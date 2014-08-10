@@ -1,0 +1,47 @@
+这里自己就是在excel中执行一个宏，这个宏的功能就是相当于：
+同步执行外部程序，等外部程序执行结束之后，弹出一个对话框
+
+实践过程：
+1)首先给excel录制一个宏：
+*依次点击："视图->宏->录制宏"
+这样开始录制一个宏。
+*随便做一些操作之后，点击"视图->宏->停止录制"
+
+2)编辑自己的宏:
+*点击"视图->宏->察看宏"
+从列表中选择自己刚才录制的宏，然后点击"编辑"。
+
+*填入自己的宏代码
+在打开的窗口中，依次存放着当前文件所有的宏.在最后面行追加一个宏代码如下：
+Declare Function GetExitCodeProcess Lib "kernel32" (ByVal hProcess As Long, lpExitCode As Long) As Long
+Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Public Const Process_Query_Information = &H400
+Public Const Still_Active = 259
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMillSecond As Long)
+Sub MySyncExecApp()
+'
+' mytest Macro
+'
+        Dim ProcessId, hProcess, exitcode As Long
+        'ProcessId = Shell("notepad.exe", vbHide)
+        ProcessId = Shell("notepad.exe", 1) 'vbNormalFocus
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+	  GetExitCodeProcess hProcess, exitcode
+	  DoEvents
+	Loop While exitcode = Still_Active
+    	msgbox "ok,app run over!"
+End Sub
+
+之后保存,这时候"察看宏"列表中会多一个"MySyncExecApp"宏。
+
+3)执行自己编辑的宏：
+点击"视图->宏->察看宏"
+选择刚才写入的"MySyncExecApp"宏，点击"执行".
+
+
+注意：
+*目前我还不知道如何直接独立编写excel宏的vba脚本，所以先录制了一个宏，然后才开始编辑。
+*我使用的是excel 2007
+
+其他：

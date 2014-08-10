@@ -1,0 +1,37 @@
+1,files:
+driver/mapmemdrv.h:
+Driver header file.
+
+driver/mapmemdrv.c:
+Driver implement file.
+
+driver/mapmem.h:
+mapmem device api header file.
+
+driver/mapmem.c:
+mapmem device api implement file.
+
+app/mapmem_demo.c:
+use demo of mapmem device.
+
+
+2,usage:
+#insmod driver/mapmem.ko
+#_mapmem_drv_num=$(cat /proc/devices |grep mapmem |awk '{print $1}')
+#mknod /dev/mapmemdev0 c $_mapmem_drv_num 0
+#app/test_demo /dev/mapmemdev0
+
+======杂乱
+1)应用程序划分为两个线程t1,t2
+t1用于发送数据，t2用于接收数据。
+
+2）应用程序
+打开设备文件/dev/mapmemdrv0
+将mapmemdrv0进行mmap映射(8M)
+
+t1发送消息，（向映射的区域写）
+t1告诉t2可以读(发送信号的异步方式)
+t2接收消息，(从映射区域读)
+
+
+

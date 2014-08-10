@@ -1,0 +1,34 @@
+20070318 赋值运算符重载。
+2.如下：代码段对堆栈进行拷贝，有错。
+MyStack1 MyStack1::operator=(MyStack1 &opnd2)
+{
+	this->length = opnd2.length;
+	delete []s;
+	s = NULL;
+	top = -1;
+	s = new StackNode[length];
+	cout<<"length"<<length<<endl;
+	while(top < opnd2.top)
+	{	
+		top++;
+		s[top] = opnd2.s[top];
+	}
+	cout<<"top"<<top<<endl;//lkdebug
+	return *this;
+}
+
+但是原来重载是返回MyStack1的对象，return *this.于是当执行完这个表达式之后（s1=s2），立刻s1内的地址不变，数据却丢了。但是知道赋值重载返回引用类型就行。当然返回引用的return *this也可。
+原因是return *this 的时候，把this付给了临时对象，临时对象没有深度拷贝，和this  指向了同一个堆空间，表达式结束之后，临时变量析构了（delete)，this的堆空间。因为我试过如果把析构里的delete去掉也行（但这样显然是不好的）
+以下正确：
+MyStack1& MyStack1::operator=(MyStack1 &opnd2)
+{
+	....
+	return opnd2;//或者return *this;
+}
+这样实现了两个堆对象的赋值重载。
+
+或者在拷贝构造函数当中new也行，那样就不可以不用返回引用了。但是风格不好
+
+
+还有初步认为对象的赋值如果没有new的堆成员，就可以直接赋值，不用考虑深度拷贝问题。否则就要如上重载。
+实际这个程序需要把拷贝构造函数实现深度拷贝的重载，因为有堆空间存在。

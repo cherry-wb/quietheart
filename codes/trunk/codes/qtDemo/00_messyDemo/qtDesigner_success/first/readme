@@ -1,0 +1,39 @@
+功能：利用designer最简单的第一种方法设计一个qt程序。
+第一种方法就是在源代码中直接利用designer生成的头文件。
+
+designer只是设计界面用的。
+步骤如下：
+1，首先利用designer设计界面，之后保存。
+这里保存的文件为untitled.ui，xml格式
+
+2,在untitled.ui所在目录中随便写一个main.cpp文件里面有运行程序的main函数
+（main可以先空白着）
+
+3，运行如下命令生成ui头文件。
+$qmake -project
+$qmake
+$make
+这里,make之后可能会报错(由于main.cpp中的错误),不用管，这里目的只是先生成一个根据untitled.ui的头文件ui_untitled.h.
+
+4,将ui界面添加到源代码中，改写main.cpp，如下：
+#include <QApplication>
+#include "ui_untitled.h"
+int main(int argc, char *argv[])
+{
+	QApplication app(argc, argv);
+
+	//这个window定义类型和ui_untitled.h中的setupUi参数类型一样
+	QMainWindow *window = new QMainWindow;
+
+	//这里是在程序中使用自己ui的方法,ui就是头文件定义的类对象
+	//声明是Ui_MainWindow但是可以这样引用
+	Ui::MainWindow ui;
+	ui.setupUi(window);
+
+	window->show();
+	return app.exec();
+}
+
+5,编译运行：
+$make
+$<运行>

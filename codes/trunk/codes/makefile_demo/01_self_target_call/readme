@@ -1,0 +1,9 @@
+make中执行自己的文件。
+
+1，make执行本身的目标，会导致再次进入读取本makefile一次。
+2，make -C执行子make之后，子make命令执行子makefile的目标，会导致再次进入读取子makefile一次。
+
+本例子使用
+--no-print-directory取消了打印目录的信息。
+
+include的make定义同样目标会有警告。

@@ -1,0 +1,8 @@
+here we can:
+use the multi target rule, one target one build cmd.
+depend the same rule, but do different things according to a "MAKETARGET" variable.
+
+Note: we should know that:
+a rule is as following:
+target:[depend1 depend2 ...]
+	[command]

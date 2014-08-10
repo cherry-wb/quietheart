@@ -1,0 +1,9 @@
+此处给出该目录说明信息。随时间更新。
+
+
+2014-08-10
+此处内容起源于之前的sourceforge项目。
+项目源地址：
+svn checkout --username=vaqeteart svn+ssh://vaqeteart@svn.code.sf.net/p/quietheart/code/trunk quietheart-code
+迁移至github上时，期最近提交版本为：r140.
+迁移日期：2014-08-10

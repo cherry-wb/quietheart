@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<api>
+	<query>
+		<search>
+			hello
+			<p ns="0" title="Mytest1" />
+			<p ns="0" title="/user-config.py/" />
+			<p ns="0" title="User-config.py" />
+			<p ns="0" title="Chinese" />
+			<p ns="0" title="Firstmytest" />
+		</search>
+	</query>
+</api>

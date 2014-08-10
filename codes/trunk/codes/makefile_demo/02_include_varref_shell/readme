@@ -1,0 +1,39 @@
+测试
+1.include时对PWD的读取(仍是主Makefile的PWD)
+Makefile中的include，设置的$(PWD)也是主文件中的，例如：
+主文件：
+##############
+include src1/src1.make
+include src2/src2.make
+
+CUR_DIR_MAKE  = $(PWD)
+
+default:
+	@echo ${CUR_DIR_MAKE}
+	@echo ${CUR_DIR_SRC1}
+	@echo ${CUR_DIR_SRC2}
+##############
+
+" ${CUR_DIR_MAKE}  ${CUR_DIR_SRC1}  ${CUR_DIR_SRC2}"三者分别用$(PWD)定义在主文件,src1.make和src2.make中，但是值却是一样的，全是主文件的路径。
+
+2.Make变量的引用方式
+*变量引用：
+Makefile变量用"${var}"或"$(var)"的形式，不用括号则无法正确引用多字符，例如"$var"变成了"$v"; 而shell中用"$var"或${HOME}来引用。
+make 规则中的命令，其中使用的是shell的变量，所以用$var方式引用，但是也可用"${var}"或"$(var)"来在shell规则中引用make定义的变量，但是由于'$'在make中有特殊含义，所以用'$$'来表示引用变量的'$'。(所以用"${}"是偷懒的做法^_^。)
+例如用如下方式来引用主目录：
+#####
+MYHOME1=$$HOME
+MYHOME2=${HOME}
+default:
+	@echo ${MYHOME1} #ok,make var
+	@echo ${MYHOME2} #ok,make var
+	@echo $$MYHOME2  #bad,null
+	@echo ${HOME}    #ok, 
+	@echo $(HOME)	 #ok,
+	@echo $$HOME     #ok, shell var
+#####
+
+shell函数
+这里$(shell...)是一个make的函数，用于执行shell命令。
+例如执行shell命令赋值Makefile变量用如下形式：
+MYVAR := $(shell echo myvalue)

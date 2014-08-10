@@ -1,0 +1,12 @@
+测试make条件赋值：
+MYVAR?=xxx
+当定义过则赋值，否则不赋值。
+
+测试make条件分支
+make MYVAR=2
+或
+make
+
+测试变量为空，可以用
+ifeq，不要用ifdef，即使赋值为空格，ifeq(,$(MYNULL))也认为空。
+make null

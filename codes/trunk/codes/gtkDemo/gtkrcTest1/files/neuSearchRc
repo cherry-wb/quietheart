@@ -1,0 +1,51 @@
+pixmap_path "./searchBarRc"
+
+style "neuSearchTreeView1"
+{
+#此处设置窗口背景为指定的像素图。
+#bg_pixmap[<STATE>] = "<pixmap filename>"
+#	  fg[PRELIGHT] = { 0, 1.0, 1.0 }
+#	  bg[PRELIGHT] = { 0, 0, 1.0 }
+#	  bg[ACTIVE] = { 1.0, 0, 0 }
+#	  fg[ACTIVE] = { 0, 1.0, 0 }
+#	  bg[NORMAL] = { 1.0, 1.0, 0 }
+#	  fg[NORMAL] = { .99, 0, .99 }
+#	  bg[INSENSITIVE] = { 1.0, 1.0, 1.0 }
+#	  fg[INSENSITIVE] = { 1.0, 0, 1.0 }
+#bg_pixmap[NORMAL] = "window.jpg"
+#base[ACTIVE] = { 1.0, 0, 1.0 }
+
+#treeView背景颜色
+	base[NORMAL] = { 1.0, 0, 1.0 }
+#treeView列表中字体颜色
+	text[NORMAL] = "#FFFF00"
+	engine "sapwood"
+	{
+
+# selection #######################################################
+#这里选择一列可以设置其列的图片
+		image
+		{
+			function = FLAT_BOX
+			state    = SELECTED
+			file = "./searchBarRc/button1.png"
+			border = { 2, 2, 2, 2 }
+		}
+	}
+
+
+}
+
+style "treeViewButton"
+{
+#bg_pixmap[NORMAL] = "button2.png"
+
+#顶部按钮中的字体颜色
+	  fg[NORMAL] = { 0, 1.0, 1.0 }
+#
+#	  bg[NORMAL] = "#00FF00"
+}
+#treeView列的顶部按钮
+#widget_class "*TreeView.GtkButton*"
+widget "*.neuSearchTreeView1" style "neuSearchTreeView1"
+widget "*.neuSearchTreeView1.GtkButton*" style "treeViewButton"

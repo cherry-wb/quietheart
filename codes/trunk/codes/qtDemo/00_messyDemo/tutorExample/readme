@@ -1,0 +1,9 @@
+这里是qt的一个教程的例子，教程的网站：
+中文版：
+http://www.kuqin.com/qtdocument/tutorial1-14.html
+是qt3的。
+
+英文版：
+http://doc.trolltech.com/4.3/tutorial-t11-main-cpp.html
+是qt4的。
+我用的是中文的教程结合英文。所以需要有一步qt3到qt4转换的过程。

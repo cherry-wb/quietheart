@@ -1,0 +1,9 @@
+注意，编译的时候，我用的是qt4.5,但是代码确实qt3的，所以直接：
+$qmake -project
+$qmake
+$make
+这样会出错，所以应该这样：
+$qmake -project
+$qt3to4 1_helloworld.pro
+$qmake
+$make

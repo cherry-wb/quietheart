@@ -1,0 +1,3 @@
+MYVARINCLUDEHEAD=headinclude
+dephead:
+	@echo in headincluded makefile, exported var:${MYVAREXPORT}, not exported var:${MYVARNOEXPORT}

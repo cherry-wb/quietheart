@@ -1,0 +1,31 @@
+c语言里函数rand（）和srand（）的用法 
+
+rand(void)用于产生一个伪随机unsigned int 整数。
+
+srand(seed)用于给rand()函数设定种子。
+ 
+
+srand 和 rand 应该组和使用。一般来说，srand 是对 rand 进行设置。
+
+比如：
+srand((UINT)GetCurrentTime());
+int x = rand() % 100;
+
+
+是生成 0 到 100 之间的随机数。
+
+ 
+
+srand()是用来初始化随机种子数的，因为rand的内部实现是用线性同余法做的，他不是真的随机数，只不过是因为其周期特别长，所以有一定的范围里可看成是随机的，式子如下：
+
+rand = rand*const_1 + c_var;
+
+srand函数就是给它的第一个rand值。
+
+ 
+
+用"int x = rand() % 100;"来生成 0 到 100 之间的随机数这种方法是不或取的，
+
+比较好的做法是： j=(int)(ｎ*rand()/(RAND_MAX+1.0))　　 产生一个0到ｎ之间的随机数
+
+ 

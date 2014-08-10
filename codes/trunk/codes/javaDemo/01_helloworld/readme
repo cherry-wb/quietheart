@@ -1,0 +1,27 @@
+编译:
+#javac HelloWorld.java
+编译之后生成HelloWorld.class文件。
+运行:
+#java HelloWorld
+
+注意：
+文件名必须是HelloWorld.java因为类名为HelloWorld。
+
+本例子具体过程：
+1）查看源代码
+[root@lv-k 01_helloworld]# cat HelloWorld.java 
+public class HelloWorld
+{
+        public static void main(String[] args) 
+        {
+        System.out.println("Hello World!");
+        }
+}
+2)编译
+[root@lv-k 01_helloworld]# javac HelloWorld.java 
+[root@lv-k 01_helloworld]# ls
+HelloWorld.class  HelloWorld.java  readme
+3)运行
+[root@lv-k 01_helloworld]# java HelloWorld
+Hello World!
+

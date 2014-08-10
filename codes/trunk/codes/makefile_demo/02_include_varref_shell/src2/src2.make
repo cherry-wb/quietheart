@@ -1,0 +1,1 @@
+CUR_DIR_SRC2  = $(PWD)

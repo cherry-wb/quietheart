@@ -1,0 +1,20 @@
+java中的目录被当作一种特殊的文件使用,list方法可以返回目录中的所有子目录和文件名.
+在Unix下的路径分隔符为/在Dos下的路径分隔符为\,Java可以正确处理Unix和Dos的路径分隔符.
+
+http://topic.csdn.net/t/20031013/15/2350165.html
+windows的分隔符为"\",unix为"/".编程序使用   
+      Properties   prop   =   new   Properties(System.getProperties());   
+      String   sep=prop.getProperty("file.separator");   
+  就可以获得这个分隔符。   
+    
+  可是我在windows下使用下面的语句定义文件路径不能找到文件。   
+  String   mypath="."   +   sep   +   "conf"   +   sep   +   "config.xml";   
+    
+  这样就可以找到：String   mypath=".\\conf\\config.xml"   
+  请问是怎么会是呀？   
+  要使用后面的方法，可移植性就差了。 
+File.separator()
+//////////
+自己实际试验的：
+import java.io.*;
+String fileName = "."+File.separator+"data"+File.separator+"exampleData.txt";// n = 5，m =10,4s必须首先初始化,否则要后面再new

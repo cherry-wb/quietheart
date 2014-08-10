@@ -1,0 +1,25 @@
+updated by:20071214
+一.单步跳过，
+二.单步进入，
+三.继续执行，
+四.设置端点，
+五.察看变量：debug下的variables的小窗口可以键入想看的成员
+选中想要查看的变量甚至是vector等，按住：ctrl+shift+I,或者右键(记住要选中之后)->检查/察看变量...
+六.条件断点的设置：
+http://bbs.chinaunix.net/thread-1005258-1-1.html
+右键点击一个断点，在breakpoint properties里就可以设置conditions。
+condition就是一个java的bool表达式，比如“i==4”，然后在i的值是4的时候就断下来。
+如果只写一个变量的名字，然后选择“value of conditionc changes”，就可以在变量的值改变的时候断下来，
+原帖由 kakasi 于 2007-10-22 11:45 发表 
+原来我常这样
+if(i == 0) {
+                        System.out.println();
+                }
+原帖由 kakasi 于 2007-10-22 11:45 发表 
+原来我常这样
+if(i == 0) {
+                        System.out.println();
+                }
+最喜欢的方法就是log.debug
+
+七.清除所有断点：找到调试-断点选项之后，出现一个窗口就可以弄了。

@@ -1,0 +1,7 @@
+include path.include
+subdep:
+	@echo in sub include makefile, exported var:${MYVAREXPORT}, not exported var:${MYVARNOEXPORT}
+	@echo sub include make:the path of pwd command is:$(pwd)
+	@echo sub include make:the path of \`pwd\` command is:`pwd`
+	@echo sub include make:the path of PWD var is:$(PWD)
+	@echo include path var from dir:${MYPATH}

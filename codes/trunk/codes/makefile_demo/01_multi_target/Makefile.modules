@@ -1,0 +1,9 @@
+MODULES=
+MODULES+=aa
+MODULES+=bb
+MODULES+=cc dd ee ff
+MODULES+=gg
+MODULES+=hh
+MODULES+=ii
+MODULES+=jj
+MODULES+=kk

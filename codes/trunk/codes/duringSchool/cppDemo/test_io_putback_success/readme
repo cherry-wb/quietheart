@@ -1,0 +1,11 @@
+this program used to test that
+if you input some group of num,one group has two num
+when you input one group ,compute the sum of the sum of the two number
+end the input by type the null line,then output the num of groups
+for example
+	input:
+1 2
+2 3
+3 1
+	output:
+3

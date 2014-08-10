@@ -1,0 +1,17 @@
+内容：Unix domain的socket通信和epoll轮询可用文件。
+1.server 创建
+Id1和Id2两个socket
+
+2.client1创建
+Id3的socket
+
+3.client2创建
+Id4的socket
+
+4.通信情况：
+(server)Id1<-->Id3(client1)
+(server)Id2<-->Id4(client2)
+
+5.注意：
+在当前路径运行，会生成./tmp/***文件，用于socket通信。
+make和make clean可以编译和清除。

@@ -1,0 +1,78 @@
+//不知道为什么，这里的代码有时候会导致类似死锁的现象。可能是同步和互斥用的方式不对。
+//不加对j++的锁就好了。
+#include "myCallback.h"
+
+#include <QMouseEvent>
+#include <QMutex>
+#include <QWaitCondition>
+#include <QtDebug>
+
+int MyThread::j = 0;
+QMutex MyThread::mutex_j;
+QWaitCondition MyThread::wait_j;
+void MyThread::run()
+{
+	if(objectName() == "WaitThread")
+	{//等待j的值，当j大于等于5的时候才打印。另外一个线程用来修改j的值。
+		qDebug()<<"In:"<<objectName()<<" wait j>=5 ";
+		myPrint();
+	}
+	else if(objectName() == "ModifyThread")
+	{
+		mutex_j.lock();
+		while(j < 5)
+		{
+			sleep(1);
+			++j;
+			qDebug()<<"In:"<<objectName()<<" Set j to "<<j;
+		}
+		//qDebug()<<"test2";
+		wait_j.wakeAll();
+		mutex_j.unlock();
+		//sleep(1);
+		//j=0;
+	}
+	else
+	{
+		;
+	}
+}
+
+void MyThread::myPrint(void)
+{
+	qDebug()<<"In:"<<objectName()<<"@@@@@@@@@{"<<__PRETTY_FUNCTION__;
+	mutex_j.lock();
+	wait_j.wait(&mutex_j);
+	//qDebug()<<"test1";
+	if(j >= 5)
+	{
+		qDebug()<<"In:"<<objectName()<<" Begin to print j";
+		qDebug()<<"j is:"<<j;
+		j=0;
+	}
+	mutex_j.unlock();
+	qDebug()<<"In:"<<objectName()<<"@@@@@@@@@}"<<__PRETTY_FUNCTION__;
+}
+
+MyCallback::MyCallback(QWidget *parent):QWidget(parent)
+{
+	;
+}
+
+void MyCallback::mousePressEvent(QMouseEvent *e)
+{
+	clicked();
+	e->ignore();
+}
+
+void MyCallback::clicked()
+{
+	//t = new MyThread(this);
+	MyThread *twait = new MyThread(this);
+	twait->setObjectName("WaitThread");
+	twait->start();
+
+	MyThread *tmodify = new MyThread(this);
+	tmodify->setObjectName("ModifyThread");
+	tmodify->start();
+}

@@ -1,0 +1,3 @@
+对cin的理解见testCin
+cin.get
+cin>>

@@ -1,0 +1,5 @@
+后添加文件形成多文件程序
+1.把start.cpp（含有main)和person.cpp和person.h拷到文件夹里
+2.把start.cpp编译
+3.工程－>添加文件，选择person.cpp和person.h
+然后就成功了。

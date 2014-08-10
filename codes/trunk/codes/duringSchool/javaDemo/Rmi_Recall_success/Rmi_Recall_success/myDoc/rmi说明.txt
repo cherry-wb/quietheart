@@ -1,0 +1,19 @@
+stub/skeleton是客户端/服务端与远程调用相关的类。
+一/环节：
+1/调用方以通常方式调用对应的远程对象方法。
+2/stub的语法形式与调用它的客户程序一致，把地址参数封装为消息。
+3/发送消息给rmi runtime系统
+4/远程rmi调用skeleton反序列化消息，发送给服务函数。
+5/结果有skeleton序列化，发给调用者。
+6/rmi接受，结果处理，显示
+二/步骤
+1/定义远程服务接口类(upper.java)
+2/定义远程接口实现类(upperImpl.java)
+3/定义客户方调用类(upperclient.java)
+4/运行rmic upperImpl生成实现类的stub和skeleton
+upperImpl_stub.java和upperImpl_skeleton.java
+5/运行rmiregistry
+6/部署
+客户方：upper.java upperclient.java upperImpl_stub.java
+服务方：upper.java upperImpl.java upperImpl_skeleton.java
+7/编译，运行

@@ -1,0 +1,26 @@
+1,查看对make变量的导入情况。
+使用include方式，定义的变量不用导入到出即能在子make中直接使用。
+使用make -C方式，子make中只能使用exported导出的make变量。子子make也能使用。
+include的make中，不能有和主make一样的目标（对于单目标的make而言）。
+
+include类似define，所以如果主make中的第一个目标前有include的动作，那么最开始include的makefile，其第一个目标是最终目标，include的makefile不用export其定义的变量直接可在主make使用。
+
+所以本实例使用：
+make default
+才能看见主make中的default被执行。
+
+若只使用:
+make
+则只能看见make.includehead中的第一个规则被执行。
+
+
+2,对路径的引用情况
+make -C的makefile，其${PWD}还是主make的${PWD}
+make -C的makefile，其`pwd`是当前sub makefile的路径
+make -C的makefile，$(pwd)为空。
+make -C的makefile，在它本身include的时候，被包含的是起始相对路径为其本身对应子目录下的文件。
+
+include的makefile，其${PWD}还是主make的${PWD}
+include的makefile，其`pwd`还是主make的${PWD}
+include的makefile，$(pwd)为空。
+include的makefile，在它本身又include的时候，被包含的是起始相对路径为主makefile的起始相对路径下的文件。

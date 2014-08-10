@@ -1,0 +1,118 @@
+举例：
+///////////////////////////////////
+//myGraph.h
+#ifndef __myGraph_h__
+#define __myGraph_h__
+#define DEBUGMYGRAPH 1//定义本文件的开关调试
+#define MAX 10000000
+#include<iostream>
+#include<fstream>
+#include<iomanip>
+using namespace std;
+// No description
+class MyGraph
+{
+	public:
+		// class constructor
+		//!!!嵌套类的声明
+		class MyVertex;
+		class MyEdge;
+		
+
+		//外部类成员
+		MyGraph();
+		//拷贝构造函数
+		MyGraph(MyGraph& g);
+		void print();
+		// class destructor
+		~MyGraph();
+
+		//随机生成一个图
+		void generateGraph(int n);
+		//如果存在当前图则生成一个表示当前图的文件否则输入图存到一个文件中
+		void createGraphFile();
+		//读取图文件的函数
+		void readGraph();
+		//把原图改成具有n个节点的图
+		setGraph(int n);
+		//赋值重载
+		MyGraph& operator=(MyGraph& g);
+		//点
+		//正式程序中V *Vertex 
+		MyVertex *Vertex;
+		//边 
+		//正式程序中是一个二维的动态数组怎么做??
+		MyEdge **Edge;//(邻接矩阵)
+		int n;//表示图中的节点总数
+};
+//!!嵌套类--图节点结构
+class MyGraph::MyVertex
+{
+public:
+	// class constructor
+	MyVertex();
+	// class destructor
+	~MyVertex();
+	// 点的度数
+	int k;
+	// 点号
+	int num;
+	
+};
+
+//!!嵌套类--图边的结构
+class MyGraph::MyEdge
+{
+public:
+	// class constructor
+	MyEdge();
+	// class destructor
+	~MyEdge();
+	// 判断是否是图中的一条边
+	int isE;
+	//记录该边被访问的次数
+	int isVisited;
+	//边的权值
+	int cost;
+};
+#endif
+///////////////////////////////////////////////////////
+//Mygraph.cpp
+//嵌套类的函数定义举例：
+// MyVertex
+MyGraph::MyVertex::MyVertex()
+{
+	k = 0; 
+	num = -1;// 节点号是负数代表此节点不是图上的节点
+}
+//////////////////////////////////////////////////////
+//test.cpp
+//使用方法举例
+待续，不知道能否访问嵌套类成员
+///////////////////////////////////////////////////////
+C++嵌套类
+http://www.cppblog.com/fwxjj/archive/2006/11/21/15507.aspx 
+C++嵌套类
+1、   嵌套类的名字只在外围类可见。   
+
+2、   类的私有成员只有类的成员和友元可以访问，因此外围类不可以访问嵌套类的私有成员。嵌套类可以访问外围类的成员（通过对象、指针或者引用）。   
+
+3、   一个好的嵌套类设计：嵌套类应该设成私有。嵌套类的成员和方法可以设为 public 。 
+4、   嵌套类可以直接访问外围类的静态成员、类型名（ typedef ）、枚举值。 
+
+5、   嵌套类定义的名字解析过程： 
+
+出现在名字使用点前的嵌套类的声明。 
+
+出现在名字使用点前外围类的声明。 
+
+嵌套类定义前名字空间域的声明。 
+6、   嵌套类的成员定义中的名字解析过程： 
+
+成员函数局部声明。 
+
+嵌套类成员的声明。 
+
+外围类成员的声明。 
+
+成员函数定义前名字空间域中出现的声明。 

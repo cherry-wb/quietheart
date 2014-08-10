@@ -1,0 +1,32 @@
+1.注意排序涉及到递归了，就一定要有递归结束条件
+例如快速排序：
+int myPartition(int *a, int left, int right)
+{
+    int pivot = a[left];
+    while(left < right)
+    {
+        while(a[right] > pivot && left < right)
+        {
+            --right;
+        }
+        a[left] = a[right];
+        while(a[left] < pivot && left < right)
+        {
+            ++left;
+        }
+        a[right] = a[left];
+    }
+    a[left] = pivot;
+    return left;
+}
+void myQuickSort(int *a, int left, int right)
+{
+    if(left < right)
+	{//这一句必须有!这是递归的结束条件!
+		assert(right >= 0);
+		//cout<<"right:"<<right<<endl;
+		int m = myPartition(a,left,right);
+		myQuickSort(a, left, m - 1);
+		myQuickSort(a, m + 1, right);	
+	}	
+}

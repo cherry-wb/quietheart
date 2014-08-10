@@ -1,0 +1,12 @@
+#!/bin/sh
+
+ftype=`file "$1"`
+case "$ftype" in
+"$1: Ziparchive"*)
+echo zip file;;
+"$1:gzip compressed"*)
+echo gzip file ;;
+"$1:bzip2 compressed"*)
+echo bzip2 file ;;
+*)echo "file $1 don't exits";;
+esac

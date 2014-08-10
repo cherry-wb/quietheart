@@ -1,0 +1,57 @@
+功能：第四种使用designer设计ui的qt程序
+
+与前面的方法都不一样，这里使用的untitled.ui文件不用生成ui_untitled.h而是动态读取。即，程序运行的时候，动态地读取untitled.ui的内容生成程序界面。这样，修改ui的时候非常方便，不用再重新编译了，只需要修改untitled.ui就行。
+
+过程如下：
+1）使用designer设计保存文件为untitled.ui.
+2）建立main.cpp文件内容如下：
+#include <QApplication>
+#include <QWidget>
+
+//这个文件必须包含用于动态加载ui.
+#include <QtUiTools>
+int main(int argc, char *argv[])
+{
+	QApplication app(argc, argv);
+
+	//加载ui文件
+	QUiLoader loader;
+	QFile file("./untitled.ui");
+	file.open(QFile::ReadOnly);
+
+	//根据ui文件生成界面
+	QWidget *uiWidget = loader.load(&file, 0);
+	file.close();
+	uiWidget->show();
+
+	//根据名称获得子部件的示例代码
+	//ui_Button = qFindChild<QPushButton*>(this,"name1");
+	//ui_textEdit = qFindChild<QTextEdit*>(this, "name2");
+	//ui_lineEdit = qFindChild<QLineEdit*>(this, "name3");
+
+	return app.exec();
+}
+3)生成.pro文件：
+$qmake -pro
+文件内容如下：
+
+###############################
+TEMPLATE = app
+TARGET = 
+DEPENDPATH += .
+INCLUDEPATH += .
+
+#Input
+FORMS += untitled.ui
+SOURCES += main.cpp
+
+#这里是手动加的
+#make时不自动生成头文件
+FORMS -= untitled.ui
+#使用动态加载必须这样配置
+CONFIG += uitools
+###############################
+4)编译运行：
+$qmake
+$make
+$./<运行程序>

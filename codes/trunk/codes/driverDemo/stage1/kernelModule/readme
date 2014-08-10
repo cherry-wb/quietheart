@@ -1,0 +1,6 @@
+这里是我在第一个阶段学习内核时候的例子。
+学习的参考网址是：
+http://blog.csdn.net/dzassn/archive/2007/09/15/1786116.aspx
+《The Linux Kernel Module Programming Guide 2.4 中文版》
+
+本目录临时编写的代码放在了tmp目录下面，之外的都是编译好的代码。

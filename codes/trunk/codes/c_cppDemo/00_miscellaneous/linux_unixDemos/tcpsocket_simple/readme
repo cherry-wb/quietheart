@@ -1,0 +1,30 @@
+server.c
+client.c
+测试使用tcp，getaddrinfo方式相互发包。
+
+1.server: 
+(1)创建套接字并绑定，监听
+socket
+bind
+listen
+
+(2)接收并处理，响应
+while(not stop)
+{
+    accept
+    receive from clients.
+    process.
+    send back to client.
+}
+
+2.client:
+(1)创建套接字
+socket
+
+(2)发送并接收响应，处理
+{
+    connect
+    send request.
+    receive from server.
+    process.
+}

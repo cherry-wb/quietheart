@@ -1,0 +1,21 @@
+1/第一个错误是我本科编写操作系统内存分配代码时使用了参数传值而不是传址记忆犹新。
+2/这次又发现个错误。
+为什么我编写的类一重载赋值运算符或者拷贝构造函数就报错？
+如下：代码没错，但是加到我的程序中就报错了。
+
+错误提示如下：
+--------------------Configuration: testMaxMatch - Win32 Debug--------------------
+Compiling...
+myEdge.cpp
+myGraph.cpp
+myHut.cpp
+myMaxMatch.cpp
+d:\program files\microsoft visual studio\vc98\include\xmemory(34) : error C2558: class 'MyBlossom' : no copy constructor available
+        d:\program files\microsoft visual studio\vc98\include\xmemory(66) : see reference to function template instantiation 'void __cdecl std::_Construct(class MyBlossom *,const class MyBlossom &)' being compiled
+myVertex.cpp
+testMaxMatch.cpp
+Error executing cl.exe.
+
+testMaxMatch.exe - 1 error(s), 0 warning(s)
+后来把参数引用改成常引用就不报错了。至今不知道这是为什么。
+3/平时经常遇到if 判断等于的错写成赋值if(a=3)/if(a==3)

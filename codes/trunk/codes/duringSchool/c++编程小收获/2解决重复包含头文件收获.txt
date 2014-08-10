@@ -1,0 +1,26 @@
+定义的习惯：
+假设B、C类头文件b.h和c.h包含a.h（含A类)，main函数的包含b.h和c.h为了防止A类重复定义错误（因为重复包含了头文件a.h)
+1.
+除了类a.cpp外其他
+文件包含a.h开头最好加上：
+#ifndef __a_h__
+#define __a_h__
+#include "a.h"
+#endif
+...其它部分...
+
+2.或者：
+#ifndef __a_h__
+#define __a_h__
+#include<iostream.h>
+class A
+{
+public:
+	A();
+	~A();
+private:
+	int a;
+};
+#endif
+
+也许是第二个方法比较好吧。

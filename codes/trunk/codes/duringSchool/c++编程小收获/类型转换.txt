@@ -1,0 +1,6 @@
+1.整数转换为字符串
+#include<cctype>
+char *s = new char[10];
+itoa(i,s,10);
+pDC->TextOut(pr.right,pr.top,s);
+delete[]s;

@@ -1,0 +1,18 @@
+例如copy 一个文件，而这个文件名又是变量，该怎么办？
+#include <stdio.h> 
+#include <string.h> 
+#include <stdlib.h> 
+main() 
+{ 
+char file1[15]; 
+char file2[16]=" ";//一个空格 
+char copycmd[50]="copy "; 
+printf("input first name\n"); 
+scanf("%s",file1); 
+printf("input first name\n"); 
+scanf("%s",file2+1); 
+strcat(copycmd,file1); 
+strcat(copycmd,file2); 
+printf("%s\n",copycmd); 
+system(copycmd); 
+}

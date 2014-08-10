@@ -1,0 +1,1 @@
+main 引用本类成员：如果在Test类中的main引用Test类中的member成员，需要声明member为静态。

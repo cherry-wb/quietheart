@@ -1,0 +1,38 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: start - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\ADMINI~1.DLU\LOCALS~1\Temp\RSP81.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Debug/start.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"E:\$lvkai\$study\$experiment\OptimalDemo_stack_success\myStack.cpp"
+"E:\$lvkai\$study\$experiment\OptimalDemo_stack_success\start.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1.DLU\LOCALS~1\Temp\RSP81.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1.DLU\LOCALS~1\Temp\RSP82.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:yes /pdb:"Debug/start.pdb" /debug /machine:I386 /out:"Debug/start.exe" /pdbtype:sept 
+".\Debug\myStack.obj"
+".\Debug\myVertex.obj"
+".\Debug\stackNode.obj"
+".\Debug\start.obj"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1.DLU\LOCALS~1\Temp\RSP82.tmp"
+<h3>Output Window</h3>
+Compiling...
+myStack.cpp
+start.cpp
+e:\$lvkai\$study\$experiment\optimaldemo_stack_success\mystack.cpp(64) : warning C4715: 'MyStack1::getTop' : not all control paths return a value
+Linking...
+
+
+
+<h3>Results</h3>
+start.exe - 0 error(s), 1 warning(s)
+</pre>
+</body>
+</html>

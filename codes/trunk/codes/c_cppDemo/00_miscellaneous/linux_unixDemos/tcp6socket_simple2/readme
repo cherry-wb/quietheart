@@ -1,0 +1,35 @@
+server.c
+client.c
+测试使用tcp，getaddrinfo方式相互发包。
+支持ipv4和ipv6。
+
+1.server: 
+(1)创建套接字并绑定，监听
+socket
+bind
+listen
+
+(2)接收并处理，响应
+while(not stop)
+{
+    accept
+    receive from clients.
+    process.
+    send back to client.
+}
+
+2.client:
+(1)创建套接字
+socket
+
+(2)发送并接收响应，处理
+{
+    connect
+    send request.
+    receive from server.
+    process.
+}
+
+3.机制
+server为ipv4和ipv6创建一个共同的socket，指定的地址为"0.0.0.0"或"::1"（根据首先获取到的地址信息确定）。
+注意：运行时，可以通过ipv4地址、ipv6地址、以及ipv4和ipv6的换回地址访问，但是创建的只有一个socket，而非多个。

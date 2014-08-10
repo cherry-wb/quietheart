@@ -1,0 +1,10 @@
+增加策略文件，假如保存为跟目录下client.policy   
+  文件内容：   
+  grant     
+  {     permission   java.net.SocketPermission     
+              "*:1024-65535",   "connect,accept";   
+        permission   java.net.SocketPermission     
+              "host:80",   "connect";   
+  };   
+  运行时加上参数：   
+  -Djava.security.policy=client.policy   

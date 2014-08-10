@@ -1,0 +1,28 @@
+server.c
+client.c
+测试使用udp，select轮询方式相互发包。
+
+packet:
+Header+Data
+
+1.server: 
+(1)创建套接字并绑定，监听
+
+(2)接收并处理，响应
+while(not stop)
+{
+    receive from clients.
+    process.
+    send back to client.
+}
+
+2.client:
+(1)创建套接字
+
+(2)广播并接收，处理
+send broadcast packet
+while(has response)
+{
+    receive from server.
+    process.
+}

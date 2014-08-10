@@ -1,0 +1,29 @@
+'功能：循环，判断，以及sheet的选择
+Sub MyScriptDemo()
+'
+' mytest Macro
+'
+    Sheets("App").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '开始比较每个文件
+    i = start
+    While i < after_end
+      If IsEmpty(Cells(i, 5)) Then
+        If Cells(i, 4) = "留用" Then
+          Cells(i, 5) = Cells(i, 2)
+        End If
+      End If
+        i = i + 1
+    Wend 'while i < afer_end
+End Sub

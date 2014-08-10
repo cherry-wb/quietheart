@@ -1,0 +1,175 @@
+STL中VECTOR动态数组的用法
+2007年04月02日 星期一 下午 10:46STL中VECTOR动态数组的用法
+
+在实际开发种，数组的运用时费用广泛的，各种各样的数组，如
+
+int a[10];
+
+int *b[10];
+
+char d[10];
+
+class d[10];
+
+class *e[10];
+
+以上的几个例子我们可以看到，数组长度都是固定的。
+
+确定一个数组长度，有时候是个很苦恼的事情。设置小了嘛，现在动不动就是512M 1G，干嘛小气。
+
+设置大了嘛，确实也会浪费。而且有时候真的就会出现1G的内存。那也太水了
+
+VECTOR可以自动的，改变数组大小
+
+以下将分为几个部分
+
+1、怎么定义VECTOR
+
+2、VECTOR几个常用的方法
+
+3、VECTOR用法的几点经验
+
+1、怎么定义VECTOR
+
+#include <vector>
+
+using namespace std;//此句可省略
+
+vecotr <int>   a;     //int类型的动态数组
+
+vecotr<char> b;   //char类型
+
+vector<char*> c; // 指针类型。注意，对于vector来说，指针只是一个4个字节的变量，他才不会为你创建任何内存空间。
+
+vector <class> d; //某种类
+
+vecotr<class*>e;
+
+2、VECTOR几个常用的方法
+
+
+push_back
+
+如
+
+for(int i=0;i<10;i++)
+
+a.push_back(i);
+
+则a此时等同于一个 int [10]数组。
+
+可以看看
+
+for (int i=0;i<10;i++)
+
+printf("%d ",a[i]); //输出   0 1 2 3 4 5 6 7 8 9
+
+
+pop_back 
+
+删除数组的最后一个元素
+
+a.pop_back();
+
+a.pop_back();
+
+此时，输出数组得到 0 1 2 3 4 5 6 7 
+
+begin end用法
+
+for （itor =a.begin(); itor<a.end(); itor++)
+
+{
+
+   printf("%d ", itor);
+
+}
+
+输出0 1 2 3 4 5 6 7
+
+begin为数组的第一个元素（数组为空时则会乱七八糟的返回吧）。end是最后一个元素之后的一个元素。即vecotr的end()不是7，而就是end()，一个不知道什么的变量。记住用法就好。不是itor<=a.end()，因为7后面还有一个元素，一个不是我们增加进去的元素
+
+size
+
+printf("%d\n", a.size())    //7
+
+数组大小。
+
+3、VECTOR用法的几点经验
+
+1、for （itor =a.begin(); itor<a.end(); itor++) 有时候，我们可能会保存itor这个变量。留着什么时候去使用它。但是要注意，当你增加删除元素后，有可能itor会发生变化。所以尽量不要将itor传递到其他地方去
+
+2、size返回的是目前数组的大小，但是他的内存使用可能比这个大。
+
+3、vector<char*> vecotr可不会为你开辟内存，释放内存。而自己手动处理。
+
+vecotr<char*> c
+
+for (i=0;i<10;i++)
+
+{
+
+char *p=new char[10];
+
+c.push_back(p); //
+
+}
+
+for (i=0;i<10;i++)
+
+{
+
+delete []c.rend(); //
+
+r.pop_back();
+
+}
+
+4、其他函数，建议看MSDN的例子
+
+初学者建议做以下习题。
+
+1、从键盘输入多个字符串，保存进vecotor。
+
+重复以下操作，直到剩下3个元素。
+
+删除第一个，最后一个，中间一个。
+
+清空整个vecotr
+
+//以上注意内存的建立和释放
+
+2、长生1万个随机数，保存进vecotr
+
+注意使用insert函数
+
+从右往左，计算5000个数的和。
+
+清空vecotr
+
+
+
+
+
+
+#include<iostream>  
+  #include   <string>  
+  #include   <vector>  
+  using   namespace   std;  
+   
+  void     main()  
+  {  
+  vector<vector<string>   >   v;  
+  v[0][0]   =   "hello   world";  
+  }  
+  
+
+2004-03-15 18:46:47 ChenLau（柳宇）
+请教为什么vector<   vector<string>   >中间加两个空格就编译通过了？ 
+
+2004-03-15 18:52:59 hawkxjy（developer）
+如果用vector<vector<string>>,编译器认为">>"是用于标准输入,所以会出错.  
+  只有vector<   vector<string>   >,才是正确的.这是在使用STL时经常犯的错误. 
+
+
+ 

@@ -1,0 +1,86 @@
+http://xkxjy.javaeye.com/blog/548433
+源自ACPP的字符串分割函数
+
+ 
+Cpp代码
+
+   1. vector<string> split(const std::string &s)  
+   2. {  
+   3.     vector<string> vec_ret;  
+   4.     typedef string::size_type string_size;  
+   5.     string_size i = 0;  
+   6.   
+   7.     while (i != s.size()){  
+   8.           
+   9.         // ignore the space  
+  10.         while (i != s.size() && isspace(s[i]))  
+  11.             ++i;  
+  12.   
+  13.         string_size j = i;  
+  14.   
+  15.         // get all the char  
+  16.         while (j != s.size() && !isspace(s[j]))  
+  17.             ++j;  
+  18.   
+  19.         if (i != j){  
+  20.             vec_ret.push_back(s.substr(i, j-i));  
+  21.             i = j;  
+  22.         }  
+  23.     } // end of while  
+  24.   
+  25.     return vec_ret;  
+  26. }  
+
+vector<string> split(const std::string &s)
+{
+	vector<string> vec_ret;
+	typedef string::size_type string_size;
+	string_size i = 0;
+
+	while (i != s.size()){
+		
+		// ignore the space
+		while (i != s.size() && isspace(s[i]))
+			++i;
+
+		string_size j = i;
+
+		// get all the char
+		while (j != s.size() && !isspace(s[j]))
+			++j;
+
+		if (i != j){
+			vec_ret.push_back(s.substr(i, j-i));
+			i = j;
+		}
+	} // end of while
+
+	return vec_ret;
+}
+
+ ddd
+
+版本2
+Cpp代码
+
+   1. //使用库算法  
+   2. vector<string> split(const string &s)  
+   3. {  
+   4.     vector<string> vec_ret;  
+   5.     typedef string::const_iterator iter;  
+   6.   
+   7.     iter i = s.begin();  
+   8.     while (i != s.end()) {  
+   9.         i = find_if(i, s.end(), not_space);  
+  10.   
+  11.         iter j = find_if(i, s.end(), space);  
+  12.           
+  13.         // get valid word  
+  14.         if (i != j) {  
+  15.             vec_ret.push_back(string(i, j));  
+  16.             i = j;  
+  17.         }  
+  18.     }  
+  19.   
+  20.     return vec_ret;  
+  21. }  

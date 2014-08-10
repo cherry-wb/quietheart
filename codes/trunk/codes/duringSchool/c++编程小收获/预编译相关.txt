@@ -1,0 +1,16 @@
+调试用的预编译,参照test_prebuild
+#include<iostream.h>
+//调试开关
+#define DEBUGPREBUILD 1
+
+void main()
+{
+	cout<<"hello"<<endl;
+#if	DEBUGPREBUILD ==1
+	cout<<"DEBUGPREBULD=1时编译执行"<<endl;
+#else
+	cout<<"DEBUGPREBULD=0时编译执行"<<endl;
+#endif
+	cout<<"总会执行这里"<<endl;
+}
+条件编译可以钳套

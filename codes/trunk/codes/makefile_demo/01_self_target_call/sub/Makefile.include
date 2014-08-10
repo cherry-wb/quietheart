@@ -1,0 +1,11 @@
+clean:force2
+	@echo "include clean!"
+	
+build:force2
+	@echo "include build!"
+
+install:force2
+	@echo "include install!"
+
+force2:
+	@echo "include force2!"

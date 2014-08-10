@@ -1,0 +1,12 @@
+char filename[256];
+	cout<<"请输入文件名(包含扩展名的txt文件):"<<endl;
+	cin>>filename;
+	ifstream infile;
+	infile.open(filename);
+	while(!infile.is_open())
+	{
+		cout<<"文件不存在！请重新输入！"<<endl;
+		cin>>filename;
+		infile.clear();
+		infile.open(filename);	
+	}
