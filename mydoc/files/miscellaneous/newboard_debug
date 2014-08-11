@@ -1,0 +1,89 @@
+http://blog.csdn.net/faithsws/archive/2010/03/15/5381560.aspx
+啊~~~，从上周三开始接手这个别扭的imx31的armadillo的蓝色破板子，到今天已经是周二了，马上就是一周了。终于把基本的过程跑通了，其中遇到不少的坎坎坷坷，现在都解决了，感觉真是不错。
+首先，一个基本的开发流程当然是 jtag，bootloader，kernel，rootfs。每一步都是建立在上一步的基础之上，只有上一步完成了，才能继续后面的工作。
+一．
+Jtag。所有的cpu都必须遵守的协议和提供的调试接口。去年的这个时候研究了jtag的内部的具体协议，现在忘记很多了，因为我并不是开发jtag程序的程序员，但在当时，确确实实自己做过实验，写了几个遵从jtag协议的测试程序。现在只能记得jtag的协议是基于一个状态机，自身有几个寄存器，像 DR，IR。在cpu内部是一个菊花链的结构，把所有的寄存器串行连接起来。
+过去用的是开源的jtag调试软件openocd。可是当时的版本并不支持imx31的cpu，所有又从网上下载了更新的版本。但新的版本的调试脚本的书写方法发生了变化，由于时间紧，没有仔细研究，就直接拷贝过去了，没有具体弄明白具体的含义。最后使用jtag的结果是：可以控制cpu的运行和停止，也可以对ram进行读写。但是flash不好用，也不能在ram中运行程序。
+这个时候真是烦躁，如果jtag不好用，就不能下载uboot，就不能进行后续工作了。
+接着，看了armadillo提供的随机附带的光盘。其中使用了另外的方法----shoehorn。当时并不明白为什么shoehorn在不经过jtag的条件下就可以调试cpu。读了一遍 shoehorn的源码，知道了imx31是支持uart启动的，而shoehorn就是封装了uart启动的相关命令的字节流。所以使用 shoehorn就可以将bootloader下载到flash中。
+可能有的后续工作：
+n 1.jtag的继续调试，n 让imx31可以从jtag下载bootloader
+n 2.shoehorn中是否有针对board的代码，n 如果有，n 就设计到移植n 问题。
+通过shoehorn就跳过了jtag的限制，进入了bootloader阶段。
+二．Bootloader
+Bootloader 是当前多数系统都要使用的引导程序。对于linux系统，在进入linux前，会将machid，tag链作为参数，传给linux的起始函数（r0:0,r1:machid,r2:tag_list）。Bootloader也提供部分的调试功能，比如读写内存，flash操作等等。最重要的功能是为内核设置正确的启动参数。
+在armadillo的开发板中，原始的bootloader是hermit。第一次接触hermit，所以需要到网上获取一些相关信息。但是并不多。最后只能看代码。
+Hermit 分为host，和target两个部分。Host运行在pc机上。Target运行在目标板上。只有在目标板上的hermit运行时，host的hermit才会连接到target，进行下载操作。
+Hermit的操作依赖于memmap（可能是shoehorn给的），即描述了cpu中的存储器分布，和bootloader，kernel，userland的烧写位置。这个文件或者说这个表，我没有仔细追究到底在哪里，因为我的操作不太相关。
+但是，hermit是明显的board相关的。如果硬件改动较大的话，必须进行移植。
+在这里hermit只是充当了uboot的bootloader。利用hermit的烧写功能，将uboot烧写到hermit的flash位置。所以只要 hermit的memmap中的起始位置正确，那么作为bootloader，uboot和hermit就没有区别。所以一旦烧写成功，下次启动的时候就是uboot了。
+这里有一个细节：在用shoehorn下载hermit，或者uboot的时候，必须要把cpu置于uart启动模式下，否则无法操作成功。而当bootloader烧写完成，就需要把启动模式改为flash启动。这样下次启动才能成功。
+在 windows下，使用hermit工具时，shoehorn已经集成了简单的hermit代码，这样shoehorn完成，目标板就已经有一个在ram 中运行的hermit了。此时就可以紧接着烧写uboot了。如果在linux中，则需要手动指定那部分大约2k的hermit 的ram代码。
+
+Uboot。
+在uboot2009中发现了对cpu imx31的支持，但是并没有对armadillo的支持。所以只能选择一个跟其相近的board。这里选择的是imx31_lite。
+Make imx31_lite_config(可以从Makefile中看到不同board的配置名称)
+Make all
+这样就生成了u-boot.bin。通过上述方法，下载。
+重新启动，good，成功。
+利用其中的命令，可以读写内存，flash的相关操作，等等。
+本以为这样就可以启动linux了，但事实不是如此。
+同样的内核，使用hermit就可以成功启动，但为什么uboot无法成功引导呢？
+很纳闷，但是我可以看到内核已经解压成功了。那这又是为什么呢？必然是解压完后，启动实际内核地址的时候有问题。从解压内核的函数 decompress_kernel，上下来看。从head.S, head-common.S中，了解了内核启动的流程。幸运的是，在head.S中有一段debug的部分，这个部分显示了内核解压完后，运行之前的一些内存地址和寄存器信息。这些正是我想要的。比较正常启动内核的数据和非正常启动的数据就可以看到不同之处，进而分析原因了。将这部分的debug打开，但是编译的时候出错了，把错误修改了，就可以通过了。
+咦？根据head.S的提示，不同的地方在于machid！正常的是0x77E，而错误的是0x4D4 !
+这是为什么呢？根据head.S的线索，找到了MACHINE_START这个宏。但是到这线索就断了，但是发现头文件里有个叫mach-types.h的文件。可是好像怎么也找不到这个文件。到网上搜索一下，有人提示arm/tools/mach-types中保存了跟这个宏相关的信息。果然，在文件的最后一行写着Armadillo-500 FX  0x77E。这跟内核中的MACHINE_START对应上了。关于machid的内核一端已经找到了，head.S的意思就比较machid是否相同，如果相同就转到对应的执行点。由于machid不对所以内核就当然起不来了。那么错误的machid是哪来的呢？
+应该是bootloader吧！怀疑，做实验，看代码。发现在uboot启动linux的第二个参数中，赫然写着mach_id。这不就是我要看的数据吗？加个printf，重新编译。——————错误的0x4D4!
+原来是bootloader的问题！在uboot中沿着machid的线索，找吧！
+突然发现uboot的一个环境变量machid决定了machid的内容，如果没有这个环境变量，那么uboot就会针对board给出自己的machid，这个machid是在make xxx_config时，进行配置的。
+哈哈，太好了，setenv machid 0x77E ，重新boot。Bingo！看到了熟悉的内核启动信息。。~~~~(>_<)~~~~ 不容易啊。回头去看那个mach-types，错误的0x4D4 对应的竟然是imx31_lite。原来如此！借用人家的uboot，人家给内核传参的时候就是自己默认的machid。偷人家的就是不行啊！大功告成了，可是还有要做的地方：
+借用人家的uboot，所以当前的uboot的网络不好用，每次下载都要通过串口，慢啊，如果有时间把这部分弄好。
+三．内核，kernel
+终于到了内核的部分了，啊呀呀，这不是胜利就在眼前了吗？事实给我又一次的打击！
+Armadillo只给了内核源码，和编译好的内核。以后做的驱动都是要基于这款内核的，所以必须要自己重新编译内核。
+没有配置文件，怎么办？自己配吧！我配，我配，我配配配！
+编译，load，运行，错误，配置，编译，load，运行，错误，编译，load，运行，错误。。。。。。进入了死循环！还是看看人家armadillo怎么干的吧！
+把一个光盘上的文件解压到硬盘上，然后再创建一个内核源码目录链接到这个文件，最后make一下，最后就好了。试试！果然好使。那么他是怎么配置的呢?内核配置文件.config，统统告诉我了。用代码比较工具，将正确的配置文件和我的错误文件比较，结果出来了。虽然有很多不同，但我知道内核起不来，主要跟内核和cpu的配置部分有关，至于设备驱动，就不去看了。
+配置，编译，下载，实验，配置，编译，下载，实验。。。。。
+最后发现那个罪魁祸首的配置选项CONFIG_CPU_32v6K
+如果配置了这个选项，内核就无法启动了。但是不太清楚为什么
+好了，内核已经可以正常启动了。
+四．Rootfs
+在uboot中配置好启动参数，把rootfs放到sd中，boot！
+嗯？无法启动！为什么？为什么？！
+好像挂载成功了，但是无法运行init。
+修改启动参数中的init=/bin/ash，结果也是无法运行。
+这个部分花了好长时间来解决。换编译器，换busybox，无论如何都起不来，郁闷！为什么二进制文件无法执行呢？
+静下心来，仔细思考。应该是内核配置的问题，rootfs本身的问题已经过了好几遍，不会有太大差错。看看内核中关于应用层运行文件的格式和关于编译格式的部分，逐个修改，逐个试验，最后找到了最重要的配置选项
+CONFIG_AEABI=y
+CONFIG_OABI_COMPAT=y
+如果配置了这两个选项，最后的rootfs就可以成功挂载了。显然是编译格式的问题。
+Ok！rootfs已经可以挂载了。
+这个部分看起来简单，但是这个问题是跟内核问题关联在一起的，所以做起来是比较麻烦的。
+
+好了。整个通路跑通了，以后就是小问题了。
+小问题一：
+Rootfs启动的时候提示 找不到/dev/ttyS0。
+呵呵，没想到会有这个错误。TtyS0是大部分rootfs启动时的默认console，可是imx31的内核，与众不同。明显的uboot启动参数中 console=ttymxc0。这里是ttymxc0不是ttyS0，所以我要在rootfs的dev下做一个指向ttymxc0的链接。但在/dev /下没有ttymxc0的设备节点，只能自己mknod了。可是mknod又需要ttymxc0的主从设备号，去看源码，找到了！哈哈
+Mknod ttymxc0 c 207 16
+Rm ttyS0
+Ln –s ttymxc0 ttyS0
+重新启动。成功！
+小问题二：
+怎么在uboot里给flash分区呢？我知道这个分区时通过mtdparts指定的。但是指定分区，需要知道flash驱动的name。还是看代码，找找找。。。，哈哈找到了 ------armadillo5x0-nor。
+Setenv bootargs console=ttymxc0 root=/dev/mmcblk0 mtdparts=armadillo5x0-nor:384K(uboot),2M(kernel),-(rootfs)
+启动。
+Cat /proc/mtd
+正确，分区信息显示在眼前！
+这些只是到现在为止，我所遇到的问题，怕忘了，赶快记下来。
+以后的工作还有很多，包括内核的精细配置、驱动的编写等等，但这些跟这周的工作比起来，都是小菜了。
+下面总结一下，整体的操作手顺。
+选择uart启动，使用shoehorn烧写hermit，再烧写uboot。
+选择flash启动，启动uboot。
+配置kernel，注意上述的配置选项。编译，mkimage。
+使用uboot 的loadb下载uimage。
+将uimage烧写到flash。
+setenv machid 0x77E
+setenv bootargs console=ttymxc0 root=/dev/mmcblk0 mtdparts=..
+bootm kernel_addr 由于是nor，可以直接启动，但是感觉先拷贝到内存，再启动会更快些。Nand则必须先拷贝，再运行。
+
+其中最大的风险在于第1步。

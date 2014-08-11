@@ -1,0 +1,7 @@
+{
+	"name":"reset_Route",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_reset_Route.py"},
+	"reporter":["success","fail"],
+	"description":"reset Route"
+}

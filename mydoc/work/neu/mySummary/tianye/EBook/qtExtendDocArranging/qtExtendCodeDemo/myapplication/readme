@@ -1,0 +1,30 @@
+程序功能：
+===============
+这个例子是编写一个简单的qtopia的程序，在qt extend中运行。
+
+参考资料：
+===============
+主要参考代码：
+qt-extended-4.4.3/examples/application
+http://doc.qt.nokia.com/qtextended4.4/application.html
+编译运行：
+===============
+编译只需要：
+.../qbuild
+../qbuild image
+
+运行的时候
+运行的时候首先在桌面程序中相应的程序入口处添加如下代码：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/myapp.desktop",false);
+applink.execute();
+然后即可运行。
+注意：
+如果在qbuild.pro中加入
+CONFIG+=qtopia quicklaunch
+
+在.desktop中修改：
+[Translation]
+File=myapp-nct
+为：
+[Translation]
+File=QtopiaApplications

@@ -1,0 +1,108 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+AR	./Makefile	/^AR            = ar cqs$/;"	m
+BOOKS	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	e	enum:ESearchItem::Type
+BTN_COUNT	./esearchresult.h	/^	enum {BTN_COUNT=11};$/;"	e	enum:EPageBar::__anon3
+CC	./Makefile	/^CC            = gcc$/;"	m
+CFLAGS	./Makefile	/^CFLAGS        = -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES)$/;"	m
+CHK_DIR_EXISTS	./Makefile	/^CHK_DIR_EXISTS= test -d$/;"	m
+COMPRESS	./Makefile	/^COMPRESS      = gzip -9f$/;"	m
+COPY	./Makefile	/^COPY          = cp -f$/;"	m
+COPY_DIR	./Makefile	/^COPY_DIR      = $(COPY) -r$/;"	m
+COPY_FILE	./Makefile	/^COPY_FILE     = $(COPY)$/;"	m
+CXX	./Makefile	/^CXX           = g++$/;"	m
+CXXFLAGS	./Makefile	/^CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES)$/;"	m
+DEFINES	./Makefile	/^DEFINES       = -DQT_NO_DEBUG -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED$/;"	m
+DEL_DIR	./Makefile	/^DEL_DIR       = rmdir$/;"	m
+DEL_FILE	./Makefile	/^DEL_FILE      = rm -f$/;"	m
+DESTDIR	./Makefile	/^DESTDIR       = $/;"	m
+DIST	./Makefile	/^DIST          = \/usr\/local\/Trolltech\/Qt-4.5.0\/mkspecs\/common\/g++.conf \\$/;"	m
+DOCUMENTS	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	e	enum:ESearchItem::Type
+EBAR_WIDTH	./esearchresult.h	/^	enum {EHEADER_HEIGHT=40, EBAR_WIDTH=40};$/;"	e	enum:ESearch::__anon1
+EHEADER_HEIGHT	./esearchresult.h	/^	enum {EHEADER_HEIGHT=40, EBAR_WIDTH=40};$/;"	e	enum:ESearch::__anon1
+EItemContainer	./esearchresult.cpp	/^EItemContainer::EItemContainer(QWidget *parent, Qt::WindowFlags f):QStackedWidget(parent,f)$/;"	f	class:EItemContainer
+EItemContainer	./esearchresult.h	/^class EItemContainer:public QStackedWidget$/;"	c
+EPageBar	./esearchresult.cpp	/^EPageBar::EPageBar(QWidget *parent):QWidget(parent)$/;"	f	class:EPageBar
+EPageBar	./esearchresult.h	/^class EPageBar:QWidget$/;"	c
+EPushLabel	./esearchresult.h	/^		EPushLabel(const QString &text, QWidget *parent = 0, Qt::WindowFlags f = 0)$/;"	f	class:EPushLabel
+EPushLabel	./esearchresult.h	/^class EPushLabel:QLabel$/;"	c
+ESearch	./esearchresult.cpp	/^ESearch::ESearch(QWidget *parent,Qt::WindowFlags f):QWidget(parent,f)$/;"	f	class:ESearch
+ESearch	./esearchresult.h	/^class ESearch:public QWidget$/;"	c
+ESearchItem	./esearchresult.cpp	/^ESearchItem::ESearchItem(QWidget *parent):QWidget(parent)$/;"	f	class:ESearchItem
+ESearchItem	./esearchresult.h	/^class ESearchItem:public QWidget$/;"	c
+INCPATH	./Makefile	/^INCPATH       = -I\/usr\/local\/Trolltech\/Qt-4.5.0\/mkspecs\/linux-g++ -I. -I\/usr\/local\/Trolltech\/Qt-4.5.0\/include\/QtCore -I\/usr\/local\/Trolltech\/Qt-4.5.0\/include\/QtGui -I\/usr\/local\/Trolltech\/Qt-4.5.0\/include -I. -I. -I.$/;"	m
+INSTALL_DIR	./Makefile	/^INSTALL_DIR   = $(COPY_DIR)$/;"	m
+INSTALL_FILE	./Makefile	/^INSTALL_FILE  = install -m 644 -p$/;"	m
+INSTALL_PROGRAM	./Makefile	/^INSTALL_PROGRAM = install -m 755 -p$/;"	m
+LFLAGS	./Makefile	/^LFLAGS        = -Wl,-O1 -Wl,-rpath,\/usr\/local\/Trolltech\/Qt-4.5.0\/lib$/;"	m
+LIBS	./Makefile	/^LIBS          = $(SUBLIBS)  -L\/usr\/local\/Trolltech\/Qt-4.5.0\/lib -lQtGui -L\/usr\/local\/Trolltech\/Qt-4.5.0\/lib -L\/usr\/X11R6\/lib -lfreetype -lSM -lICE -lXrender -lfontconfig -lXext -lX11 -lQtCore -lz -lm -lrt -ldl -lpthread$/;"	m
+LINK	./Makefile	/^LINK          = g++$/;"	m
+MAX_PERPAGE	./esearchresult.h	/^	enum {MAX_PERPAGE=8};$/;"	e	enum:EItemContainer::__anon2
+MKDIR	./Makefile	/^MKDIR         = mkdir -p$/;"	m
+MOVE	./Makefile	/^MOVE          = mv -f$/;"	m
+MUSIC	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	e	enum:ESearchItem::Type
+OBJECTS	./Makefile	/^OBJECTS       = esearchresult.o \\$/;"	m
+OBJECTS_DIR	./Makefile	/^OBJECTS_DIR   = .\/$/;"	m
+PHOTOS	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	e	enum:ESearchItem::Type
+QMAKE	./Makefile	/^QMAKE         = \/usr\/local\/Trolltech\/Qt-4.5.0\/bin\/qmake$/;"	m
+QMAKE_TARGET	./Makefile	/^QMAKE_TARGET  = pageList$/;"	m
+RANLIB	./Makefile	/^RANLIB        = $/;"	m
+SED	./Makefile	/^SED           = sed$/;"	m
+SOURCES	./Makefile	/^SOURCES       = esearchresult.cpp \\$/;"	m
+SYMLINK	./Makefile	/^SYMLINK       = ln -sf$/;"	m
+TAR	./Makefile	/^TAR           = tar -cf$/;"	m
+TARGET	./Makefile	/^TARGET        = pageList$/;"	m
+Type	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	g	class:ESearchItem
+WIKI	./esearchresult.h	/^	enum Type{BOOKS,DOCUMENTS,PHOTOS,MUSIC,WIKI};$/;"	e	enum:ESearchItem::Type
+__ESEARCHRESULT_H__	./esearchresult.h	2;"	d
+addItem	./esearchresult.cpp	/^void EItemContainer::addItem(ESearchItem *item)$/;"	f	class:EItemContainer
+connectSignals	./esearchresult.cpp	/^void EPageBar::connectSignals()$/;"	f	class:EPageBar
+dataLbl	./esearchresult.h	/^	QLabel *dataLbl;$/;"	m	class:ESearchItem
+dateLbl	./esearchresult.h	/^	QLabel *dateLbl;$/;"	m	class:ESearchItem
+deleteItem	./esearchresult.cpp	/^void EItemContainer::deleteItem(int index)$/;"	f	class:EItemContainer
+ext	./esearchresult.h	/^	bool ext;\/\/show detail or not$/;"	m	class:ESearchItem
+extBtn	./esearchresult.h	/^	EPushLabel *extBtn;$/;"	m	class:ESearchItem
+getType	./esearchresult.cpp	/^Type ESearchItem::getType()const$/;"	f	class:ESearchItem
+iconLbl	./esearchresult.h	/^	QLabel *iconLbl;$/;"	m	class:ESearchItem
+init	./esearchresult.cpp	/^void EItemContainer::init()$/;"	f	class:EItemContainer
+initUi	./esearchresult.cpp	/^void EPageBar::initUi()$/;"	f	class:EPageBar
+initUi	./esearchresult.cpp	/^void ESearch::initUi()$/;"	f	class:ESearch
+initUi	./esearchresult.cpp	/^void ESearchItem::initUi()$/;"	f	class:ESearchItem
+itemTitle	./esearchresult.h	/^	EPushLabel *itemTitle;$/;"	m	class:ESearchItem
+lastPageBtn	./esearchresult.cpp	/^void EPageBar::lastPageBtn()$/;"	f	class:EPageBar
+m_btnIcons	./esearchresult.h	/^	QList<QIcon> m_btnIcons;$/;"	m	class:EPageBar
+m_btns	./esearchresult.h	/^	QList<EPushLabel> m_btns;\/\/button count is BTN_COUNT; while page btn is index [1,9].$/;"	m	class:EPageBar
+m_curPg	./esearchresult.h	/^	int m_curPg;$/;"	m	class:EPageBar
+m_itemContainer	./esearchresult.h	/^	EItemContainer *m_itemContainer;$/;"	m	class:EPageBar
+m_itemContainer	./esearchresult.h	/^	EItemContainer *m_itemContainer;$/;"	m	class:ESearch
+m_items	./esearchresult.h	/^	QList<ESearchItem> m_items;$/;"	m	class:EItemContainer
+m_maxPerPg	./esearchresult.h	/^	int m_maxPerPg;$/;"	m	class:EItemContainer
+m_pageBar	./esearchresult.h	/^	EPageBar *m_pageBar;$/;"	m	class:EItemContainer
+m_pageBar	./esearchresult.h	/^	EPageBar *m_pageBar;$/;"	m	class:ESearch
+m_pgCnt	./esearchresult.h	/^	int m_pgCnt;$/;"	m	class:EItemContainer
+m_signalMapper	./esearchresult.h	/^	QSignalMapper *m_signalMapper;$/;"	m	class:EPageBar
+m_titleHeader	./esearchresult.h	/^	QLabel *m_titleHeader;$/;"	m	class:ESearch
+m_totalPg	./esearchresult.h	/^	int m_totalPg;$/;"	m	class:EPageBar
+main	./main.cpp	/^int main(int argc, char *argv[])$/;"	f
+mousePressEvent	./esearchresult.cpp	/^void ESearchItem::mousePressEvent(QMouseEvent *event)$/;"	f	class:ESearchItem
+mousePressEvent	./esearchresult.h	/^		void mousePressEvent(QMouseEvent *event)$/;"	f	class:EPushLabel
+nextPageBtn	./esearchresult.cpp	/^void EPageBar::nextPageBtn()$/;"	f	class:EPageBar
+pageCntChanged	./esearchresult.cpp	/^void EPageBar::pageCntChanged(int count)$/;"	f	class:EPageBar
+pageSelect	./esearchresult.cpp	/^void EPageBar::pageSelect(int page)$/;"	f	class:EPageBar
+pageSelected	./esearchresult.cpp	/^void EItemContainer::pageSelected(int page)$/;"	f	class:EItemContainer
+refresh	./esearchresult.cpp	/^void EItemContainer::refresh()$/;"	f	class:EItemContainer
+setDataLbl	./esearchresult.cpp	/^void ESearchItem::setDataLbl(QLabel *data)$/;"	f	class:ESearchItem
+setDateLbl	./esearchresult.cpp	/^void ESearchItem::setDateLbl(QLabel *date)$/;"	f	class:ESearchItem
+setExtBtn	./esearchresult.cpp	/^void ESearchItem::setExtBtn(EPushLabel *btn)$/;"	f	class:ESearchItem
+setIconLbl	./esearchresult.cpp	/^void ESearchItem::setIconLbl(QLabel *icon)$/;"	f	class:ESearchItem
+setItemContainer	./esearchresult.cpp	/^void EPageBar::setItemContainer(EItemContainer *itemContainer)$/;"	f	class:EPageBar
+setPageBar	./esearchresult.cpp	/^void EItemContainer::setPageBar(EPageBar *pageBar)$/;"	f	class:EItemContainer
+setTitleLbl	./esearchresult.cpp	/^void ESearchItem::setTitleLbl(EPushLabel *title)$/;"	f	class:ESearchItem
+setType	./esearchresult.cpp	/^void ESearchItem::setType(Type t)$/;"	f	class:ESearchItem
+showDetail	./esearchresult.cpp	/^void ESearchItem::showDetail(bool f)$/;"	f	class:ESearchItem
+t	./esearchresult.h	/^	Type t;$/;"	m	class:ESearchItem
+typeLbl	./esearchresult.h	/^	QLabel *typeLbl;$/;"	m	class:ESearchItem

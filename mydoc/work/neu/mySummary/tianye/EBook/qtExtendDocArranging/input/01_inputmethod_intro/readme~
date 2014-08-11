@@ -1,0 +1,4 @@
+这里是输入法相关的文档，其中有两个用Qt些的输入法的例子。
+pinyin_qtex20091121.tgz基于qt extend
+myInputMethod_20091102.tgz基于嵌入式的qt程序。
+

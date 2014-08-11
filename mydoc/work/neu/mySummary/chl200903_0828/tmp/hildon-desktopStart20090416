@@ -1,0 +1,198 @@
+ run-standalone.sh ./hildon-desktop 
+go into main.c main**************
+qemu: Unsupported syscall: 264
+qemu: Unsupported syscall: 316
+lt-hildon-desktop[10010]: GLIB WARNING ** gnome-vfs-modules - Could not initialize inotify
+lt-hildon-desktop[10010]: GLIB WARNING ** default - unable to register TN callback for /usr/share/applications/hildon
+
+##########################################################load_containers{###########################
+#这里开始在load_containers里面加载各个container,（包括home,status等）
+go into hd-desktop.c _load_containers**************
+go into panel-window-composite.c base_init**************
+go out of panel-window-composite.c base_init************
+go into panel-window-composite.c base_init**************
+go out of panel-window-composite.c base_init************
+
+go into panel-window.c constructor**************
+/home/quietheart/.osso/current-gtk-key-theme:1: Unable to find include file: "keybindings.rc"
+go into panel-window-composite.c init**************
+go out of panel-window-composite.c init************
+go into panel.c init**************
+go out of panel.c init************
+go out of panel-window.c constructor************
+
+############################call _manager_load 0{#######################################
+in hd-desktop.c _load_containers call _manager_load 0**************
+go into hd-plugin-manager.c hd_plugin_manager_load**************
+#这里开始在hd-plugin-manager里面循环加载.conf文件里面指定的desktop文件
+
+#########################call _manager_load_plugin ?{}############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Plugin desktop file not found, ignoring plugin
+
+#########################call _manager_load_plugin ?{}############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Plugin desktop file not found, ignoring plugin
+go into -item.c class_init**************
+go out of -item.c class_init************
+go into panel-item.c class_init**************
+go out of panel-item.c class_init************
+go into -item.c init**************
+go out of -item.c init************
+
+#########################call _manager_load_plugin ?{}############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Plugin desktop file not found, ignoring plugin
+
+#########################call _manager_load_plugin ?{}############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Plugin desktop file not found, ignoring plugin
+go into -item.c init**************
+go out of -item.c init************
+
+#########################call _manager_load_plugin {##############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+go into hd-plugin-loader-factory.c _factory_create**************
+go out of hd-plugin-loader-factory.c _factory_create************
+in hd-plugin-manager.c hd_plugin_manager_load_plugin before call loader_load**************
+go into hd-plugin-loader.c loader_load**************
+go into -item.c init**************
+go out of -item.c init************
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Others_menu_initialize_menu: failed setting monitor callback for systemwide menu conf.
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Others_menu_initialize_menu: failed setting monitor callback for user specific menu conf.
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Others_menu_initialize_menu: failed setting monitor callback for .desktop directory.
+go out of hd-plugin-manager.c hd_plugin_manager_load_plugin************
+#########################call _manager_load_plugin }##############################
+
+#########################call _manager_load_plugin {##############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+go into hd-plugin-loader-factory.c _factory_create**************
+go out of hd-plugin-loader-factory.c _factory_create************
+in hd-plugin-manager.c hd_plugin_manager_load_plugin before call loader_load**************
+go into hd-plugin-loader.c loader_load**************
+go into -item.c init**************
+go out of -item.c init************
+Unsupported setsockopt level=1 optname=2 
+Unable to set for a fresh socket
+Audio File Library: could not open file '/usr/local/share/sounds/ui-window_open.wav' [error 3]
+Audio File Library: could not open file '/usr/local/share/sounds/ui-window_close.wav' [error 3]
+Usage:program_name [address][:port]go out of hd-plugin-manager.c hd_plugin_manager_load_plugin************
+#########################call _manager_load_plugin }##############################
+
+#########################call _manager_load_plugin {##############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+go into hd-plugin-loader-factory.c _factory_create**************
+go out of hd-plugin-loader-factory.c _factory_create************
+in hd-plugin-manager.c hd_plugin_manager_load_plugin before call loader_load**************
+go into hd-plugin-loader.c loader_load**************
+go into -item.c init**************
+go out of -item.c init************
+Unsupported setsockopt level=1 optname=2 
+Unable to set for a fresh socket
+lt-hildon-desktop[10010]: GLIB WARNING ** default - Error loading notification groups file: No such file or directory
+Usage:program_name [address][:port]go out of hd-plugin-manager.c hd_plugin_manager_load_plugin************
+#########################call _manager_load_plugin }##############################
+
+go out of hd-plugin-manager.c hd_plugin_manager_load************
+qemu: Unsupported syscall: 307
+lt-hildon-desktop[10010]: GLIB WARNING ** Gdk - shmget failed: error 38 (Function not implemented)
+############################call _manager_load 0}#######################################
+
+############################call _manager_load 1{#######################################
+in hd-desktop.c _load_containers call _manager_load 1**************
+go into hd-plugin-manager.c hd_plugin_manager_load**************
+go out of hd-plugin-manager.c hd_plugin_manager_load************
+go into panel-window-composite.c base_init**************
+go out of panel-window-composite.c base_init************
+go into panel-window-composite.c base_init**************
+go out of panel-window-composite.c base_init************
+go into panel-window-dialog.c constructor**************
+go into panel-window.c constructor**************
+go into panel-window-composite.c init**************
+go out of panel-window-composite.c init************
+go into window-dialog.c init**************
+go out of window-dialog.c init************
+go into panel.c init**************
+go out of panel.c init************
+go out of panel-window.c constructor************
+go into container.c base_init**************
+go out of container.c base_init************
+go into container.c base_init**************
+go out of container.c base_init************
+go into panel-expandable.c class_init**************
+go out of panel-expandable.c class_init************
+go into panel-expandable.c constructor**************
+go into panel.c init**************
+go out of panel.c init************
+go into panel-expandable.c init**************
+go out of panel-expandable.c init************
+go out of panel-expandable.c constructor************
+go out of panel-window-dialog.c constructor************
+############################call _manager_load 1}#######################################
+
+############################call _manager_load 2{#######################################
+in hd-desktop.c _load_containers call _manager_load 2**************
+go into hd-plugin-manager.c hd_plugin_manager_load**************
+
+#########################call _manager_load_plugin {##############################
+go into hd-plugin-manager.c hd_plugin_manager_load_plugin**************
+
+#########################call  _factory_create{###########################
+go into hd-plugin-loader-factory.c _factory_create**************
+#########
+go into loader-default.c _default_class_init**************
+go out of loader-default.c _default_class_init************
+#########
+go into loader-default.c _default_init**************
+go out of loader-default.c _default_init************
+go out of hd-plugin-loader-factory.c _factory_create************
+#########################call  _factory_create}###########################
+
+in hd-plugin-manager.c hd_plugin_manager_load_plugin before call loader_load**************
+
+#########################call  loader_load?###############################
+go into hd-plugin-loader.c loader_load**************
+
+#########################call  _default_load{########################
+go into loader-default.c _default_load**************
+
+#########################call  open_module{#####################
+go into loader-default.c open_module**************
+
+#############
+go into -plugin.c plugin_load**************
+go out of -plugin.c plugin_load************
+#############
+go into statusbar-item.c class_init**************
+go out of statusbar-item.c class_init************
+#############
+go into hello-world-statusbar.c _class_init**********************
+go out of hello-world-statusbar.c _class_init********************
+#############
+go into -item.c init**************
+go out of -item.c init************
+#############
+go into statusbar-item.c init**************
+go out of statusbar-item.c init************
+#############{
+go into hello-world-statusbar.c _init**********************
+ the entry on status bar can focus
+go out of hello-world-statusbar.c _init********************
+#############}
+go out of loader-default.c open_module************
+#########################call  open_module}#####################
+go out of loader-default.c _default_load************
+#########################call  _default_load}########################
+
+go out of hd-plugin-manager.c hd_plugin_manager_load_plugin************
+#########################call _manager_load_plugin }##############################
+go out of hd-plugin-manager.c hd_plugin_manager_load************
+
+############################call _manager_load 2}#######################################
+go out of hd-desktop.c _load_containers************
+
+##########################################################load_containers}###########################
+go out of main.c main************
+go into panel-window.c in_focus**************
+go out of panel-window.c in_focus************
+

@@ -1,0 +1,19 @@
+
+processbase.neusoft.com
+
+to 全员
+
+    使用以下命令获得日报设置客户端：
+    wget http://p-d2-gengs/ezWork/register.pl
+    chmod +x register.pl
+    ./register.pl
+
+    首先是使用'a'设置户名（mail名，如gengs）初始密码为：neusoft
+    然后使用's'登录，输入密码：neusoft
+    之后再次使用's'修改密码，该密码必须和邮箱密码一致，否则将会失败。
+    最后使用'i [CMD]'命令设置个人日报信息。
+    完成后使用'q'退出。
+
+    发现任何bug和问题请及时与我联系。
+
+以上 耿爽

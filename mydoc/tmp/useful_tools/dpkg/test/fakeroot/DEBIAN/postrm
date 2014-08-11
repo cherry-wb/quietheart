@@ -1,0 +1,6 @@
+#!/bin/sh
+echo "begin postrm."
+echo "the parameter \$1 is:" $1
+echo "the parameter \$2 is:" $2
+echo "the parameter \$3 is:" $3
+echo "end postrm."

@@ -1,0 +1,378 @@
+进程管理
+文件管理
+通信相关
+
+这里的内容是c中一些库函数。
+先把它们都列出来，然后慢慢整理。
+
+*整理的
+*待整理
+
+整理的
+=============
+常用的
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+[描述]
+fread函数从stream中读取nmemb个内存块，每个内存块大小是size，把读取的数据存放在ptr指向的位置。
+如果成功了，fread会返回读取的字节数目。
+如果到达文件结尾或者出错了，会返回一个小于nmemb的数或者0，fread是无法区分的，这时候需要使用feof()和ferror()来进行区分。
+
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+[描述]
+fwrite向stream中写nmemb个内存块，每个内存块大小是size,数据来源是ptr.
+如果到达文件结尾或者出错了，会返回一个小于nmem的数或者0.
+
+fread和fwrite的一个问题是：fread的数据必须是fwrite从同一个系统上面写的。大致因为：
+1）不同系统上面，编译环境有可能不同，结构的字节对齐因素等也不同。
+2）不同的系统，二进制文件格式可能不同，可能还包含了平台相关的信息。
+
+memcpy
+
+memccpy
+据说这个函数是用汇编实现所以效率比较高。
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec8.html
+
+
+#include <semaphore.h>
+int sem_wait(sem_t *sem);
+int sem_trywait(sem_t *sem);
+int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout);
+[描述]
+sem_wait用来减少sem指向的信号量。如果信号量比0大那么减少操作继续,然后函数返回;如果当前的sem值是0，那么调用被阻塞，直到信号量大于0，或者有信号处理函数终止了这个调用。
+
+所有这些函数成功返回0；如果出错那么返回-1,此时信号量sem的值不被改变，并且设置相应的错误码errno.
+Link with -lrt or -pthread.
+
+#include <semaphore.h>
+int sem_getvalue(sem_t *sem, int *sval);
+[描述]
+把信号量sem的当前值存放在sval变量中。
+如果一个或者多个进程或者线程在sem_wait上面阻塞了一个被锁的等待信号量，POSIX.1-2001允许sval具有两个值:0;或者返回一个负数，负数绝对值是在sem_wait上面等待的进程或者线程的数目。linux采用前面的行为。
+返回0成功，返回-1出错。
+Link with -lrt or -pthread.
+
+#include <semaphore.h>
+int sem_post(sem_t *sem);
+
+增加（解锁）sem指向的信号量。如果信号量的值比0大，那么另外一个在sem_wait上面等待的进程或者线程会被唤醒，并且给semaphore加锁。
+如果成功返回0，如果错误返回－1并且设置errno,原有的信号量的数值不会被改变。
+Link with -lrt or -pthread.
+
+#include <signal.h>
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+
+#include <signal.h>
+int sigemptyset(sigset_t *set);
+int sigfillset(sigset_t *set);
+int sigaddset(sigset_t *set, int signum);
+int sigdelset(sigset_t *set, int signum);
+int sigismember(const sigset_t *set, int signum);
+
+待整理
+=============
+*不是很常用的
+ftw
+fwide
+
+#include <stdio.h>
+void setbuf(FILE *restrict fp, char *restrict buf);
+int setvbuf(FILE *restrict fp, char *restrict buf, int mode, size_t size);
+这两个函数都是设置缓存的函数。必须在stream被open之后，并且任何i/o操作之前，被调用。
+
+使用setbuf我们可以设置和取消buffer.如果设置buffer,指向buf的指针的数据的大小必须是BUFSIZ,一般这样stream就是fully buffered.但是如果stream是和terminal相关联的也有些系统会把buffered设置为line buffered的。如果取消buffer,那么buf参数是NULL的。
+
+使用setvbuf,我们可以精确地指定我们想要的buffer类型。我们通过modde参数来进行指定：
+_IOFBF:表示fully buffered.
+_IOLBF:表示line buffered.
+_IONBF:表示unbuffered.
+如果我们指定为unbuffered,那么buf和size参数会被忽略.
+如果指定了fully buffered或者line buffered那么:我们可以通过buf和size来设置缓存和大小。如果这时候的buf参数是NULL那么standio 会自动分配一个合适的大小，例如BUFSIZ.
+注意，你需要保证在stream closed的时候，buf是存在的。如果我们自行指定分配的buffer是一个函数内部的局部变量，我们需要在这个函数返回之前把这个stream给closed了，另外，因为某些实现使用这个buffer的一部分做为记录的空间，所以我们存放在这个buffer中的数据应该小于它的实际大小。一般我们应该让系统自己选择分配合适的缓存和大小。
+fflush会导致在stream中没有被written的数据被提交到kernel中去。
+
+
+fflush
+这个函数会把所有没有写入的stream中的数据传递到内核。如果其参数fp是空，那么会把所有的输出streams给flushed.
+
+打开和关闭stream：
+FILE *fopen(const char *path, const char *mode);
+FILE *fdopen(int fd, const char *mode);
+FILE *freopen(const char *path, const char *mode, FILE *stream);
+
+读写stream:
+#include <stdio.h>
+int getc(FILE *fp);
+int fgetc(FILE *fp);
+int getchar(void);
+三者以单个字符的方式操作流。
+getchar和getc(stdin)一样。getc和fgetc的区别是getc可能是一个宏定义而fgetc一定是一个函数的实现。
+三者都返回一个unsigned char并转化成为int.这样返回值非负。不能用其返回值和EOF比较。判断文件结束有另外的方法。
+当读取文件错误或者到达文件结尾的时候，需要通过ferror和feof才能加以区别。
+
+#include <stdio.h>
+int ferror(FILE *fp);
+int feof(FILE *fp);
+void clearerr(FILE *fp);
+ferror和feof返回true(非0)或者false.stream有一个error flag和end of file flag。就是通过这两个函数进行判断的。使用clearerr可以清除这两个标记.
+
+#include <stdio.h>
+int ungetc(int c, FILE *fp);
+
+这个函数可以把一个字符推送回到流中，下次读取的时候就会读到那个字符了。
+注意这个函数只是把一个字符推送到流里面了，并没有写这个流对应的实际文件。不能把EOF推送到stream中。当推送一个字符到stream中成功的时候，会自动清除end of file flag。
+
+#include <stdio.h>
+int putc(int c, FILE *fp);
+int fputc(int c, FILE *fp);
+int putchar(int c);
+这三个函数和getc,fgetc,getchar类似，不过是写而不是读取了。
+
+#include <stdio.h>
+char *fgets(char *restrict buf, int n, FILE *restrict fp);
+char *gets(char *buf);
+两者以行的方式操作流。fgets需要指定缓存的大小，然后读取一行，读取的结果包含new line和一个null结束。如果行长超过了n，那么就读取到n，最后也包含一个null字符（需要仔细调查？）,反正fgets最多读取n-1个字符。gets已经逐渐被淘汰了，因为没有指定缓存大小，不安全，另外它并不把newline存放到buffer中。
+
+#include <stdio.h>
+int fputs(const char *restrict str, FILE *restrict fp);
+int puts(const char *str);
+fputs会把一个null结束的字符串写到一个指定的stream中。结尾的null字节并不会被写入。需要注意的是,这个函数并不一定是一次一行的输出，因为输出的字符串并不需要把newline作为最后的非空字符。一般来说，最有一个非空字符会是newline字符，但是这不是必须的。
+
+puts函数会把null字符串写入到标准输出，但是不会写入空字符。另外，puts还会把一个newline字符输出到标准输出。
+puts函数是安全的，而不想相应的gets。然而，我们也要避免使用它，否则还要记住它要在输出的最后追加一个newline字符。如果我们始终使用fgets和fputs,我们会知道我们怎样处理每一行最后的一个newline字符。
+
+
+#include <stdio.h>
+int fseek(FILE *stream, long offset, int whence);
+long ftell(FILE *stream);
+void rewind(FILE *stream);
+
+fseek设置stream指向的文件的位置标记。位置用字节作为衡量单位,通过偏移量offset和whence来进行指定。如果whence是SEEK_SET,offset就是相对文件开始的位置；whence是SEEK_CUR,offset就是相对当前位置的位置；whence是SEEK_END,offset就是相对文件结尾的位置。fseek调用成功之后，会清除文件stream的end-of-file标志，并且updo任何ungetc对这个stream的影响。
+ftell获取stream指向的当前文件的位置。
+rewind会把文件流中的位置标记设置成文件的开始位置。
+
+
+#include <stdio.h>
+int printf(const char *format, ...);
+int fprintf(FILE *stream, const char *format, ...);
+int sprintf(char *str, const char *format, ...);
+int snprintf(char *str, size_t size, const char *format, ...);
+(含有v前缀的呢？例如vsprintf,vfprintf?)
+	printf将字符串写入到标准输出;fprintf写入到指定的stream;sprintf将格式化的字符串写入到str数组中，并且将一个'\0'字符追加到最后，但是返回值却不包含这个'\0';snprintf和sprintf类似，但是指定了要写入的大小限制，写入包含'\0'在内最多size的字符到str数组中.
+
+	对于这几个函数的返回值，它们都返回不包括'\0'的、写入的字符数目。另外注意，如果snprintf由于size限制把写入的字符串截断了，那么它会返回假设没有被截断（也就是size足够大）的时候的字符串字符数目（当然也不包含'\0'），所以如果返回值是size或者更多则表示输出被截断了。
+	关于format的格式：
+	int printf(const char *restrict format, ...);
+参数前面的format参数指名了格式，其形式是：
+%[flags][fldwidth][precision][lenmodifier]convtype
+最好不用翻译，但是翻译起来就是：%[标记][宽度][精度][长度调整]类型
+中括号代表可选。这里:
+对于flags有:
+1)-:指定的参数的输出在所在处是左对齐的(如果存在下面将说的0那么忽略0),默认右对齐。
+2)+:指定对于有符号的convtype(相当于类型)，输出其符号。
+3) (空格)：指定如果不显示符号的话就以一个空格作为前缀。
+4)#:用可选的方式显示。例如：八进制类型（用o)就以0开头，十六进制(用x)就以0x开头等,见man.
+5)0:参数的前面用0填充(如果同时存在-将被-覆盖，导致0被忽略)而不是用空格了。
+对于fldwidth：
+它指明了最小宽度，如果参数小于这个宽度就填充空格。
+fldwidth可以是一个正的十进制数，或者是一个'*'。例如：5,或者*
+对于precision:
+它指定了整数的最少显示数字数目，浮点数小数点后面的数字数目以及字符串的最大字节数目。 
+presion可以是一个点'.'后面接整数或者'*'。例如:.5或者.*
+注意：对于fldwidth和precision都可以指定一个'*'，这时候，需要在将要显示的参数前面再添加一个整数参数来指定将要显示的值。可以参见代码中的例子。
+其他的暂时不说了，这里主要就说了#和*在format参数中的作用。
+
+#include <stdio.h>
+int fileno(FILE *fp);
+这个函数传入参数是指定的stream,然后会返回相应的stream的文件描述符号。
+
+#include <stdio.h>
+char *tmpnam(char *ptr);
+FILE *tmpfile(void);
+
+tmpnam函数会产生一个字符串（合法路径），这个字符串将会和已有的任何文件名称不相同。每次调用这个函数的时候，都会产生一个不同的字符串,最多使用TMP_MAX次，TMP_MAX这个常量在<stdio.h>文件中有定义。
+如果ptr是NULL的，那么产生的字符串就会存储在一个静态的区域,并且返回指向这个区域的指针。之后的每一个tmpnam调用都会重写这个静态存储区域（如果我们要保存原来的值，需要自己复制一份）。如果ptr参数非NULL,那么会假设指向一个至少有L_tmpnam个字符的数组中(L_tmpnam在stdio.h中有定义)，生成的路径就存放在这个数组中，并且prt作为函数的返回值。
+
+tmpfile函数创建一个临时的二进制文件(指定wb+模式),这个文件在它被关闭或者程序结束的时候会被自动删除。
+一般tmpfile函数采用的技术是调用tmpnam来生成一个唯一的路径，然后创建相应的文件，然后立即将这个文件unlink.注意，unlink并没有把文件的内容删除了，这样，只在这个程序空间中可以访问这个文件了，（在系统中已经无法再访问这个文件了）。这样，当文件被关闭的时候，或者程序退出的时候，这个文件的内容就会被删除了。
+
+#include <stdio.h>
+char *tempnam(const char *directory, const char *prefix);
+int mkstemp(char *template);
+
+这两个函数属于Single UNIX Specification提供的作为XSI的创建临时文件的函数
+
+tempnam函数是tmpnam的一个变体，它允许调用者指定生成的字符串的目录和前缀。然后这个函数按照如下的规则依次进行处理：
+1.如果TMPDIR环境变量被定义了，那么它将会被用作directory.
+If the environment variable TMPDIR is defined, it is used as the directory. (We describe environment variables in Section 7.9.)
+2.如果directory是非NULL的，那么它会被用作目录。
+3.采用stdio.h中的P_tmpdir字符串作为directory.
+4.采用本地的一个目录，一般是/tmp做为directory.
+如果prefix是非NULL,那么它应该是个至多5个字节的字符串，做为生成的字符串相应文件的前缀。
+这个函数调用malloc函数来为生成的pathname存储分配空间，我们处理的时候，可以将这个pathname的存储空间给free掉。
+如果directory是一个不存在的目录，那么规则中的2将会被忽略，然后采用下一条匹配规则。
+
+mkstemp函数，也会创建临时文件，不同的是它返回一个文件描述符号。临时文件的文件名称使用template字符串来进行生成。这个字符串是一个路径名称，它的后六个字符被设置成XXXXXX.这个函数会把这些字符替换成不同的字符，这样可以创建一个唯一的路径名称。如果mkstemp返回success,它会修改template字符串，这个字符串就是生成的临时文件。
+和tmpfile不同，由mkstemp生成的临时文件，不会被自动地移除。如果我们想要把它从文件系统中去掉，我们需要自己亲自对它进行unlink.
+
+tmpnam和tempnam有一个缺点：在返回 pathname和创建file的时候，会有一个时间间隙，在这个时间间隙内有可能其他的程序会创建同样的名称文件，而tempfile和mkstemp函数就没有这个缺陷。
+mktemp函数和mkstemp类似，不同的是，它创建一个只适合用作临时文件的名称。这个mktemp函数，并不创建文件，所以它也有tmpname和tempnam同样的缺点。mktemp函数是Unix Specification中将要被废弃的函数，所以要尽量避免使用它。
+
+------
+#include <sys/types.h>
+#include <pwd.h>
+struct passwd *getpwuid(uid_t uid);
+struct passwd *getpwnam(const char *name);
+getpwuid在在ls将文件索引节点中的user id映射成为登录的用户名称的时候会被用到。getpwnam在我们输入用户名称时候login程序会用到。
+两个函数,如果运行失败了，返回NULL;成功之后都返回一个指向passwd结构的指针，这个指针内容是一个函数内部的静态变量，所以我们每次调用这两个函数的时候都会导致这个指针中的内容被后来的调用所覆盖。
+
+#include <sys/types.h>
+#include <pwd.h> 
+struct passwd *getpwent(void); 
+void setpwent(void);
+void endpwent(void);
+这三个函数不是posix中的，而是Single Unix Specification中的XSI定义的，一般的系统都支持这个功能。
+函数getpwent如果运行失败了，返回NULL;成功之后返回一个passwd指针。返回的指针指向的是一个静态变量，每次调用其值都会被修改，每次调用getpwent都会返回下一条passwd记录。这个函数在第一次调用的时候会自动打开passwd文件，但是使用完了之后我们需要使用endpwent来关闭相应的文件。
+函数setpwent实现的是回滚功能，使用它之后，会回滚到第一个记录。getpwent会返回第一记录了。
+函数endpwent用来在使用完passwd之后关闭相应的文件。
+如果想要从最开始遍历passwd的化，例如如果实现getpwname，这三个函数的调用次序一般大致如下：
+struct passwd *
+getpwnam(const char *name)
+{
+	struct passwd  *ptr;
+	setpwent();
+	while ((ptr = getpwent()) != NULL)
+	{
+		if (strcmp(name, ptr->pw_name) == 0)
+		{
+			break;
+		}
+	}
+	endpwent();
+
+}
+
+linux2.4和solaris有用来访问shadow一组函数：
+---------------
+#include <shadow.h>
+struct spwd *getspnam(const char *name);
+struct spwd *getspent(void);
+这两个函数如果运行正常则返回指针，出错返回NULL.
+
+void setspent(void);
+void endspent(void);
+这几个函数类似访问passwd的函数。
+
+组信息的数据库文件存储在/etc/group文件中，其中存放了组的相关结构信息。
+我们可以通过下面函数获取组数据项信息：
+---------------
+#include <grp.h>
+struct group *getgrgid(gid_t gid);
+struct group *getgrnam(const char *name);
+如果运行正常返回相应的组数据项结构的指针，如果错误返回NULL.
+函数和访问passwd的相关函数类似，也是posix.1的。
+
+类似passwd相关函数，也有如下遍历组数据项的函数:
+#include <grp.h>
+struct group *getgrent(void);
+这个函数如果运行正常则返回指针，出错或者到达文件结尾返回NULL.
+void setgrent(void);
+void endgrent(void);
+这三个函数类似passwd的相关函数，setgrent如果在文件没有打开的时候会打开文件，然后rewinds。getgrent获取下一个组项。endgrent关闭组文件，这三个函数不是posix.1而是single unix的xsi扩展。
+
+---------
+用来设置额外组的函数是：
+#include <unistd.h>
+int getgroups(int gidsetsize, gid_t grouplist[]);
+getgroups函数用来获取用户所属的组id，并将其存放在一个数组里面。gidsetsize指明存放在数组里面的元素数目，grouplist是存放组id的数组，函数返回获取到grouplist中的元素数目。如果gidsetsize是0那么函数返回属于的所有组的组的数目。grouplist不会被修改，这里允许用户自行分配grouplist的空间。
+
+#include <grp.h>     /* on Linux */
+#include <unistd.h>  /* on FreeBSD, Mac OS X, and Solaris */
+int setgroups(int ngroups, const gid_t grouplist[]);
+setgroups函数用来设置调用进程的额外组id。grouplist就是要设置的id数组，ngroups指明要存放在数组的元素的数目。一般只有initgroups才会调用setgroups.
+
+#include <grp.h>     /* on Linux and Solaris */
+#include <unistd.h>  /* on FreeBSD and Mac OS X */
+int initgroups(const char *username, gid_t basegid);
+initgroups使用getgrent,setgrent,endgrent来读取整个group文件以便决定username所属的组。然后这个函数调用setgroups来为用户初始化所属的组成员。除了groups文件中的组，initgroups也会把basegid中的组包含到额外组中，basegid为了passwd中的user的group id来设置的。一般来说initgroups由login来调用。
+
+
+
+
+---------
+进程控制：
+exit
+_Exit(系统调用)
+_exit(系统调用)
+
+----------
+内存分配
+ISO C指定了三种内存分配的方式：
+#include <stdlib.h>
+void *malloc(size_t size);
+void *calloc(size_t nobj, size_t size);
+void *realloc(void *ptr, size_t newsize);
+这三种函数如果返回的指针是非空的表示分配成功，如果出错了那么返回的是null.
+void free(void *ptr);
+malloc分配指定字节大小的内存，内存里面的数据是不确定的。
+calloc分配nobj个特定大小（size）的对象，内存里面的数据被初始化为0。
+realloc用来增加或者减小之前分配的内存区域。如果是增加的话，可能会把原先的分配的区域移动到别的地方然后在后面增加多出来的内存，增加的内存的内容不确定并返回新内存块的指针，如果原来的区域后面有足够的空间来增加额外的内存的话就不需要移动内存了。参数是最终内存的总大小。如果ptr为空那么realloc的行为和malloc的行为是一样的。
+三种分配函数返回的指针的对齐方式保证适合任何的数据类型。因为函数返回的是void*所以如果我们包含了stdlib.h那么我们不用强制将这个函数返回的指针转换成为我们想要的类型。
+free使用来释放之前分配的内存的。
+
+alloca
+还有一个值得一提的函数就是alloca.这个函数和malloc具有一样的调用次序，然而它不是从heap上面分配内存而是从当前函数所处堆栈上面分配内存的。这样的有时就是我们不用释放空间了，当函数结束的时候内存的空间会自动地被释放掉。alloca函数导致堆栈桢的大小增加。这样的缺点是有些系统不支持alloca函数，因为对于它们而言不可能在调用函数之后再增加堆栈桢的大小。然而许多的软件包还是使用了它，因为这个函数在许多系统上都有实现。
+
+---------
+环境变量
+ISO C定义了一些可以获取环境变量值的函数，但是标准说值的内容是由实现定义的。
+#include <stdlib.h>
+char *getenv(const char *name);
+返回和name相关的环境变量的值的指针，如果没有这个环境变量那么返回NULL.需要注意的是这个函数返回"name=value"字符串。我们一般调用getenv来获得特定的值,而不是直接访问environ.有些环境变量是特定的标准(例如XSI)才有的,而不是所有的标准才有这样的环境变量。
+
+有时候我们想要修改一个环境变量或者添加一个环境变量，但是并不是所有的系统都支持这样的功能。下面的函数就和这个相关：
+#include <stdlib.h>
+int putenv(char *str);
+int setenv(const char *name, const char *value,int rewrite);
+int unsetenv(const char *name);
+
+putenv函数以一个"name=value"字符串做为输入，把这个字符串放到环境列表中去。如果name已经存在了，那么旧的定义会被移除。
+
+setenv函数设置name为value,如果name已经存在了，那么a)如果重写的值非0，会先把已经定义的name给移除;b)如果重写的值为0，那么已经存在的name定义不会被移除，name也不会设置为被设置为心值也不会有任何错误发生。
+
+unsetenv函数会把任何定义的name给移除。如果没有相应的定义也不会出现错误。
+
+注意putenv和setenv的不同之处。setenv必须分配一块memory来创建name=value来根据参数创建字符串，putenv直接把传递给它的字符串自由地传递到environment.在linux和solaris中，putenv的实现会把我们传递给它的地址直接放到environment list中去。这时候，如果传递一个在stack上面的字符串将会出现错误。
+
+-----------
+跳转
+在c语言中，我们不能够使用goto跳转到另外一个函数的标签中去,如果我们想要实现这样的功能，我们需要使用setjmp和longjmp。
+
+#include <setjmp.h>
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+
+我们需要在跳转的地方调用setjmp,其参数保存了跳转时候的各种信息，并且因为是从不同函数的跳转所以一般是全局变量。
+setjmp的返回值，直接调用它返回的是0，通过longjmp返回的，是非0。
+我们在需要跳转的时候，调用longjmp函数，这个函数有两个参数，一个是先前设置setjmp的变量，一个是用来设置跳转之后setjmp的返回值。
+
+-----------
+#include <unistd.h>
+pid_t tcgetpgrp(int filedes);
+如果成功返回前台的进程组id，否则出错并返回1.
+
+int tcsetpgrp(int filedes, pid_t pgrpid);
+如果成功返回0，否则出错并返回1.
+
+tcgetpgrp函数返回和参数filedes相关的打开的终端的前台进程组id.
+如果进程有一个控制终端,那么函数tcsetpgrp会设置前台进程组id为pgrpid.pgrpid的值必须是当前同一个会话中的进程组id的值，filedes必须是session的控制终端的引用。
+大多数应用程序不会直接调用这两个函数，它们一般是被作业控制的shell来进行调用的。
+Single UNIX Specification定义了一个XSI扩展，叫做tcgetsid允许应用程序通过一个给定的控制tty的描述符号获得session leader的进程组id。
+
+#include <termios.h>
+pid_t tcgetsid(int filedes);
+如果成功返回session leader的进程组id，否则出错并返回1。
+需要管理控制终端的应用程序可以使用tcgetsid函数来辨别控制终端session leader的session id(这个和session leader所在的进程组一样).
+
+fdopen
+
+man strtoul

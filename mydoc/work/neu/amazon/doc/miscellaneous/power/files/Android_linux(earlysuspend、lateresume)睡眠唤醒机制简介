@@ -1,0 +1,441 @@
+Android/linux(earlysuspend、lateresume)睡眠唤醒机制简介
+
+本文属于原创！！如要转载，请注明来源处 http://blog.sina.com.cn/s/blog_759dc36b0100stax.html
+  背景介绍：
+睡眠/唤醒是嵌入式Linux非常重要的组成部分,因为优秀的睡眠唤醒机制可以是嵌入式设备尽可能的进入休眠状态，来延长电池的续航时间（这在移动终端消费类电子设备中是非常重要和有意义的！！）。但标准的Linux睡眠唤醒机制有其自身的一些缺陷（所有模块必须同时睡下或者唤醒），在某些情况下，这会导致能耗的白白浪费。因此Android在标准Linux睡眠唤醒的机制上作了新的改动(wake_lock唤醒、early_suspend和late_resume机制），从而很好的解决上面的问题。本文将以Android2.3.1版本为例，详细介绍标准Linux睡眠/唤醒是如何工作的, 并且Android中是如何把其自身特有的机制和Linux中标准的联系起来的。
+  标准Linux睡眠唤醒机制简介：
+    在标准Linux中，休眠主要分三个主要的步骤：（1）冻结用户态进程和内核态任务；（2）调用注册的设备的suspend的回调函数，其调用顺序是按照驱动加载时的注册顺序。（3）休眠核心设备和使CPU进入休眠态冻结进程是内核把进程列表中所有的进程的状态都设置为停止,并且保存下所有进程的上下文。 当这些进程被解冻的时候,它们是不知道自己被冻结过的,只是简单的继续执行。
+    那么是如何让Linux进入休眠的呢？其实很简单，因为Android和kernel已经做了很多复杂的工作，所以用户只需可以通过读写sys文件/sys /power/state 就可以实现控制系统进入休眠。 
+比如： # echo  mem  > /sys/power/state               使系统进行睡眠
+       # echo  on   > /sys/power/state     使系统从睡眠中唤醒过来
+当然还有其它的状态操作，在下面的内容中将有介绍。
+  Android睡眠唤醒机制简介：
+Android在Linux内核原有的睡眠唤醒模块上基础上，主要增加了下面三个机制：
+    Wake _Lock 唤醒锁机制；
+Early _Suspend 预挂起机制；
+Late _Resume 迟唤醒机制；
+其基本原理如下：当启动一个应用程序的时候，它都可以申请一个wake_lock唤醒锁，每当申请成功之后都会在内核中注册一下（通知系统内核，现在已经有锁被申请），当应用程序在某种情况下释放wake_lock的时候，会注销之前所申请的wake_lock。特别要注意的是：只要是系统中有一个wake_lock的时候，系统此时都不能进行睡眠。但此时各个模块可以进行early_suspend。当系统中所有的wake_lock都被释放之后，系统就会进入真正的kernel的睡眠状态。在系统启动的时候会创建一个主唤醒锁main_wake_lock，该锁是内核初始化并持有的一个WAKE_LOCK_SUSPEND属性的非限时唤醒锁。因此，系统正常工作时，将始终因为该锁被内核持有而无法进入睡眠状态。也就是说在不添加新锁的情况下，只需将main_wake_lock 解锁，系统即可进入睡眠状态。    
+    下面是Android睡眠唤醒模块框架（该图引用上届师兄毕设里图片，自己懒得再画了，这就是鲁迅所说的“拿来主义” ^ ^）：
+
+    接下来我们将以上图的框架结构为主线，将进行非常非常详细地从最上层到最底层的跟踪！！！本文的主旨主要就是读者从Android最上层（Java写的应用程序）一步一步的往下跟进，经过Java、C++和C语言写的Framework层、JNI层、HAL层最后到达android的最底层（Kernel层）。通过本文的阅读，您将对android的整体有更加深入、宏观的理解和把握！
+   主要涉及到的目录文件：
+android/frameworks/base/core/java/android/os/PowerManager.java 
+android/frameworks/base/services/java/com/android/server/PowerManagerService.java
+android/frameworks/base/core/java/android/os/ Power.java
+android/frameworks/base/core/jni/android_os_Power.cpp
+android/hardware/libhardware_legacy/power/power.c
+ 
+android/kernel/kernel/power/main.c 
+android/kernel/kernel/power/earlysuspend.c
+android/kernel/kernel/power/suspend.c
+android/kernel/kernel/power/wakelock.c
+android/kernel/kernel/power/userwakelock.c
+    在应用程序框架层中，PowerManager类是面向上层应用程序的接口类，提供了Wake Lock机制（同时也是睡眠唤醒子系统）的基本接口（唤醒锁的获取和释放）。上层应用程序通过调用这些接口，实现对系统电源状态的监控。PowerManager类通过IBinder这种Android中特有的通信模式，与PowerManagerService 类进行通信。PowerManagerService 是PowerManager 类中定义的接口的具体实现，并进一步调用Power 类来与下一层进行通信。PowerManagerService 类是WakeLock 机制在应用程序框架层的核心，他们对应用程调用PowerManager类接口时所传递的参数进行初步的分析和对应的设置，并管理一个唤醒锁队列，然后配合其他模块（例如WatchDog、BatteryService、ShutdownThread 等）的状态信息，做出决策，调用Power类的对应接口，最终通过JNI 接口，调用到硬件抽象层中的函数，对sysfs 的用户接口进行操作，从而触发内核态实现的用。 （该段引自于上届一个师兄的毕设原文，在这就直接用了，希望师兄看了不要介意了哈 ^ ^）
+    PowerManager.java：提供上层应用程序的接口；
+    PowerManagerService.java：具体实现PowerManager类中的接口；
+    Power.java：被PowerManagerService类调用；
+    android_os_Power.cpp：实现Power类中的JNI接口；
+    power.c：进行sysfs用户接口的操作。
+其余涉及到的都是内核kernel中的文件，它们的作用将在下面给予介绍。
+   具体流程：
+下面我将分别以两条路线（第一：获得wakelock唤醒锁。第二：系统进入睡眠。）来分别说明各自的流程，让读者对android睡眠唤醒机制有更深入的理解！
+   第一部分：获得wakelock唤醒锁
+    比如在应用程序中，当获得wakelock唤醒锁的时候，它首先是调用/android/frameworks/base/core/java/
+android/os/PowerManager类中的public void acquire()方法，而该方法通过android特有的通讯机制，会接着调用到PowerManagerService类中的public void acquireWakeLock。
+public void acquireWakeLock(int flags, IBinder lock, String tag, WorkSource ws) {
+        int uid = Binder.getCallingUid();
+        int pid = Binder.getCallingPid();
+        if (uid != Process.myUid()) {
+            mContext.enforceCallingOrSelfPermission(android.Manifest.permission.WAKE_LOCK, null);
+        }    
+        if (ws != null) {
+            enforceWakeSourcePermission(uid, pid);
+        }    
+        long ident = Binder.clearCallingIdentity();
+        try {
+            synchronized (mLocks) {
+                acquireWakeLockLocked(flags, lock, uid, pid, tag, ws); 
+            }    
+        } finally {
+            Binder.restoreCallingIdentity(ident);
+        }    
+}   
+而 public void acquireWakeLock方法又调用了acquireWakeLockLocked。
+public void acquireWakeLockLocked(int flags, IBinder lock, int uid, int pid, String tag,
+            WorkSource ws)
+ {
+    if (mSpew) {
+     Slog.d(TAG, "acquireWakeLock flags=0x" + Integer.toHexString(flags) + " tag=" + tag); }
+        if (ws != null && ws.size() == 0) {ws = null;}
+        int index = mLocks.getIndex(lock);
+        WakeLock wl;
+        boolean newlock;
+        boolean diffsource;
+        WorkSource oldsource;
+                      。
+                      。
+                      。
+                 中间代码省略
+                      。
+                      。
+                      。
+          Power.acquireWakeLock(Power.PARTIAL_WAKE_LOCK,PARTIAL_NAME);
+        }
+        if (diffsource) {
+            // If the lock sources have changed, need to first release the
+            // old ones.
+            noteStopWakeLocked(wl, oldsource);
+        }
+        if (newlock || diffsource) {
+            noteStartWakeLocked(wl, ws);
+        }
+}
+我们可以看到在acquireWakeLockLocked 方法调用Power类中的public static native void acquireWakeLock(int lock, String id)方法。而该方法是调用android_os_Power.cpp中的static void acquireWakeLock（）函数。
+static void acquireWakeLock(JNIEnv *env, jobject clazz, jint lock, jstring idObj)
+{
+    if (idObj == NULL) {
+        throw_NullPointerException(env, "id is null");
+        return ;
+    }
+    const char *id = env->GetStringUTFChars(idObj, NULL);
+    acquire_wake_lock(lock, id);
+    env->ReleaseStringUTFChars(idObj, id);
+}
+    函数 acquire_wake_lock（）的实现在 power.c中，其定义如下：
+int  acquire_wake_lock(int lock, const char* id)
+{
+    initialize_fds();
+//    LOGI("acquire_wake_lock lock=%d id='%s'\n", lock, id);
+    if (g_error) return g_error;
+    int fd;
+    if (lock == PARTIAL_WAKE_LOCK) {
+        fd = g_fds[ACQUIRE_PARTIAL_WAKE_LOCK];
+    }
+    else {
+        return EINVAL;
+    }
+    return write(fd, id, strlen(id));
+}
+到现在为止，我们的代码流程已经走了一大半了，我们一开始介绍的android的上面几层Framework层、JNI层、HAL层都已经介绍了就剩下Kernel层了。下面就应该是和kernel层进行交互了。
+    但是在android/hardware/libhardware_legacy/power/power.c中的acquire_wake_lock（）函数似乎没法和kernel层进行通信啊？？不急 要淡定！！在这个函数的最后不是还有一个返回语句return write(fd, id, strlen(id))嘛！！有人会说这句话看不出什么啊，我一开始用Source Insight代码阅读器跟踪的时候也没有找到它的原型，那个叫急啊!!呵呵 最后经过我的继续不断的努力查找（其实方法很简单，既然我从上往下的路断了，那我就换个方向，我最后又从下往上顺着代码走了一遍），终于被我发现了。
+我们先看一下android/kernel/kernel/power/main.c中的一段代码，我将会做简单的分析，之后你就会明白刚才上面所产生的疑问了。
+#ifdef CONFIG_USER_WAKELOCK
+power_attr(wake_lock);
+power_attr(wake_unlock);
+#endif
+ 
+static struct attribute * g[] = {
+&state_attr.attr,
+#ifdef CONFIG_PM_TRACE
+&pm_trace_attr.attr,
+#endif
+#ifdef CONFIG_PM_SLEEP
+&pm_async_attr.attr,
+#ifdef CONFIG_PM_DEBUG
+&pm_test_attr.attr,
+#endif
+#ifdef CONFIG_USER_WAKELOCK
+&wake_lock_attr.attr,
+&wake_unlock_attr.attr,
+#endif
+#endif
+NULL,
+};
+ 
+static struct  attribute_group  attr_group = {
+.attrs = g,
+};
+ 
+#ifdef CONFIG_PM_RUNTIME
+struct workqueue_struct *pm_wq;
+EXPORT_SYMBOL_GPL(pm_wq);
+ 
+static int __init pm_start_workqueue(void)
+{
+pm_wq = create_freezeable_workqueue("pm");
+ 
+return pm_wq ? 0 : -ENOMEM;
+}
+#else
+static inline int pm_start_workqueue(void) { return 0; }
+#endif
+ 
+static int __init pm_init(void)
+{
+int error = pm_start_workqueue();
+if (error)
+return error;
+power_kobj = kobject_create_and_add("power", NULL);
+if (!power_kobj)
+return -ENOMEM;
+return sysfs_create_group(power_kobj, &attr_group);
+}
+core_initcall(pm_init);
+这段代码虽然简短，但看起来是不是还是比较费劲，没关系，我们倒过来看就比较清楚了。上面代码中的sysfs_create_group(power_kobj, &attr_group);的意思就是当我们在对sysfs/下相对的节点进行操作的时候会调用与attr_group里的相关函数，再往上面看其实就是指&wake_lock_attr.attr（对不同情况的操作会调用不同的attr_group，在第二条路的里面我们还会再次接触到这里）。power_attr(wake_lock)就是使具体的操作函数与其挂钩。我们现在来看一看这个挂钩过程是怎么实现的。
+#define power_attr(_name) \
+static struct kobj_attribute _name##_attr = { \
+.attr = { \
+.name = __stringify(_name), \
+.mode = 0644, \
+}, \
+.show = _name##_show, \
+.store = _name##_store, \
+}
+在该函数中##的作用通俗点讲就是“连接”的意思，比如power_attr(wake_lock)，
+    static struct kobj_attribute  wake_lock_attr = { \
+.attr = { \
+.name = __stringify(wake_lock), \
+.mode = 0644, \
+}, \
+.show = wake_lock_show, \
+.store = wake_lock_store, \
+}
+ 
+函数wake_lock_store和wake_lock_show就定义在android/kernel/kernel/power/userwakelock.c 
+中。因此当我们对/sys/power/wake_lock进行操作的时候就会调用到userwakelock.c中定义的
+wake_lock_store（）函数。
+     好了，我们该回到原来我们产生疑问的地方了，在 power.c中我们将重新研究一下这这段代码，这时我们还得关注其中的另一个函数initialize_fds()。
+int  acquire_wake_lock(int lock, const char* id)
+{
+    initialize_fds();
+//    LOGI("acquire_wake_lock lock=%d id='%s'\n", lock, id);
+    if (g_error) return g_error;
+    int fd;
+    if (lock == PARTIAL_WAKE_LOCK) {
+        fd = g_fds[ACQUIRE_PARTIAL_WAKE_LOCK];
+    }
+    else {
+        return EINVAL;
+    }
+ return write(fd, id, strlen(id));
+}
+ 
+initialize_fds(void)
+{
+    // XXX: should be this:
+    //pthread_once(&g_initialized, open_file_descriptors);
+    // XXX: not this:
+    if (g_initialized == 0) {
+        if(open_file_descriptors(NEW_PATHS) < 0) {
+            open_file_descriptors(OLD_PATHS);
+            on_state = "wake";
+            off_state = "standby";
+        }
+        g_initialized = 1;
+    }
+}
+其实这个函数中最和新的步骤就是open_file_descriptors(NEW_PATHS) ；而
+const char * const NEW_PATHS[] = {
+    "/sys/power/wake_lock",
+    "/sys/power/wake_unlock",
+    "/sys/power/state"
+};
+    总之经过着一些列的步骤后，最终我们将在 return write(fd, id, strlen(id));时调用android/kernel/kernel/power/userwakelock.c 中的 wake_lock_store（）函数。
+ssize_t  wake_lock_store(
+        struct kobject *kobj, struct kobj_attribute *attr,
+        const char *buf, size_t n)
+{
+        long timeout;
+        struct user_wake_lock *l; 
+ 
+        mutex_lock(&tree_lock);
+        l = lookup_wake_lock_name(buf, 1, &timeout);
+        if (IS_ERR(l)) {
+                n = PTR_ERR(l);
+                goto bad_name;
+        }
+ 
+        if (debug_mask & DEBUG_ACCESS)
+                pr_info("wake_lock_store: %s, timeout %ld\n", l->name, timeout);
+ 
+        if (timeout)
+                wake_lock_timeout(&l->wake_lock, timeout);
+        else
+                wake_lock(&l->wake_lock);
+bad_name:
+        mutex_unlock(&tree_lock);
+        return n;
+}
+    该函数执行的基本流程为：首先调用lookup_wake_lock_name()来获得指定的唤醒锁，若延迟参数timeout为零的话，就调用 wake_lock（）否则就调用wake_lock_timeout（），但不管调用哪个最后都会调用到android/kernel/kernel/power/wakelock.c中的函数static void wake_lock_internal（）。
+static void wake_lock_internal(struct wake_lock *lock, long timeout, int has_timeout)
+{
+int type;
+unsigned long irqflags;
+long expire_in;
+ 
+spin_lock_irqsave(&list_lock, irqflags);
+type = lock->flags & WAKE_LOCK_TYPE_MASK;
+BUG_ON(type >= WAKE_LOCK_TYPE_COUNT);
+BUG_ON(!(lock->flags & WAKE_LOCK_INITIALIZED));
+#ifdef CONFIG_WAKELOCK_STAT
+if (type == WAKE_LOCK_SUSPEND && wait_for_wakeup) {
+if (debug_mask & DEBUG_WAKEUP)
+pr_info("wakeup wake lock: %s\n", lock->name);
+wait_for_wakeup = 0;
+lock->stat.wakeup_count++;
+}
+if ((lock->flags & WAKE_LOCK_AUTO_EXPIRE) &&
+    (long)(lock->expires - jiffies) <= 0) {
+wake_unlock_stat_locked(lock, 0);
+lock->stat.last_time = ktime_get();
+}
+#endif
+if (!(lock->flags & WAKE_LOCK_ACTIVE)) {
+lock->flags |= WAKE_LOCK_ACTIVE;
+#ifdef CONFIG_WAKELOCK_STAT
+lock->stat.last_time = ktime_get();
+#endif
+}
+list_del(&lock->link);
+if (has_timeout) {
+if (debug_mask & DEBUG_WAKE_LOCK)
+pr_info("wake_lock: %s, type %d, timeout %ld.lu\n",
+lock->name, type, timeout / HZ,
+(timeout % HZ) * MSEC_PER_SEC / HZ);
+lock->expires = jiffies + timeout;
+lock->flags |= WAKE_LOCK_AUTO_EXPIRE;
+list_add_tail(&lock->link, &active_wake_locks[type]);
+} else {
+if (debug_mask & DEBUG_WAKE_LOCK)
+pr_info("wake_lock: %s, type %d\n", lock->name, type);
+lock->expires = LONG_MAX;
+lock->flags &= ~WAKE_LOCK_AUTO_EXPIRE;
+list_add(&lock->link, &active_wake_locks[type]);
+}
+if (type == WAKE_LOCK_SUSPEND) {
+current_event_num++;
+#ifdef CONFIG_WAKELOCK_STAT
+if (lock == &main_wake_lock)
+update_sleep_wait_stats_locked(1);
+else if (!wake_lock_active(&main_wake_lock))
+update_sleep_wait_stats_locked(0);
+#endif
+if (has_timeout)
+expire_in = has_wake_lock_locked(type);
+else
+expire_in = -1;
+if (expire_in > 0) {
+if (debug_mask & DEBUG_EXPIRE)
+pr_info("wake_lock: %s, start expire timer, "
+"%ld\n", lock->name, expire_in);
+mod_timer(&expire_timer, jiffies + expire_in);
+} else {
+if (del_timer(&expire_timer))
+if (debug_mask & DEBUG_EXPIRE)
+pr_info("wake_lock: %s, stop expire timer\n",
+lock->name);
+if (expire_in == 0)
+queue_work(suspend_work_queue, &suspend_work);
+}
+}
+spin_unlock_irqrestore(&list_lock, irqflags);
+}
+   到这里为止，我们走的第一条路就到目的地了，这个函数具体做了什么，在这里就不仔细分析了，大家可以自己再跟下或者上网查相关资料，理解这个函数不难。
+ 
+ 
+   第二部分：系统进入睡眠
+有了上面第一部分的学习，再看第二部分的话，会容易很多。假如现在我们按了PAD上的power睡眠键，经过一些列的事件处理后，它会调用到PowerManager类中的
+  public void goToSleep(long time) 
+   {   
+        try {
+            mService.goToSleep(time);
+        } catch (RemoteException e) {
+        }   
+    }
+而该函数会调用到PowerManagerService类中的public void goToSleep（）方法；
+      public void goToSleep(long time)
+      {
+        goToSleepWithReason(time, WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+   }
+     goToSleepWithReason（）会调用goToSleepLocked()方法，接着会调用setPowerState();而setPowerState()方法里会调用setScreenStateLocked（），setScreenStateLocked（）又会调用到Power类中的JNI接口setScreenState（）,其具体实现是在android_os_Power.cpp文件中； 
+      static int setScreenState(JNIEnv *env, jobject clazz, jboolean on) 
+     {
+          return set_screen_state(on);
+     }
+ 函数中return set_screen_state（）的实现是android/hardware/libhardware_legacy/power/power.c
+    set_screen_state(int on)
+{
+    QEMU_FALLBACK(set_screen_state(on));
+ 
+    LOGI("*** set_screen_state %d", on);
+ 
+    initialize_fds();
+ 
+    //LOGI("go_to_sleep eventTime=%lld now=%lld g_error=%s\n", eventTime,
+      //      systemTime(), strerror(g_error));
+ 
+    if (g_error) return g_error;
+ 
+    char buf[32];
+    int len;
+    if(on)
+        len = snprintf(buf, sizeof(buf), "%s", on_state);
+    else
+        len = snprintf(buf, sizeof(buf), "%s", off_state);
+ 
+    buf[sizeof(buf) - 1] = '\0';
+    len = write(g_fds[REQUEST_STATE], buf, len);
+    if(len < 0) {
+        LOGE("Failed setting last user activity: g_error=%d\n", g_error);
+    }
+    return 0;
+    看！！代码到这里是不是跟第一部分很相似？不错，如果接着往下分析的话，可以套用上面第一部分的分析思路，最终len = write(g_fds[REQUEST_STATE], buf, len);语句调用的是android//kernel/kernel/power/main.c中的set_screen_state( )；
+当我们在sys/power/state（android/hardware/libhardware_legacy/power/power.c）进行读写操作的时候，（linux/kernel/power/main.c）中的state_store（）函数会被调用，在该函数中会分成两个分支：
+static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t n)
+{
+#ifdef CONFIG_SUSPEND
+#ifdef CONFIG_EARLYSUSPEND
+        suspend_state_t state = PM_SUSPEND_ON;
+#else
+        suspend_state_t state = PM_SUSPEND_STANDBY;
+#endif
+        const char * const *s;
+#endif
+        char *p;
+        int len;
+        int error = -EINVAL;
+ 
+        p = memchr(buf, '\n', n);
+        len = p ? p - buf : n;
+ 
+        
+        if (len == 4 && !strncmp(buf, "disk", len)) {
+                error = hibernate();
+  goto Exit;
+        }
+ 
+#ifdef CONFIG_SUSPEND
+        for (s = &pm_states[state]; state < PM_SUSPEND_MAX; s++, state++) {
+                if (*s && len == strlen(*s) && !strncmp(buf, *s, len))
+                        break;
+        }
+        if (state < PM_SUSPEND_MAX && *s)
+#ifdef CONFIG_EARLYSUSPEND
+                if (state == PM_SUSPEND_ON || valid_state(state)) {
+                        error = 0;
+                        request_suspend_state(state);
+                }
+#else
+                error = enter_state(state);
+#endif
+#endif
+Exit:
+        return error ? error : n;
+}                                    
+Android特有的earlysuspend： request_suspend_state(state)
+Linux标准的suspend：       enter_state(state)
+ 
+注意：如果CONFIG_EARLYSUSPEND宏开的话，kernel会先走earlysuspend，反之则直接走suspend；从这里开始就要分两个分支了，如果支持earlysuspend的话就进入 request_suspend_state(state)函数，如果不支持的话就进入标准Linux的enter_state(state)函数。、
+这两个函数分别在两个文件中kernel/kernel/power/earlysuspend.c和suspend.c。现在再回过头来看的话，感觉整个android中睡眠唤醒机制还是很清晰的。这两个函数体里又做了什么，在这里就不再做具体分析，大家可以自己对照代码或者上网查资料，因为本文的主旨是带读者从最上层应用层一直到最底层kernel层，把整个android的睡眠唤醒机制给走通。
+ 
+PowerManager.java                          goToSleep( )
+PowerManagerService.java                  goToSleep（）
+PowerManagerService.java              goToSleepWithReason（）
+PowerManagerService.java                 setPowerState()
+PowerManagerService.java              SetScreenStateLocked ()
+Power.java                             setScreenState（）
+android_os_Power.cpp                    setScreenState（）
+power.c                                   set_screen_state( )
+main.c                                  state_store( )
+ 
+本文属于原创！！如要转载，请注明来源处 http://blog.sina.com.cn/s/blog_759dc36b0100stax.html

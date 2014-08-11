@@ -1,0 +1,11 @@
+[Translation]
+File=myrcv-nct
+Context=MyRcv
+
+[Desktop Entry]
+Comment[]=My Receive
+Exec=myrcv
+#Icon=example/Example
+Type=Application
+#Builtin=Yes
+Name[]=MyRcv

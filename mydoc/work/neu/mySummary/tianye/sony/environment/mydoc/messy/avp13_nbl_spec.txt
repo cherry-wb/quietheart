@@ -1,0 +1,724 @@
+[INTERNAL USE ONLY]
+===============================================================================
+ Design specification of NBL for AVP-13 Diablo evaluation board
+
+ System Software Development Department
+ Common Technology Division
+ Technology Development Group
+
+ $Id: avp13_nbl_spec.txt,v 1.13 2009/12/03 01:57:37 takamori Exp $
+===============================================================================
+
+1. Description
+==============
+
+This document describes the design specification of NBL for AVP-13
+Diablo evaluation board.
+
+
+2. Boot sequence
+================
+
+2.1. On ROM
+-----------
+
+  1. Enable I-cache
+
+  2. Initialize SFMEMC to maximize NOR Flash read speed
+
+  3. Initialize DDR2
+
+  4. Enable MMU and D-cache
+
+  5. Relocate NBL image into DDR2, and enable 'high vector'
+
+2.2. On DDR2
+------------
+
+  6. Enable 'remapping' feature to map DDR2 at 0x00000000
+
+  7. Initialize timer
+
+  8. Initialize GPIO
+
+  9. Initialize UART
+
+  10. Initialize some NBL common modules such as heap.
+
+  11. Call loader() to boot NBL.
+
+  12. Initialize PCI (called from NBL common part)
+
+2.3. Register values
+--------------------
+
+Register values for SFMEMC, DDR2 and PCI is derived from Diablo
+BSP. But all interrupts are disabled.
+
+
+3. Memory map of NBL
+====================
+
+NBL utilizes the physical memory as shown in the following. AVP-13 has
+512MB of physical memory, but NBL utilizes only 64MB at the head of
+it. The rest of the memory can be used by other MPU.
+
+  Phys. address
+
+  0x40000000 +---------------------------+ RAM_BASE
+             |  Exception vectors *1     |
+  0x40000024 +---------------------------+
+             |                           |
+  0x40000100 |+-------------------------+|
+             ||(ATAGS for Linux)        ||
+             |+-------------------------+|
+             |                           |
+  0x40008000 ++-------------------------++ CONFIG_LINUX_BASE
+             ||(Linux kernel)           || A
+             |+-------------------------+| |- NBL usermem region
+             |                           | |
+             |                           | |
+  0x40a00000 |+-------------------------+| CONFIG_INITRD_BASE
+             || initrd                  || |
+             ||                         || |
+             |+-------------------------+| |
+             |                           | V
+  0x43d00000 +---------------------------+ CONFIG_NBL_BASE - CONFIG_SYSMEM_SIZE
+             |  NBL Sysmem Area          | A
+             |                           | |
+             |                           | |- NBL sysmem region
+             |                           | |
+             |                           | V
+  0x43f00000 +---------------------------+ CONFIG_NBL_BASE
+             |  NBL .text                |
+             |  NBL .data                |
+             |  NBL .bss                 |
+  0x43f3XXXX +---------------------------+ __bss_end
+  0x43f3XY00 +---------------------------+ (__bss_end + 0xff) & ~0xff
+             |  NBL Heap                 |
+  0x43fea000 +---------------------------+
+             |  NBL stack                |
+  0x43ff2000 +---------------------------+
+             |  Exception handler stacks |
+  0x43ff8000 +---------------------------+
+             |  MMU section table        |
+  0x43ffc000 +---------------------------+
+             |  MMU page table           |
+  0x43ffd000 +---------------------------+
+             |  Exception vectors *2     |
+  0x43ffe000 +---------------------------+
+             |  NBLArgs                  |
+  0x43fff000 +---------------------------+ CONFIG_NBLBIOS_BASE
+             |  NBL BIOS Jump Table      |
+  0x44000000 +---------------------------+
+             | (not used)                |
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             |                           |
+  0x5fffffff +---------------------------+
+
+  *1 This exception vectors are set just before invoking kernel, and
+     are used to trap exceptions until kernel's vectors are enabled.
+
+  *2 This exception vectors is used to trap exceptions caused by NBL.
+
+
+4. Virtual address space
+========================
+
+Any other virtual addresses not described on the following table is
+mapped to the identical physical address as shared-device, uncachable.
+
+  ---------------+-------------------------+------------+-------+------+-----
+  Device         | Virtual address         | Physical   | Size  | Type | R/W
+  ===============+=========================+============+=======+======+=====
+  PCI Window2    | 0x20000000 - 0x2fffffff | 0xd0000000 | 256MB | Dev. | R/W
+  ---------------+-------------------------+------------+-------+------+-----
+  SDRAM (mirror) | 0x40000000 - 0x5fffffff | 0x00000000 | 512MB | Dev. | R/W
+  ---------------+-------------------------+------------+-------+------+-----
+  SDRAM          | 0xc0000000 - 0xdfffffff | 0x40000000 | 512MB | Mem. | R/W
+  ---------------+-------------------------+------------+-------+------+-----
+  Flash (mirror) | 0xfe000000 - 0xfeffffff | 0xff000000 |  16MB | Mem. |  R
+  ---------------+-------------------------+------------+-------+------+-----
+  Exception Vec. | 0xffff0000 - 0xffff0fff | 0x43ffd000 |   4KB | Mem. |  R
+  ---------------+-------------------------+------------+-------+------+-----
+  Dev. : mapped as shared-device, uncachable
+  Mem. : mapped as normal memory, write-back cachable
+
+NBL runs on SDRAM address space, 0xc0000000 - 0xdfffffff. Note that
+0xc0000000 is identical to Linux kernel's PAGE_OFFSET, so virtual
+address of system memory on NBL matches the one on the Linux kernel.
+
+SDRAM (mirror) mapped as share-device is used for debug purpose.
+
+
+5. PCI address space
+====================
+
+  Memory address space
+  ------------------------+------------+-------
+  Device                  | Address    | Size
+  ========================+============+=======
+  Diablo                  |            |
+    BAR0 : PCIC register  | 0xE0010000 |   1KB
+    BAR1 : SDRAM          | 0x40000000 | 512MB
+    BAR2 : SDRAM (mirror) | 0x00000000 | 512MB
+  ------------------------+------------+-------
+  Intel 82541PI           |            |
+    BAR0 : register       | 0xd0000000 | 128KB
+    BAR1 : flash          | 0xd0020000 | 128KB
+  ------------------------+------------+-------
+
+  I/O address space
+  ------------------------+------------+-------
+  Device                  | Address    | Size
+  ========================+============+=======
+  Intel 82541PI           |            |
+    BAR2 : registers      | 0xe0000000 |  64
+  ------------------------+------------+-------
+
+Note that PCI address for each device is identical to the one in AXI &
+AHB address space. So, you can use PCI address in AXI & AHB address
+space, v.v.
+
+We have no intention about Diablo's BAR2 settings. It's just a
+temporary settings.
+
+
+6. Bootmode
+===========
+
+NBL's bootmode depends on the DIP switch S1902 on the AVP-13 board as
+shown in the following table.
+
+   SW1 | Bootmode
+  -----+------------
+   On  | bootselect mode
+   Off | shell mode
+
+In bootselect mode, NBL boots the linux kernel specified by boot
+profile automatically.
+
+In shell mode, NBL's shell prompt waits for user command input. In
+this mode, you can use all diag commands.
+
+
+7. Clocks
+=========
+
+NBL assumes ISYSCK is 33333000Hz and AXI clock is ISYSCK * 4 = 133MHz.
+CPU clock is ISYSCK * 12 = 400MHz which is default rate.
+
+8. UART
+=======
+
+NBL utilizes UART0 for NBL's console with the following settings.
+
+   baudrate     : 115200
+   data         : 8bit
+   parity       : none
+   stop bit     : 1bit
+   flow control : none
+
+
+9. Timer
+========
+
+NBL utilizes TIMER1 for time management such as nbl_udelay().
+
+Dividing TIM_CLK by 4, count clock is 16.6MHz. So, timer resolution is
+approx. 60ns.
+
+If Linux kernel uses TIMER1 for sched_clock() without resetting it,
+it's able to measure elapsed time from boot up including NBL's one.
+In this case, it's expected that TIMER0 is used for kernel's tick.
+
+On the other hand, the kernel doesn't use TIMER1, the kernel should
+disable it to suppress power consumption.
+
+
+10. NOR
+=======
+
+NBL supports the following NOR Flash devices.
+
+  Numonyx M25P128
+  Numonyx M25PX64
+  Winbond W25X64
+
+NBL stores the followings in NOR Flash.
+
+  -. NBL itself
+
+  -. Profile information to invoke Linux kernel such as kernel image
+     name, kernel parameter and so on (bootprof).
+
+  -. Boot status and kernel status for boot select feature (nblconfig)
+
+  -. Non-volatile environment variable (sdmreg)
+
+  -. Non-volatile log (sdmlog)
+
+  -. Any binary images such as Linux kernel, initrd image and so on
+
+10.1. Erase block size
+----------------------
+
+NBL supports both sector erase command (0xd8) and subsector erase
+command (0x20). So erase block size for each devices are shown in the
+followings.
+
+  Numonyx M25P128 : 256KB
+  Numonyx M25PX64 :   4KB
+  Winbond W25X64  :   4KB
+
+10.2. SDM
+---------
+
+NBL manages NOR Flash with SDM. SDM (Sony Disk Management) is the
+framework to manage storage device such as NOR Flash, NAND Flash and
+so on.
+
+Using SDM, NBL gets the following features.
+
+  - Divide NOR Flash into multiple partitions for each purpose.
+
+  - Update bootprof, nblconfig, sdmreg and sdmlog data atomically.
+
+10.3. NOR Flash partitions layout (M25PX64, W25X64)
+---------------------------------------------------
+
+   Region |  Size  | Atomic | Description
+    Name  | (byte) | Update |
+  --------+--------+--------+----------------------------------------
+     -    |  512KB |   No   | NBL
+  --------+--------+--------+----------------------------------------
+     -    |   32KB |   Yes  | SDM management info./bootprof (*1)
+  --------+--------+--------+----------------------------------------
+    sdma  |  128KB |   Yes  | nblconfig (*1,*2)
+  --------+--------+--------+----------------------------------------
+    sdmb  |  128KB |   Yes  | sdmreg (*1,*3)
+  --------+--------+--------+----------------------------------------
+    sdmc  |  128KB |   Yes  | sdmlog (*1,*4)
+  --------+--------+--------+----------------------------------------
+    sdmd  |        |        |
+      ~   |   *5   |   No   | Any binary images
+    sdmp  |        |        |
+  --------+--------+--------+----------------------------------------
+
+  *1 Size of these regions must be 2 or more than times the size of
+     NOR's erase block, 4KB.
+
+  *2 Each entry of nblconfig is 1KB, and the entry is written at every
+     boot. So, a block erase will occur every 128 boot. As Numonyx
+     M25PX64 and Winbond W25X64 can tolerate more than 100,000 erase,
+     NBL can update nblconfig more than 10^7 times correctly.
+
+  *3 Total size of environment variables is 32KB.
+
+  *4 Each entry of log is 1KB, so last 128 log entries is stored.
+
+  *5 Size of each region is aligned into 4KB unit.
+
+10.4. NOR Flash partitions layout (M25P128)
+-------------------------------------------
+
+   Region |  Size  | Atomic | Description
+    Name  | (byte) | Update |
+  --------+--------+--------+----------------------------------------
+     -    |  512KB |   No   | NBL
+  --------+--------+--------+----------------------------------------
+     -    |  512KB |   Yes  | SDM management info./bootprof (*1)
+  --------+--------+--------+----------------------------------------
+    sdma  |  512KB |   Yes  | nblconfig (*1,*2)
+  --------+--------+--------+----------------------------------------
+    sdmb  |  512KB |   Yes  | sdmreg (*1,*3)
+  --------+--------+--------+----------------------------------------
+    sdmc  |  512KB |   Yes  | sdmlog (*1,*4)
+  --------+--------+--------+----------------------------------------
+    sdmd  |        |        |
+      ~   |   *5   |   No   | Any binary images
+    sdmp  |        |        |
+  --------+--------+--------+----------------------------------------
+
+  *1 Size of these regions must be 2 or more than times the size of
+     NOR's erase block, 256KB.
+
+  *2 Each entry of nblconfig is 1KB, and the entry is written at every
+     boot. So, a block erase will occur every 512 boot. As Numonyx
+     M25P128 can tolerate more than 10,000 erase, NBL can update
+     nblconfig more than 5 * 10^6 times correctly.
+
+  *3 Total size of environment variables is 32KB.
+
+  *4 Each entry of log is 1KB, so last 512 log entries is stored.
+
+  *5 Size of each region is aligned into 256KB unit.
+
+10.5. Configurations
+--------------------
+
+There is the configuration, CONFIG_AVP13_SUPPORT_NOR_M25P128, to
+enable Numonyx M25P128 support.
+
+If you enable, i.e. say y, this configuration, NBL can treat all NOR
+Flash devices including M25PX64 and W25X64, but read speed on M25PX64
+and W25X64 become slower than it's disabled.
+
+In detail, the configuration changes SFMEMC's settings shown in below.
+
+  CONFIG_AVP13_SUPPORT_NOR_M25P128=n
+
+    SFMSMD.SFMRM  = b'10    (Fast Read Dual Output)
+    SFMSKC.SFMDV  = b'00000 (2*HCLK)
+    SFMSKC.SFMDTY = b'0     (Duty ratio correction is disabled)
+
+  CONFIG_AVP13_SUPPORT_NOR_M25P128=y
+
+    SFMSMD.SFMRM  = b'01    (Fast Read)
+    SFMSKC.SFMDV  = b'00010 (3*HCLK)
+    SFMSKC.SFMDTY = b'1     (Duty ratio correction is enabled)
+
+
+11. Ether
+=========
+
+NBL supports Ethernet controller, Intel 82541PI, mounted on AVP-13
+board.
+
+With ethernet, you can load binary images such as the kernel from TFTP
+server and save it on NOR Flash.
+
+The driver doesn't support the controller's EEPROM in which MAC
+address is stored, so NBL uses MAC address stored in NOR Flash.
+
+This MAC address is stored in NOR Flash as environment variables of
+NBL, and you can set/get it with "diag ethaddr" command.
+
+The environment variable for the address is protected, so "clearenv"
+command can't delete it.
+
+Also, the address is passed to Linux kernel via ATAG_SNSC_MACADDR. See
+"Invoking Linux kernel" for details.
+
+
+12. FAT filesystem
+==================
+
+NBL supports FAT filesystem on NOR Flash.
+
+Note the following issues in using FAT filesystem on NOR Flash.
+
+  - On updating a file allocation table, whole the table is erased
+    completely once, and then programmed with newer table. So, cutting
+    off the power source during the updating may corrupt the FAT
+    filesystem completely.
+
+  - There is no wear-leveling mechanism to equalize number of rewrite
+    times of blocks. So, creating or updating a file degrades the
+    blocks locally.
+
+  - As maximum cluster size of FAT is 32KB, 4 or more than clusters is
+    in a erase block on Numonyx M25P128 which has 256KB erase block.
+    So, on the device, intensive read-modify-write consumes rewritable
+    times of the device and degrade write-speed.
+
+
+13. NUI
+=======
+
+NUI (NBL Update Image) is a file format to update NBL with "update"
+command on shell. NUI can include some information such as board
+identification and so on.
+
+NUI versions for AVP-13 board is shown in the following.
+
+  NUI_TARGETID_MAJOR: 0xc  (Diablo family)
+  NUI_TARGETID_MINOR: 0x0  (AVP-13 board)
+
+
+14. Custom version
+==================
+
+Custom version will be embedded into NBL, if you describe the following
+information in "RELEASE" file and build NBL with "make release".
+
+  PREFIX="AVP13 "
+  MAJOR=<major version>
+  MINOR=<minor version>
+
+
+15. Invoking Linux kernel
+=========================
+
+On invoking the kernel, NBL sets the following ATAGs at 0x40000100.
+
+  -. ATAG_CORE         : no information , just a marker
+  -. ATAG_MEM32        : memory size which Linux can use (512MB)
+  -. ATAG_INITRD2      : initrd address (available only when initrd is loaded)
+  -. ATAG_CMDLINE      : kernel command line parameter
+  -. ATAG_SNSC_MACADDR : MAC address stored in environment variable
+
+NBL invokes the kernel in the following conditions.
+
+  MMU               : disabled
+  D-cache           : disabled
+  Exception vectors : Low
+  GPR R0            : 0
+  GPR R1            : MACHINE_TYPE (2525)
+  GPR R2            : physical address of ATAG list (0x40000100)
+
+
+16. How to use NBL
+==================
+
+11.1 How to initialize NOR Flash
+--------------------------------
+
+  (1) At first, initialize SDM with "sdm init" command. The regions
+      for bootprof, nblconfig, sdmreg and sdmlog will be created
+      automatically.
+
+      NBL> sdm init
+      NBL> sdm list
+      sdma: nblconfig
+          device      : 0
+          start sect  : 0x88
+          image size  : 0x20000 bytes(0x20 sectors)
+          protect     : Yes
+      sdmb: sdmreg
+          device      : 0
+          start sect  : 0xa8
+          image size  : 0x20000 bytes(0x20 sectors)
+          protect     : Yes
+      sdmc: sdmlog
+          device      : 0
+          start sect  : 0xc8
+          image size  : 0x20000 bytes(0x20 sectors)
+          protect     : Yes
+
+  (2) Set MAC address
+
+      NBL> diag ethaddr 00:11:12:33:44:55
+      NBL> diag ethaddr
+      Ethernet Address = 00:11:12:33:44:55
+
+  (3) Set reserved environment variables.
+
+      Reserved environment variables is shown in the following.
+
+        console : When set to "on", console output is enabled in boot
+                  select mode. You should set "on" if unsure.
+
+      The followings should be set if you don't use bootp to determine
+      the network configuration.
+
+        myip    : IP address of the board
+        servip  : IP address of TFTP server
+        gateip  : IP address of gateway
+        netmask : network mask
+
+      example
+      NBL> setenv console on
+
+16.1. How to boot Linux kernel from TFTP server
+-----------------------------------------------
+
+  (1) Load Linux kernel from TFTP server, and boot it.
+
+      NBL> boot -r -t binary -c "console=ttyS0,115200" net:tftp:vmlinux.bin
+
+16.2. How to boot Linux kernel from NOR Flash
+---------------------------------------------
+
+  (1) Create SDM region to store Linux kernel, and store it.
+
+      NBL> sdm create -n -l 0x400000 kernel
+      NBL> sdm list
+       <snip>
+       sdmd: kernel
+           device      : 0
+           start sect  : 0xe8
+           image size  : 0x400000 bytes(0x400 sectors)
+           protect     : No
+      NBL> cp net:tftp:vmlinux.bin sdmd::
+
+  (2) Load and boot Linux kernel from NOR Flash.
+
+      NBL> boot -r -t binary -c "console=ttyS0,115200" sdmd:raw:vmlinux.bin
+
+16.3. How to update NBL
+-----------------------
+
+  (1) Load NUI file from TFTP server, and update with it.
+
+      NBL> update -f net:tftp:nbl-avp13.nui
+      ** About to update the Flash - are you sure(y/n)?
+
+16.4. How to create and use FAT filesystem
+------------------------------------------
+
+  (1) Create SDM region on which FAT filesystem will be created.
+
+      NBL> sdm create -n -l 0x400000 fat
+       <snip>
+       sdmd: kernel
+           device      : 0
+           start sect  : 0xe8
+           image size  : 0x400000 bytes(0x400 sectors)
+           protect     : No
+
+  (2) Create a partition in the region.
+
+      NBL> fdisk -a sdmd::
+
+  (3) Create FAT filesystem on the partition.
+
+      [Numonyx M25P128]
+      NBL> mkfs -b 0x8000 sdmd1:uvfat:
+
+      [Numonyx M25PX64 and Winbond W25X64]
+      NBL> mkfs sdmd1:uvfat:
+
+  (4) Use the filesystem as usual.
+
+      NBL> mkdir sdmd1:uvfat:/kernel
+      NBL> cp net:tftp:vmlinux.bin sdmd1:uvfat:/kernel/
+      NBL> ls sdmd1:uvfat:/kernel
+      ./
+      ../
+      vmlinux.bin
+      NBL> boot -r -t binary -c "console=ttyS0,115200" sdmd1:uvfat:/kernel/vmlinux.bin
+
+
+17. Supported shell commands
+============================
+
+  - boot profile related
+
+     aboot
+     bootprof
+     nblconfig
+
+  - Invoking the kernel
+
+     boot
+     exec
+     load
+
+  - SDM
+
+     sdm
+
+  - sdmlog
+
+     sdmlog
+
+  - Environment variables
+
+     clearenv
+     printenv
+     setenv
+
+  - File operation
+
+     cat
+     chmod
+     chown
+     cp
+     fdisk
+     fsck
+     ln
+     ls
+     mkdir
+     mkfs
+     mknod
+     mv
+     rm
+     rmdir
+     stat
+
+  - Memory operation
+
+     cksum
+     dump
+     fill
+     memcmp
+     save
+     diag memtest
+     diag memtestf
+
+  - Network
+
+     ping
+     ifconfig
+     diag ethaddr
+     diag ether
+     diag mii
+
+  - PCI
+
+     pciread
+     pciconf
+     pciio
+     pcimem
+
+  - misc.
+
+     boottime
+     echo
+     go
+     halt
+     help
+     log
+     nblargs
+     nsh
+     passwd
+     repeat
+     sleep
+     time
+     update
+     version
+
+
+18. Directories layout
+======================
+
+  platform name : diablo
+  target name   : avp13
+
+  loader/
+  |-- dev/
+  |   `-- confidential/
+  |       `-- sfmemc_nor/
+  `-- arch/
+      `-- arm/
+          |-- arm/
+          |-- include/
+          `-- diablo/
+              |-- def-configs/
+              |-- avp13/
+              |   `-- include/
+              `-- include/
+
+"sfmemc_nor" is NOR Flash driver for Diablo. To share this with sdmblk
+driver, it seems good that "sfmemc_nor" is independent from Diablo.
+
+
+19. History
+===========
+
+2009/11/25
+
+  -. Add descriptions about FAT filesystem.
+
+2009/11/24
+
+  -. Update descriptions about NOR Flash.
+
+2009/11/12
+
+  -. Fixed upon review.
+
+2009/11/11
+
+  -. Initial version.

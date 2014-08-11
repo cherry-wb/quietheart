@@ -1,0 +1,26 @@
+如何切换编码的转换。
+set termencoding=utf8
+set encoding=***
+
+或者
+"support east-world characters
+set encoding=utf-8
+set fileencodings=ucs-bom,iso-2022-jp-3,iso-2022-jp,eucjp-ms,euc-jisx0213,euc-jp,sjis,cp932,utf-8
+
+cscope或者ctags出现多个匹配的时候如何设置停留或者不自动停留?
+
+如何全局搜索？需要具体了解。
+:w
+
+文件浏览的时候，如果是日文的则目录名称之前会出现e字符，无法进入目录？
+
+
+如何查看一个变量的值？
+例如查看当前tags文件?
+这样：":set tags"就会显示了。
+
+如何更新tags或者cscope文件？
+
+map之类的切换？
+vim脚本？
+lookup插件？

@@ -1,0 +1,105 @@
+这里叙述使用ICE烧写开发板子的过程。
+资料下载地址：
+============
+
+AVP-13基板とadvicePro.ppt
+advicePro環境ファイル
+所在路径：
+\\10.1.29.125\SonyFS\Documents\TechnologyDoc\開発環境-VxWorks\ICEによるROM焼き手順
+\\10.1.29.125\SonyFS\Documents\TechnologyDoc\開発環境-VxWorks\ICESoftware
+
+举例,假设烧坏了NBL,用ICE恢复的方法是:
+============
+一、准备
+============
+1,烧写Rom必需的文件：
+diablo.mvp
+--microVIEW-PLUS使用
+diablo.mvr
+--microVIEW-PLUS使用
+diablo.uer
+--microVIEW-PLUS使用
+mem_init.bin
+--diablo的LSI初始化程序
+diablo_img.bin
+--rom的imagefile
+serial_flash_program.out
+--rom烧写程序
+init.mvw
+--Diablo LSI初始化宏
+
+
+请将如下文件放在一个文件夹内：
+1_meminit_download.mvw
+2_romimg_download.mvw
+diablo.mvp
+diablo.mvr
+diablo.uer
+diablo_img.bin
+meminit.bin
+serial_flash_program.out
+
+2,需要安装必须的软件：
+1)ICESoftware\APClient\setup.exe
+2)mvwPLUS\mvw_jpn\setup.exe
+3)为advice上电并连接usb,并且安装相应驱动,安装驱动的时候,搜索路径是:ICESoftware\driver\usb
+4)安装teraterm-4.67,如果不安装就看不到log
+等以上安装完毕之后(假设我这里选择的安装路径是C盘),有一些文档(没有什么用是调试的时候需要的)在路径:C:\YDC\microVIEW-PLUS\manuals.
+
+3,更改板子跳线：
+检查跳线:
+s2000为:2和5号on，其他都off。
+将s1902跳线组的1号设置为on.
+s1900（如果有的话）都设置为on.
+
+4,运行apcclient:
+1)上电advice之后,连接advice的usb驱动，并运行apcclient程序
+选择菜单option->connect(这里注意之前要在option菜单中选择usb连接，并且关闭norton防护软件)
+选择菜单file->system install(这里需要选择arm11)
+之后就不用apcclient了.
+注意,
+目录下面有diablo.mvp,
+还有diablo_img.bin(将要烧写的NBL)
+把deablo.mvp中的PORT修改成对应的，这里advice中是MGA05025PR
+创建的工程向导中有一个步骤中的USB Device，这里的值自动填充为：MGA05025PR ZX600J
+所以在diablo.mvp中搜索PORT并设置为MGA05025PR.
+
+注意，这里需要关闭norton,关闭norton防护软件的方法是：
+1 运行 services.msc
+2 关闭symantec management client
+3 设备硬件管理器中再重新启动一下那个usb驱动即可。
+
+
+============
+二、烧写
+============
+烧写之前，先将advice pro和机器连接(有一个类似光驱形状的线在sxs卡对侧有相应的插槽)
+1，上电
+烧写之前,先为advice pro上电,等上面的"ICE POWER"灯变绿之后,再给板子上电.
+烧写结束之后,先给板子下电,然后再给advice pro下电.
+
+2,开始烧写
+1)打开teraterm-4.67（超级终端程序），将速率设置成115200n8.文档说设置成230400,没有尝试过。
+如果不打开，看不到烧写的过程。
+2)双击diablo.mvp
+提示是否reset,选择はい.
+弹出的对话框选すべてクリア并确定.(参照文档)
+这样，microVIEW-PLUS就起来了,也可以在启动microView-plus中执行open project,选择diablo.mvp。
+3)
+选择「ファイル」→「ログの実行」.(File->Excute Log)
+选择1_meminit_download.mvw.
+选择「表示」→「出力」,(View->Output)这样可以看见1_meminit_download.mvw被执行。
+2秒之后，选择：「実行制御」→「Stop」.
+这里，如果出现了什么错误信息，那么根据错误信息的错误号码察看C:\YDC\microVIEW-PLUS\下面的“msgdef2_jpn.err”和“msgdef1_jpn.err”错误文件,可以寻找出错的原因。
+4)
+选择「ファイル」→「ログの実行」
+选择2_romimg_download.mvw
+选择「表示」→「出力」这样可以看见 2_romimg_download.mvw被执行。
+有一个串口灯闪，表示正在烧写。
+当出现「Program End」的时候，表示烧写完成了(输出是在teraterm中显示的)。
+
+3,下电
+关闭micro view 程序
+给开发板子下电
+给advicepro下电
+

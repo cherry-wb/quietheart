@@ -1,0 +1,375 @@
+这里是使用中的一些小技巧。
+
+概念相关：
+wiki，wikipedia与mediawiki三者的区别
+wiki系统是个统称,就是百科全书,wikipedia是做得最成功也是较早的一个,所以后者就用了他的名字wiki作为百科全书的代名词,pedia的以及就是百科全书wikipedia使用的是mediawiki系统,mediawiki只是一个程序 
+mediawiki:
+*创建一个新的页面：
+有多个方法：
+1）随便编辑一个页面，输入"[[新页面名称]]"，然后预览。
+这样，在预览中可以点击创建你所指定名称的页面。注意，新建立的页面是一个孤立的页面，应该把它指定为属于某一个分类。
+2)利用搜索功能创建新页面：搜索框输入“你要创建的新页面名称”，然后点击进入，就会提示你创建一个新的页面了。
+3)在网址中输入不存在的页面名称，这样建立一个新的页面：
+例如：http://www.allwiki.com/index.php?title=想要的文章名称&action=edit
+注意，这里在IE中，可能会出现中文的编码问题。
+4)访问一个不存在的链接。
+
+
+**关于分类：
+*创建一个分类页，和创建一个页面类似：
+1）搜索category:不存在的分类
+之后进入就可以创建这个分类页了。任何用"[[category:分类名]]"指定的页面或者分类页面，都是这个分类页面中的子页面或者子分类。
+
+*指定一个页面文章属于某个分类：
+在mediawiki中，在编辑文章时输入:
+[[category:文章分类]]
+这样，会使本文自动归类到“文章分类”下面。如果分类不存在会自动新建一个。编辑完成后，打开页面就会看到在该页面的底部列出你所设定的分类，这个文章就属于列出的分类中的一篇。点击正文页面下端的分类名称，可以进入该分类页面查看更多的同类文章。同时，可以对"分类"这个总页面进行编辑，以进行必要的说明。
+分类说明文本一般被放在文章末尾，但实际上它可以位于文章的任何部分。 同一篇文章可以设定多个分类。
+
+*指定一个分类是属于某个分类的子分类：
+和指定页面文章的分类类似，编辑相应的分类页面，编辑中加上“[[category:父分类名]]”。
+
+*指定某个页面／分类属于某个多层的分类：
+???
+
+*引用一个分类页面的链接：
+mediawiki文章中链接分类页面正确的写法是[[:category:XXX]]，显示时不会显示前导冒号，例如category:mediawiki.
+这里，前导冒号不要忘记，分类页面链接的引用中也可以增加说明文字，格式为[[:category:XXX|说明文字]]，例如文本中的“[[:category:wiki|天下维客的wiki文章索引]]”将显示为"天下维客的wiki文章索引"。如只想隐藏链接中的category:字眼而不改变主标题，|后面不写文字即可，例如[[:category:CPU|]]将显示为"CPU"。 实践发现，即使引用的是一个分类的子分类，也要用"[[:category:子分类名称]]"来直接引用。
+**
+
+**关于子页面
+*创建一个页面的子页面：
+编辑页面的时候输入："[[/子頁面一|子頁面一]] "。
+这样，编辑保存之后，打开当前页面，会出现一个"子页面一"的链接，打开这个链接就进入你的子页面了。这里，'|'前后没有空格，其后面的文字是你链接显示的文字，如果没有的话将显示"/子页面一"。
+
+*创建子子页面：
+编辑页面的时候输入："[[/子頁面二/子子页面|子子頁面]] "。
+这里，点击并创建子子页面之后，子页面二并没有被自动创建，而是直接创建了子子页面。
+
+*指定父页面？
+**
+
+*关于命名空间：
+命名空间解决不同性质页面重名的问题。例如两个部门研发和销售，都有会议这个页面。那么在wiki中表达的方法分别应该是"研发:会议"、"销售:会议".创建页面的时候可以指定一个命名空间。通常wiki有预设的命名空间，如下:
+(Main)	预设，若创建文章是没有指定命名空间，页面就属于这个空间。
+Talk		预设命名重建下的每个页面，都会有对应的Talk页面（系统自动产生），用于在修改页面之前现到对应的talk页面进行讨论。
+User		使用者命名空间，注册之后每个用户会自动获得一个"User:帐号名称"的页面(用户页)，所有的个人页面都可以放在这个命名空间之下。
+网站名称	每个网站的名称会有一个命名空间，例如英文Wikipedia的命名空间就是Wikipedia。
+Image		所有文件档案的命名空间（尽管名称是image），所有上传的文件都在这个命名空间之下，在文章引用的时候，图片是"[[Image:图片名称]]"，文件是"[[Media:文件名称]]"。
+MediaWiki	所有的wiki网站都是在mediawiki软件体系下面架构的，MediaWiki这个命名空间和管理Wiki网站有关，例如修改王爷左面的浏览列，就修改MediaWiki下的SideBar页面。
+Template	对于网站中重复用到的内容，可以设计成模板，内嵌到页面中，而不是链接方式，这样页面可以放在Template命名空间中，用{{Template:页面名称}}来嵌入。
+Help		对于网站中使用说明相关信息一般放在这里。例如Wiki的语法说明，管理者手册页面等。
+Category	分类的命名空间，参见前面Category的相关概念，所有的分类页面也是一个页面，被放在这个命名空间之下。
+可以在网站的"特殊页面->所有页面"中查看所有命名空间（在一个下拉列表中）。这样网站的阅读者可以清楚知道创立的页面应放在那个空间下，寻找文章时如何利用命名空间更快定位。创建新的命名空间是管理者的权限，一般很少用到。
+
+在添加内部链接时，条目名字空间内的页面直接使用“[[页面名称]]”的形式进行链接；而其他名字空间内的页面则要使用“[[名字空间:页面名称]]”的形式。
+
+注意：尽管有这些好处，但名字空间也为用户操作带来了很大的困扰。例如，默认设置中不会搜索主名字空间之外的文章，这使得新手找到帮助内容的难度加大了；同时，设置名字空间的搜索选项数量大，易用性不足。
+站长对名字空间的使用争议很大，有些站长很反感用这个功能划分正式内容（例如天下维客站长）。因此，建议wiki新手对此特性斟酌使用
+更多的信息，参见：
+http://zh.wikipedia.org/wiki/Help:%E5%90%8D%E5%AD%97%E7%A9%BA%E9%97%B4
+
+
+折腾了很久，终于搞清楚mediawiki树状显示子分类的办法了：安装categorytree插件即可，下载地址以及安装方法，链接如下：
+http://www.mediawiki.org/wiki/Extension:CategoryTree
+
+
+关于mediawiki的编程接口
+=============================
+这里说了在EB K1下搜索Wikipedia中的相关总结。
+
+一个参考网站：http://hi.baidu.com/wtnzone/blog/item/39f159daa67de9d1b6fd4892.html
+
+wikipedia访问接口官方文档：
+=========================
+	http://www.mediawiki.org/wiki/API
+其中有各种语言下api的列表。
+例如：
+　　中文维基API：http://zh.wikipedia.org/w/api.php
+　　英文维基API：http://en.wikipedia.org/w/api.php
+
+
+通过官方文档介绍，访问wikipedia的api有如下几种语言的库接口：
+http://www.mediawiki.org/wiki/API:Client_Code
+ Python
+ Java
+ Javascript
+ .NET
+ Perl
+ Ruby
+ PHP
+
+常见问题：
+参考：http://www.mediawiki.org/wiki/API:FAQ#call_the_API.3F
+如何调用api？通过发送http请求给api.php。后面有几个例子可以参考。
+
+如何控制输出的格式？在请求中指定参数字符串"&format=someformat"。
+
+如何获得页面的内容？(txt)
+如果你只是想要获取wikitext文件，不要其他的任何信息，那么最好使用"index.php"的"action=raw"模式，来替代api。如：http://en.wikipedia.org/w/index.php?action=raw&title=Main_Page。可以参考文档" action=raw documentation".
+prop=revisions 模块可以获得页面的信息.
+You can retrieve 50 pages per API request: http://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&titles=Main_Page|Articles This also work with generators.
+
+显示页面的内容?（html）
+类似如下的请求来替代api:http://en.wikipedia.org/w/index.php?action=render&title=Main_Page
+
+一些可能有用的信息：
+每个自建的mediawiki中都有api的使用帮助，例如我的：
+http://192.168.0.118/mediawiki/api.php
+其中看似有用的api有：
+* list=search (sr) *
+* action=opensearch *
+
+*mediawiki的index也有其接口，参考文档：
+http://www.mediawiki.org/wiki/Manual:Parameters_to_index.php
+
+
+
+实践例子：
+=========================
+1）在wiki上面全名搜索
+http://192.168.0.118/mediawiki/api.php?action=query&list=search&srsearch=测试分类的文章1
+这里，wiki网站就是http://192.168.0.118/mediawiki/,
+搜索的文章是：测试分类的文章1.这样会列出所有这个名字的文件到一个文件中（默认xml格式）
+
+*用txt显示：
+http://192.168.0.118/mediawiki/api.php?action=query&list=search&srsearch=mytest1&format=txt
+这里，具体格式参见http://zh.wikipedia.org/w/api.php，这样显示的结果类似如下：
+Array
+(
+    [query] => Array
+        (
+            [search] => Array
+                (
+                    [0] => Array
+                        (
+                            [ns] => 0
+                            [title] => Mytest1
+                        )
+
+                )
+
+        )
+
+)
+
+*之请求指定页面的内容，不要任何的其他信息：
+http://192.168.0.118/mediawiki/index.php?action=raw&title=mytest1
+
+*用txt格式获取页面的版本和作者等信息：
+http://192.168.0.118/mediawiki/api.php?action=query&prop=revisions&titles=mytest1&format=txt
+这里，如果是txtfm就直接在浏览器中显示出来这个内容了。
+内容如下：
+Array
+(
+    [query] => Array
+        (
+            [normalized] => Array
+                (
+                    [0] => Array
+                        (
+                            [from] => mytest1
+                            [to] => Mytest1
+                        )
+
+                )
+
+            [pages] => Array
+                (
+                    [15] => Array
+                        (
+                            [pageid] => 15
+                            [ns] => 0
+                            [title] => Mytest1
+                            [revisions] => Array
+                                (
+                                    [0] => Array
+                                        (
+                                            [revid] => 42
+                                            [user] => Administrator
+                                            [timestamp] => 2010-03-17T08:54:35Z
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+*获得页面的内容
+http://192.168.0.118/mediawiki/api.php?action=query&prop=revisions&titles=mytest1&rvprop=timestamp|user|comment|content
+
+*获得的内容以一定的格式来返回：
+http://192.168.0.118/mediawiki/api.php?action=query&prop=revisions&titles=mytest1&rvprop=content&format=xmlfm
+这里，如果不用xmlfm用xml就是将文件下载下来。
+
+*根据指定的标题导出页面的txt文本:
+http://192.168.0.118/mediawiki/index.php?action=raw&title=mytest1
+这里，导出来之后，页面的格式标记也作为txt的内容导出来了,这里使用的是index的接口。
+
+*查看页面的内容，显示到浏览器上面：
+http://192.168.0.118/mediawiki/index.php?action=view&title=mytest1
+这里使用的是index的接口,显示的内容是源代码，包含页面框架。
+
+*查看页面内容，只显示请求的页面，并且没有格式：
+http://192.168.0.118/mediawiki/index.php?action=render&title=mytest1
+
+目前通过wikimedia提供的php接口，返回的内容里面都包含标记，还没有办法把这些标记去掉。
+
+目前打算使用Pywikipediabot工具来请求wikipedia内容：
+=========================
+这里是python库，好像是访问wikipedia的api接口的一些python脚本集合。
+而wikipedia的api接口是php的，利用这些接口可以操作wikipedia上的内容，例如添加删除文章等。
+下载地址：http://toolserver.org/~valhallasw/pywiki/
+项目地址：https://sourceforge.net/projects/pywikipediabot/
+检出地址：svn co http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia pywikipedia
+文档地址：http://meta.wikimedia.org/wiki/Using_the_python_wikipediabot
+
+1,使用方法：
+pywikipediabot机器人程序，利用python脚本，发送http请求，调用mediawiki系统网站提供的php接口，来操作相关的网站，其中它已经支持了wikipedia网站，
+这里更一步说明如何利用pywikipediabot机器人程序来操作自己搭建的mediawiki网站。
+1）搭建mediawiki
+具体步骤不多说了,网上也有,自己也做过类似的总结。
+
+2)运行之前的配置。
+在运行其中的模块之前，首先需要配置,大致过程如下：
+2.1)安装python2.4或更新版本的python.
+2.2)下载pywikipedia机器人程序。
+2.3)在解压之后的pywikipedia/families目录里建立你自己的网站描述信息。
+2.4)运行generate_user_files.py脚本，生成user-config.py配置文件和user-fixes.py配置文件。
+2.5)运login.py登录user-config.py中指定网站的指定用户帐号。
+2.6)开始运行其他脚本进行操作。例如category.py来管理分类，template.py来管理模板等等。
+
+下面就关键的地方进行详细说明：
+(1)下载pywikipedia机器人程序。
+下载地址：http://toolserver.org/~valhallasw/pywiki/
+项目地址：https://sourceforge.net/projects/pywikipediabot/
+(2)在解压之后的pywikipedia/families目录里建立你自己的网站描述信息:
+这里，我将mediawiki的内容搭建在/var/www/mediawiki了。
+(2.1)查看自己的网站信息
+根据文档说明：http://meta.wikimedia.org/wiki/Pywikipediabot/Use_on_non-WMF_wikis
+用如下的php api请求：
+http://192.168.0.118/mediawiki/api.php?action=query&meta=siteinfo&siprop=general|namespaces|namespacealiases|statistics
+这里，我的网站名称是QuietHeart,机器地址是192.168.0.118,还有mediawiki的版本,以及api的帮助等。
+(2.2)建立pywikipedia/families/quietheart_family.py
+创建的方法参考：README-family.txt.
+关键的地方是含有REQUIRED的地方：
+#...前面省略...
+self.name = 'quietheart'        # REQUIRED; replace with actual name
+self.langs = {                # REQUIRED
+	'en': '192.168.0.118/mediawiki',  # Include one line for each wiki in family
+		'zh-hans': '192.168.0.118/mediawiki',   # in the format 'code': 'hostname',
+}
+#...省略...
+self.namespaces[4] = {
+	'_default': [u'quietheart', self.namespaces[4]['_default']], # REQUIRED
+		'de': 'Name des wiki',
+	'es': 'Nombre del wiki',
+	'zh-hans': 'Nom du wiki',
+# ETC.
+}
+#...省略...
+	def scriptpath(self, code):
+	#这里，一定注意不要写成return '/'
+	return ''
+#...省略...
+    def version(self, code):
+        return '1.15.2'
+#...省略...
+(2.3)根据你的网站信息，生成用户配置文件：
+$python generate_user_files.py
+这样按照提示去做，会生成一个user-config.py.文件。
+
+如果想要指定的用户登录，修改其中如下语句：
+usernames['quietheart']['zh-hans'] = u'administrator'
+这样会在quietheart站点上面用administrator登录。
+
+user-config.py编辑完了之后要去掉写权限,否则登录的时候会被忽略。
+(3)登录
+$python login.py
+这样就登录到你自己的站点上面了。
+你就可以使用其他的脚本工具了。
+
+根据文档http://meta.wikimedia.org/wiki/Pywikipediabot/Basic_use
+工具中的每个功能脚本的运行方式如下格式：
+$python <脚本名>.py
+对于所有脚本程序，一些通用的参数:
+-help
+打印帮助信息列表。
+
+-lang:xx
+设置你运行时候的语言码为xx.这个设置会覆盖user-config.py中的设置。
+
+-family:xyz
+设置你想要运行的wiki的family.例如:wikipedia,wiktionary等。这里会覆盖user-config.py中的设置。
+
+-log
+使用logfile,日志信息会存储在logs子目录。
+
+-log:xyz
+使用logfile,使用xyz作为文件名。
+
+-nolog
+不使用logfile(前提是默认使用log了).
+
+-putthrottle:nn
+设置机器人程序在存储页面的时候的最小等待时间为nn秒。默认的值是10秒。
+
+例如，
+python scriptname.py -family:wiktionary
+这个命令会运行"scriptname"机器人脚本，取代user-config的family而处理指定的wiktionary上的文章.
+
+
+2,使用举例:
+1)使用query来请求php的api接口：
+*调用 action=opensearch 接口，
+搜索标题以mytest开始的标题,最多返回2个结果
+(1)编写python脚本如下：
+#!/usr/bin/python
+#Search "mytest" maximum count is 2.
+import query
+params = {
+	'action'    :'opensearch',
+	'search'    :'mytest',
+	'limit'     :'5',
+	'rvlimit'   :'2',
+	'rvprop'    :'user|timestamp|content',
+}
+print query.GetData(params, encodeTitle = False)
+(2)运行脚本：
+$python mytest_opensearch.py
+这里假设python脚本保存的文件名是:mytest_opensearch.py.具体的opensearch,其api参考相关文档。
+
+*调用 list=search (sr) 接口。
+在页的标题中搜索含mytest,最大返回数目是5.
+(1)编写脚本如下：
+#!/usr/bin/python
+#Search "mytest" in the title/text,maximum return count is 5.
+import query
+params = {
+	'action'    :'query',
+	'list'      :'search',
+	'srwhat'    :'title',
+#'srwhat'    :'text',
+	'srsearch'  :'*mytest*',
+	'srlimit'   :'5',
+}
+print query.GetData(params, encodeTitle = False)
+(2)运行脚本：
+$python mytest_search.py
+这里假设python脚本保存的文件名是:mytest_search.py.具体的search,其api参考相关文档。
+
+*获取指定标题的页面的内容:
+$python get.py mytest1
+这里，get.py脚本是自带的，mytest1就是要获取的页面的标题。执行之后会把页面的内容用txt的形式打印到标准输出中。
+
+
+
+目前的问题：
+mediawiki的phpapi提供的访问页面的接口，无论txt还是xml格式，返回的数据都是页面的源代码，而不是解析之后显示给用户的数据。
+mediawiki的index接口提供的raw也是这样,好像只要是下载的东西，返回的都是源代码。
+

@@ -1,0 +1,2516 @@
+------------------------------------------------------------------------
+r1339 | yujj | 2012-03-27 21:51:26 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/tate/00_ping_test.xml
+   A /Management/wifi/test_suite/scripts/parser/scheduler.py
+   A /Management/wifi/test_suite/scripts/parser/testcase.py
+   A /Management/wifi/test_suite/scripts/parser/xml_parser.py
+
+replace json parser with xml parser
+------------------------------------------------------------------------
+r1335 | zhenglei | 2012-03-27 18:12:20 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+add set dhcp to wrt54gl
+------------------------------------------------------------------------
+r1334 | chengzhx | 2012-03-27 18:07:17 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_dhcp.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_dhcp.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_dhcp.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add dhcp
+------------------------------------------------------------------------
+r1333 | zhenglei | 2012-03-27 18:02:53 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+
+------------------------------------------------------------------------
+r1332 | lv-k | 2012-03-27 17:57:16 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+
+add temp dir for real time report in html format
+------------------------------------------------------------------------
+r1325 | shen-yh | 2012-03-27 17:28:40 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/utils/adb.py
+
+
+------------------------------------------------------------------------
+r1324 | shen-yh | 2012-03-27 17:28:07 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/utils/wifi.py
+
+shen update
+------------------------------------------------------------------------
+r1323 | lv-k | 2012-03-27 17:22:30 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/00_sample_case1.json.template
+   M /Management/wifi/test_suite/cases/tate/00_ping_test.json
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_transmissionRate.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/doc/scenario_with_subscenario_sample.json.template
+   M /Management/wifi/test_suite/doc/simple_case_sample.json.template
+   M /Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+modify the "class" keywork to "catagory"
+------------------------------------------------------------------------
+r1322 | lv-k | 2012-03-27 17:14:17 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+modify bug for parser
+------------------------------------------------------------------------
+r1313 | lv-k | 2012-03-27 16:26:04 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+[Note]delete scenario json from framework, needs the patch for old format be deleted
+------------------------------------------------------------------------
+r1309 | guo.hm | 2012-03-27 15:19:52 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modefy setSecurityMode
+------------------------------------------------------------------------
+r1305 | zhenglei | 2012-03-27 14:22:54 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+
+------------------------------------------------------------------------
+r1298 | zhenglei | 2012-03-27 13:50:13 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+
+------------------------------------------------------------------------
+r1291 | chengzhx | 2012-03-27 13:30:41 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+
+modify dns
+------------------------------------------------------------------------
+r1286 | chengzhx | 2012-03-27 11:29:11 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+modify reset_route
+------------------------------------------------------------------------
+r1281 | lv-k | 2012-03-27 11:11:35 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+modify framework(case parse scenario before run) a little
+------------------------------------------------------------------------
+r1277 | chengzhx | 2012-03-27 11:02:22 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+test wrt54gl
+------------------------------------------------------------------------
+r1272 | guo.hm | 2012-03-27 10:13:05 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+
+comment
+------------------------------------------------------------------------
+r1270 | zhenglei | 2012-03-27 09:44:19 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modify comment for functions
+------------------------------------------------------------------------
+r1269 | lv-k | 2012-03-27 09:40:28 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+no use of contex vendor for ap and dut
+------------------------------------------------------------------------
+r1266 | zhenglei | 2012-03-27 09:04:46 +0800 (Tue, 27 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/db/dbmanager.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify for new structure
+------------------------------------------------------------------------
+r1261 | lv-k | 2012-03-26 17:24:09 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+
+log file with time name
+------------------------------------------------------------------------
+r1259 | chengzhx | 2012-03-26 16:58:56 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify tab and space
+------------------------------------------------------------------------
+r1257 | lv-k | 2012-03-26 16:53:49 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+   A /Management/wifi/test_suite/scripts/lib/pyh.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+dummy tools for report in html format
+------------------------------------------------------------------------
+r1251 | chengzhx | 2012-03-26 15:55:28 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+add the comment
+------------------------------------------------------------------------
+r1245 | zhenglei | 2012-03-26 15:06:27 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/factory.py
+
+modify a bug in factory (reset default value nomatter new obj or not)
+------------------------------------------------------------------------
+r1244 | shen-yh | 2012-03-26 14:05:46 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+modify wpa_stopped
+------------------------------------------------------------------------
+r1243 | shen-yh | 2012-03-26 14:05:13 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scripts/dut/ping_test.sh
+   D /Management/wifi/test_suite/scripts/dut/start_supplicant.sh
+   D /Management/wifi/test_suite/scripts/dut/stop_supplicant.sh
+
+using python instead of shell 
+------------------------------------------------------------------------
+r1242 | guo.hm | 2012-03-26 13:57:54 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+delete the dict in init ap 
+------------------------------------------------------------------------
+r1241 | chengzhx | 2012-03-26 13:35:55 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify cisco_wrt160n
+------------------------------------------------------------------------
+r1240 | shen-yh | 2012-03-26 11:24:32 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong update
+------------------------------------------------------------------------
+r1239 | shen-yh | 2012-03-26 11:22:45 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/utils/adb.py
+
+shenyanhong modify
+------------------------------------------------------------------------
+r1238 | shen-yh | 2012-03-26 11:13:59 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/device/scenario_stop_supplicant.json
+
+shenyanhong 
+------------------------------------------------------------------------
+r1237 | shen-yh | 2012-03-26 11:12:58 +0800 (Mon, 26 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shen add
+------------------------------------------------------------------------
+r1231 | zhenglei | 2012-03-23 18:03:29 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r1229 | zhenglei | 2012-03-23 17:56:19 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.py
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/db/dbmanager.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify for new structure
+------------------------------------------------------------------------
+r1220 | lv-k | 2012-03-23 17:23:40 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+
+misc doc
+------------------------------------------------------------------------
+r1219 | shen-yh | 2012-03-23 17:23:23 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scripts/dut/load_driver.sh
+   D /Management/wifi/test_suite/scripts/dut/unload_driver.sh
+
+del and commit  from shell to python
+------------------------------------------------------------------------
+r1218 | lv-k | 2012-03-23 17:21:55 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/doc/scenario_sample.json.template
+   A /Management/wifi/test_suite/doc/scenario_sample.py.template
+   A /Management/wifi/test_suite/doc/scenario_with_subscenario_sample.json.template
+   A /Management/wifi/test_suite/doc/simple_case_sample.json.template
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+add default type seq for case json files
+------------------------------------------------------------------------
+r1217 | shen-yh | 2012-03-23 17:21:18 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong update
+------------------------------------------------------------------------
+r1211 | lv-k | 2012-03-23 16:41:51 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/factory.py
+
+support many aps with the same vendor
+------------------------------------------------------------------------
+r1210 | shen-yh | 2012-03-23 16:41:33 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/dut/unload_driver.sh
+
+shenyanhong up
+------------------------------------------------------------------------
+r1209 | shen-yh | 2012-03-23 16:40:45 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scripts/dut/unload_driver.sh
+
+shenyanhong delete
+------------------------------------------------------------------------
+r1208 | shen-yh | 2012-03-23 16:39:53 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong update
+------------------------------------------------------------------------
+r1204 | lv-k | 2012-03-23 16:13:38 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/db/dbmanager.py
+
+add constant for dbmanager
+------------------------------------------------------------------------
+r1200 | lv-k | 2012-03-23 15:36:55 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scripts/lib/dbtools.py
+
+delete unused dbtools
+------------------------------------------------------------------------
+r1199 | lv-k | 2012-03-23 15:32:01 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/factory.py
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+replace the dbtools by dbmanager
+------------------------------------------------------------------------
+r1195 | lv-k | 2012-03-23 15:11:28 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/db/dbmanager.py
+   M /Management/wifi/test_suite/scripts/factory.py
+   M /Management/wifi/test_suite/scripts/lib/dbtools.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+set wireless mode in ciscoe3000 ok
+------------------------------------------------------------------------
+r1191 | shen-yh | 2012-03-23 14:33:47 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_disconnect_ap.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_load_driver.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_ping_test.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_start_supplicant.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_stop_supplicant.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_unload_driver.py
+
+shenyanhong update
+------------------------------------------------------------------------
+r1190 | shen-yh | 2012-03-23 14:33:22 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong up
+------------------------------------------------------------------------
+r1186 | shen-yh | 2012-03-23 13:54:35 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/utils/adb.py
+
+shen yanhong new this file for a wrapping adb
+------------------------------------------------------------------------
+r1185 | lv-k | 2012-03-23 13:45:25 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/tools/resetap.py
+
+reset ap try
+------------------------------------------------------------------------
+r1182 | yujj | 2012-03-23 11:52:27 +0800 (Fri, 23 Mar 2012) | 2 lines
+Changed paths:
+   D /Management/wifi/test_suite/scripts/factory_class.py
+
+delete
+
+------------------------------------------------------------------------
+r1181 | yujj | 2012-03-23 11:49:03 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/utils/__init__.py
+   A /Management/wifi/test_suite/scripts/utils/log.py
+
+commit
+------------------------------------------------------------------------
+r1180 | yujj | 2012-03-23 11:48:47 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/db/dbmanager.py
+   A /Management/wifi/test_suite/scripts/factory.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   A /Management/wifi/test_suite/scripts/utils
+
+commit
+------------------------------------------------------------------------
+r1167 | shen-yh | 2012-03-23 09:23:49 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/base.py
+
+
+------------------------------------------------------------------------
+r1165 | chengzhx | 2012-03-23 09:17:10 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+
+modify DNS
+------------------------------------------------------------------------
+r1163 | zhenglei | 2012-03-23 09:11:52 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+
+modify dir655 reset route
+------------------------------------------------------------------------
+r1162 | guo.hm | 2012-03-23 08:57:09 +0800 (Fri, 23 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_transmissionRate.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+
+format cases
+------------------------------------------------------------------------
+r1161 | yujj | 2012-03-22 18:19:59 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/db/__init__.py
+   A /Management/wifi/test_suite/scripts/db/dbmanager.py
+
+commit
+------------------------------------------------------------------------
+r1159 | yujj | 2012-03-22 18:08:37 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/base.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   A /Management/wifi/test_suite/scripts/db
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/lib/dbtools.py
+
+commit
+------------------------------------------------------------------------
+r1147 | shen-yh | 2012-03-22 15:48:18 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scenarios/device/scenario_disconnect_ap.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_disconnect_ap.py
+
+shenyanhong new two files for disconnect
+------------------------------------------------------------------------
+r1146 | shen-yh | 2012-03-22 15:47:49 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyunhong up
+------------------------------------------------------------------------
+r1145 | shen-yh | 2012-03-22 15:47:35 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ping_test.json
+
+shenyanhong up
+------------------------------------------------------------------------
+r1141 | lv-k | 2012-03-22 15:21:34 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+setpassphrase ok
+------------------------------------------------------------------------
+r1136 | lv-k | 2012-03-22 11:11:57 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ping_test.json
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/lib/dbtools.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+add the "all" keyword for ap model in casefile
+------------------------------------------------------------------------
+r1132 | lv-k | 2012-03-22 10:08:57 +0800 (Thu, 22 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ping_test.json
+   M /Management/wifi/test_suite/doc/intro
+
+test tate
+------------------------------------------------------------------------
+r1116 | guo.hm | 2012-03-21 17:02:53 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+completly test all cases in netgear3700
+------------------------------------------------------------------------
+r1115 | shen-yh | 2012-03-21 16:58:12 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong update
+------------------------------------------------------------------------
+r1114 | lv-k | 2012-03-21 16:47:01 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/lib/dbtools.py
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+   M /Management/wifi/test_suite/scripts/tools/resetap.py
+
+log to databases
+------------------------------------------------------------------------
+r1112 | shen-yh | 2012-03-21 16:23:39 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scenarios/device/scenario_load_driver.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_load_driver.py
+
+shenyanhong up
+------------------------------------------------------------------------
+r1111 | shen-yh | 2012-03-21 16:23:27 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scenarios/device/scenario_start_supplicant.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_start_supplicant.py
+   A /Management/wifi/test_suite/scenarios/device/scenario_stop_supplicant.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_stop_supplicant.py
+   A /Management/wifi/test_suite/scenarios/device/scenario_unload_driver.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_unload_driver.py
+
+shenyanhong up
+------------------------------------------------------------------------
+r1110 | shen-yh | 2012-03-21 16:22:10 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+shenyanhong modify
+------------------------------------------------------------------------
+r1109 | shen-yh | 2012-03-21 16:22:01 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/dut/load_driver.sh
+   A /Management/wifi/test_suite/scripts/dut/start_supplicant.sh
+   A /Management/wifi/test_suite/scripts/dut/stop_supplicant.sh
+   A /Management/wifi/test_suite/scripts/dut/unload_driver.sh
+
+shenyanhong up
+------------------------------------------------------------------------
+r1108 | shen-yh | 2012-03-21 16:21:37 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ping_test.json
+
+shenyanhong modify
+------------------------------------------------------------------------
+r1104 | guo.hm | 2012-03-21 15:45:47 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+setSSID do not have same name in 2G and 4G
+------------------------------------------------------------------------
+r1101 | zhenglei | 2012-03-21 15:01:56 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+
+------------------------------------------------------------------------
+r1097 | zhenglei | 2012-03-21 14:45:55 +0800 (Wed, 21 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+Modify for reset remoute
+
+------------------------------------------------------------------------
+r1093 | guo.hm | 2012-03-21 14:11:18 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modify the setChannel 
+------------------------------------------------------------------------
+r1092 | guo.hm | 2012-03-21 14:10:39 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modify the setChannel 
+------------------------------------------------------------------------
+r1079 | zhenglei | 2012-03-21 10:54:18 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify for reset Route
+------------------------------------------------------------------------
+r1074 | chengzhx | 2012-03-21 09:56:51 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modify dns
+------------------------------------------------------------------------
+r1071 | zhenglei | 2012-03-21 09:33:04 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+
+modify dlink_dir655.py for resetRoute
+------------------------------------------------------------------------
+r1070 | songld | 2012-03-21 09:18:47 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+add wireless mode and security in wndr3700v3
+------------------------------------------------------------------------
+r1069 | guo.hm | 2012-03-21 09:17:49 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+
+delete some 'print  ' 
+------------------------------------------------------------------------
+r1068 | guo.hm | 2012-03-21 09:10:52 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+add setSSID setSsidBroadcast and setChannel
+------------------------------------------------------------------------
+r1067 | chengzhx | 2012-03-21 09:09:08 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+
+modify dns
+------------------------------------------------------------------------
+r1066 | lv-k | 2012-03-21 09:03:53 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+
+change the default behavior of main.py not reset all routers
+------------------------------------------------------------------------
+r1065 | chengzhx | 2012-03-21 09:00:21 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+add dns、passpharse for wndr3700v3
+------------------------------------------------------------------------
+r1064 | zhenglei | 2012-03-21 08:57:54 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+modify openWebDriver()
+------------------------------------------------------------------------
+r1063 | lv-k | 2012-03-21 08:30:55 +0800 (Wed, 21 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/lib/dbtools.py
+   A /Management/wifi/test_suite/scripts/lib/exceptions.py
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+work for multi process and log
+------------------------------------------------------------------------
+r1033 | shen-yh | 2012-03-19 16:39:04 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scenarios/device/tate
+
+shenyanhong del
+------------------------------------------------------------------------
+r1032 | shen-yh | 2012-03-19 16:36:52 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/dut/ping_test.sh
+
+
+------------------------------------------------------------------------
+r1031 | shen-yh | 2012-03-19 16:36:48 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/base.py
+
+
+------------------------------------------------------------------------
+r1030 | shen-yh | 2012-03-19 16:36:33 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+
+------------------------------------------------------------------------
+r1028 | shen-yh | 2012-03-19 16:36:06 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scenarios/device/scenario_ping_test.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_ping_test.py
+
+
+------------------------------------------------------------------------
+r1027 | shen-yh | 2012-03-19 16:35:44 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/tate/00_ping_test.json
+
+
+------------------------------------------------------------------------
+r1026 | shen-yh | 2012-03-19 16:35:35 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+
+
+------------------------------------------------------------------------
+r1011 | chengzhx | 2012-03-19 14:23:11 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+add setDNS
+------------------------------------------------------------------------
+r1010 | chengzhx | 2012-03-19 13:40:09 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+
+edit NetgearWndr3700v3
+------------------------------------------------------------------------
+r1009 | zhenglei | 2012-03-19 13:33:03 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_transmissionRate.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   D /Management/wifi/test_suite/scenarios/ap/scenario_set_channel_scan.json
+   D /Management/wifi/test_suite/scenarios/ap/scenario_set_channel_scan.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   A /Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add func to ap dlink_dir655 and add class NetgearWndr3700v3
+------------------------------------------------------------------------
+r1008 | chengzhx | 2012-03-19 13:24:19 +0800 (Mon, 19 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add DNS for wrt160n
+------------------------------------------------------------------------
+r989 | zhenglei | 2012-03-16 18:53:07 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+
+add set securitymode for dlink_dir655
+------------------------------------------------------------------------
+r987 | lv-k | 2012-03-16 18:22:23 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+
+main.py 
+------------------------------------------------------------------------
+r985 | songld | 2012-03-16 17:57:21 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+add in 00_ap_set_passphrase.json  00_ap_set_keyRenewal.json  00_ap_set_SSID.json  00_ap_set_SSID_Broadcast.json
+------------------------------------------------------------------------
+r979 | lv-k | 2012-03-16 17:23:46 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+
+format logger information
+------------------------------------------------------------------------
+r978 | zhenglei | 2012-03-16 17:20:39 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_channel_scan.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_channel_scan.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add func for dlink_dir655
+------------------------------------------------------------------------
+r977 | lv-k | 2012-03-16 17:14:28 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/lib/logtools.py
+   M /Management/wifi/test_suite/scripts/tools/resetap.py
+
+change the code about log init
+------------------------------------------------------------------------
+r973 | guo.hm | 2012-03-16 16:57:48 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+change 'enabled' to 'Enabled' in dbgenerate.py
+------------------------------------------------------------------------
+r972 | lv-k | 2012-03-16 16:52:11 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   D /Management/wifi/test_suite/scripts/lib/db_api.py
+   A /Management/wifi/test_suite/scripts/lib/dbtools.py (from /Management/wifi/test_suite/scripts/lib/db_api.py:970)
+
+change the db_api to dbtools
+------------------------------------------------------------------------
+r970 | lv-k | 2012-03-16 16:49:15 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   D /Management/wifi/test_suite/scripts/lib/log_api.py
+   A /Management/wifi/test_suite/scripts/lib/logtools.py (from /Management/wifi/test_suite/scripts/lib/log_api.py:968)
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   A /Management/wifi/test_suite/scripts/tools/resetap.py (from /Management/wifi/test_suite/scripts/tools/test.py:968)
+   D /Management/wifi/test_suite/scripts/tools/test.py
+
+change the log_api to logtools
+------------------------------------------------------------------------
+r969 | chengzhx | 2012-03-16 16:48:35 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+
+delete and
+------------------------------------------------------------------------
+r967 | chengzhx | 2012-03-16 15:43:12 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+
+edit for CiscoWRT160N
+------------------------------------------------------------------------
+r966 | guo.hm | 2012-03-16 15:39:14 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+complete the ap of e3200
+------------------------------------------------------------------------
+r957 | lv-k | 2012-03-16 14:37:53 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add the disconnect of connection of mysql
+------------------------------------------------------------------------
+r956 | chengzhx | 2012-03-16 14:34:29 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+
+add functions to CiscoWRT160N
+------------------------------------------------------------------------
+r952 | lv-k | 2012-03-16 14:05:00 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.py.template
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add new change for synchronize work with others
+------------------------------------------------------------------------
+r949 | lv-k | 2012-03-16 13:31:55 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify the structure of database data generator
+------------------------------------------------------------------------
+r940 | chengzhx | 2012-03-16 11:16:04 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+edit channelWidth for e3000
+------------------------------------------------------------------------
+r935 | lv-k | 2012-03-16 10:18:26 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify a syntax error
+------------------------------------------------------------------------
+r933 | lv-k | 2012-03-16 10:11:59 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+   M /Management/wifi/test_suite/scripts/tools/test.py
+
+add the subprocess module function for reset route in multi process
+------------------------------------------------------------------------
+r932 | yujj | 2012-03-16 10:11:51 +0800 (Fri, 16 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/.project
+
+change eclipse project name
+------------------------------------------------------------------------
+r919 | chengzhx | 2012-03-15 18:06:27 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   A /Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+add functions for CiscoWRT160N
+------------------------------------------------------------------------
+r914 | zhenglei | 2012-03-15 17:44:06 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   A /Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+
+add ap Dlink-DIR655 
+------------------------------------------------------------------------
+r910 | zhenglei | 2012-03-15 17:05:29 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/tools/test.py
+
+modify grammer
+------------------------------------------------------------------------
+r907 | zhenglei | 2012-03-15 16:34:07 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r901 | lv-k | 2012-03-15 14:57:17 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+
+modify the phrase error.
+------------------------------------------------------------------------
+r899 | zhenglei | 2012-03-15 14:40:41 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify for reset Route
+------------------------------------------------------------------------
+r896 | lv-k | 2012-03-15 14:37:30 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/lib/log_api.py
+   A /Management/wifi/test_suite/scripts/tools/test.py
+
+toos/test.py
+------------------------------------------------------------------------
+r885 | chengzhx | 2012-03-15 10:55:19 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   D /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+edit channelwidth and security
+------------------------------------------------------------------------
+r882 | guo.hm | 2012-03-15 10:25:28 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+correct some not precise expressions
+------------------------------------------------------------------------
+r878 | zhenglei | 2012-03-15 09:53:37 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r876 | zhenglei | 2012-03-15 09:25:52 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+
+modify for reset Route
+------------------------------------------------------------------------
+r875 | zhenglei | 2012-03-15 09:08:19 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+modify reset Route
+------------------------------------------------------------------------
+r874 | zhenglei | 2012-03-15 09:04:24 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+modify reset Route
+------------------------------------------------------------------------
+r873 | lv-k | 2012-03-15 08:30:50 +0800 (Thu, 15 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+
+get settings from db not modify object
+------------------------------------------------------------------------
+r866 | chengzhx | 2012-03-14 17:49:46 +0800 (Wed, 14 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms_wrt.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+   D /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms_wrt.json
+   D /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms_wrt.py
+
+ 'modify file's name for Algorithms'
+
+------------------------------------------------------------------------
+r863 | zhenglei | 2012-03-14 17:32:41 +0800 (Wed, 14 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+Add reset Route for e3000 and wrt54gl
+
+------------------------------------------------------------------------
+r855 | lv-k | 2012-03-14 17:02:45 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+modify a bug in dbgenerate
+------------------------------------------------------------------------
+r850 | chengzhx | 2012-03-14 16:49:06 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_Algorithms_wrt.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms_wrt.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms_wrt.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+edit securitymode 、Algorithms and passphrase for wrt54gl
+------------------------------------------------------------------------
+r848 | guo.hm | 2012-03-14 16:40:35 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+merge the case from wrt54gl and e3000 ,and change the path of scenarios/ap/scenario_set_wireless_passphrase.json, scenarios/ap/scenario_set_radio_off.json, scenarios/ap/scenario_set_wireless_passphrase.py, scenarios/ap/scenario_set_radio_off.py
+------------------------------------------------------------------------
+r837 | yujj | 2012-03-14 15:10:37 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.json
+
+add scripts package
+------------------------------------------------------------------------
+r835 | chengzhx | 2012-03-14 14:59:25 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+edit channel channelwidth securitymode 
+------------------------------------------------------------------------
+r834 | lv-k | 2012-03-14 14:56:09 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+connect_ap passed
+------------------------------------------------------------------------
+r833 | guo.hm | 2012-03-14 14:51:02 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/__init__.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+use dict_securityMode_5G and dict_securityMode_2G in setPassphrase
+------------------------------------------------------------------------
+r832 | chengzhx | 2012-03-14 14:49:08 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+
+edit channel channelwidth securitymode 
+------------------------------------------------------------------------
+r826 | zhenglei | 2012-03-14 14:29:01 +0800 (Wed, 14 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.json (from /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json:810)
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py (from /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py:810)
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.json (from /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json:810)
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py (from /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py:810)
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+Modify for new framework
+
+------------------------------------------------------------------------
+r821 | yujj | 2012-03-14 13:28:03 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/tools
+
+move tools to scripts folder
+------------------------------------------------------------------------
+r820 | yujj | 2012-03-14 13:27:27 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/tools
+   A /Management/wifi/test_suite/scripts/tools/__init__.py
+   A /Management/wifi/test_suite/scripts/tools/dbgenerate.py
+
+move tools to scripts folder
+------------------------------------------------------------------------
+r819 | yujj | 2012-03-14 13:24:46 +0800 (Wed, 14 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/00_sample_case1.json.template
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+   M /Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+1.delete space character.
+2.add package include.
+------------------------------------------------------------------------
+r816 | yujj | 2012-03-14 13:00:14 +0800 (Wed, 14 Mar 2012) | 3 lines
+Changed paths:
+   M /Management/wifi/test_suite/.pydevproject
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/__init__.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/__init__.py
+   A /Management/wifi/test_suite/scripts/__init__.py
+   M /Management/wifi/test_suite/scripts/ap/__init__.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/dut/__init__.py
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+   M /Management/wifi/test_suite/scripts/host/__init__.py
+   M /Management/wifi/test_suite/scripts/lib/__init__.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/scripts/lib/log_api.py
+   M /Management/wifi/test_suite/scripts/parser/__init__.py
+   A /Management/wifi/test_suite/tools/__init__.py
+
+1.change scenarios, scripts, tools to package
+2.delete warnings.
+
+------------------------------------------------------------------------
+r809 | lv-k | 2012-03-14 11:05:34 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.json
+
+set channel for e3000 ok
+------------------------------------------------------------------------
+r807 | lv-k | 2012-03-14 10:37:02 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/00_sample_case1.json.template
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   M /Management/wifi/test_suite/doc/intro
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_login.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_login.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_logout.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/device/__init__.py
+   A /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.json
+   A /Management/wifi/test_suite/scenarios/device/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+   M /Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   M /Management/wifi/test_suite/scripts/dut/base.py
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   M /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+new framework sample and connect_ap and set_wireless_mode can work
+------------------------------------------------------------------------
+r805 | zhenglei | 2012-03-14 10:07:21 +0800 (Wed, 14 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+
+
+------------------------------------------------------------------------
+r786 | zhenglei | 2012-03-13 17:29:20 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+
+------------------------------------------------------------------------
+r780 | guo.hm | 2012-03-13 16:44:53 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+set wireless mode
+------------------------------------------------------------------------
+r778 | chengzhx | 2012-03-13 16:28:44 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+update securitymode
+------------------------------------------------------------------------
+r777 | chengzhx | 2012-03-13 16:14:05 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+update securitymode
+------------------------------------------------------------------------
+r773 | zhenglei | 2012-03-13 15:59:51 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+
+------------------------------------------------------------------------
+r749 | chengzhx | 2012-03-13 11:16:23 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+check 
+------------------------------------------------------------------------
+r748 | guo.hm | 2012-03-13 11:13:54 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+self.channel=' 1 - 2.412GHZ' 
+------------------------------------------------------------------------
+r746 | zhenglei | 2012-03-13 11:00:10 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+
+
+------------------------------------------------------------------------
+r745 | zhenglei | 2012-03-13 10:56:00 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r744 | chengzhx | 2012-03-13 10:55:35 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+add Algorithms and security_mode for wrt54gl
+------------------------------------------------------------------------
+r743 | lv-k | 2012-03-13 10:49:09 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+nothing
+------------------------------------------------------------------------
+r729 | lv-k | 2012-03-13 09:17:18 +0800 (Tue, 13 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+
+delete useless code from db_api
+------------------------------------------------------------------------
+r723 | lv-k | 2012-03-12 19:05:16 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+change the data base design
+------------------------------------------------------------------------
+r715 | guo.hm | 2012-03-12 17:31:36 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+cisco_wrt54gl
+------------------------------------------------------------------------
+r714 | zhenglei | 2012-03-12 17:07:44 +0800 (Mon, 12 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+add class wrt54gl
+
+------------------------------------------------------------------------
+r696 | zhenglei | 2012-03-12 14:42:01 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r694 | zhenglei | 2012-03-12 14:34:42 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r692 | liu-dj | 2012-03-12 14:21:25 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/TODO
+
+update TODO
+------------------------------------------------------------------------
+r690 | zhenglei | 2012-03-12 13:50:05 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/test/wrt54gl
+
+
+------------------------------------------------------------------------
+r689 | zhenglei | 2012-03-12 13:47:44 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+
+------------------------------------------------------------------------
+r687 | liu-dj | 2012-03-12 13:10:47 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/AUTHORS
+
+update authors
+------------------------------------------------------------------------
+r686 | liu-dj | 2012-03-12 13:07:30 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/LICENSE
+
+add license for this project
+------------------------------------------------------------------------
+r685 | liu-dj | 2012-03-12 13:03:26 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/AUTHORS
+
+add authors of this project
+------------------------------------------------------------------------
+r684 | liu-dj | 2012-03-12 12:58:29 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/TODO
+
+update todo list
+------------------------------------------------------------------------
+r683 | liu-dj | 2012-03-12 12:56:26 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/TODO
+
+add todo list for wifi interopebility
+------------------------------------------------------------------------
+r680 | lv-k | 2012-03-12 11:36:24 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/doc/intro
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+db map
+------------------------------------------------------------------------
+r677 | guo.hm | 2012-03-12 10:36:36 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set wireless passphrase and set radio off 
+------------------------------------------------------------------------
+r674 | chengzhx | 2012-03-12 10:25:31 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+modify channel、channelwidth and securitymode 
+------------------------------------------------------------------------
+r673 | zhenglei | 2012-03-12 09:55:06 +0800 (Mon, 12 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Modify for new scenario.
+
+------------------------------------------------------------------------
+r668 | lv-k | 2012-03-12 09:13:46 +0800 (Mon, 12 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set_wireless_mode is a template
+------------------------------------------------------------------------
+r667 | lv-k | 2012-03-11 15:16:20 +0800 (Sun, 11 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/profiles/general.conf
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+add the database default config ok.
+------------------------------------------------------------------------
+r660 | guo.hm | 2012-03-09 18:21:07 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set passphrase and set radio off
+------------------------------------------------------------------------
+r659 | chengzhx | 2012-03-09 18:02:58 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set channel channelwidth and securitymode
+------------------------------------------------------------------------
+r648 | zhenglei | 2012-03-09 16:33:11 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+
+
+------------------------------------------------------------------------
+r647 | lv-k | 2012-03-09 16:31:32 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+passphrase name
+------------------------------------------------------------------------
+r646 | lv-k | 2012-03-09 16:30:28 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+passphrase name
+------------------------------------------------------------------------
+r642 | lv-k | 2012-03-09 16:14:29 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+
+good for cases/tate/ cases.
+------------------------------------------------------------------------
+r641 | zhenglei | 2012-03-09 16:07:56 +0800 (Fri, 09 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/00_sample_case1.json.template
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Modify for new changes
+
+------------------------------------------------------------------------
+r640 | lv-k | 2012-03-09 15:58:51 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+set wireless mode case good but the tate cannot run
+------------------------------------------------------------------------
+r636 | lv-k | 2012-03-09 15:08:32 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   A /Management/wifi/test_suite/cases/tate/00_connect_ap.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   D /Management/wifi/test_suite/profiles/ap
+   D /Management/wifi/test_suite/profiles/device
+   A /Management/wifi/test_suite/profiles/general.conf (from /Management/wifi/test_suite/profiles/ap/cisco.conf:619)
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.py.template
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/lib/__init__.py
+   A /Management/wifi/test_suite/scripts/lib/db_api.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   D /Management/wifi/test_suite/scripts/utils
+   A /Management/wifi/test_suite/tools (from /Management/wifi/test_suite/scripts/utils:619)
+   M /Management/wifi/test_suite/tools/dbgenerate.py
+
+new frame work good with "connect_ap case"
+------------------------------------------------------------------------
+r612 | chengzhx | 2012-03-09 09:42:58 +0800 (Fri, 09 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+edit channel and channelwith class
+------------------------------------------------------------------------
+r602 | lv-k | 2012-03-08 18:22:48 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/doc/dir_trees
+   A /Management/wifi/test_suite/doc/intro (from /Management/wifi/test_suite/doc/dir_trees:442)
+   M /Management/wifi/test_suite/main.py
+   A /Management/wifi/test_suite/profiles
+   A /Management/wifi/test_suite/profiles/ap
+   A /Management/wifi/test_suite/profiles/ap/cisco.conf
+   A /Management/wifi/test_suite/profiles/device
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+   A /Management/wifi/test_suite/scenarios/sample_scenario1.py.template
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+   A /Management/wifi/test_suite/scripts/utils
+   A /Management/wifi/test_suite/scripts/utils/dbgenerate.py
+
+[WARNING] modify the framework and it cann't work for many scenarios expect for sample*.template
+------------------------------------------------------------------------
+r601 | zhenglei | 2012-03-08 18:20:16 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r600 | zhenglei | 2012-03-08 18:16:06 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r597 | zhenglei | 2012-03-08 18:00:37 +0800 (Thu, 08 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   M /Management/wifi/test_suite/cases/test/wrt54gl/00_ap_set_SSID_wrt.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+Support 24G and 5G changes at one time
+
+------------------------------------------------------------------------
+r595 | chengzhx | 2012-03-08 17:44:09 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+   D /Management/wifi/test_suite/cases/test/00_set_channel.json
+   D /Management/wifi/test_suite/cases/test/00_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+add two values for channel、channelwidth and security_mode
+------------------------------------------------------------------------
+r591 | guo.hm | 2012-03-08 17:25:23 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+delet redundance of the expressions  
+------------------------------------------------------------------------
+r586 | guo.hm | 2012-03-08 15:53:11 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+replace some variables in e3000.py and wireless mode json and radio of json
+------------------------------------------------------------------------
+r581 | guo.hm | 2012-03-08 12:47:34 +0800 (Thu, 08 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_radio_off_24G.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_radio_off_5G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode_24G.json
+   M /Management/wifi/test_suite/cases/test/00_set_security_mode.json
+   M /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+add two variable to save the variable of 2.4G and 5G 
+------------------------------------------------------------------------
+r556 | zhenglei | 2012-03-07 18:01:42 +0800 (Wed, 07 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/wrt54gl
+   A /Management/wifi/test_suite/cases/test/wrt54gl/00_ap_set_SSID_wrt.json
+   M /Management/wifi/test_suite/scenarios/ap/__init__.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.py
+   A /Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+
+add wrt54gl
+
+------------------------------------------------------------------------
+r550 | guo.hm | 2012-03-07 16:41:50 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/01_ap_set_passphrase.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set passphrase 
+------------------------------------------------------------------------
+r548 | chengzhx | 2012-03-07 14:44:03 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+test ok
+------------------------------------------------------------------------
+r547 | chengzhx | 2012-03-07 14:38:27 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_set_security_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+test
+------------------------------------------------------------------------
+r545 | guo.hm | 2012-03-07 11:22:55 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+
+radio off .json
+------------------------------------------------------------------------
+r544 | guo.hm | 2012-03-07 11:14:31 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r543 | zhenglei | 2012-03-07 11:03:33 +0800 (Wed, 07 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_SsidEn.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SsidEn.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SsidEn.py
+   M /Management/wifi/test_suite/scripts/ap/__init__.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+
+modify for SSID_Broadcast
+
+------------------------------------------------------------------------
+r542 | guo.hm | 2012-03-07 10:35:23 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_24G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_24G.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_5G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_5G.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode_24G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode_24G.py
+
+
+------------------------------------------------------------------------
+r541 | chengzhx | 2012-03-07 10:26:11 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_24G.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_5G.json
+   D /Management/wifi/test_suite/cases/test/00_set_24Gchannel.json
+   D /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_24Gchannel.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_24Gchannel.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_24G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_24G.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_5G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_5G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+delete the disabled
+------------------------------------------------------------------------
+r539 | guo.hm | 2012-03-07 09:01:48 +0800 (Wed, 07 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r511 | guo.hm | 2012-03-06 17:58:37 +0800 (Tue, 06 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set_wireless_mode,set_radio_off
+------------------------------------------------------------------------
+r503 | chengzhx | 2012-03-06 17:32:22 +0800 (Tue, 06 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+   A /Management/wifi/test_suite/cases/test/00_set_channel.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+合并channel channelwidth
+------------------------------------------------------------------------
+r484 | zhenglei | 2012-03-06 14:39:56 +0800 (Tue, 06 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r482 | zhenglei | 2012-03-06 14:37:02 +0800 (Tue, 06 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_SSID_24G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SsidEn.json
+   D /Management/wifi/test_suite/cases/test/00_set_5GSSID.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5GSSID.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5GSSID.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_24G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_24G.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SsidEn.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Add set ap wireless SSID, and test is OK.
+
+------------------------------------------------------------------------
+r470 | zhenglei | 2012-03-06 14:12:55 +0800 (Tue, 06 Mar 2012) | 2 lines
+Changed paths:
+   D /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_24G.json
+   D /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_5G.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SsidEn.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SsidEn.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SsidEn.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Add set wireless ssid enable, and test OK.
+
+------------------------------------------------------------------------
+r458 | lv-k | 2012-03-06 10:20:16 +0800 (Tue, 06 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/00_sample_case1.json.template
+
+add a template file for write cases
+------------------------------------------------------------------------
+r457 | lv-k | 2012-03-06 10:19:48 +0800 (Tue, 06 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+   M /Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+
+add two template file for write scenario
+------------------------------------------------------------------------
+r447 | chengzhx | 2012-03-05 11:06:54 +0800 (Mon, 05 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_radio_off_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_24G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set radio_off 24G
+------------------------------------------------------------------------
+r446 | chengzhx | 2012-03-05 10:45:10 +0800 (Mon, 05 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_radio_off_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off_5G.py
+
+set radio_off 5G
+------------------------------------------------------------------------
+r445 | chengzhx | 2012-03-05 10:31:54 +0800 (Mon, 05 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set radiooff 5G
+------------------------------------------------------------------------
+r436 | zhenglei | 2012-03-02 18:49:18 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_24G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_5G.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+test ok
+------------------------------------------------------------------------
+r432 | zhenglei | 2012-03-02 18:35:08 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_24G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_5G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode_24G.json
+
+test ok
+------------------------------------------------------------------------
+r431 | chengzhx | 2012-03-02 18:31:33 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_24Gchannel.json
+   M /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+5Gchannel 2.4Gchannel 全部测试
+------------------------------------------------------------------------
+r430 | zhenglei | 2012-03-02 18:17:47 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_24G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode_24G.json
+
+
+------------------------------------------------------------------------
+r429 | lv-k | 2012-03-02 17:40:28 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/doc/dir_trees
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+[good]merge code for new framework
+------------------------------------------------------------------------
+r425 | guo.hm | 2012-03-02 16:46:47 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SSID_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_24G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+SSID_24G
+------------------------------------------------------------------------
+r424 | guo.hm | 2012-03-02 16:38:15 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_24G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set24gchannelwidth but cann't run nomal when ecord
+------------------------------------------------------------------------
+r420 | guo.hm | 2012-03-02 16:02:16 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_wireless_ChannelWidth_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_ChannelWidth_5G.py
+
+set wireless channel width 5g
+------------------------------------------------------------------------
+r416 | zhenglei | 2012-03-02 14:43:00 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_5G.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set ssiden5g
+------------------------------------------------------------------------
+r415 | chengzhx | 2012-03-02 14:23:35 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.py
+
+set5gchannel
+------------------------------------------------------------------------
+r414 | chengzhx | 2012-03-02 14:19:03 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_24Gchannel.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_24Gchannel.py
+
+set24gchannel
+------------------------------------------------------------------------
+r413 | zhenglei | 2012-03-02 14:19:01 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.pyc
+
+
+------------------------------------------------------------------------
+r412 | chengzhx | 2012-03-02 14:12:39 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_5GSSID.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5GSSID.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.pyc
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+set5gssid
+------------------------------------------------------------------------
+r411 | zhenglei | 2012-03-02 14:05:42 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_24G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_5G.json
+   M /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode_24G.json
+
+
+------------------------------------------------------------------------
+r410 | zhenglei | 2012-03-02 14:03:20 +0800 (Fri, 02 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode_24G.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Add set_wireless_mode_24G
+
+------------------------------------------------------------------------
+r408 | chengzhx | 2012-03-02 11:57:05 +0800 (Fri, 02 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_set_24Gchannel.json
+   A /Management/wifi/test_suite/cases/test/00_set_5GSSID.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_24Gchannel.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_24Gchannel.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5GSSID.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5GSSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+添加2.4Gchannel 5GSSID 模块 并修改5Gchannel 类文件
+
+------------------------------------------------------------------------
+r406 | zhenglei | 2012-03-02 11:15:23 +0800 (Fri, 02 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_24G.json
+   A /Management/wifi/test_suite/cases/test/00_ap_set_SSID_EN_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_24G.pyc
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_SSID_EN_5G.pyc
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Add set_SSID_EN test cases for both 5G and 2.4G
+
+------------------------------------------------------------------------
+r403 | zhenglei | 2012-03-02 10:47:51 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/test/00_set_wireless_SSID_zl.json
+
+
+------------------------------------------------------------------------
+r402 | zhenglei | 2012-03-02 10:42:50 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/test/00_set_ssid_enable.json
+
+
+------------------------------------------------------------------------
+r401 | zhenglei | 2012-03-02 10:41:50 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+
+
+------------------------------------------------------------------------
+r400 | zhenglei | 2012-03-02 10:41:36 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+
+
+------------------------------------------------------------------------
+r399 | lv-k | 2012-03-02 10:29:18 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/__init__.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/ap/__init__.py
+   M /Management/wifi/test_suite/scripts/dut/__init__.py
+   D /Management/wifi/test_suite/scripts/dut/dut_tate.py
+   M /Management/wifi/test_suite/scripts/dut/tate.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/host/__init__.py
+   A /Management/wifi/test_suite/scripts/lib/__init__.py
+   M /Management/wifi/test_suite/scripts/lib/log_api.py
+   A /Management/wifi/test_suite/scripts/parser/__init__.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+merge import struct change and log except dut tate
+------------------------------------------------------------------------
+r397 | lv-k | 2012-03-02 08:59:18 +0800 (Fri, 02 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+[good]for test dut and ap
+------------------------------------------------------------------------
+r392 | lv-k | 2012-03-01 18:17:18 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/dut/dut_tate.py
+
+modify
+------------------------------------------------------------------------
+r391 | chengzhx | 2012-03-01 17:52:42 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+modify the parameter for channel
+------------------------------------------------------------------------
+r389 | zhenglei | 2012-03-01 17:25:40 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   D /Management/wifi/test_suite/cases/test/00_set_wireless_SSID_enable_zl.json
+   A /Management/wifi/test_suite/cases/test/00_set_wireless_SSID_zl.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_enable.json
+   D /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_enable.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+Modify set SSID
+
+------------------------------------------------------------------------
+r388 | lv-k | 2012-03-01 17:13:56 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+
+add login and logout scenarios, now dut connect still has some problem.
+------------------------------------------------------------------------
+r387 | guo.hm | 2012-03-01 17:03:04 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+
+------------------------------------------------------------------------
+r385 | guo.hm | 2012-03-01 16:37:52 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+ChannelWidth 修改类
+
+------------------------------------------------------------------------
+r384 | chengzhx | 2012-03-01 16:36:41 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+channel 修改类
+
+------------------------------------------------------------------------
+r383 | lv-k | 2012-03-01 16:23:10 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+delete channel attribute for wireless mode
+------------------------------------------------------------------------
+r382 | chengzhx | 2012-03-01 16:06:33 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_set_5Gchannel.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_5Gchannel.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+channel 实现
+
+------------------------------------------------------------------------
+r380 | lv-k | 2012-03-01 15:33:44 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+add modify
+------------------------------------------------------------------------
+r379 | lv-k | 2012-03-01 15:33:09 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/scripts/dut/dut_tate.py
+
+add missing files
+------------------------------------------------------------------------
+r378 | lv-k | 2012-03-01 15:25:08 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   M /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+
+add miss file
+------------------------------------------------------------------------
+r377 | lv-k | 2012-03-01 15:09:12 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/cases/tate/00_ap_set_wireless_mode.json
+   D /Management/wifi/test_suite/cases/tplink_tate
+   M /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   A /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.json
+   A /Management/wifi/test_suite/scenarios/device/tate/scenario_connect_ap.py
+   M /Management/wifi/test_suite/scripts/factory_class.py
+   M /Management/wifi/test_suite/scripts/parser/parser.py
+
+can run scenario of dut and ap, but why cann't connect to ap?
+------------------------------------------------------------------------
+r376 | zhenglei | 2012-03-01 14:58:17 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi/test_suite/cases/test/00_set_wireless_SSID_enable_zl.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_enable.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_enable.py
+   M /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+
+SSID enable set by zhenglei
+
+------------------------------------------------------------------------
+r375 | lv-k | 2012-03-01 14:19:17 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   D /Management/wifi/test_suite/cases/cisco_tate
+   A /Management/wifi/test_suite/cases/jem
+   A /Management/wifi/test_suite/cases/tate (from /Management/wifi/test_suite/cases/cisco_tate:374)
+
+change the directory structure
+------------------------------------------------------------------------
+r374 | guo.hm | 2012-03-01 13:49:51 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   A /Management/wifi/test_suite/cases/test
+   A /Management/wifi/test_suite/cases/test/00_set_ssid_enable.json
+   M /Management/wifi/test_suite/main.py
+
+add the test directory
+------------------------------------------------------------------------
+r371 | lv-k | 2012-03-01 09:14:32 +0800 (Thu, 01 Mar 2012) | 1 line
+Changed paths:
+   M /Management/wifi/test_suite/main.py
+
+[test]
+------------------------------------------------------------------------
+r370 | liu-dj | 2012-03-01 09:11:18 +0800 (Thu, 01 Mar 2012) | 2 lines
+Changed paths:
+   A /Management/wifi
+   A /Management/wifi/test_suite
+   A /Management/wifi/test_suite/.project
+   A /Management/wifi/test_suite/.pydevproject
+   A /Management/wifi/test_suite/cases
+   A /Management/wifi/test_suite/cases/00_sample_case1.json.template
+   A /Management/wifi/test_suite/cases/cisco_tate
+   A /Management/wifi/test_suite/cases/cisco_tate/00_ap_set_wireless_mode.json
+   A /Management/wifi/test_suite/cases/tplink_tate
+   A /Management/wifi/test_suite/doc
+   A /Management/wifi/test_suite/doc/RelatedClasses.jpg
+   A /Management/wifi/test_suite/doc/dir_trees
+   A /Management/wifi/test_suite/doc/wifi interoperability hld.docx
+   A /Management/wifi/test_suite/main.py
+   A /Management/wifi/test_suite/report
+   A /Management/wifi/test_suite/report/ping_report
+   A /Management/wifi/test_suite/scenarios
+   A /Management/wifi/test_suite/scenarios/__init__.py
+   A /Management/wifi/test_suite/scenarios/ap
+   A /Management/wifi/test_suite/scenarios/ap/__init__.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco
+   A /Management/wifi/test_suite/scenarios/ap/cisco/__init__.py
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.json
+   A /Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+   A /Management/wifi/test_suite/scenarios/ap/tplink
+   A /Management/wifi/test_suite/scenarios/ap/tplink/__init__.py
+   A /Management/wifi/test_suite/scenarios/device
+   A /Management/wifi/test_suite/scenarios/device/__init__.py
+   A /Management/wifi/test_suite/scenarios/device/tate
+   A /Management/wifi/test_suite/scenarios/device/tate/__init__.py
+   A /Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+   A /Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+   A /Management/wifi/test_suite/scripts
+   A /Management/wifi/test_suite/scripts/ap
+   A /Management/wifi/test_suite/scripts/ap/__init__.py
+   A /Management/wifi/test_suite/scripts/ap/base.py
+   A /Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+   A /Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+   A /Management/wifi/test_suite/scripts/dut
+   A /Management/wifi/test_suite/scripts/dut/__init__.py
+   A /Management/wifi/test_suite/scripts/dut/base.py
+   A /Management/wifi/test_suite/scripts/dut/connect_ap.sh
+   A /Management/wifi/test_suite/scripts/dut/tate.py
+   A /Management/wifi/test_suite/scripts/factory_class.py
+   A /Management/wifi/test_suite/scripts/host
+   A /Management/wifi/test_suite/scripts/host/__init__.py
+   A /Management/wifi/test_suite/scripts/host/base.py
+   A /Management/wifi/test_suite/scripts/host/local_tester.py
+   A /Management/wifi/test_suite/scripts/lib
+   A /Management/wifi/test_suite/scripts/lib/log_api.py
+   A /Management/wifi/test_suite/scripts/parser
+   A /Management/wifi/test_suite/scripts/parser/parser.py
+   A /Management/wifi/test_suite/scripts/parser/parser_api.py
+
+initial wifi interoperability source code
+
+------------------------------------------------------------------------

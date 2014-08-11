@@ -1,0 +1,195 @@
+try1,
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763105392230e54f739678b8d4368d4e415d33146111727fefa7d7f554289852b3457b8492ba8aa7465367766eccddf893cdcb1866d72c8713b676c845662d30ed9ce5155c337912aaeff5ebbfcb72593df93849b0313dd52756df1f29c2d7403bb6ee76335f4a7e95f655807cbeb27648f183673&p=8b2a91129d8352ff57ea9e371107&user=baidu
+ ubuntu安装SSH
+
+安装 SSH(Secure Shell) 服务以提供远程管理服务
+
+sudo apt-get install ssh
+
+SSH 远程登入 Ubuntu 机
+
+ssh username@192.168.0.1
+
+将 文件/文件夹 从远程 Ubuntu 机拷至本地(scp)
+
+scp -r username@192.168.0.1:/home/username/remotefile.txt .
+
+将 文件/文件夹 从本地拷至远程 Ubuntu 机(scp)
+
+scp -r localfile.txt username@192.168.0.1:/home/username/
+
+将 文件/文件夹 从远程 Ubuntu 机拷至本地(rsync)
+
+rsync -v -u -a --delete --rsh=ssh --stats username@192.168.0.1:/home/username/remotefile.txt .
+
+将 文件/文件夹 从本地拷至远程 Ubuntu 机(rsync)
+
+rsync -v -u -a --delete --rsh=ssh --stats localfile.txt username@192.168.0.1:/home/username/
+
+在 Windows 机上用 SSH 远程登录 Ubuntu 机
+
+下载 PuTTY
+
+
+如何在 Windows 机上拷贝 文件/文件夹 从/到 远程 Ubuntu 机
+
+下载 FileZilla
+
+如何限制通过SSH远程连接的用户帐号
+
+如，假如你启用了SSH服务，那么任何有有效帐号的用户都可以远程连接。这可能会导致一些安全问题，由于有一些远程密码破解工具可以尝试常见的用户名／密码
+
+备份SSH服务的配置文件
+
+sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.ORIGINAL
+
+编辑配置文件
+
+sudo gedit /etc/ssh/sshd_config
+
+* 将参数 PermitRootLogin 由 yes 更改为 no。 超级用户不能直接通过远程联机。
+* 添加参数 AllowUsers 设定远程连接的用户名 (用空格来分割) 。
+* 您也可以使用 DenyUsers for fine-grained selection of users.
+* If you enable the openssh server and you have no intention for now to enable remote connections, you may add AllowUsers nosuchuserhere to disable anyone connecting.
+
+
+SSH 命令
+
+ssh 命令可以用来在远程机器上不经 shell 提示登录而执行命令。它的语法格式是： ssh hostname command。譬如，如果你想在远程主机 penguin.example.net 上执行 ls /usr/share/doc 命令，在 shell 提示下键入下面的命令：
+
+ssh penguin.example.net ls /usr/share/doc
+
+3.2. 使用 scp 命令
+
+　　scp 命令可以用来通过安全、加密的连接在机器间传输文件。它与 rcp 相似。
+
+　　把本地文件传输给远程系统的一般语法是：
+
+　　scp localfile username@tohostname:/newfilename
+
+　　localfile 指定源文件，username@tohostname:/newfilename 指定目标文件。
+
+　　要把本地文件 shadowman 传送到你在 penguin.example.net 上的账号内，在 shell 提示下键入(把 username 替换成你的用户名)：
+
+　　scp shadowman username@penguin.example.net:/home/username
+
+　　这会把本地文件 shadowman 传输给 penguin.example.net 上的 /home/username/shadowman 文件。
+
+　　把远程文件传输给本地系统的一般语法是：
+
+　　scp username@tohostname:/remotefile /newlocalfile
+
+　　remotefile 指定源文件，newlocalfile 指定目标文件。
+
+　　源文件可以由多个文件组成。譬如，要把目录 /downloads 的内容传输到远程机器 penguin.example.net 上现存的 uploads 目录，在 shell 提示下键入下列命令：
+
+　　scp /downloads/* username@penguin.example.net:/uploads/
+
+　　3.3. 使用 sftp 命令
+
+　　sftp 工具可以用来打开一次安全互动的 FTP 会话。它与 ftp 相似，只不过，它使用安全、加密的连接。它的一般语法是：sftp username@hostname.com。一旦通过 验证，你可以使用一组和使用 FTP 相似的命令。请参阅 sftp 的说明书页(man)来获取这些 命令的列表。要阅读说明书页，在 shell 提示下执行 man sftp 命令。sftp 工具只在 OpenSSH 版本 2.5.0p1 以上才有。
+
+
+SSH 概念
+
+SSH是指Secure Shell，SSH协议族由IETF（Internet Engineering Task Force）的Network Working Group制定，SSH协议的内容SSH协议是建立在应用层和传输层基础上的安全协议。
+
+传统的网络服务程序，如FTP、Pop和Telnet其本质上都是不安全的；因为它们在网络上用明文传送数据、用户帐号和用户口令，很容易受到中间人（man-in-the-middle）攻击方式的攻击。就是存在另一个人或者一台机器冒充真正的服务器接收用户传给服务器的数据，然后再冒充用户把数据传给真正的服务器。
+
+SSH(Secure Shell)是目前比较可靠的为远程登录会话和其他网络服务提供安全性的协议。利用SSH协议可以有效防止远程管理过程中的信息泄露问题。通过SSH，可以把所有传输的数据进行加密，也能够防止DNS欺骗和IP欺骗。
+SSH，还有一个额外的好处就是传输的数据是经过压缩的，所以可以加快传输的速度。SSH有很多功能，它既可以代替Telnet，又可以为FTP、Pop、甚至为PPP提供一个安全的"通道"。
+
+
+====================================================================
+ssh -X guoshuang@192.168.100.4
+
+支持 SSH 图形界面。也就是说，gedit 打开和另存都是在服务器端操作的。nautilus 打开服务器端的文件管理器。这下就比只用命令行方便多了。不知道 windows 下的 putty 支持不。
+
+ssh -X guoshuang@192.168.100.4 ls
+
+直接在服务器端执行 ls 返回结果到客户端
+
+
+######################################################
+try2,
+http://www.linuxeden.com/html/netadmin/20071226/39537.html
+先在本机上产生public key
+
+ 
+
+ssh-keygen
+
+ 
+
+按缺省生成就行了。如果一切正常，那么就应该生成两个文件：
+
+ 
+
+id_rsa
+
+id_rsa.pub
+
+ 
+
+一个是私钥，一个是公钥，公钥文件id_rsa.pub拷贝到服务器上，然后导入需要登录的用户。
+
+ 
+
+比如使用root用户登录ssh服务器，就导入/root/.ssh目录下。
+
+ 
+
+cat id_rsa.pub >>authorized_keys
+
+ 
+
+这样就可以不用输入密码就登录ssh
+
+ 
+
+ssh root@ssh-server 
+
+
+##########################
+try3,
+
+把/etc/ssh/ssh_config里面的GSSAPIAuthentication修改成no就ok了。 GSSAPIAuthentication no 。
+
+X下就是选择
+系统 --> 管理 --> 网络
+或
+System --> administrator --> network
+把 General 下的 Automatic service discovery 去掉（默认是选中的）
+
+安装FTP服务：
+
+sudo apt-get install vsftpd
+
+修改配置文件, /etc/vsftpd.conf (提示：先做备份sudo cp /etc/vsftpd.conf /etc/vsftpd.conf.old)
+
+#不让匿名用户使用
+#anonymous_enable=YES
+
+#本地用户可用
+local_enable=YES
+
+#可用写操作
+write_enable=YES
+
+#不需要显示某目录下文件信息
+#dirmessage_enable=YES
+
+#加点banner提示
+ftpd_banner=Hello~~
+
+#FTP服务器最大承载用户
+max_clients=100
+
+#限制每个IP的进程
+max_per_ip=5
+
+#最大传输速率(b/s)
+local_max_rate=256000
+
+#隐藏帐号
+hide_ids=YES 

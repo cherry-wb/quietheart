@@ -1,0 +1,21 @@
+1.vim中缩进与空格的设置
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc791d030d37feeb797f451988832b381cf91d0cb9a06776600823e399c38b1cd6b191797f8e7465710b8636489546f1df037881769f1eb2f00ee7cbe743e3b9a6d4c82425dd270f6d81809c2a7403bc68e7643bf4d29a&p=c072c54ad5c61ab503be9b7f4f4b&user=baidu
+2007-11-24 17:07
+1 shiftwidth:这个是用于程序中自动缩进所使用的空白长度指示的。一般来说为了保持程序的美观，和下面的参数最好一致。同时它也是>>或者<<符号移位长度的制定者。
+
+    2 tabstop:定义tab所等同的空格长度，一般来说最好设置成8，因为如果是其它值的话，可能引起文件在打印之类的场合中看起来很别扭。除非你设置了 expandtab模式，也就是把tabs转换成空格，这样的话就不会一起混淆，不过毕竟制表符为8是最常用最普遍的设置，所以一般还是不要改。
+
+    3 softtabstop 如果我们希望改变程序中的缩进怎么办？shiftwidth和tabstop不一样的话，你会发现程序比较难看的。这时候，softtabstop就起作 用了。可以从vim的说明中看到，一旦设置了softtabstop的值时，你按下tab键，插入的是空格和 tab制表符的混合，具体如何混合取决于你设定的softtabstop，举个例子，如果设定softtabstop=8,那么按下tab键，插入的就是正常的一个制表符;如果设定 softtabstop=16,那么插入的就是两个制表符；如果softtabstop=12,那么插入的就是一个制表符加上4个空格；如果 softtabstop=4呢？那么一开始，插入的就是4个空格，此时一旦你再按下一次tab，这次的四个空格就会和上次的四个空格组合起来变成一个制表 符。换句话
+
+example:http://cache.baidu.com/c?m=9d78d513d9871af04fede5697c66c0121e43f0152ba3da027ea48438e7732d465016e9ac53210443939b733d47e90b4beb832b6f675361a09bbfd91086e7c16f73d36d23706bda1654ce5ff58b11769737902cecac1ae5b9f62593d8d1c4df2250dd537220c6afd5&p=b439f916d9c711a059edc626114f&user=baidu
+前面得到斑竹和大虾的帮助,
+得知在vi/vim中,可以通过在~/.vimrc中添加
+set ts=4
+使得tab键保持为4个空格,而非8个。
+answer:set shiftwidth=4
+
+使用此法,tab键确实保持为4个空格了,不过自动缩进仍为8个空格。
+/* 因为在用vim写代码时,按tab键和vim的自动缩进是两个概念。 */
+
+再请教一下,诸位,在vi/vim中,
+如何使自动缩进保持为4个空格而非8个呢？

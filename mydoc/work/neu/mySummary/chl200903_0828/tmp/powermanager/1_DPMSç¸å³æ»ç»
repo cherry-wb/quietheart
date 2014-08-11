@@ -1,0 +1,13 @@
+
+X Display Power Management Signaling (DPMS) 
+
+DPMS extension设计的目标是提供一个传统screen saver的逻辑扩展。
+它的执行独立于screensa，。塔河screen saver交互，并且DPMS能够服从用户或者screen saver应用程序。
+
+VESA（ Video Electronics Standards Association）规定了四种电源状态：
+0 DPMSModeOn      显示器打开状态中
+1 DPMSModeStandby 最轻度的节省电源，切换较快，这种状态会把显示器的水平同步信号关掉。
+2 DPMSModeSuspend 中度节省电源，切换速度稍慢，这种状态会把显示器的垂直同步信号关掉。
+3 DPMSModeOff     最大程度节省电源，切换速度慢于前两个，它会关闭垂直和水平同步信号。
+
+如果把1，2，3状态的timeout设置为0表示不使用。这三种状态的timeout延迟是递增的，后面的不会小于前面的，否则就是错误的。

@@ -1,0 +1,19 @@
+#myfile.cfg
+[DEFAULT]
+thekey=thevalue0
+#the [DEFAULT] section's value can be referenced by %(...)s from other section if it doesn't has.
+
+[Section1]
+int=15 ;int value is 15, which can use 'int:15'
+bool=true ;internal line comment use ';' best behind a space.
+float:3.1415 ;another way of <key>:<value> compare to <key>=<value>
+baz=fun
+bar=python
+foo=%(bar)s is %(baz)s! ;reference other key from the section, or [DEFAULT]
+thekey1=%(thekey)s
+
+[Section2]
+thekey2=thevalue2
+key21=value21
+key22:value22
+# comment can use '#' or ';'

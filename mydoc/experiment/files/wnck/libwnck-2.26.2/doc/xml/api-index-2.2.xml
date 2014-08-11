@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>A</title>
+<indexentry><primaryie linkends="wnck-application-get-startup-id"><link linkend="wnck-application-get-startup-id">wnck_application_get_startup_id</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>C</title>
+<indexentry><primaryie linkends="wnck-class-group-get"><link linkend="wnck-class-group-get">wnck_class_group_get</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-icon"><link linkend="wnck-class-group-get-icon">wnck_class_group_get_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-mini-icon"><link linkend="wnck-class-group-get-mini-icon">wnck_class_group_get_mini_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-name"><link linkend="wnck-class-group-get-name">wnck_class_group_get_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-res-class"><link linkend="wnck-class-group-get-res-class">wnck_class_group_get_res_class</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-windows"><link linkend="wnck-class-group-get-windows">wnck_class_group_get_windows</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>L</title>
+<indexentry><primaryie linkends="WnckLoadIconFunction"><link linkend="WnckLoadIconFunction">WnckLoadIconFunction</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>P</title>
+<indexentry><primaryie linkends="wnck-pager-set-screen"><link linkend="wnck-pager-set-screen">wnck_pager_set_screen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-shadow-type"><link linkend="wnck-pager-set-shadow-type">wnck_pager_set_shadow_type</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="wnck-screen-change-workspace-count"><link linkend="wnck-screen-change-workspace-count">wnck_screen_change_workspace_count</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-showing-desktop"><link linkend="wnck-screen-get-showing-desktop">wnck_screen_get_showing_desktop</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-toggle-showing-desktop"><link linkend="wnck-screen-toggle-showing-desktop">wnck_screen_toggle_showing_desktop</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>T</title>
+<indexentry><primaryie linkends="wnck-tasklist-set-icon-loader"><link linkend="wnck-tasklist-set-icon-loader">wnck_tasklist_set_icon_loader</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-screen"><link linkend="wnck-tasklist-set-screen">wnck_tasklist_set_screen</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-get-class-group"><link linkend="wnck-window-get-class-group">wnck_window_get_class_group</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-change-name"><link linkend="wnck-workspace-change-name">wnck_workspace_change_name</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

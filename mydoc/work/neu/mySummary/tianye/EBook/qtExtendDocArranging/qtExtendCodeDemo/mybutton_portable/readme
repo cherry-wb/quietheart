@@ -1,0 +1,21 @@
+程序功能：
+==============
+这里是将一个简单的qt程序移植成为qtextend程序的例子。
+原来的程序在文件夹back_old下面。
+
+参考：
+==============
+这里主要参考的是qt Extend源代码中的:
+qt-extended-4.4.3/examples/manual_main
+
+编译和运行：
+==============
+编译只要运行：
+..../qbuild
+..../qubild image
+就行了。
+
+运行的时候首先在桌面程序中相应的程序入口处添加如下代码：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/mybutton.desktop",false);
+applink.execute();
+然后即可运行。

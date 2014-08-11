@@ -1,0 +1,12 @@
+1,in page 10:
+on_button_clicked(GtKWidget *button,gpointer userdata)
+why does this function have two parameters?not three as said in page8?
+
+answer:the function returns TRUE means that the function process the event and tell system don't process with default sysfunction.if it teturns FALSE,means that after the function process,the sysfunction process also.the three parameters function assigned the event(change it not to be the default event)
+or the answer2:the two parameter means connect to the signal.the three parameter means connect to the event(belong to the xWindows)
+2.
+什么是gtk filter?
+3.
+如何使用gtk中的module加载机制？
+4.如何使用gtk中的 socket机制?
+

@@ -1,0 +1,40 @@
+比较正式的：
+FYI
+abbr. 供参考(=for your information) 让你知道一下 
+
+TBD
+abbr.  待完成， 待做(=to be determined)
+
+IMO
+abbr. 在我看来（=in my opinion）
+
+BR
+BR:Best Regards祝好（用于邮件末尾）
+
+ASAP
+abbr.越快越好(=As Soon As Possible)
+example:
+Hi, All
+I have updated the wiki page .
+Please reconfigure your environment ASAP according to the wiki page.
+
+
+
+工作：
+*BSP:
+参考：http://wenda.tianya.cn/wenda/thread?tid=0f39a4d557528fc5&hl=zh-CN.....
+BootStrap Processor, or the CPU which enables the other CPUs in an SMP system.
+BSP是板级支持包，是介于主板硬件和操作系统之间的一层，应该说是属于操作系统的一部分,主要目的是为了支持操作系统，使之能够更好的运行于硬件主板。BSP是相对于操作系统而言的，不同的操作系统对应于不同定义形式的BSP,例如VxWorks的BSP和Linux的BSP相对于某一CPU来说尽管实现的功能一样，可是写法和接口定义是完全不同的，所以写BSP一定要按照该系统BSP的定义形式来写（BSP的编程过程大多数是在某一个成型的BSP模板上进行修改）。这样才能与上层OS保持正确的接口，良好的支持上层OS。
+
+参考：http://www.cnblogs.com/vxworks/articles/1460259.html
+BSP综述
+BSP是系统用来管理外设的部分，由两部分组成：初始化、驱动程序。所谓初始化是指从系统上电复位开始直到wind kernel和usrRoot根任务启动的这段时间，系统的执行过程。驱动程序就是一些包含I/O操作的子函数。初始化包括：CPU Init、Board Init、System Init。CPU Init初始化CPU的内部寄存器。Board Init初始化智能I/O的寄存器，将device打通。System Init为系统的运行准备数据结构，进行数据初始化。 驱动程序的特点是不能自动执行，只能被动调用。调用可以有三种方式：任务直接调用、任务调用System Call、任务调用服务。所以驱动程序可以抽象为三个层次：常规操作、与VxWorks的接口、与Component的接口。 常规操作是设备的固有操作逻辑，有两层含义： I/O编址微观上表现为CPU操作device的寄存器、宏观上表现为具体操作的含义。 驱动程序与VxWorks的接口、驱动程序与Component的接口有三层含义： I/O管理 操作类型规整 参数规整 驱动程序与VxWorks的接口使Driver具有更好的层次性，驱动程序与Component的接口使Driver具有更好的抽象性。 
+
+*BSE
+参考：http://blog.sina.com.cn/s/blog_612f89a60100ex9w.html
+软件外包是目前全球软件实现区域性外包合作的趋势。这种软件外包商业模式的运行首先必须解决发包方和承包方的信息沟通，一种以负责软件开发信息沟通的技术人才即桥梁工程师BSE（英文全称是Bridge System Engineer）承担了这种角色。BSE以其对双方国家语言、地域文化及技术体系的深度理解，能够有效的将发包方的需求准确的传递给承包方，并将承包方的工期进程、开发方案等有效的传递给发包方，从而打破中日之间文化和语言屏蔽，实现信息在双方的透明传输与准确沟通。随着全球软件外包的强劲发展，这种职业在国际软件外包业务开展中IT界倍受关注。
+
+
+平时记录的杂乱：
+misc,(=miscellaneous)杂乱的。
+

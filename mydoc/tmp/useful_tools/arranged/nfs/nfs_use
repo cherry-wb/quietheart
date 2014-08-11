@@ -1,0 +1,58 @@
+nfs服务器建立
+本文介绍Linux环境下nfs服务的搭建过程。
+
+[简介]
+nfs服务的作用是让其他机器可以通过网络把将本地的nfs目录挂载，然后通过访问挂载目录访问本地机器。在嵌入式开发中经常会将运行的开发板上的整个文件系统，做为本地的一个主目录，然后开发板启动的时候通过nfs服务，将本地的这个目录挂载上去，作为根文件系统。
+这里分别介绍在Ubuntu和CenterOS上面nfs服务的配置过程。
+
+[举例]
+**在Ubuntu机器上面配置nfs服务
+1）.安装nfs服务器端和客户端
+sudo apt-get install portmap nfs-kernel-server
+sudo apt-get install portmap nfs-common
+2）.配置共享文件
+编辑/etc/exports，在其中增加要共享的目录
+如 
+/home/quietheart/nfs 10.1.14.0/24(rw,sync,no_root_squash,no_subtree_check)
+其中 /home/quietheart/nfs，10.1.14.0/24代表共享给哪个子网，rw是可读写权限
+然后
+sudo exportfs -ra
+3）.重启服务(这一步实际不用，有上一步就行了)
+sudo /etc/init.d/portmap restart
+sudo /etc/init.d/nfs-kernel-server restart
+4）.客户就可以加载了
+sudo mount 10.1.14.58:/home/quietheart/nfs /home/xxx
+
+建立好了nfs之后，如果板子里面的内核支持网络和nfs，需要板子和你的机器各有一个网线和网口，两者在同一个网段，配置好了就能互访。也可以把机器和板子用一根网线链接（板子有独立的网口），这样不需要网关，就能使板子挂载机器的nfs系统了，但是机器也不能够上网了。
+**
+
+**在CenterOS上面配置nfs服务
+1)编辑/etc/exports
+添加类似如下一行：
+<your nfs directory> *(rw,sync,no_root_squash)
+在配置NFS之前先查看“rpm -q nfs-utils portmap“两个软件包是否安装，默认都是安装的。
+这里，'<your nfs directory>'是你本地的nfs目录，可以随意设置。具体含义参见"info exports".
+2)重启服务：
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+3)关闭防火墙：
+这一步有时候可以不用做。
+具体在："系统"->"管理"->"安全级别和防火墙"
+至此nfs服务搭建完毕.
+**
+
+**测试nfs
+这里说一下测试nfs是否好用的方法：
+在其它机器上运行：
+#mkdir nfstest
+#mount -t nfs <你的ip>:<你的nfs目录> nfstest
+如果成功则完毕。
+**
+
+[其他]
+无。
+通过以上可知，在Linux上面配置nfs服务的过程大致一样。
+
+作者：QuietHeart
+Email：quiet_heart000@126.com
+日期：2010年12月25日

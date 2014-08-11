@@ -1,0 +1,108 @@
+描述了如何使用usb设备，nfs启动开发板。
+主要就是设置
+1)setenv bootargs console=ttySAC0,115200n8 mem=128M ip=192.168.100.200:192.168.100.1:192.168.100.1:255.255.255.0:ubuntu:usb0 root=/dev/nfs nfsroot=192.168.100.1:/nfs/ebook,proto=tcp
+这里设置了板子ip(200),主机ip，以及网关ip，和nfs路径。
+2）ifconfig usb0 **.**.**.**
+这里，首先要等待板子启动连接nfs，这时候才会出现usb0设备，才能用这个命令设置usb0的ip。
+3）
+nfs启动之后再telnet登录开发板子
+
+[nfs 启动开发板]
+
+1, 首先安装ckermit，这是一个串口工具。
+apt-get install ckermit
+
+
+2, 将下列文本拷贝并保存为 "~/.kermrc" 文件（两行等号之间的文本）
+//======================================
+set line /dev/ttyUSB0
+set speed 115200
+set carrier-watch off
+set handshake none
+set flow-control none
+robust
+set file type bin
+set file name lit
+set rec pack 1000
+set send pack 1000
+set window 5
+//======================================
+
+
+3, 将开发板连接到PC，然后运行命令：
+ubuntu# kermit -c
+
+此时您将看到类似如下信息：
+Connecting to /dev/ttyUSB0, speed 115200
+ Escape character: Ctrl-\ (ASCII 28, FS): enabled
+Type the escape character followed by C to get back,
+or followed by ? to see other options.
+----------------------------------------------------
+
+
+4, 给开发板上电，您应该可以看到熟悉的uboot启动信息，然后按下任意键进入uboot
+
+
+5, 此时，如果板子上的内核不支持nfs，还需要烧写内核，烧写内核的步骤在下文叙述。假设此时已经有新内核。
+
+
+6, 配置uboot的内核启动参数，键入如下两条命令：
+eb306 # setenv bootargs console=ttySAC0,115200n8 mem=128M ip=192.168.100.200:192.168.100.1:192.168.100.1:255.255.255.0:ubuntu:usb0 root=/dev/nfs nfsroot=192.168.100.1:/nfs/ebook,proto=tcp
+eb306 # saveenv
+
+注意：
+a, 前面的“eb306 # ”是开发板上的uboot提示符。
+b, 第一条命令较长，但需要根据个人情况修改的地方只有nfs的路径，即 /nfs/ebook，注意命令中所有的ip地址都不需要修改！
+c, 要切换回以sd卡启动的模式，需重设bootargs变量，命令为：
+eb306 # setenv bootargs console=ttySAC0,115200n8 mem=128M root=/dev/mmcblk0
+
+7, 重启开发板，当内核开始加载时，在PC机上打开另一个终端，输入如下命令：
+ifconfig usb0 192.168.100.1
+如果没有什么错误提示，表示设置完成。如果有错误提示找不到usb0设备等，稍等几秒再试几次。
+
+
+8, 顺利的话，此时开发板已经以nfs启动成功。
+
+
+［向开发板烧写内核］
+0，准备一个要烧写的内核，下文假设新内核的路径是 /root/zImage_new
+
+1，启动kermit (命令kermit -c)
+
+2，进入uboot
+
+3，键入命令：
+eb306 # loadb 0xC0008000
+此时开发板uboot等待串口另一断输入数据。
+
+4，同时按下Ctrl和'\'键，抬起，再按下'c'键，可切到kermit的命令模式：
+(Back at ubuntu)
+----------------------------------------------------
+C-Kermit 8.0.211, 10 Apr 2004, for Linux
+ Copyright (C) 1985, 2004,
+  Trustees of Columbia University in the City of New York.
+Type ? or HELP for help.
+(/root/) C-Kermit>
+
+5，向开发板输入数据，键入命令：
+(/root/) C-Kermit>send /root/zImage_new
+
+6，等待传输结束，然后键入如下命令，可切换回uboot：
+(/root/) C-Kermit>connect
+
+7，在uboot下顺次键入命令：
+eb306 # nand erase 0x40000 0x1C0000
+eb306 # nand write 0xC0008000 0x40000 0x1C0000
+完成烧写，恭喜你。
+
+注：
+kermit的退出命令：
+(/root/) C-Kermit>exit］
+
+［附］
+内核所在位置：
+ftp://10.1.14.235/Document/BoardSupport/Pegatron_Sumsung2416/kernel/20100113/zImage_20100113_OProfile_TimeLog_NFS_USBGadget
+
+
+有问题请联系。
+

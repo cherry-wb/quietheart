@@ -1,0 +1,394 @@
+=========================
+编译环境和编译
+=========================
+一、基于5.0.4.1版本的编译环境：
+1,环境搭建：
+1.1)centeros 安装.（省略）
+1.2)安装交叉编译工具链(SONY-CE-Linux-5.0.4.1-ARM.iso)
+#cd SONY-CE-Linux-5.0.4.1-ARM/Tools_Userland/arm
+#rpm -e $(rpm -qa "arm-sony-linux-gnueabi-*")
+#rm -rf /usr/local/arm-sony-linux-gnueabi/
+#rpm -Uvh --ignorearch *.rpm
+其中SONY-CE-Linux-5.0.4.1-ARM/doc/install_en.txt里面有相关的文档。
+1.3)安装内核头文件
+#cd <latest kernel path>
+#export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+#make avp13_defconfig
+#make
+#make kernel_headers_install
+
+2,代码编译：
+注意，必须首先编译内核，然后才能使用makerootfs.sh脚本编译app，如下：
+2.1)release时：
+2.1.1)编译内核：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+$cd <latest kernel path>
+$ make avp13_rel_defconfig
+$ make
+生成的内核avp13Build/vmlinux
+
+2.1.2)编译app以及生成文件系统镜像：
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh clean
+#./makerootfs.sh all
+注意，
+生成的镜像名称为target/*.img
+对于该脚本具体信息，最好参考下makerootfs/readme
+
+2.2)开发时：
+2.2.1)编译内核：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+$cd <latest kernel path>
+$ make avp13_defconfig
+$ make
+生成的内核avp13Build/vmlinux
+
+2.2.2)编译app以及生成文件系统镜像：
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh all
+这样会根据时间戳编译最新的内容。
+
+二、基于8.0.1.4版本的编译环境：
+1,环境搭建：
+这里讲述将编译环境从原有的5.0.4.1升级到新的8.0.1.4的具体过程。
+1.1,安装至8.0.1.2：
+下载相应的升级包的位置：
+smb://10.1.2.228/PFX/Document/Architecture/KernelUpgrade/Sony CE-Linux 8.0.1.1, 8.0.1.2 for ARMv5.zip
+假设解压之后文件为$(SONY_CE)。
+1)安装8.0.1.1
+#cd $(SONY_CE)
+#mount -o loop SONY-CE-Linux-8.0.1.1-ARMv5.iso tmp_mount/
+(以下内容，具体参照$(SONY_CE)/tmp_mount/doc/install_en.txt)
+#cd tmp_mount/
+#rpm -e `rpm -qa 'arm-sony-linux-gnueabi-*'`
+#cd /usr/local
+#rm -rf arm-sony-linux-gnueabi scel8.0
+#cd -
+#yes | cp Scripts/scel-cmds.sh /usr/bin/
+#cd Tools_Userland/arm/
+#scel-cmds.sh --install *.rpm arm/*.rpm
+(注意，这里一定要使用一步命令操作，不要分别安装*.rpm和arm/*.rpm，否则安装路径就是"usr/local/scel"而不是"/usr/local/scel8.0"了)
+#cd optional/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+至此，将8.0.1.1安装完毕，这里需要注意的是安装之前将以前的版本都删除了。
+
+2)升级到8.0.1.2
+#cd $(SONY_CE)
+#tar -xzvf CE-Linux-8.0.1.2.tgz
+(以下内容参照$(SONY_CE)/CE-Linux-8.0.1.2/doc/install_en.txt)
+#cd CE-Linux-8.0.1.2/Tools_Userland/arm/
+#scel-cmds.sh --install arm/*.rpm
+(这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/)
+#scel-cmds.sh --install armv7a/*.rpm
+(这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/)
+至此，将8.0.1.1升级至8.0.1.2。
+
+1.2,升级至8.0.1.4
+下载相应的升级包的位置：
+smb://10.1.2.228/PFX/Document/Architecture/KernelUpgrade/Release8.0.1.0-8.0.1.4.zip
+1)升级到8.0.1.3
+#cd Release8.0.1.0-8.0.1.4/8.0.1.3/
+#tar -xzvf CE-Linux-8.0.1.3.tgz
+#cd CE-Linux-8.0.1.3/Tools_Userland/arm/arm
+#scel-cmds.sh --install *.rpm
+(注意，这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/
+另外，此时会有错误如下：
+        package arm-sony-linux-gnueabi-arm-dev-libpng-1.4.5-08000102.arm (which is newer than arm-sony-linux-gnueabi-arm-dev-libpng-1.2.44-08000101.arm) is already installed
+        package arm-sony-linux-gnueabi-arm-srel-libpng-1.4.5-08000102.arm (which is newer than arm-sony-linux-gnueabi-arm-srel-libpng-1.2.44-08000101.arm) is already installed
+不用管它。)
+#cd optional
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+#cd ../extra_options/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+(这里报告了一大堆错误,不用管它)
+#cd ../../armv7a/
+#scel-cmds.sh --install *.rpm
+#cd optional/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+#cd ../extra_options/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+(这里报告了一大堆错误,不用管它)
+#cd ../../../../../../
+至此，升级到8.0.1.3完毕。
+
+2)升级到8.0.1.4
+#cd 8.0.1.4/
+#tar -xzvf CE-Linux-8.0.1.4.tgz
+#cd CE-Linux-8.0.1.4/Tools_Userland/arm/arm
+#scel-cmds.sh --install *.rpm
+#cd ../armv7a
+#scel-cmds.sh --install *.rpm
+至此，升级到8.0.1.4完毕。
+
+2,代码编译：
+注意，必须首先编译内核，然后才能使用makerootfs.sh脚本编译app，如下：
+2.1)release时：
+2.1.1)编译内核：
+#export PATH=/usr/local/scel8.0/arm/cross/devel/bin:${PATH//\/usr\/local\/scel8.0\/arm\/cross\/devel\/bin:/}
+#cd <latest kernel path>
+#./setup-avp13
+#make avp13_rel_defconfig
+#make
+生成的内核avp13Build/vmlinux.elf，可以将它重新命名为vmlinux。
+
+2.1.2)编译app以及生成文件系统镜像：
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh clean
+#./makerootfs.sh all
+这样会根据时间戳编译最新的内容。
+注意，
+*生成的镜像名称为target/*.img
+*对于该脚本具体信息，最好参考下makerootfs/readme
+*脚本内部设置了关于编译路径的环境变量，由于处于新旧环境使用交替阶段，可能里面设置的路径不对。若如此，那么需要自己在脚本中修改相关的设置，大致类似如下：
+"export PATH=/usr/local/scel8.0/arm/cross/bin:${PATH//\/usr\/local\/scel8.0\/arm\/cross\/bin:/}"
+
+2.2)开发时：
+2.2.1)编译内核：
+#export PATH=/usr/local/scel8.0/arm/cross/devel/bin:${PATH//\/usr\/local\/scel8.0\/arm\/cross\/devel\/bin:/}
+#cd <latest kernel path>
+#./setup-avp13
+#make avp13_defconfig
+#make 
+生成的内核avp13Build/vmlinux.elf，可以将它重新命名为vmlinux。
+
+2.2.2)编译app以及生成文件系统镜像：
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh clean
+#./makerootfs.sh all
+这样会根据时间戳编译最新的内容。
+注意，
+*生成的镜像名称为target/*.img
+*对于该脚本具体信息，最好参考下makerootfs/readme
+*脚本内部设置了关于编译路径的环境变量，由于处于新旧环境使用交替阶段，可能里面设置的路径不对。若如此，那么需要自己在脚本中修改相关的设置，大致类似如下：
+"export PATH=/usr/local/scel8.0/arm/cross/bin:${PATH//\/usr\/local\/scel8.0\/arm\/cross\/bin:/}"
+
+=========================
+运行环境和运行
+=========================
+一、pc机端配置
+1,配置nfs服务：
+配置nfs服务的目的是让板通过网络把nfs的目录当做板子环境中的根目录。
+(1)编辑/etc/exports
+添加类似如下一行：
+<your nfs directory> *(rw,sync,no_root_squash)
+在配置NFS之前先查看“rpm -q nfs-utils portmap“两个软件包是否安装，默认都是安装的。
+这里，'<your nfs directory>'是你本地的nfs目录，可以随意设置。具体含义参见"info exports".
+(2)重启服务：
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3)关闭防火墙：
+这一步有的人可以不用做。
+具体在："系统"->"管理"->"安全级别和防火墙"
+至此nfs服务搭建完毕，测试方法如下：
+在其它机器上运行：
+#mkdir nfstest
+#mount -t nfs <你的ip>:<你的nfs目录> nfstest
+如果成功则完毕。
+
+2,配置tftp服务：
+配置tftp服务的目地是让板子通过tftp下载内核并启动。
+(1)安装tftp客户/服务端:
+#yum install tftp.i386
+#yum install tftp-server.i386
+这里，如果不行就先运行"#yum makecache"试试。
+(2)编辑/etc/xinetd.d/tftp
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+这里，disable是指关闭还是打开tftp服务，取值yes/no.
+server_args指定tftp服务在本地机器上的导出目录。其它参数具体含义参见“info xinetd.conf”.
+(3)重启服务：
+#/etc/init.d/xinetd restart
+至此tftp服务搭建完毕，测试方法如下：
+在本地机器上运行：
+#>>/tftpboot/mytest
+在其它机器上运行：
+#tftp <你的ip地址>
+#get mytest
+然后"[Ctrl]D"退出，如果在那个其他机器的当前目录看到mytest说明成功。
+
+3,配置minicom:
+配置minicom的目的是让pc机可以通过minicom连接开发板。
+(1)#minicom -s
+(2)选择"Serial port setup"
+配置其中的如下配置选项：
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4,准备内核
+将编译好的内核放到tftp的导出目录。
+导出目录按前面配置应该是:/tftpboot
+#cp vmlinux /tftpboot/vmlinux
+#arm-sony-linux-gnueabi-dev-strip /tftpboot/vmlinux
+
+5，准备文件系统
+将文件系统镜像(ramdisk.img)拷贝到tftp导出目录(/tftpboot)。
+将文件系统中所有内容拷贝到nfs导出目录(<your nfs directory>)。
+编译时候生成的文件系统以及镜像在目录"Rootfs/makerootfs/target/"中.
+
+二、开发板设置
+pc端配置好之后，启动minicom，再启动开发板，会自动进入bootloader。
+接下来，根据选择的不同启动方式，有两种配置开发板的方式：
+1,从flash上启动内核，从flash上挂载文件系统:
+需先将文件系统和内核写到flash rom中,配置如下：
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv myip 10.1.29.180
+NBL> setenv servip 10.1.29.44
+NBL> sdm init
+NBL> sdm create -n -l 0x480000 kernel
+NBL> sdm create -n -l 0x780000 initrd_fat
+NBL> sdm create -n -l 0x300000 nvm
+
+NBL> cp net:tftp:vmlinux sdmd::
+NBL> cp net:tftp:ramdisk.img sdme::
+NBL> bootprof init
+NBL> bootprof param -k sdmd:raw:vmlinux -c "mem=236MB console=ttyS0,115200n8 initrd=0x42000000,2744425 rdinit=/sbin/init ip=10.1.29.135::10.1.29.1:255.255.255.0" -i sdme:raw:ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux -c "mem=236MB console=ttyS0,115200n8 initrd=0x42000000,2744425 rdinit=/sbin/init ip=10.1.29.135::10.1.29.1:255.255.255.0" -i sdme:raw:ramdisk.img -t 3 -n 3 Linux0
+
+这里注意：
+0x42000000是ramdisk.img的地址，在NBL中已经固定;
+2744425是ramdisk.img的大小，可以用"ls -l ramdisk.img"命令来获取;
+10.1.29.xx1是开发板ip.
+最后，将开发板断电并设置s1902跳线组第一号开关为"on".如上设置如果正确，上电之后即可实现自动启动。
+
+2,从tftp下载内核，从nfs启动文件系统：
+基于nfs文件系统，从tftp下载内核，配置如下：
+NBL> setenv myip 10.1.29.180
+NBL> setenv console on
+NBL> setenv servip 10.1.29.44
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv gateip 10.1.29.1
+注意，这里servip是tftp服务器地址,myip是板子ip，ethaddr是板的mac,这根据自己情况设置。gateip只为保留用，可以不设置。
+
+最后，下电，再上电并启动开发板:
+NBL> boot -t elf -c "mem=236MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux
+这里，"nfsroot=10.1.29.44:<your nfs directory>"对应你机器的nfs服务目录，“ip=10.1.29.180::10.1.29.1:255.255.255.0“对应你板子的ip地址，需要修改。
+这样，就可以启动开发了。如果在开发板和pc之间通过你的nfs目录相关联，可以通过这个目录在pc和你开发板间传递数据。
+
+三、程序运行
+如果上电后没有自动启动，则断电后将s1902跳线组第一号开关为"off"，然后上电运行：
+NBL> aboot -n
+成功启动后将开发板断电并设置s1902跳线组第一号开关为"on"，再次上电即可。
+
+=========================
+其他补充
+=========================
+1,编译好内核之后，会生成三种格式的内核,路径分别如下：
+a)bin格式：avp13Build/arch/arm/boot/Image
+b)压缩格式：avp13Build/arch/arm/boot/zImage
+c)elf格式：avp13Build/vmlinux
+这里，我们使用elf格式启动。
+注意：如果使用.bin格式或者压缩bin格式的内核，那么烧写的时候必须以"*.bin"为扩展名,以便NBL能够自动识别。
+
+2,NBL的编译过程：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+$ cd ${RELDIR}/loader
+$ ./setup diablo avp13 rom 
+$ make
+这里，${RELDIR}是要编译的BootLoader的源代码所在路径。
+生成的文件如下：
+    ${RELDIR}/loader/arch/arm/diablo/nbl-avp13.raw
+    ${RELDIR}/loader/arch/arm/diablo/nbl-avp13.nui
+其中，向nor写nbl用raw文件，更新nbl用nui文件。
+
+3,NBL的烧写：
+烧写NBL有可选两种途径：
+3.1)使用JTAG写NBL:
+当使用JTAG向Nor Flash中写入NBL的时候，NBL的raw文件会从Nor flash的初始地址下载。
+具体应该参考：ICEによるROM焼き手順/AVP-13基板とadvicePro.ppt
+这里未经实践，不再叙述。
+
+3.2)在原有NBL基础上更新：
+NBL> update -f net:tftp:/nbl.nui
+这个过程基于tftp传输，所以需要事先把nbl.nui文件拷贝到pc机的tftp的导出目录。
+
+4,烧写内核时常见的问题：
+在烧写内核的时候，经常会遇见有时候好用，有时候不好用的情况。
+原因是：
+我们编译出来的内核有三个，对应三种不同格式; 
+bootloader在aboot启动的时候，有的类型需要用根据文件的后缀来判断其类型，以便正确加载（有的类型不需要后缀）。
+
+这样组合起来，好用和不好用的情况比较多，很容易出错。
+这里将这些好用的情况和不好用的情况总结一下，希望对烧写出现问题的时候有所帮助：
+
+4.1)内核编译的时候，产生的三个文件分别是：
+-------
+Kernel/avp13Build/vmlinux
+Kernel/avp13Build/arch/arm/boot/Image
+Kernel/avp13Build/arch/arm/boot/zImage
+
+三者的区别是：
+vmlinux是elf格式的内核，启动速度最快，体积最大。
+Image是bin格式的内核，启动速度比较快，体积大约5M.
+zImage是压缩bin格式的内核，启动速度最慢(比elf格式慢了至少２s)，体积大约2.2M.
+
+4.2)常见的错误烧写命令：
+-------
+以下是常见的不正确的烧写命令，请大家注意。
+4.2.1)名为vmlinux的内核：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.bin
+
+4.2.2)名为Image的内核：
+NBL> cp net:tftp:Image sdmd:raw:Image
+或
+NBL> cp net:tftp:Image sdmd::
+或
+NBL> cp net:tftp:Image sdmd:raw:vmlinux
+
+4.2.3)名为zImage的内核：
+NBL> cp net:tftp:zImage sdmd:raw:zImage
+或
+NBL> cp net:tftp:zImage sdmd::
+或
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux
+或
+NBL> cp net:tftp:zImage sdmd:raw:zImage.gz
+
+4.3）正确的烧写命令：
+-------
+以下命令请烧写的时候使用。
+4.3.1)名为vmlinux的内核：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.elf
+或
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux
+或
+NBL> cp net:tftp:vmlinux sdmd::
+也就是说，vmlinux可以不要后缀，或者使用".elf"的后缀进行烧写。
+
+4.3.2)名为Image的内核：
+NBL> cp net:tftp:Image sdmd:raw:vmlinux.bin
+也就是说Image只能用".bin"格式的后缀进行烧写。
+
+4.3.3)名为zImage的内核：
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux.bin
+也就是说zImage只能用".bin"格式的后缀进行烧写。
+
+以上为好用的烧写命令，烧写完毕后应该用"bootprof "设置参数，然后用"aboot -n" 即可启动。
+另外，目前大多数人都用zImage格式，但是这只是在测试的时候，如果要实现高速启动，那么应该不能用zImage来进行烧写。
+
+5，启动时注意的问题：
+5.1)关于启动的mem
+前面所说的启动命令类似：
+NBL> boot -t elf -c "mem=236MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux
+关于这个启动参数中的“mem”，目前，相关的开发人员应当了解如下信息：
+5.1.1）此处所述针对的是目前，目前的时间是2011年10月20日。
+5.1.2）国内的内核配置文件中默认没有包含avp17配置，而onsite中调试的时候一般包含这个avp17配置。
+5.1.3）这个事先配置好的、用于编译内核的、配置文件中，如果它包含了avp17配置，在NBL中使用boot命令启动时就应该用“mem=236MB”，否则使用“mem=252MB”或“mem=236MB”都行（不过后者导致内存无形中减小了）。
+5.1.4）更新详细的情况是，因为目前avp17下支持的子项不多，配置内核时候如果打开了AVP17配置，那么就自然支持了这个配置之下的、导致用boot命令启动时使用"mem=236MB"来启动的、相关子配置。但是考虑到将来的扩展性，更具体的原因应该是，导致采用“mem=236MB”的相关子配置其实是和“csi和sc2p通信”相关的那些子配置。
+5.1.5）关于以上所说的那些配置，其实是在编译内核之前就做好、并保存在了相应的配置文件中。在运行了“make avp17_defconfig”或“make avp13_defconfig”之类命令的时候，这些表明是否进行了相应配置的配置文件就会被选择。所以仅仅在编译的时候，则不用考虑太多。

@@ -1,0 +1,157 @@
+在Linux下开启硬盘DMA
+   注意：/sbin/hdparm命令不支持SATA硬盘。
+   Linux下的32位I/O和DMA默认是关闭的。如果用的是16位I/O的话，就无法充分发挥电脑的性能。
+  　　如果要打开32位I/O和DMA，就需要以root身份进行设置。为了降低因出错而重启系统对文件系统的损害，最好以单用户模式进行。
+  首先，使用下面的命令检查硬盘驱动器的当前I/O情况：
+  [root@anima lwg]# /sbin/hdparm -t /dev/hda
+  /dev/hda:
+   Timing buffered disk reads: 8 MB in 3.31 seconds = 2.42 MB/sec
+  [root@anima lwg]#
+  　　如果要显示当前I/O、DMA设置，可以分别使用下面的命令：
+  [root@anima lwg]# /sbin/hdparm -c /dev/hda （显示当前I/O设置）
+  /dev/hda:
+   IO_support = 0 (default 16-bit)
+  [root@anima lwg]# /sbin/hdparm -d /dev/hda （显示当前DMA设置）
+  /dev/hda:
+   using_dma = 0 (off)
+  [root@anima lwg]#
+  　
+  　　通过上面的命令，已经知道现在32位I/O和DMA是关闭的，可以分别用下面的命令将其打开：
+  [root@anima lwg]# /sbin/hdparm -c 1 /dev/hda （打开32位I/O）
+  /dev/hda:
+   setting 32-bit IO_support flag to 1
+   IO_support = 1 (32-bit)
+  [root@anima lwg]# /sbin/hdparm -d 1 /dev/hda （打开DMA）
+  /dev/hda:
+   setting using_dma to 1 (on)
+   using_dma = 1 (on)
+  [root@anima lwg]#
+  　　然后使用下面的命令使设置生效：
+  [root@anima lwg]# /sbin/hdparm -k 1 /dev/hda
+  /dev/hda:
+   setting keep_settings to 1 (on)
+   keepsettings = 1 (on)
+  [root@anima lwg]#
+  好啦！现在再查看一下驱动器的I/O情况：
+  [root@anima lwg]# /sbin/hdparm -t /dev/hda
+  /dev/hda:
+   Timing buffered disk reads: 116 MB in 3.03 seconds = 38.34 MB/sec
+  [root@anima lwg]#
+  可以看到，现在系统的I/O性能提高了很多。
+  但是，上面的设置只是对当前的系统有效，当再次重启系统时，又得重新设置了。
+  如果要使每次系统启动时都打开DMA，可以在/etc/rc.d/rc.local文件中添加上面的命令来实现：
+  [root@anima lwg]# echo "/sbin/hdparm -c 1 -d 1 -k 1 /dev/hda" >> /etc/rc.d/rc.local
+  [root@anima lwg]#
+  -------------------------------------------------------------------------------------------------------------------------
+  对于SATA硬盘：
+  -------------------------------------------------------------------------------------------------------------------------
+  [root@anima lwg]# /sbin/hdparm -t /dev/sda
+  /dev/sda:
+   Timing buffered disk reads: 100 MB in 3.02 seconds = 33.11 MB/sec
+  [root@anima lwg]# /sbin/hdparm -c 1 -d 1 /dev/sda
+  /dev/sda:
+   setting 32-bit IO_support flag to 1
+   HDIO_SET_32BIT failed: Invalid argument
+   setting using_dma to 1 (on)
+   HDIO_SET_DMA failed: Inappropriate ioctl for device
+   IO_support = 0 (default 16-bit)
+  [root@anima lwg]#
+  查看控制器：
+  ---------------------------
+  [root@anima lwg]# /sbin/lspci -v | grep IDE
+  00:0f.0 IDE interface: VIA Technologies, Inc. VIA VT6420 SATA RAID Controller (rev 80) (prog-if 8f [Master SecP SecO PriP PriO])
+  00:0f.1 IDE interface: VIA Technologies, Inc. VT82C586A/B/VT82C686/A/B/VT823x/A/C PIPC Bus Master IDE (rev 06) (prog-if 8a [Master SecP PriP])
+  [root@anima lwg]#
+  如果不打开内核的SATA选项，则不能使用SATA的DMA模式，否则使用/sbin/hdparm命令时会出错。
+  查看内核配置：
+  [root@anima lwg]# cat /boot/config-2.6.9-42.0.10.EL | grep ATA
+  # CONFIG_X86_MCE_NONFATAL is not set
+  # ATA/ATAPI/MFM/RLL support
+  # CONFIG_BLK_DEV_IDE_SATA is not set
+  CONFIG_SCSI_SATA=y
+  CONFIG_SCSI_SATA_AHCI=m
+  CONFIG_SCSI_SATA_SVW=m
+  CONFIG_SCSI_ATA_PIIX=m
+  CONFIG_SCSI_SATA_MV=m
+  CONFIG_SCSI_SATA_NV=m
+  CONFIG_SCSI_SATA_QSTOR=m
+  CONFIG_SCSI_SATA_PROMISE=m
+  CONFIG_SCSI_SATA_SX4=m
+  CONFIG_SCSI_SATA_SIL=m
+  CONFIG_SCSI_SATA_SIL24=m
+  CONFIG_SCSI_SATA_SIS=m
+  CONFIG_SCSI_SATA_ULI=m
+  CONFIG_SCSI_SATA_VIA=m
+  CONFIG_SCSI_SATA_VITESSE=m
+  CONFIG_SCSI_SATA_INTEL_COMBINED=y
+  # CONFIG_SCSI_EATA is not set
+  # CONFIG_SCSI_EATA_PIO is not set
+  # CONFIG_ATALK is not set
+  CONFIG_USB_STORAGE_DATAFAB=y
+  # CONFIG_INFINIBAND_IPOIB_DEBUG_DATA is not set
+  # CONFIG_ATARI_PARTITION is not set
+  [root@anima lwg]#
+  需要打开内核的如下两个选项：
+  CONFIG_SCSI_SATA=y
+  CONFIG_SCSI_ATA_PIIX=y
+  重新编译内核。
+  如果你的SATA为启动盘的话，可能需要把原来/boot/grub/grub.conf 和 /etc/fstab 中的hda更改为sda，其他的驱动器名称也可能需要进行更改。
+  -----------------------------------------------------------------------------------------------------
+  hdparm命令帮助：
+  -----------------------------------------------------------------------------------------------------
+  [root@anima lwg]# /sbin/hdparm --help
+  hdparm - get/set hard disk parameters - version v5.7
+  Usage: hdparm [options] [device] ..
+  Options:
+   -a get/set fs readahead
+   -A set drive read-lookahead flag (0/1)
+   -b get/set bus state (0 == off, 1 == on, 2 == tristate)
+   -B set Advanced Power Management setting (1-255)
+   -c get/set IDE 32-bit IO setting
+   -C check IDE power mode status
+   -d get/set using_dma flag
+   --direct use O_DIRECT to bypass page cache for timings
+   -D enable/disable drive defect management
+   -E set cd-rom drive speed
+   -f flush buffer cache for device on exit
+   -g display drive geometry
+   -h display terse usage information
+   -i display drive identification
+   -I detailed/current information directly from drive
+   --Istdin reads identify data from stdin as ASCII hex
+   --Istdout writes identify data to stdout as ASCII hex
+   -k get/set keep_settings_over_reset flag (0/1)
+   -K set drive keep_features_over_reset flag (0/1)
+   -L set drive doorlock (0/1) (removable harddisks only)
+   -M get/set acoustic management (0-254, 128: quiet, 254: fast) (EXPERIMENTAL)
+   -m get/set multiple sector count
+   -n get/set ignore-write-errors flag (0/1)
+   -p set PIO mode on IDE interface chipset (0,1,2,3,4,...)
+   -P set drive prefetch count
+   -q change next setting quietly
+   -Q get/set DMA tagged-queuing depth (if supported)
+   -r get/set device readonly flag (DANGEROUS to set)
+   -R register an IDE interface (DANGEROUS)
+   -S set standby (spindown) timeout
+   -t perform device read timings
+   -T perform cache read timings
+   -u get/set unmaskirq flag (0/1)
+   -U un-register an IDE interface (DANGEROUS)
+   -v defaults; same as -mcudkrag for IDE drives
+   -V display program version and exit immediately
+   -w perform device reset (DANGEROUS)
+   -W set drive write-caching flag (0/1) (DANGEROUS)
+   -x tristate device for hotswap (0/1) (DANGEROUS)
+   -X set IDE xfer mode (DANGEROUS)
+   -y put IDE drive in standby mode
+   -Y put IDE drive to sleep
+   -Z disable Seagate auto-powersaving mode
+   -z re-read partition table
+  [root@anima lwg]#
+  ---------------------------------------------------------------------------------
+  关于硬盘DMA：
+  ---------------------------------------------------------------------------------
+  硬盘的DMA模式大家应该都知道吧，硬盘的PATA模式有DMA33、DMA66、DMA100和DMA133，较新的有SATA-150、SATA-300。一般来说现在大多数人用的还是PATA模式的硬盘，硬盘使用DMA模式相比以前的PIO模式传输的速度要快2~8倍。DMA模式的启用对系统的性能起到了实质性的作用。
+  DMA传输模式：
+  ----------------------------
+  “Ultra DMA Mode *（*为数字，DMA33为2， DMA66为4，DMA100为5、DMA133为6）”。

@@ -1,0 +1,38 @@
+一、关于Matchbox Window Manager：
+1，关于启动：
+当X－server启动并且DISPLAY环境变量已经设置好了，通过如下命令行方式来启动matchbox-windowmanager:
+$matchbox-window-manager [options]
+这里，我们一般不用使用命令行来指定[options],可以通过配置文件来指定（前提是在编译的时候 X Resource 的支持没有被disabled），配置文件一般就在： ~/.Xdefaults 和 (安装目录)/share/matchbox/defaults这两个位置。但如果我们用命令行指定了选项，则命令行的选项优先于配置文件。
+关于[options]，可以参见文档，例如有：
+-display <string>
+指明了要连接的X窗口,默认的窗口由DISPLAY环境变量来决定。
+-theme <string>
+指明了将要使用的主题，相应的配置文件：~/.theme/[theme name]/matchbox 和 (安装目录)/share/themes/，如果都没有，则使用这个：(安装目录)/share/themes/Default/matchbox 。
+......
+2.关于主题：
+主题可以配置，配置文件在： (安装目录)/share/themes/[selected theme name]/matchbox
+用命令行来配置主题简单，输入如下命令：
+$matchbox-remote -t <theme name>
+matchbox-remote 是一个可以在外部控制Matchbox的命令行工具,如果在编译的时候，有XSettings support，你还可以使用Gnome2 / GPE / KDE3 的桌面配置工具来配置主题。
+3.关于快捷键：
+相关的配置文件在：(install prefix)/share/matchbox/kbdconfig和 ~/.matchbox/kdbconfig
+配置文件中每行的定义如下格式：
+<keys definition>=<action>
+举例：
+<ctrl><alt>p=prev
+指定按ctrl+alt+p将切换到前一个窗口
+<ctrl>x=!xterm
+指定按ctrl+x将启动一个新的xterm终端
+我们可以参考已经安装的kbdconfig文件来获得更多的例子。
+我们也可利用gconf来配置快捷键（gconf是GNome的类似Windows注册表的东西可以设置一些参数）
+4.内建工具
+一个简单的可以执行 Matchbox window manager,desktop和panel的脚本，可以输入如下命令来运行：
+$matchbox-session
+执行的脚本文件是：~/.matchbox/session 和 /etc/matchbox/session
+
+【参考文献】
+[1] http://matchbox-project.org/documentation/manual/wm.html
+
+
+#########################################
+

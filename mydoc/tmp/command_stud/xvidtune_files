@@ -1,0 +1,16 @@
+参考：http://blog.csdn.net/chiefsailor/archive/2006/11/07/1371714.aspx
+对于那些使用双系统或者多系统的用户来说，经常会遇到这样一个问题：在不同的系统当中，图形界面的屏幕显示位置和范围会不一致。比如在windows下面正合适，但是在linux下面就显示得偏左，而到了freebsd下面显示得又偏窄。出现这种情况是由于不同的显示驱动程序对显卡的RAMDAC（数模转换芯片）的输出指令不同而造成的，那些使用液晶显示器并且通过DVI接口联接电脑的人不会遇到这类问题，因为DVI是数字接口。
+在标准的 XFree86/Xorg程序包中给我们提供了一个工具：xvidtune，可以解决上述的问题。在图形界面起动xvidtune，如图所示，可以使用中间的8个按钮调整屏幕的上下左右、高低宽窄，点这些按钮以后需要再点"Apply"按钮才能生效，当然您不放心的话可以现"Test"然后 "Apply"。调节满意了以后，点"Show"按钮，这时在终端窗口会看到一行参数，把这行参数复制下来，记住！
+然后你就可以退出xvidtune了，用你喜欢的编辑器编辑X的配置文件XF86Config-4或者xorg.conf，找到Monitor段，在段中加入一个参数项“Modeline”，内容就是你刚才记下的那一行参数：
+
+CODE:Section "Monitor"
+Identifier "Monitor0"
+VendorName "Monitor Vendor"
+ModelName "T711S"
+DisplaySize 320 240
+HorizSync 30.0 - 71.0
+VertRefresh 50.0 - 160.0
+Option "dpms"
+Modeline "1024x768" 94.50 1024 1072 1168 1376 768 769 772 808 +hsync +vsync
+EndSection
+

@@ -1,0 +1,153 @@
+负责的内容是avc格式的Codec部分。
+一、总体情况
+将来板子总体的概况大致如下：
+
+                  +--------------+
+                  |    EU11      |
+                  +-----/----\---+
+                       /      \
+                      v        v
+            +MeSy---------+  +Disco-------+
+            |  AVP-17     |  |  DP-474    |
+            +--/----\-----+  +------------+
+              /      \
+             v        v
+     +--------+   +---------+
+     | Diablo |   | EMMA    |
+     +--------+   +---------+
+
+对于上面图形，如下：
+1)EU11
+是之后将要做的索尼硬件，其包含了两个部分:AVP-17以及DP-474，两个板之间通过pcie相连，dp-474插到avp-17上面。
+
+2)AVP-17
+又有一说叫MeSy(大概是Media block+System block的简写)。是原来AVP-13板子的升级。
+其中包括两个CPU：Diablo以及EMMA。
+
+3)Diablo
+用于负责Media Block的部分，重要的功能关注的是解码(codec)部分。像现在的MBP项目，大致就对应这个部分。
+关于解码，采用的硬件方式是NATH以及beaune。
+这里NATH相当于之前avp13上面torino解码硬件部分的升级版本，支持那些例如MP4，等常见的解码格式。
+beaune是专用来解码mxf的avc格式的解码器，逻辑上它归为Diablo上面了，实际硬件上它在DP-474上面，通过pcie连接到AVP-17板子上面。
+注意：这个beaune也是目前我组重点关注的内容，底层的驱动部分完事了，还剩下上层如何解码了。
+
+4)EMMA
+负责System Block的部分，相当于"控制面板"。
+
+5)DP-474
+这个板子又有一说叫Disco(大概是Display+codec的简写)。主要在IA端。
+其包含的功能有Codec以及Display。
+Display部分将要使用Rossetta，目前使用Diablo+FPGA模拟。
+Codec部分含有beaune。
+这个部分内容不重点关注。
+
+二、解码部分
+1、内容简介
+codec解码流程
+假设播放(再生)视频文件，那么过程大致如下：
+从文件系统读取文件->通过demux模块解复用(就是读取文件填充好相应结构体)->解复用之后音频的编码部分送给音频解码硬件解码，视频部分送给视频解码部分解码。可以参考mp4，解码硬件底层已经差不多，主要是上层部分解码。
+录画过程相反。
+主要关注的是视频部分的解码。
+
+文档资料获取：
+文档位置：\\10.1.2.228\pfx\Document\Architecture\Codec\資料\beaune
+pdf文档密码：文件名称的非数字部分全大写，再加上前面日期。例如：
+20110811-0_BeaunePSG-HIF_clean.pdf
+的密码是：BEAUNEPSG2011081
+
+2、资料内容总结
+以下是对资料:"20110811-0_BeaunePSG-HIF_clean.pdf"的简要总结，
+文档获取位置：\\10.1.2.228\pfx\Document\Architecture\Codec\資料\beaune
+1)文档中的一些词汇：
+LSI:表示beaune,也就是解码的部分。
+Host:相当于Diablo，就是beaune插入的板子。
+VAU:Video Access Unit,相当于编码压缩的视频数据。
+AAU:Audio Access Unit,和VAU相对，是音频的。
+
+
+2)操作：
+LSI的主要操作如下：
+*从Host上面获取和解码指定的VAU到frame内存上面(解码)。将指定的frame内存上面的内容用baseband信号输出(显示)。
+*捕获和编码输入的baseband信号，并且传送到Host的指定区域上去(录像)。
+
+Encode模式的基本操作
+在Encode模式下，对被输入的视频帧数据执行捕捉和encode操作，然后根据Host的指示向Host管理的内存中发送数据。
+编码处理所需要的时间，也就是从capture结束开始，到通知host编码结束的期间，最短一个frame，最长两个frame。
+注意对于每个video frame data，每次执行编码操作，就会生成一个VAU，如果没有输入的video frame data那么就不进行解码操作。
+输入数据->捕捉数据->解码数据->传送数据
+输入数据的同时进程数据的捕捉，数据捕捉完成之后立即进行解码操作，解码完成之后向主机发送解码结束通知(发送解码结束通知的时间依赖内部解码)。
+从Host发送对编码之后的VAU的传送指示，然后进行数据的传送(传送处理的开始时间取决编码结束通知时间以及发送传送指令时间)。传送处理的时间要少于一个frame。传输完成之时向Host发送传送结束通知。
+
+Decode模式的基本操作
+在Decode模式中，根据Host的指示，从Host管理的内存区域读取VAU然后进行解码，解码的结果存放在LSI内部的Video Frame Buffer中。也存在将为Host准备的image data传输到LSI内部的Video Frame Buffer的功能。
+通过解码或者从Host传输过来的image data通过Host选择的显示器的指令，将它们做为视频基带信号输出。
+解码处理所需要的时间，也就是从数据传送结束开始，到通知host解码结束的期间，最短一个frame，最长两个frame。
+指示解码->传输数据->开始解码->显示数据
+指定VAU指示开始解码，然后LSI传输数据，传输数据完成之后通知Host然后进行解码操作，当解码动作完成之后会通知Host。
+
+3)Host和LSI之间的接口简述
+command和result
+command以package形式经过command buffer传送。传送中可能发生中断。
+result以package形式经过result buffer传送。传送中可能发生中断。
+根据图，那个buffer在LSI中。
+
+VAU写入
+在encode模式中，LSI生成的VAU通过GetAnEncodedVau命令输出到指定的"Host Window #1"上面（就是Host上面的一块内存）。
+同理，VAU的读取，Video image data的读取，都是通过同样的"Host Window #1"进行，不过其命令有所不同。
+
+firmware image的读取类似，不过读取是从"Host Window #0"上面读取。
+
+4）启动过程
+*reset解除
+
+*link确认
+通过检测LSI的VendorID 和Device ID确定连接。
+*寄存器设定
+a,基址寄存器设定
+LSI在PCIE总线上面设置三个必要的基址。Host根据PCIE的相关规则，将地址进行映射。
+三个地址分别存放：PCI Window #0、PCI Window #1、PCI Window #2的基地址。
+b,PCI命令寄存器设定
+在配置空间中将命令寄存器配置成0x0006
+c,配置PCI Express Capability Structure, Device Control。
+d,其他设定
+
+*写入IPL(Initial Program Loader)
+写入位置在PCI Window #2中的偏移量0x1fc00000，大小24k
+
+*参数设定
+设定在PCI Window #2的偏移量0x1FC05FD0上面
+（小问题：发现0x1FC05FD0-0x1fc00000略小于24k）
+具体参见表格，设置内容来自不同地方，例如Host Window等。大致如下：
+a.HostWindows #0
+在pcie bus上面配置后面设置firmware所需的HostWindow#0相关信息。
+b.HostWindows #1
+在pcie bus上面配置HostWindow#1的相关信息。
+c.firmware address设置
+根据host window#0开始的地址偏移指示，配置LSI的firmware开始位置。
+
+*准备firmware
+LSI的firmware通过前面根据Host window#0设置的firmware地址偏移来进行配置。
+
+*解除内部cpu的reset
+根据pci window#0进行设置。
+
+*firmware启动的确认
+
+5)PCI的地址空间
+PCI的地址空间有三个，叫做PCI Window #0,PCI Window #1,PCI Window #2。
+另外LSI需要Host开放在PCIE总线上面的两个地址空间。启动时候使用Host Window#0的地址空间读取firmware image。
+LSI的处理使用的地址空间叫做Host Window #1。
+Host Window #0在启动的时候使用，Host Window #1在启动之后使用。
+PCI Window#0是LSI向PCIE开放的区域,在启动处理，以及控制命令和结果缓存的时候使用。(cmd&result buffer)
+PCI Window#1是LSI向PCIE开放的区域,目前没有使用。
+PCI Window#2是LSI向PCIE开放的区域,涉及本LSI的在内存管理，启动处理以及dump log等。(initia loader)
+
+Host Window#0是LSI向PCIE开放的区域，可以看做是Host侧内存的映射。启动LSI的时候，从Host Window#0指定的地址读取配置好的fireware。(fireware)
+Host Window#1是LSI向PCIE开放的区域，可以看做是Host侧内存的映射。用于在LSI运行的时候写入和读取数据。(vau)
+
+6)command和result的buffer控制
+host和LSI之间的命令和结果的传输，通过LSI上面专门的硬件进行传输。
+先大致说了一下控制的情况，然后说了相关的控制寄存器。
+I:立即生效的命令
+B:上升或下降沿才有的命令（base band）。
+命令就是buffer的位（即package的）。

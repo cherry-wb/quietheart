@@ -1,0 +1,21 @@
+{
+	"name":"sample_subscenario",
+	"vendor":"ap:cisco:e3000",
+	"type":{"name":"seq"},
+	"description":"setting device wireless.",
+	"scenarios":[
+    {
+        "subscenario1":
+        {
+            "fname":"sample_scenario1.json", 
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}

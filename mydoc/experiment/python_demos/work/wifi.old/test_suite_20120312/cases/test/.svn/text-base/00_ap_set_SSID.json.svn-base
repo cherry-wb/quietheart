@@ -1,0 +1,25 @@
+{
+	"name":"set SSID",
+	"type":{"name":"seq"},
+	"description":"set cisco ap SSID.",
+	"scenarios":[{
+		"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ip":"10.1.10.32:8080"
+			}
+		}},
+		{"set_SSID":{
+			"fname":"ap/cisco/scenario_set_wireless_SSID.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+			"ssid":{"2G":"Cisco0309","5G":"Cisco0309"}
+			}
+		}},
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout.json", 
+			"type":{"name":"seq"}
+		}
+	}]
+}

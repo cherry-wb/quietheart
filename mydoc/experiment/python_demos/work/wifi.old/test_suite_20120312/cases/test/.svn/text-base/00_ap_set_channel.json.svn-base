@@ -1,0 +1,29 @@
+{
+	"name":"ap_set_channel",
+	"type":{"name":"seq"},
+	"description":"set cisco ap channel.",
+	"scenarios":[
+	
+		{"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ip":"10.1.10.32:8080"
+			           }
+                          }
+		},
+		{"set_channel":{
+			"fname":"ap/cisco/scenario_set_channel.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+                                "channel":{"5G":"48","2G":"3"}
+			             }
+		                  }
+               },
+		{"logout":{
+					  "fname":"ap/cisco/scenario_logout.json", 
+					  "type":{"name":"seq"}
+		           }
+		}
+	]
+}

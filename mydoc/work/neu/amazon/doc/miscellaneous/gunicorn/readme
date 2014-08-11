@@ -1,0 +1,9 @@
+
+
+http://gunicorn.org/run.html
+
+sudo apt-get install gunicorn
+
+easy_install gevent-websocket
+
+sudo pip install ws4py

@@ -1,0 +1,134 @@
+To All (ES)
+>From 吕凯
+CC 田野，刘兴宝，于海涛，何正光，王亮，田原，diablo部分的担当
+
+各位好，
+根据客户最新要求，将要采用新的编译环境。所以对编译环境升级的同时，还需要
+对自己相应的代码进行修改以及测试。
+
+一、问题
+根据目前我所知的情况，客户要求，应当采用新的编译环境。
+目前的问题是：使用新的编译环境安装，内核几乎没有修改，busybox部分修改不
+多，但是diablo程序的代码修改很多。
+
+二、状况
+为了能够使用新的编译环境，修改了不少代码diablo内部的代码。因为涉及文件较
+多，修改只集中在分支PowerOn上面。
+PowerOn分支的svn地址为：
+http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/PowerOn/Source/Rootfs/diablo
+修改之前的版本是：23149，提交修改之后的版本是：23150。
+
+三、需要做的
+1，安装新编译环境
+[root@P-D4-lv-k eu11_environment]# rpm -ivh
+pfx-celinux-cross-compiler-8.0.1.4-3.i386.rpm
+Preparing... ########################################### [100%]
+1:pfx-celinux-cross-compi########################################### [100%]
+这样，实际全部的环境安装在"/usr/local/scel8.0"中；另外，还会向
+"/usr/local/bin"中安装一个"scel- cmds.sh"脚本。所以，保险起见，最好自己
+备份原来得"/usr/local/scel8.0"目录，以及可能的相应文件。
+目前我将编译环境安装包放在：
+smb://10.1.2.228/share/lv-k/build_tmp/pfx-celinux-cross-compiler-8.0.1.4-3.i386.rpm
+请自行下载。
+
+2，修改代码
+因为要使用新编译环境的，所以需要diablo程序部分、使用其它分支的、相关人员
+参照PowerOn上面进行过的修改自己进行修改。
+而我之前在PowerOn上面修改的文件为：
+M diabloMainCpu/osWrapper/dummy.h
+M diabloMainCpu/osWrapper/diabloCmnDebug.h
+M diabloMainCpu/osWrapper/defs.mk
+M diabloMainCpu/osWrapper/fsEncapsulationLib.h
+M diabloMainCpu/osWrapper/Makefile
+M diabloMainCpu/osWrapper/tcb.h
+M diabloMainCpu/osWrapper/memPartLibP.h
+M diabloMainCpu/osWrapper/wrapper.h
+M diabloMainCpu/osWrapper/dummy.c
+M diabloMainCpu/zou3Mif/FileSystem/Wrapper/fsMediaBlockFLapi.c
+M diabloMainCpu/zou3Mif/FileSystem/Fat/dosVDirLib.c
+M diabloMainCpu/zou3Mif/FileSystem/Fat/dosChkLib.c
+M diabloMainCpu/zou3Mif/FileSystem/Fat/fsDosFsEx.c
+M diabloMainCpu/zou3Mif/FileSystem/Fat/dosFsLib.c
+M diabloMainCpu/zou3Mif/FileSystem/Udf/udfFsWrapper.c
+M diabloMainCpu/zou3Mif/iLinkFileIFConverter/iConvInterface.c
+M diabloMainCpu/build/diablo_flags.mk
+M diabloMainCpu/zou3App/include/wfs.h
+M diabloMainCpu/zou3Main/systemMode/debugControl/sytmDbgLogDump.c
+A diabloMainCpu/../Makefile
+这里，M表示修改的文件，A表示后来添加的文件。这些修改的文件里面，修改的地
+方都用:
+//lvkai+ for new env
+//lvkai* for new env
+之类的字样标记了，便于其它分支相关担当合并，以及运行错误时候，查看是否是
+由于这些修改导致。
+
+提示：
+如果所做修改的分支还是在Poweron同样的svn库上面，那么结合PowerOn修改前后
+的版本号，使用"svn merge"可能会更快一些，具体请自己查阅"svn help merge"
+命令。
+
+
+三、注意
+由于每个分支的代码有些不同，所以需要相应担当结合之前PowerOn分支修改的内
+容和自己的需求进行。
+下面的例子中就给出了修改过程中感觉比较关键的、几处错误类型，可供参考。修
+正处是否合理，需要各担当自己判断了：
+1，关于pthread部分的修改
+原有编译环境中：
+pthread.h中定义pthread_cleanup_push和pthread_cleanup_pop是一个独立的函数。
+
+而新的编译环境中pthread.h中如下定义:
+"#define pthread_cleanup_push(...) do{ XXX"
+"#define pthread_cleanup_pop(...) XXX}"
+这样要求采用新编译环境，那么pthread_cleanup_push和pthread_cleanup_pop函
+数必须严格地成对使用。
+
+而原有代码中许多地方使用pthread_cleanup_push和pthread_cleanup_pop都不是
+严格成对的。例如：
+taskLib.c:taskMyTcb(...)
+{
+pthread_cleanup_push(...);
+...
+if(...)
+{
+....
+pthread_cleanup_pop(...);
+...
+}
+else
+{
+...
+}
+pthread_cleanup_pop(...);
+}
+pthread_cleanup_pop多了一个，逻辑上面没有错，但是由于新环境定义成了宏，
+导致语法错误。
+我在diabloMainCpu/osWrapper/wrapper.h中，参照pthread.h，重新定义了这两个
+宏，可供参考，如果不能用，还要担当自己确认修改方式。
+
+
+2，关于文件系统部分的修改
+2.1)fs_stat结构中的
+TIME st_atime;
+TIME st_mtime;
+TIME st_ctime;
+三个成员在新的编译环境下有冲突，所以将其名称全部改成
+TIME st_atime_m;
+TIME st_mtime_m;
+TIME st_ctime_m;
+并将引用处也都改过来了，如有遗漏，还需相应担当自己修正。
+
+2.2)fsid_t结构与sys/types.h冲突，
+将该结构的定义去掉，并且将程序中对成员
+fsid_t::val[2]的引用部分，全部替换成标准系统库中的fsid_t::__val[2]。如有
+遗漏，还需相应担当自己修正。
+
+3，关于应用程序的运行：
+目前，因为编译出来的是静态库，并且只有我这有新的环境，所以还无法确定、编
+译出来的最后应用程序，如果运行在最后的文件系统镜像中，具体还需要哪些动态
+库，如果有能够确认需要某个库的担当，希望能够提前告知我。谢谢！！
+
+以上，
+2011年11月16日
+(PS.昨天机器一直无法联网，今天换了一个IP才把这邮件发送出去，所以晚了一
+天，还需测试编译好的结果。)

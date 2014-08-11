@@ -1,0 +1,153 @@
+# Беларускі пераклад libwnck.HEAD.
+# Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
+# Vital Khilko <dojlid@mova.org>, 2003.
+# Ales Nyakhaychyk <nab@mail.by>, 2004.
+# Ihar Hrachyshka <ihar.hrachyshka@gmail.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libwnck.HEAD\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-12-12 07:25+0100\n"
+"PO-Revision-Date: 2006-12-12 10:40+0300\n"
+"Last-Translator: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>\n"
+"Language-Team: Belarusian <i18n@mova.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../libwnck/application.c:29
+msgid "untitled application"
+msgstr "безназоўнае дастасаваньне"
+
+#: ../libwnck/pager-accessible.c:321
+msgid "Workspace Switcher"
+msgstr "Пераключальнік прастораў"
+
+#: ../libwnck/pager-accessible.c:332
+msgid "Tool to switch between workspaces"
+msgstr "Пераключальнік працоўных прастораў"
+
+#: ../libwnck/pager-accessible.c:436
+#, c-format
+msgid "Click this to switch to workspace %s"
+msgstr "Пстрыкніце сюды, каб пераключыцца на прастору %s "
+
+#: ../libwnck/selector.c:221
+msgid "Unknown Window"
+msgstr "Невядомае вакно"
+
+#: ../libwnck/selector.c:729
+msgid "No Windows Open"
+msgstr "Няма адкрытых вокнаў"
+
+#: ../libwnck/selector.c:833
+msgid "Window Selector"
+msgstr "Выбар вокнаў"
+
+#: ../libwnck/selector.c:834
+msgid "Tool to switch between windows"
+msgstr "Пераключальнік вокнаў"
+
+#: ../libwnck/tasklist.c:646
+msgid "Window List"
+msgstr "Сьпіс вокнаў"
+
+#: ../libwnck/tasklist.c:647
+msgid "Tool to switch between visible windows"
+msgstr "Пераключальнік бачных вокнаў"
+
+#: ../libwnck/tasklist.c:2535
+msgid "_Close All"
+msgstr "За_крыць усе"
+
+#: ../libwnck/tasklist.c:2550
+msgid "_Minimize All"
+msgstr "Най_меншыць усе"
+
+#: ../libwnck/tasklist.c:2561
+msgid "_Unminimize All"
+msgstr "Разнай_меншыць усе"
+
+#: ../libwnck/window-action-menu.c:260
+msgid "Unmi_nimize"
+msgstr "Разнай_меншыць"
+
+#: ../libwnck/window-action-menu.c:267
+msgid "Mi_nimize"
+msgstr "Най_меншыць"
+
+#: ../libwnck/window-action-menu.c:275
+msgid "Unma_ximize"
+msgstr "Разнай_большыць"
+
+#: ../libwnck/window-action-menu.c:282
+msgid "Ma_ximize"
+msgstr "Най_большыць"
+
+#: ../libwnck/window-action-menu.c:302
+msgid "_Only on This Workspace"
+msgstr "Толькі на _гэтай працоўнай прасторы"
+
+#: ../libwnck/window-action-menu.c:309
+msgid "_Always on Visible Workspace"
+msgstr "Заўсёды на _бачнай працоўнай прасторы"
+
+#: ../libwnck/window-action-menu.c:463
+#: ../libwnck/workspace.c:237
+#, c-format
+msgid "Workspace %d"
+msgstr "Працоўная прастора %d"
+
+#: ../libwnck/window-action-menu.c:471
+msgid "Workspace 1_0"
+msgstr "Працоўная прастора 1_0"
+
+#: ../libwnck/window-action-menu.c:473
+#, c-format
+msgid "Workspace %s%d"
+msgstr "Працоўная прастора %s%d"
+
+#: ../libwnck/window-action-menu.c:563
+msgid "On _Top"
+msgstr "На_версе"
+
+#: ../libwnck/window-action-menu.c:572
+msgid "_Move"
+msgstr "Пера_мясьціць"
+
+#: ../libwnck/window-action-menu.c:579
+msgid "_Resize"
+msgstr "Зьмяніць _памер"
+
+#: ../libwnck/window-action-menu.c:592
+msgid "_Close"
+msgstr "За_крыць"
+
+#: ../libwnck/window-action-menu.c:626
+msgid "Move to Workspace _Left"
+msgstr "Перамясьціць _улева"
+
+#: ../libwnck/window-action-menu.c:637
+msgid "Move to Workspace R_ight"
+msgstr "Перамясьціць у_права"
+
+#: ../libwnck/window-action-menu.c:648
+msgid "Move to Workspace _Up"
+msgstr "Перамясьціць _вышэй"
+
+#: ../libwnck/window-action-menu.c:660
+msgid "Move to Workspace _Down"
+msgstr "Перамясьціць _ніжэй"
+
+#: ../libwnck/window-action-menu.c:667
+msgid "Move to Another _Workspace"
+msgstr "Перамясьціць на іншую _прастору"
+
+#: ../libwnck/window.c:36
+msgid "untitled window"
+msgstr "безназоўнае вакно"
+
+#~ msgid "%s"
+#~ msgstr "%s"
+

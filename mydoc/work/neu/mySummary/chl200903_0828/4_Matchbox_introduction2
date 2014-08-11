@@ -1,0 +1,51 @@
+二、关于Matchbox-panel-manager
+matchbox-panel-manager（面板管理器） 是基于GTK的应用程序，用来管理面板的应用程序。 这些小程序包括：开始菜单，用户信息的工具如：电池电量显示，cpu等监视，钟表。
+1.关于用法和配置：
+运行面板需要X Server运行，并且DISPLAY环境变量的正确设置。输入：
+$matchbox-panel [options]
+这里的选项有许多，可参见文档。例如：
+－display,-d，指定显示的窗口号。
+--id，指定面板id号。
+--titlebar
+要求面板被重新指定父窗口到窗口标题栏。
+......
+可以把matchbox－panel在主程序窗口标题栏中重新指定父窗口（翻译不太确定？？）。利用--titlebar
+这需要在Matchbox WM 的 "theme.xml"配置文件的window frame中定义一个panel域（利用<panel>标签）这时候有些选项将无作用了。
+举例：
+
+一个透明的，60象素宽的面板:
+
+matchbox-panel --size 60 --orientation east --bgtrans yes &
+
+在显示的顶部和底部运行两个面板：
+
+matchbox-panel --orientation north & matchbox-panel --id 2 --orientation south &
+在命令行设置背景将覆盖主题配置文件中所有对背景有影响的设置。
+
+2.关于面板工具：
+面板工具一般都识别的选项：
+--display,--offset,--no-session含义自己看文档。
+面板程序也可以通过SYSTEM_TRAY_ID环境变量来指定它停靠的面板ID。
+1)mb-applet-menu-launcher（开始菜单）：
+通过读取(安装目录)/share/applications/ ( 和 ~/.applications )中的.desktop 文件。
+它的结构由(安装目录)/share/matchbox/vfolders 中的.directory 文件来定义
+2）mb-applet-launcher （程序运行器）
+通过如下两命令：
+mb-applet-launcher [options..] <xpm|png filename> <command> ]
+或
+mb-applet-launcher --desktop <.desktop file>
+第一种命令行方式的[options]请参考文档。
+3）其它：
+mb-applet-clock
+一个简单的钟表.
+mb-applet-wireless
+无线网络的信号强度.
+mb-applet-system-monitor
+cpu、内存使用监视.
+mb-applet-battery
+电池.
+
+【参考文献】
+[2] http://matchbox-project.org/documentation/manual/panel.html
+
+#########################################

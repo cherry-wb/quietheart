@@ -1,0 +1,102 @@
+arping :向相邻主机发送ARP请求
+
+语 法
+
+arping[必要参数][选择参数][目的地址]
+功 能
+arping 命令： 在指定网卡上发送ARP请求指定地址，源地址 “-s” 参数指定，可用来直接 ping MAC 地址，以及找出那些 ip 地址被哪些电脑所使用了
+
+
+参数
+必要参数 
+
+-A ARP回复模式，更新邻居
+-b 保持广播
+-D 复制地址检测模式
+-f 得到第一个回复就 退出
+-q 不显示警告信息
+-U 主动的ARP模式，更新邻居
+
+
+选择参数 
+
+-c<数据包的数目> 发送的数据包的数目
+-w<超时时间> 设置超时时间
+-I<网卡> 使用指定的以太网设备，默认情况下使用eth0
+-s 指定源IP地址
+-h 显示帮助信息
+-V 显示版本信息
+ 
+
+范例
+
+
+范例1 ： 发送ARP请求 
+
+[root@hnlinux ~]# arping 192.168.0.1 //向指定IP发送ARP请求
+ARPING 192.168.0.1 from 192.168.0.3 eth0
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 2.480ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 2.387ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.459ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.494ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.478ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 2.414ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.464ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.501ms
+Sent 8 probes (1 broadcast(s))
+Received 8 response(s) //Ctrl+C 终止
+[root@hnlinux ~]# 
+
+范例2 ： 向指定主机发送ARP请求，当收到第一个包自动退出
+
+[root@hnlinux ~]# arping -f 192.168.0.1
+ARPING 192.168.0.1 from 192.168.0.3 eth0
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 0.692ms
+Sent 1 probes (1 broadcast(s))
+Received 1 response(s)
+[root@hnlinux ~]# 
+
+范例3 ： 指定发送次数
+
+
+[root@hnlinux ~]# arping -c 3 192.168.0.1 //指定发送3次
+ARPING 192.168.0.1 from 192.168.0.3 eth0
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 0.662ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 0.810ms
+Unicast reply from 192.168.0.1 [00:21:27:9E:36:66] 1.491ms
+Sent 3 probes (1 broadcast(s))
+Received 3 response(s)
+[root@hnlinux ~]#
+
+ 
+
+那么如何知道自己的linux主机是否与网络中其它的windows主机IP地址冲突呢？
+
+其实很简单，在linux主机端执行
+
+#arping 192.168.0.25
+
+Unicast reply from 192.168.0.25 [00:25:e4:6a:4b:f4]  1.390ms
+
+如果没有任何信息，则表示网内我的IP是唯一的
+
+如果有以上信息，则表示网内有一台MAC地址为00:25:e4:6a:4b:f4的主机IP地址与我相同，这时可以通过ifconfig命令验证，你会发现：本机的MAC地址是00:14:k2:5d:8e:b2。我们可以用局域网扫描软件找到MAC地址为00:25:e4:6a:4b:f4的主机，并将其隔离或更换IP地址。
+
+原理：arping命令是以广播地址发送arp packets，以太网内所有的主机都会收到这个arp packets，但是本机收到之后不会Reply任何信息。当我们在linux主机端上执行下面的命令时：
+
+　　arping 192.168.0.25　　会默认使用eth0，向局域网内所有的主机发送一个：
+
+who has 192.168.0.25的arp request，tell 192.168.0.25 your mac address，
+
+当这台windows主机端收到这个arp packets后，则会应答：
+
+　　"I am 192.168.0.25 , mac是00:25:e4:6a:4b:f4"，这样我们会收到mac地址为00:25:e4:6a:4b:f4的windows主机的Reply信息。
+
+
+
+
+
+
+参考信息：
+http://www.cnblogs.com/feisky/archive/2011/11/20/2256587.html
+http://www.linuxidc.com/Linux/2012-09/70424.htm

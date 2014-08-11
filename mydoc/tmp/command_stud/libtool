@@ -1,0 +1,3 @@
+
+libtool --mode=execute gdb -q src/hello
+hello是一个shell脚本，不能直接gdb，参见autotool

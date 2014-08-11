@@ -1,0 +1,247 @@
+http://forum.ubuntu.org.cn/viewtopic.php?f=139&t=135358
+   	
+ 文章标题 : [已解决][问题]双系统，重装了windows后，开机进不去unbutu了
+帖子发表于 : 2008-07-08 23:21 
+
+现在开机直接进到了windows面了
+grub for dos不知道怎么用啊
+
+我是把2个系统装在一块硬盘上的
+
+高手指教详细点
+谢谢
+
+
+XP在安装的时候是不会给我们提供系统引导程序安装的，Linux 带有系统引导程序，如 GRUB等等。它一般装在第一个硬盘（hd0）、第一个分区（hd,0）的第一个扇区上，所以要是我们把 XP 装在第一个分区上，那重装 XP， GRUB 就被破坏了，再也不能引导系统了。
+
+要是遇上这样的情况就得重装 GRUB 了。别着急，Linux 不会那么容易就要重装的。那么下面介绍 GRUB 的安装方法：
+
+第一种方法
+
+1. 用Live CD启动
+2. 打开一个终端，运行$sudo grub命令（这里可能需要等一会儿），你会看到'grub>'这样的提示符
+3. 在提示符'grub>'后输入find /grub/stage1，你会得到一个运行结果，比如我的机子上结果是(hd0,5) （这个命令其实就是找出/boot所在分区）
+4. 运行 grub>root (hd0,5) (这个位置要填上你机子上的运行结果)
+5. 运行grub>setup (hd0) 出现几行提示文字，最后是“... succeeded” 修复成功！
+6. 运行quit
+7. 重启计算机，取出live CD
+
+
+
+
+
+第二种、手动引导Linux，先进去再说
+
+grub>root (hdX,Y)
+
+#一般IDE和SATA硬盘都是hd0，Y就是你ubuntu系统所在的分区，D盘一般是5，你可以自己试多几次，
+#反正不正确的话GRUB会提示的。下面的类似
+
+grub>kernel (hdX,Y)/boot/vmlinuz-2.6.16
+
+#不一定是vmlinuz-2.6.16，你问下跟你装同个版本的兄弟，/boot/下面的vmlinuz开头的文件名叫什么，
+#我在办公室，没ubuntu，帮不了你
+#下面的initrd.img-2.6.16也要根据情况更改，可能叫initrd.gz
+
+grub>initrd (hdX,Y)/boot/initrd.img-2.6.16
+
+grub>boot
+
+#注意哦，上面的命令只能让你进入ubuntu，要彻底解决还是要重装grub，至于怎么重装，可以按照第一种方法，
+#也可以进入ubuntu后直接装，至于怎么装，我还不懂，
+#你可以看下grub的文档，或者google一下
+
+
+
+
+
+
+http://forum.ubuntu.org.cn/viewtopic.php?f=139&t=219900
+对于双系统grub的一点解释
+
+首先声明，本文只针对于正统的grub引导，grub在mbr的情况，也就是默认情况。
+案例一，先装win，不必说了，直接装ubuntu双系统菜单自然就有了。
+案例二，先装ubuntu或者是已经存在的双系统重新安装了windows而导致不能进入ubuntu或者干脆连windows也不能进入。
+
+不管怎样，我们唯一的依靠就是grub。LiveCD启动，重装grub(这个应该是必修课)
+终端：
+
+代码:
+sudo grub,一定要是sudo 或者su之后；
+grub> find  /grub/stage1，找出/boot所在分区，如果确定boot位置也可以不运行了。
+(hd0,0)
+grub> root (hd0,0) (这个位置要填上你机子上的运行结果)
+grub> setup (hd0) 出现“... succeeded” 修复成功！
+grub> quit
+
+引用:
+注意grub的识别比自己在操作系统下看到的数字少一。另外这是对于单独分出boot分区的用户，如果你boot不是单独分区就要改成“find /boot/grub/stage1”
+
+重启应该就能进ubuntu了。假如看不到windows系统了，不必担心，有grub呢
+终端：
+代码:
+sudo gedit /boot/grub/menu.lst
+
+找到没有加#的哪些title的位置。在最后面添加启动项root根据自己的来，
+这是我前一段时间先装ubuntu后装win7之后添加的win7启动项
+引用:
+title windows7
+root (hd0,3)
+chainloader +1
+
+下面一个是我因为某种原因重装系统之后自动生成的win7启动项，title部分有修改（不影响）。
+引用:
+title Windows-7(没事少点我！) ＃可以使的grub支持中文，论坛有搜索。
+rootnoverify (hd0,3)
+savedefault
+makeactive
+chainloader +1
+
+
+至于xp，应该是一样的，写上这个吧
+引用:
+title windows7
+root (hd0,3)
+chainloader +1
+
+
+
+http://forum.ubuntu.org.cn/viewtopic.php?f=139&t=65991
+删除Linux与恢复grub
+说明：
+收到一个网友的短信，告知按这个帖子出了问题，很令我惭愧。抱歉。
+我要说明的一点是，我对Linux并不是很熟悉，我写的帖子多是自己应用中的积累。而Linux应用环境很复杂，各种情况都 有，我不可能全面掌握。如果想彻底解决问题，还是知其然又知其所以然的好。否则其它人无法解决你的问题，除非与你的应用环境相同。
+而我在使用Linux时并没有将/boot单独分区，这点与该网友不同，以致该网友在使用find /boot/grub/stage1时发生Error 15: File not found错误。按starboys网友说的“如果boot分区是单独分的上面的/boot/grub/stage1应该改成/grub/stage1。 ”这里是需要注意的。
+而我之所以没有采用连按Tab方式列出可用分区，是因为当时我认为对新手来说，确认是哪个分区并不容易，特别是划分了多个Linux分区的情况下。却没想到单独划分/boot区会导致原命令出现错误。很抱歉。
+参见：http://forum.ubuntu.org.cn/viewtopic.php?t=90831
+
+删除Linux与恢复grub，这是我等新手常遇到的两个问题，感觉Linux不好，想退出，就要删除Linux，覆盖Grub；而装了 Windows与Linux双系统的用户，又会在重装Windows时把Grub覆盖掉，需要恢复Grub。这是后路，我们在做事之前需要先考虑好的。
+
+删除Linux，覆盖Grub，还原成XP自带的启动引导，这个很简单，只要你有Windows XP盘（非Ghost），用它启动，至选择安装位置的地方退出重启就可以。或者用它启动故障修复台，运行fixboot或者fixmbr都可以。
+
+而恢复Grub，其实也很简单的：用Live CD（对于Ubuntu来说就是Desktop CD或者DVD）启动，打开终端（Applications──>Accessory──>Terminal），执行以下代码：
+代码:
+sudo grub                               
+find /boot/grub/stage1
+root (hdX,Y)
+setup (hdX)
+quit
+
+
+注意：其中的X、Y是执行find /boot/grub/stage1命令后系统提示的。，比如：
+代码:
+grub> find /boot/grub/menu.lst
+(hd0,7)
+
+注意：这里的grub>是执行sudo grub命令后进入grub环境得到的提示符，不用输入。这时，X就是0,Y就是7。
+
+下面详细解释一下这几条命令：
+
+
+sudo grub 以root用户身份启动grub，否则会出错，错误见后文
+find /boot/grub/stage1 寻找/boot所在分区，其实换用find /boot/grub/menu.lst也一样。
+这一步也可以跳过，在执行root （hdX,时连按两下Tab列出可用分区，自己确定是哪个分区。
+如果是将/boot单独分区，详见说明。
+root (hdX,Y) 设置硬盘hdX的根文件系统（root Device)，实际就是设置/boot所在的分区
+setup (hdX) 自动安装GRUB到硬盘hdX。
+quit 退出GRUB
+root、setup命令后都有空格，如果没有会出错误。
+如果不以root用户身份会出现什么样的错误呢？
+引用:
+ubuntu@ubuntu:~$grub
+
+[ Minimal BASH-like line editing is supported. For
+the first word, TAB lists possible command
+completions. Anywhere else TAB lists the possible
+completions of a device/filename. ]
+
+grub> find /boot/grub/stage1
+
+Error 15: File not found
+
+grub> find /boot/grub/menu.lst
+
+Error 15: File not found
+
+grub> root(hd0,7)
+
+Error 27: Unrecognized command
+
+grub> root (hd0,7)
+
+Error 21: Selected disk does not exist
+grub> setup (hd0)
+
+Error 12: Invalid device requested
+
+
+一个成功例子：
+引用:
+ubuntu@ubuntu:~$ sudo grub
+[ Minimal BASH-like line editing is supported. For
+the first word, TAB lists possible command
+completions. Anywhere else TAB lists the possible
+completions of a device/filename. ]
+
+grub> find /boot/grub/menu.lst
+(hd0,7)
+
+grub> root (hd0,7)
+
+grub> setup (hd0)
+Checking if "/boot/grub/stage1" exists... yes
+Checking if "/boot/grub/stage2" exists... yes
+Checking if "/boot/grub/e2fs_stage1_5" exists... yes
+Running "embed /boot/grub/e2fs_stage1_5 (hd0)"... 15 sectors are embedded.
+succeeded
+Running "install /boot/grub/stage1 (hd0) (hd0)1+15 p (hd0,7)/boot/grub/stage2 /boot/grub/menu.lst"... succeeded
+Done.
+grub>quit
+
+
+这是最简单的方法，也有其它几个寻找/boot分区的方法，但稍麻烦点：
+在终端使用ls /dev/sd*和ls /hd*命令来查找系统的外部设置，用sudo mkdir命令来建立挂载目录，用sudo mount命令挂载，再用ls命令查看是否/boot所在的分区。
+
+也可以用sudo fdisk -l来找到启动分区（这里不涉及将/boot单独分区的情况，因为那种我没有实验过，不太清楚），如：
+引用:
+ubuntu@ubuntu:~$ sudo fdisk -l
+
+Disk /dev/sda: 160.0 GB, 160041885696 bytes
+255 heads, 63 sectors/track, 19457 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+
+Device Boot Start End Blocks Id System
+/dev/sda1 * 1 2295 18434556 7 HPFS/NTFS
+/dev/sda2 2296 19456 137845732+ f W95 Ext'd (LBA)
+/dev/sda5 2296 4845 20482843+ 7 HPFS/NTFS
+/dev/sda6 4846 8669 30716248+ 7 HPFS/NTFS
+/dev/sda7 8670 16557 63360328+ 7 HPFS/NTFS
+/dev/sda8 * 16558 17361 6458098+ 83 Linux
+/dev/sda9 17362 19393 16322008+ 83 Linux
+/dev/sda10 19394 19456 506016 82 Linux swap / Solaris
+
+
+就知道启动分区是/dev/sda8
+
+有人可能会有疑问，在Linux系统中是用sda8来表示这个启动分区，而GRUB中则是用(hd0,7)表示，这是因为在新版的Ubuntu中系统将串口硬盘和并口硬盘都识别为sd，a表示第一硬盘，8表示第4个逻辑分区（1──4被分配给主分区，扩展分区里的逻辑分区从5开始计算）。而Grub中则是用统一用hd代表硬盘，硬盘号与分区号都是从0开始计算的。
+这部分是凭记忆写的，可能不准确，请参考wiki。
+
+PS：
+看到有的帖子说Alterate CD可以在boot后输入linux rescue来启动救援盘，后面的操作则一样。我因手头没有Alterate CD无法验证。DVD虽说集成了Alterate CD与Desktop CD，但无法在以字符界面安装时启动救援盘。
+
+感谢雕雕补充：
+雕啸长空 写道:
+补充一点，上面讲的是在/boot下面的东西都还完好的,但如果RP不行，/boot都玩完了，可以试一下下面的：
+生成/etc/mtab
+代码:
+sudo grep -v rootfs /proc/mounts >sudo tee /etc/mtab
+
+安装grub到mbr
+代码:
+grub-install --no-floppy /dev/hda
+
+然后就自己搞定menu.lst了.
+
+ps：将雕的命令按http://forum.ubuntu.org.cn/viewtopic.php?t=67897修改了一下。
+顺便鄙视一下Linux/Windows双料菜鸟。
+再鄙视一下自己，其实这都是网上流传的已有的，只是这次恰好在实验Vista时用上了实证了一下。

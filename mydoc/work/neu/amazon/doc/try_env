@@ -1,0 +1,52 @@
+http://www.cnblogs.com/vincent-lee/archive/2012/02/06/2339658.html
+
+done:
+安装python-dev
+$sudo apt-get install python-dev
+安装 libevent-dev
+$sudo apt-get install libevent-dev
+
+安装 greenlet
+$sudo easy_install greenlet
+安装 gevent
+$sudo easy_install gevent
+
+
+sudo easy_install -U gunicorn
+try
+
+
+
+
+
+
+
+
+============good
+apt-get install python-setuptools
+apt-get install libevent-dev
+apt-get install python-greenlet python-greenlet-dev
+apt-get install python-gevent
+apt-get install gunicorn
+easy_install gevent-websocket
+easy_install ws4py
+
+
+-----------
+注意django版本,gevent版本，如果不对就到官方网站下载。
+lv-k@P-D2-lv-k:~/work/doc$ ls /usr/local/lib/python2.7/dist-packages/
+django                                gevent_websocket-0.3.6-py2.7.egg       mylab126.pth                ws4py
+Django-1.4.egg-info                   greenlet-0.4.0-py2.7-linux-x86_64.egg  selenium                    ws4py-0.2.2.egg-info
+easy-install.pth                      gunicorn-0.14.6-py2.7.egg              selenium-2.22.1.egg-info
+gevent-0.13.7-py2.7-linux-x86_64.egg  mylab126                               virtualenv-1.7.2-py2.7.egg
+
+
+===============
+rmsserver
+1,cli manage reset_db
+2,rms_start
+
+app_c
+1,sandbox
+2,testcase.py run():time.sleep
+3,app_cli:dutCount:xxx

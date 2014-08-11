@@ -1,0 +1,45 @@
+http://www.insideqt.com/bbs/viewthread.php?tid=113
+首先，让我们来看看Qt/e的系统结构介绍：
+
+Qt for destop Linux 和 Qt for Embedded Linux 最大的区别就在于他们所依赖的底层显示基础的不同，这也就导致了他们在体系结构上的差异。对于Qt for desktop Linux来说，底层的显示技术构建在X Window System之上，完全依赖于X System，他们在下层完全是调用了X Lib的系统方法来把界面上的东西显示出来。
+
+Qt for embedd linux在这方面则完全不同，它并没有构建在X Window之上，而是构建在Linux的Framebuffer之上，把在界面上需要显示的内容直接写入了framebuffer。因为在嵌入式系统上把X System给省略了，这样会节省许多的系统开销。而直接写framebuffer，又会加快显示速度。这种区别如图所示：
+
+
+
+但就是这一个改变，导致了在Qt/E凭空多出了一个Server这么一层，这一层负责监听系统事件，尤其是键盘和鼠标事件，屏幕输出，管理region，管理顶层窗口，管理光标和屏幕保护程序等等诸多功能。系统产生的键盘鼠标事件，首先就传给了这个server application，然后server在根据具体的情况把这些事件分发给相应的应用程序。
+
+每一个Qt/e应用程序，都需要这样一个server存在。一个程序运行起来后，如是自己成为Server进程，就是连接到一个已经存在的Server进程。所以，第一个运行起来的Qt/E应用程序就会启动这个server让自己成为这个Server进程，后续运行的程序就会连接到这个Server来管理自己。
+
+在Server端，每一个连接到QWSServer的client都有一个QWSClient对象与之对应，这个对象主要记录了client ID。在应用程序中每创建一个顶层窗口，那么在server端就会有创建一个QWSWindow实例来与之对应。
+
+每一个Server实例都是由一个QWSServer类来实现的。
+
+每当Server收到一个event 的时候，它需要判断应该发送给那一个窗口，这时候，它就会从QWSWindow列表中去找，然后根据这个窗口去找对应的client application，然后用一个QWSEvent对象来包装这个event，通过socket机制发送给具体的client application。如果当前系统安装了一个输入法，那么每一次键盘事件产生的时候，都会去调用输入法的相应方法。
+如图所示(取自Qte文档)：
+
+
+
+鼠标事件的处理和键盘事件的处理也符合上面的流程。鼠标驱动由一个QWSMouseHandler对象封装，键盘驱动由一个 QWSKeyboardHandler封装。这两个驱动程序对象都会通过Qt的plugin机制加载。具体的鼠标和键盘事件发生之后，都会封装成为一个 QWSEvent对象并发送给具体的client。
+图形输出，Qte的缺省行为是每一个widget会把自己画在一块内存中，然后由Server负责把这快内存copy到Linux的Framebuffer上去，如图所示(取自Qte文档)：
+
+
+
+但是对于大多数嵌入式系统来说，其中的显示子系统都是确定的，这样对于client应用程序来说，就可以直接输出到Framebuffer上面去。有两种方法可以实现这一点，第一种是为每一个Widget都设置Qt::WA_PaintOnScreen属性，另一种是QDirectPainter来在 Framebuffer中保留一块区域，如图所示(取自Qte文档)：
+
+
+
+
+
+
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+声明：
+《Inside Qt Series》专栏文章是Qt核心技术论坛(InsideQt.com)原创技术文章。
+本系列专栏文章可随意转载，但必须保留本段声明和每一篇文章的原始地址。
+作者保留版权，未经作者同意，不得用于任何商业用途
+
+《Inside Qt Series》专栏文章总索引：
+http://www.insideqt.com/bbs/viewthread.php?tid=9
+本文原始地址：
+http://www.insideqt.com/bbs/viewthread.php?tid=113

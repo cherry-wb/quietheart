@@ -1,0 +1,8 @@
+{
+    "name":"logout",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_logout.py"},
+    "reporter":["success","fail"],
+    "description":"logout and close firefox."
+}
+

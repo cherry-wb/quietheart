@@ -1,0 +1,147 @@
+功能说明：cpio命令是通过重定向的方式将文件进行打包备份，还原恢复的工具，它可以解压以“.cpio”或者“.tar”结尾的文件。
+使用格式：cpio [选项] > 文件名或者设备名
+                    cpio [选项] < 文件名或者设备名
+选项说明：详细选项说明参看下表
+选项 含义
+-o 将文件拷贝打包成文件或者将文件输出到设备上。
+-i 将打包文件解压或者将设备上的备份还原到系统。
+-t 查看cpio打包的文件内容或者输出到设备上的文件内容。
+-v 显示打包过程中的文件名称。
+-d 在cpio还原文件的过程中，自动的建立相应的目录。
+-c 一种较新的存储方式。
+-B 让默认的Blocks可以增大到5120 bytes，默认Blocks为512 bytes，这样做的好处是可以加快存取速度。
+
+举例：
+1．         将/etc下的所有普通文件都备份到/opt/etc.cpio，使用以下命令：
+[root@mylinux ~]# find /etc –type f | cpio –ocvB >/opt/etc.cpio
+2．         将系统上所有资料备份到磁带机内，使用以下命令：
+[root@mylinux ~]# find / -print | cpio -covB > /dev/st0
+#这里的“/dev/st0”是磁带的设备名，代表SCSI磁带机。
+3．         查看上例磁带机上备份的文件，使用以下命令：
+  #有时可能因为备份的文件过多，一个屏幕无法显示完毕，此时我们利用下面命令，让磁带机的文件信息输出到文件。
+ [root@mylinux ~]# cpio  -icdvt < /dev/st0 > /tmp/st_content
+ 4．         将示例1中的备份包还原到相应的位置，如果有相同文件进行覆盖，使用以下命令：
+[root@mylinux ~]#cpio –icduv < /opt/etc.cpio
+#注意，cpio恢复的路径，如果cpio在打包备份的时候用的是绝对路径，那么在恢复的时候会自动恢复到这些绝对路径下，本例就会将备份文件全部还原到/etc路径下对应的目录中。同理，如果在打包备份用的是相对路径，还原时也将恢复到相对路径下。
+ 通过上面的示例，可以看出，cpio无法直接读取文件，它需要每个文件或者目录的完整路径名才能识别读取，而find命令的输出刚好做到了这点，因此，cpio命令一般和find命令配合使用。其实，上面的示例我们已经看到了它们的组合用法。
+ 
+***************************************************************************************
+假如你要备份/etc/这个目录到/root上
+[root@mylinux ~]# find /etc -type f|cpio -ovBc >/root/etc.cpio
+要恢复文件的时候
+[root@mylinux ~]# cd /
+[root@ /]# cpio -idv /root/etc.cpio
+ 
+ 
+ 
+只是查看etc.cpio文件，可以使用
+[root@mylinux ~]# cpio -tv <etc.cpio 
+
+
+
+
+=========================
+今天突然看到后缀是cpio的文件，很久没用这个命令啦，现将常用用法总结如下：
+
+解压cpio文件
+cpio -idmv < filename.cpio
+同样可以解压img文件：
+cpio -idmv < filename.img
+cpio 备份命令
+备份：cpio -covB > [file|device] 将数据备份到文件或设备上
+还原：cpio -icduv < [file|device} 将数据还原到系统中
+常用参数：
+-o   ：将数据copy到文件或设备上
+-i    ：将数据从文件或设备上还原到系统中
+-t    ：查看cpio建立的文件或设备内容
+-c   ：一种比较新的portable format方式存储
+-v   ：在屏幕上显示备份过程中的文件名
+-B   ：让预设的blocks可以增加到5120bytes，默认是512bytes，这样可以使备份速度加快
+-d   ：自动建立目录，这样还原时才不会出现找不到路径的问题
+-u   ：更新，用较新的文件覆盖旧的文件
+cpio常与find 配合使用
+
+ 
+
+有人介绍了一下这样用:cpio -idv -E extralist < archive
+但我在extralist文件中写上文件名为/bin/netstat或netstat，则什么也得不到，如果改为:*netstat，则会在当前目录下生成一个bin目录，里面有解压出的netstat文件。
+如何指定一个文件名，而不用通配符*
+问题在你的extralist文件中的文件全名没有写对
+我是用Oracle的安装盘做的试验，文件里的用这种格式写的：Disk3/stage/Components/oracle.sysman.website/9.2.0.1.0/1/DataFiles/jarfiles.1.1.jar
+Disk3/stage/Components/oracle.sysman.website/9.2.0.1.0/1/DataFiles/html.1.1.jar
+。。。
+不应该以/开头的。
+你也可以执行一下cpio -idmv < xxx.cpio,屏幕输出的文件列表的格式就是正确的格式
+
+ 
+
+在DOS或Windows下,有各种压缩与解压缩工具软件,其主要功能是将一目录下的众多文件或子目录打包并压缩成一个文件,便于备份、组织与管理。而在Unix系统中,却无此类能打包并同时压缩的工具。　
+
+　　本人在Unix系统业务使用（特别是数据管理与备份）中,经过一番研究、整理后,充分利用Unix系统本身的命令tar、cpio和compress等来做到打包和压缩,使之充当类似DOS下的压缩软件,同时在Unix系统中亦具有通用性。　
+
+　　在Unix系统中,是先通过cpio或tar将众多的文件打包成一个文件库后,再用compress将文件库压缩来达到目的的。下面分别以cpio和tar来说明使用的方法和步骤。　
+
+　　一、cpio　
+
+　　1.文件或目录打包。　
+
+　　打包有如下多种情况：　
+
+　　A)含子目录打包：　
+
+　　find /usr/lib －print cpio －o〉/u0/temp1.cpio　
+
+　　将/usr /lib目录下的文件与子目录打包成一个文件库为/u0/temp1.cpio。　
+
+　　若通过－o选项来打包整个目录下的所有文件与子目录,常先利用find目录名－print来找出所有文件与子目录的名称,通过管道“ ”传给cpio打包。　
+
+　　B)不含子目录的打包：
+　　ls /usr/lib cpio －o〉/u0/temp1.cpio
+
+　　将/usr/lib目录下的文件(不含子目录下的文件)打包成一个文件库为/u0/temp1.cpio。　
+
+　　C)特定文件打包：
+　　可利用文本搜索命令grep与管道配合,可以排除或选择特定类型的文件传给cpio打包。
+如:ls /usr/lib/＊.c cpio －o〉/u0/temp1.cpio
+　　或ls /usr/lib grep ′\.c＄′ cpio －o〉/u0/temp1.cpio　
+
+　　意思均为找出/usr/lib目录下以.c结尾的文件予以打包。　
+
+　　又如：ls /usr/lib grep abcd cpio －o〉/u0/temp1.cpio ,其意为找出/usr/lib目录
+下文件名中含有abcd字符的文件予以打包。　
+
+　　ls /usr/lib grep －v abcd cpio －o〉/u0/temp1.cpio,其意为找出/usr/lib目录下文
+件名中不含 abcd 字符的文件予以打包。－v选项在grep命令中的意思是排除含有字符串的行
+列。　
+
+　　如此,可充分利用Unix的管道和一些命令的强大功能来实现文件的打包。　
+
+　　2.压缩：　
+
+　　文件打包完成后,即可用Unix中的compress命令（/usr/bin下）压缩打包文件。对一般的文
+本文件,压缩率较高,可达81％。　
+
+　　compress /u0/temp1.cpio则将文件库/u0/temp1.cpio压缩为/u0/temp1.cpio.Z（自动添
+加.Z并删除/u0/temp1.cpio ）。　
+
+　　3.解压：　
+
+　　uncompress /u0/temp1.cpio.Z则自动还原为/u0/temp1.cpio。　
+
+　　4.解包展开：　
+
+　　将按原目录结构解包展开到当前所在目录下。若以相对路径打包的,当解包展开时,也是以相
+对路径存放展开的文件数据;若以绝对路径打包的,当解包展开时,也是以绝对路径存放展开的文
+件数据。因此注意若为相对路径,应先进入相应的目录下再展开。　
+
+　　 cd /u1　
+　　 cpio －id〈/u0/tmp1.cpio则将/u0/temp1.cpio解压到/u1下(这里假设temp1.cpio以相对路径压缩)。　
+
+　　若加u选项,如cpio －iud〈/u0/temp1.cpio则文件若存在将被覆盖,即强制覆盖。　
+
+　　cpio －id〈/u0/temp1.cpio ＊.c 则展开其中的＊.c文件,类似于DOS系统中的Pkzip软件中Pkunzip －d temp1.zip解包功能。　
+
+　　5.显示：　
+
+　　cpio －it〈/u0/temp1.cpio [＊.c] 显示文件库内的文件名称,类似于DOS系统中的Pkzip软件中Pkunzip －vbnm temp1.zip功能。　
+

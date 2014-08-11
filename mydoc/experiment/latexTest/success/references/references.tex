@@ -1,0 +1,43 @@
+%关于引用
+%1)先用\label{marker} 命令来定义一个标记,标记名可以是任意字符串(例如这里是marker),但是在全文中须保持唯一。
+%2)之后可以用 \ref{marker} 命令来引用标记处章节或图表的编号,用 \pageref{marker} 来引用标记处的页码。
+
+%文档中新增交叉引用后,得利用pdflatex编译两次，否则第一次有警告且无法显示引用位置。因为第一次编译只会扫描出有交叉引用的地方,第二次编译才能得到正确结果。
+
+%添加脚注只用\footnote{脚注内容}就行了。
+
+%问题：不知道为什么，这里的引用和脚注只能显示出来，但是点击却没有链接链到那里
+
+
+\documentclass[10pt,titlepage]{report} %文档类声明
+\begin{document}               %正文
+helloworld1!
+\newpage%这个newpage有没有都是一样的，因为chapter会自动的另起一页
+\chapter{first chapter1}
+here is chapter1
+\section{first section1.1}
+hello,section 1.1
+\section{second section1.2}
+\label{mysec1.2}%这里定义一个标签
+hello,section 1.2 %后面的空行是需要的，否则都跑到一行了
+
+The page is:\pageref{mysec1.2},the sec is:\ref{mysec1.2}%这里引用前面定义的标签
+
+
+\chapter{second chapter2} %似乎每一章都另起一页，这里的second chapter2另起一行
+here is chapter2
+\section{third section2.1}
+hello,section 2.1
+\newpage
+\section{forth section2.2}
+\label{mysec2.2}
+hello,section 2.2
+
+In section1.2,the page is:\pageref{mysec1.2},the sec is:\ref{mysec1.2}
+
+\chapter{third chapter3} 
+section 2.2 is in the page:\pageref{mysec2.2}
+%这里添加一个脚注
+\footnote{here is a footnote}
+
+\end{document}

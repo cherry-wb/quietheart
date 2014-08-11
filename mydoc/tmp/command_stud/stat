@@ -1,0 +1,11 @@
+*显示文件的详细信息：
+$ stat patch_files 
+输入之后，输出如下：
+File: `patch_files'
+Size: 3500            Blocks: 8          IO Block: 4096   regular file
+Device: 802h/2050d      Inode: 44568       Links: 1
+Access: (0777/-rwxrwxrwx)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2009-08-24 11:26:20.000000000 +0800
+Modify: 2009-08-24 11:26:20.000000000 +0800
+Change: 2009-08-24 11:26:20.000000000 +0800
+这里，如果文件不存在则输出错误信息。

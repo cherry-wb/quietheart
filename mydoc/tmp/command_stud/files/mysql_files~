@@ -1,0 +1,206 @@
+LAMP（linux,apache,mysql,python/php/perl）
+可能需要安装的
+$sudo apt-get install apache2
+$sudo apt-get install mysql-server
+$sudo apt-get install php5
+$sudo apt-get install php5-mysql
+$sudo apt-get install php5-cli
+$sudo apt-get install libgd2-xpm libgd2-xpm-dev php5-gd
+这里，简单介绍了如何使用mysql进行数据库的管理。
+参考网址：
+http://www.eygle.com/digest/2008/01/mysql_create_user.html
+
+1.CREATE USER
+
+CREATE USER user [IDENTIFIED BY [PASSWORD] 'password']
+
+    [, user [IDENTIFIED BY [PASSWORD] 'password']] ...
+
+CREATE USER用于创建新的MySQL账户。要使用CREATE USER，您必须拥有mysql数据库的全局CREATE USER权限，或拥有INSERT权限。对于每个账户，CREATE USER会在没有权限的mysql.user表中创建一个新记录。如果 账户已经存在，则出现错误。
+
+使用自选的IDENTIFIED BY子句，可以为账户给定一个密码。user值和 密码的给定方法和GRANT语句一样。特别是，要在纯文本中指定密码，需忽略PASSWORD关键词。要把 密码指定为由PASSWORD()函数返回的混编值，需包含关键字PASSWORD。
+2.使用GRANT语句
+
+最好的方法是使用GRANT语句，因为这样更精确，错误少。从MySQL 3.22.11起提供了GRANT；它的主要用途是来给帐户授权的，但也可用来建立新帐户并同时授权。注意：当mysql运行于no_auto_create_user时要提供新建用户的密码，否则不能创新用户。
+下面的示例说明如何使用MySQL客户端程序来设置新用户。
+首先，使用MySQL程序以MySQL root用户来连接服务器：
+
+shell> MySQL --user=root MySQL
+
+如果你为root账户指定了密码，还需要为该MySQL命令和本节中的其它命令提供--password或-p选项。
+
+以root连接到服务器上后，可以添加新账户。下面的语句使用GRANT来设置四个新账户：
+
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'monty'@'localhost'
+
+    ->     IDENTIFIED BY 'some_pass' WITH GRANT OPTION;
+
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'monty'@'%'
+
+    ->     IDENTIFIED BY 'some_pass' WITH GRANT OPTION;
+
+mysql> GRANT RELOAD,PROCESS ON *.* TO 'admin'@'localhost';
+
+mysql> GRANT USAGE ON *.* TO 'dummy'@'localhost';
+
+用GRANT语句创建的账户有下面的属性：
+
+·         其中两个账户有相同的用户名monty和密码some_pass。两个账户均为超级用户账户，具有完全的权限可以做任何事情。一个账户 ('monty'@'localhost')只用于从本机连接时。另一个账户('monty'@'%')可用于从其它主机连接。请注意monty的两个账户必须能从任何主机以monty连接。没有localhost账户，当monty从本机连接时，mysql_install_db创建的localhost的匿名用户账户将占先。结果是，monty将被视为匿名用户。原因是匿名用户账户的Host列值比'monty'@'%'账户更具体，这样在user表排序顺序中排在前面。(user表排序的讨论要参考mysql手册）。
+
+·         一个账户有用户名admin，没有密码。该账户只用于从本机连接。授予了RELOAD和PROCESS管理权限。这些权限允许admin用户执行mysqladmin reload、mysqladmin refresh和mysqladmin flush-xxx命令，以及mysqladmin processlist。未授予访问数据库的权限。你可以通过GRANT语句添加此类权限。
+
+·         一个账户有用户名dummy，没有密码。该账户只用于从本机连接。未授予权限。通过GRANT语句中的USAGE权限，你可以创建账户而不授予任何权限。它可以将所有全局权限设为'N'。假定你将在以后将具体权限授予该账户。
+3.直接操作MySQL授权表
+
+    除了GRANT，你可以直接用INSERT语句创建相同的账户，然后使用FLUSH PRIVILEGES告诉服务器重载授权表。
+
+shell> mysql --user=root mysql
+
+mysql> INSERT INTO user
+
+    ->     VALUES('localhost','monty',PASSWORD('some_pass'),
+
+    ->     'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+
+mysql> INSERT INTO user
+
+    ->     VALUES('%','monty',PASSWORD('some_pass'),
+
+    ->     'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+
+mysql> INSERT INTO user SET Host='localhost',User='admin',
+
+    ->     Reload_priv='Y', Process_priv='Y';
+
+mysql> INSERT INTO user (Host,User,Password)
+
+    ->     VALUES('localhost','dummy','');
+
+mysql> FLUSH PRIVILEGES;
+
+当你用INSERT创建账户时使用FLUSH PRIVILEGES的原因是告诉服务器重读授权表。否则，只有重启服务器后更改方会被注意到。使用 GRANT，则不需要使用FLUSH PRIVILEGES。
+
+用INSERT使用PASSWORD()函数是为了加密密码。GRANT语句为你加密密码，因此不需要PASSWORD()。
+
+'Y'值启用账户权限。对于admin账户，还可以使用更加可读的INSERT扩充的语法（使用SET）。
+
+在为dummy账户的INSERT语句中，只有user表中的Host、User和Password列记录为指定的值。没有一个权限列为显式设置，因此MySQL将它们均指定为 默认值'N'。这样等同于GRANT USAGE的操作。
+
+请注意要设置超级用户账户，只需要创建一个权限列设置为'Y'的user表条目。user表权限为全局权限，因此其它 授权表不再需要条目。
+4.举几个应用grant创建帐户和授权的例子
+
+下面的例子创建3个账户，允许它们访问专用数据库。每个账户的用户名为custom，密码为obscure。
+
+要想用GRANT创建账户，使用下面的语句：
+
+shell> MySQL --user=root MySQL
+
+shell> mysql --user=root mysql
+
+mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP
+
+    ->     ON bankaccount.*
+
+    ->     TO 'custom'@'localhost'
+
+    ->     IDENTIFIED BY 'obscure';
+
+mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP
+
+    ->     ON expenses.*
+
+    ->     TO 'custom'@'whitehouse.gov'
+
+    ->     IDENTIFIED BY 'obscure';
+
+mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP
+
+    ->     ON customer.*
+
+    ->     TO 'custom'@'server.domain'
+
+    ->     IDENTIFIED BY 'obscure';
+
+这3个账户可以用于：
+
+·         第1个账户可以访问bankaccount数据库，但只能从本机访问。
+
+·         第2个账户可以访问expenses数据库，但只能从主机whitehouse.gov访问。
+
+·         第3个账户可以访问customer数据库，但只能从主机server.domain访问。
+
+要想不用GRANT设置custom账户，使用INSERT语句直接修改 授权表：
+
+shell> mysql --user=root mysql
+
+mysql> INSERT INTO user (Host,User,Password)
+
+    ->     VALUES('localhost','custom',PASSWORD('obscure'));
+
+mysql> INSERT INTO user (Host,User,Password)
+
+    ->     VALUES('whitehouse.gov','custom',PASSWORD('obscure'));
+
+mysql> INSERT INTO user (Host,User,Password)
+
+    ->     VALUES('server.domain','custom',PASSWORD('obscure'));
+
+mysql> INSERT INTO db
+
+    ->     (Host,Db,User,Select_priv,Insert_priv,
+
+    ->     Update_priv,Delete_priv,Create_priv,Drop_priv)
+
+    ->     VALUES('localhost','bankaccount','custom',
+
+    ->     'Y','Y','Y','Y','Y','Y');
+
+mysql> INSERT INTO db
+
+    ->     (Host,Db,User,Select_priv,Insert_priv,
+
+    ->     Update_priv,Delete_priv,Create_priv,Drop_priv)
+
+    ->     VALUES('whitehouse.gov','expenses','custom',
+
+    ->     'Y','Y','Y','Y','Y','Y');
+
+mysql> INSERT INTO db
+
+    ->     (Host,Db,User,Select_priv,Insert_priv,
+
+    ->     Update_priv,Delete_priv,Create_priv,Drop_priv)
+
+    ->     VALUES('server.domain','customer','custom',
+
+    ->     'Y','Y','Y','Y','Y','Y');
+
+mysql> FLUSH PRIVILEGES;
+
+ 
+
+前3个INSERT语句在user表中加入条目，允许用户custom从各种主机用给定的密码进行连接，但不授予全局权限(所有权限设置为 默认值'N')。后面3个INSERT语句在user表中加入条目，为custom授予bankaccount、expenses和customer数据库权限，但只能从合适的主机访问。通常若直接修改 授权表，则应告诉服务器用FLUSH PRIVILEGES重载授权表，使权限更改生效。
+
+如果你想要让某个用户从给定域的所有机器访问(例如，mydomain.com)，你可以在账户名的主机部分使用含'%'通配符的GRANT语句：
+
+mysql> GRANT ...
+
+    ->     ON *.*
+
+    ->     TO 'myname'@'%.mydomain.com'
+
+    ->     IDENTIFIED BY 'mypass';
+
+要想通过直接修改授权表来实现：
+
+mysql> INSERT INTO user (Host,User,Password,...)
+
+    ->     VALUES('%.mydomain.com','myname',PASSWORD('mypass'),...);
+
+mysql> FLUSH PRIVILEGES;
+5.创建账户的其它方法是使用MySQL账户管理功能的第三方程序。phpMyAdmin即是一个程序。
+
+从MySQL删除用户账户
+
+要想移除账户，应使用DROP USER语句。
+-----

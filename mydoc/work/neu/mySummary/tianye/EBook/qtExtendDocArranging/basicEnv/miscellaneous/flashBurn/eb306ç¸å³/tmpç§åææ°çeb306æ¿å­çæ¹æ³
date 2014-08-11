@@ -1,0 +1,17 @@
+这个文档是一个临时的文档，只使用于一种情况，时间是
+20100209的项目eb306
+1)插入特殊的sdcard
+2)按住volumn up键，再按电源开关，同时保持volumn up按住状态10－15秒。
+3）松开volumn up之后就自动烧写了。烧写过程5分钟左右。
+4）烧写完毕，实际可以直接拔卡了。（都不用关电源，因为自动从板子里的flash启动。）
+因为uboot做的好，所以都自动化了。ip什么的也都有了。
+
+烧完之后：
+   1） 启动设备，看到loading画面后，设置PC的usb0
+# ifconfig usb0 192.168.100.1
+   2） telnet到设备
+# telent 192.168.100.200
+   3） mount PC上的nfs目录，示例如下：
+# /etc/init.d/desktop stop 
+# mount -t nfs -o nolock
+   192.168.100.1:/nfs/ebook/usr/local/qtex /usr/local/qtex

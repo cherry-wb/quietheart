@@ -1,0 +1,1738 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=x-gbk">
+<title>我理解的逻辑地址、线性地址、物理地址和虚拟地址(补充完整了) - 内核源码 -  ChinaUnix.net </title>
+<meta name="google-site-verification" content="OJoEeACa37Td5C_TevGy7D9GrG9Pe407duCwm81ra6g">
+<meta name="keywords" content="我理解的逻辑地址、线性地址、物理地址和虚拟地址(补充完整了) - 内核源码 -  ChinaUnix.net">
+<meta name="description" content="我理解的逻辑地址、线性地址、物理地址和虚拟地址(补充完整了) - 内核源码 -  ChinaUnix.net内核源码 要过年了，发个年终总结贴，只是个人理解，不包正确哈。本贴涉及的硬件平台是X86，如果是其它平台，嘻嘻，不保证能一一对号入座，但是举一反三，我想是完全可 ... Linux,Freebsd,Solaris,Sco,HP-UX,IBM-AIX,cisco,oracle,java,cgi,mysql,perl,Apache,proFTP,Sendmail,Qmail,DNS,Squid,Rsync,SSL">
+<meta name="generator" content="Discuz! 7.2">
+<meta name="author" content="Discuz! Team and Comsenz UI Team">
+<meta name="copyright" content="2001-2009 Comsenz Inc.">
+<meta name="MSSmartTagsPreventParsing" content="True">
+<meta http-equiv="MSThemeCompatible" content="Yes">
+<meta http-equiv="Refresh" content="3600">
+<meta http-equiv="x-ua-compatible" content="ie=7">
+<link rel="archives" title="ChinaUnix.net" href="http://bbs.chinaunix.net/archiver/">
+<link rel="stylesheet" type="text/css" href="thread-2083672-1-1_files/style_7_common.css"><link rel="stylesheet" type="text/css" href="thread-2083672-1-1_files/scriptstyle_7_viewthread.css">
+<script src="thread-2083672-1-1_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript">var STYLEID = '7', IMGDIR = 'images/default', VERHASH = 't3D', charset = 'gbk', discuz_uid = 9525959, cookiedomain = 'chinaunix.net', cookiepath = '/', attackevasive = '0', disallowfloat = 'login|register|newthread|reply|viewvote|tradeorder|activity|debate|nav|usergroups|task', creditnotice = '', gid = parseInt('60'), fid = parseInt('224'), tid = parseInt('2083672')</script>
+<script src="thread-2083672-1-1_files/common.js" type="text/javascript"></script>
+</head><body id="viewthread" onkeydown="if(event.keyCode==27) return false;"><link type="text/css" rel="stylesheet" href="thread-2083672-1-1_files/jiathis_share.html"><iframe style="position: fixed; display: none; opacity: 0;" frameborder="0"></iframe><div style="position: absolute; z-index: 1000000000; display: none; top: 50%; left: 50%; overflow: auto;" id="ckepop"></div><div style="position: absolute; z-index: 1000000000; display: none; overflow: auto;" id="ckepop"></div><iframe src="thread-2083672-1-1_files/jiathis_utility_002.html" style="display: none;" frameborder="0"></iframe>
+
+<div id="append_parent"></div><div style="display: none;" id="ajaxwaitid"></div>
+
+<div id="header">
+<div id="myprompt_menu" style="position: absolute; z-index: 301; opacity: 1; left: 309.65px; top: 130px; display: none;" class="promptmenu">
+<div class="promptcontent">
+<ul class="s_clear"><li style="display: none;"><a id="prompt_pm" href="http://bbs.chinaunix.net/pm.php?filter=newpm" target="_blank">私人消息 (0)</a></li><li style="display: none;"><a id="prompt_announcepm" href="http://bbs.chinaunix.net/pm.php?filter=announcepm" target="_blank">公共消息 (0)</a></li><li><a id="prompt_systempm" href="http://bbs.chinaunix.net/notice.php?filter=systempm" target="_blank">系统消息 (1)</a></li><li style="display: none;"><a id="prompt_friend" href="http://bbs.chinaunix.net/notice.php?filter=friend" target="_blank">好友消息 (0)</a></li><li><a id="prompt_threads" href="http://bbs.chinaunix.net/notice.php?filter=threads" target="_blank">帖子消息 (1)</a></li></ul>
+</div>
+</div>
+</div>
+
+<!--栏目条-->
+<style type="text/css">
+A.title1:link {font-size:14px;font-family:arial;font-weight:bold;text-decoration:none;color:#ffffff;}
+A.title1:visited {font-size:14px;font-family:arial;font-weight:bold;text-decoration:none;color:#ffffff;}
+A.title1:active {font-size:14px;font-family:arial;font-weight:bold;text-decoration:none;color:#ffffff;}
+A.title1:hover {font-size:14px;font-family:arial;font-weight:bold;text-decoration:none;color:#ffffff;}
+A.title2:link {text-decoration:none;color:#000000;font-size:12px}
+A.title2:visited {text-decoration:none;color:#000000;font-size:12px}
+A.title2:active {text-decoration:none;color:#ff0000;font-size:12px}
+A.title2:hover {text-decoration:none;color:#ff0000;font-size:12px}
+</style>
+<center>
+<table width="98%" align="center" bgcolor="#ffffff" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td colspan="2" height="1" bgcolor="#000000"></td></tr>
+<tr><td colspan="2" height="2"></td></tr>
+<tr><td height="18" width="150" align="center" bgcolor="#9898ba"><a href="http://bbs.chinaunix.net/" class="title1">bbs.ChinaUnix.net</a></td>
+<td width="*" align="right">
+<table border="0" cellpadding="0" cellspacing="0">
+
+<tbody><tr align="center"><td align="right">
+<a href="http://www.chinaunix.net/" class="title2">首页</a> |
+<a href="http://bbs.chinaunix.net/" class="title2">论坛</a>
+<a href="http://my.chinaunix.net/" class="title2" target="_blank" style="color: red;">微博</a> 
+<a href="http://blog.chinaunix.net/" class="title2" target="_blank">博客</a>
+<a href="http://hi.chinaunix.net/" class="title2" target="_blank" style="color: red;">空间</a>
+<a href="http://book.chinaunix.net/" class="title2" target="_blank">读书</a>
+<a href="http://job.chinaunix.net/" class="title2" target="_blank">人才</a>
+<a href="http://selftest.chinaunix.net/" class="title2" target="_blank">自测</a> | 
+
+<a href="http://news.chinaunix.net/" class="title2" target="_blank">新闻</a>
+<a href="http://linux.chinaunix.net/" class="title2" target="_blank" style="color: red;">Linux</a> 
+<a href="http://aix.chinaunix.net/" class="title2" target="_blank" style="color: red;">AIX</a>
+<a href="http://win.chinaunix.net/" class="title2" target="_blank" style="color: blue;">Windows</a>
+<a href="http://stor.chinaunix.net/" class="title2" target="_blank">存储</a>
+<a href="http://net.chinaunix.net/" class="title2" target="_blank">网络</a> | 
+<a href="http://wiki.chinaunix.net/" class="title2" target="_blank">Wiki</a>&nbsp;  
+<a href="http://fanqiang.chinaunix.net/" class="title2" target="_blank" style="color: red;">资料</a>
+<a href="http://man.chinaunix.net/" class="title2" target="_blank">手册</a>
+<a href="http://download.chinaunix.net/" class="title2" target="_blank">下载</a> | 
+<a href="http://search.chinaunix.net/" class="title2" target="_blank">搜索</a>
+</td></tr>
+</tbody></table></td></tr>
+<tr><td colspan="2" height="2"></td></tr>
+<tr><td colspan="2" height="1" bgcolor="#000000"></td></tr>
+</tbody></table>
+<!-------->
+
+<table style="border-collapse: collapse;" width="98%" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td align="left">
+<a href="http://bbs.chinaunix.net/"><img src="thread-2083672-1-1_files/logo.gif" alt="ChinaUnix.net" border="0"></a>
+</td><td height="85" align="center">
+<iframe src="thread-2083672-1-1_files/iframe.html" frameborder="0" height="80" scrolling="no" width="760"></iframe></td></tr>
+<tr><form name="toplogin" action="logging.php?action=login" method="post"></form><td colspan="2" height="28" align="left" background="thread-2083672-1-1_files/bg_menu_top.gif">
+&nbsp;
+
+您好，<span class="bold"><a href="http://bbs.chinaunix.net/space-uid-9525959.html">vaqeteart</a> </span>，欢迎进入ChinaUnix社区  <a vhref="" href="http://bbs.chinaunix.net/logging.php?action=logout&amp;formhash=b5d849a5">退出</a>
+| 
+<a id="myprompt" href="http://bbs.chinaunix.net/pm.php" onmouseover="showMenu({'ctrlid':this.id})">有新消息(2)</a>
+<span id="myprompt_check"></span> 
+<a href="http://bbs.chinaunix.net/memcp.php?action=profile">个人资料</a>&nbsp;
+<a href="http://bbs.chinaunix.net/my.php?item=buddylist">好友列表</a>&nbsp;
+<a href="http://bbs.chinaunix.net/my.php?item=favorites&amp;type=thread">收藏夹</a>&nbsp;
+<a href="http://bbs.chinaunix.net/my.php?item=threads&amp;srchfid=224">我的话题</a>&nbsp;|&nbsp;
+<a href="http://bbs.chinaunix.net/blog2.php?uid=9525959" style="color: rgb(255, 0, 0);">我的博客</a>&nbsp;
+<a href="http://hi.chinaunix.net/?uid-9525959.html" target="_blank">我的空间</a>&nbsp;
+<a href="http://my.chinaunix.net/" style="color: red;" target="_blank">我的微博</a>&nbsp;|&nbsp;  
+ &nbsp;<a href="http://search.chinaunix.net/" target="_blank">搜索</a>&nbsp;
+&nbsp;<a href="http://bbs.chinaunix.net/faq.php">帮助</a>&nbsp;
+<table style="border-collapse: collapse;" width="910" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td height="1"></td></tr>
+</tbody></table>
+</td></tr>
+</tbody></table>
+<div style="margin-top: 10px;"></div>
+<div class="ad_text" id="ad_text">
+<table summary="Text Ad" cellpadding="0" cellspacing="1"><tbody><tr><td width="100%"><div align="left">
+<a target="_blank" href="http://blog.chinaunix.net/space.php?uid=24462432&amp;do=blog&amp;id=1740899" style="color: blue;"><b>
+ChinaUnix社区PHP技术征文大赛</b></a> |<a target="_blank" href="http://safe.it168.com/focus/201107/20110711/" style="color: red;"><b>
+IT168用户网银安全大调查！</b></a> | <a href="http://bbs.chinaunix.net/thread-3564234-1-1.html" target="_blank" style="color: green;"><b>9.9北京：2011系统架构师大会隆重推出！！</b></a>| <a href="http://www.now.cn/?now_1920_it168" target="_blank" style="color: rgb(142, 35, 107);"><b>买域名送域名 海外主机免备案</b></a>  </div></td></tr>
+</tbody></table>
+</div>
+<div class="maintable"><script language="javascript">
+<!--
+function showexif(obj){
+try{
+if(document.getElementById(obj).style.display=="none"){
+document.getElementById(obj).style.display="block";
+}else{
+document.getElementById(obj).style.display="none";
+}
+}catch(e){
+}
+}
+//-->
+</script>
+
+
+<script src="thread-2083672-1-1_files/viewthread.js" type="text/javascript"></script>
+<script type="text/javascript">zoomstatus = parseInt(1);var imagemaxwidth = '%700';var aimgcount = new Array();</script>
+
+
+<div class="subtable" style="width: 98%;">
+
+<div style="float: right;">
+<div class="p_bar"><a class="p_curpage">1</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_num">2</a><a href="http://bbs.chinaunix.net/thread-2083672-3-1.html" class="p_num">3</a><a href="http://bbs.chinaunix.net/thread-2083672-4-1.html" class="p_num">4</a><a href="http://bbs.chinaunix.net/thread-2083672-5-1.html" class="p_num">5</a><a href="http://bbs.chinaunix.net/thread-2083672-6-1.html" class="p_num">6</a><a href="http://bbs.chinaunix.net/thread-2083672-7-1.html" class="p_num">7</a><a href="http://bbs.chinaunix.net/thread-2083672-8-1.html" class="p_num">8</a><a href="http://bbs.chinaunix.net/thread-2083672-9-1.html" class="p_num">9</a><a href="http://bbs.chinaunix.net/thread-2083672-10-1.html" class="p_num">10</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_redirect">&#8250;&#8250;</a><a href="http://bbs.chinaunix.net/thread-2083672-19-1.html" class="p_redirect">&#8250;|</a><a class="p_pages" style="padding: 0px;"><input class="p_input" name="custompage" onkeydown="if(event.keyCode==13) {window.location='viewthread.php?tid=2083672&amp;extra=page%3D1&amp;page='+this.value; return false;}" type="text"></a></div></div>
+</div>
+
+<div class="subtable" style="padding-left: 10px;">
+<table>
+<tbody><tr>
+<td>
+<a href="http://www.chinaunix.net/">首页</a> &#187; 
+<a href="http://bbs.chinaunix.net/index.php">论坛</a>
+ 
+<!-- &raquo; <a href="listthread.php" style="color:#FF0000">汇总贴列表</a> --> 
+ &#187; <a href="http://bbs.chinaunix.net/forum-224-1.html">内核源码</a> &#187; 			
+</td>
+</tr>
+</tbody></table>
+</div>
+ 
+<div style="font-size: 18px; color: rgb(0, 0, 0); font-weight: bold; float: left; margin: 5px 0pt 10px 10px;">
+<img src="thread-2083672-1-1_files/src_jh.gif" alt="原创精华帖子" align="absmiddle">		
+ 
+<span>我理解的逻辑地址、线性地址、物理地址和虚拟地址(补充完整了)</span>
+</div>
+
+<div class="subtable" style="padding: 5px 5px 5px 10px;">
+<table style="border-collapse: collapse;" width="98%" align="center" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td nowrap="nowrap">
+<span id="newspecial" prompt="post_newthread" onmouseover="$('newspecial').id = 'newspecialtmp';this.id = 'newspecial';showMenu({'ctrlid':this.id})">
+<a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224&amp;extra=page%3D1" onclick="showWindow('newthread', this.href);return false;"><img src="thread-2083672-1-1_files/new_topic.gif" alt="" border="0"></a> </span>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;extra=page%3D1"><img src="thread-2083672-1-1_files/new_reply.gif" alt="" border="0"></a>&nbsp;
+</td>
+<td>
+<span style="font-weight: normal;">
+<!-- [<a href="viewthread.php?action=printable&amp;tid=2083672" target="_blank">打印</a>] --> 
+[<a href="#" onclick="showDialog($('favoritewin').innerHTML, 'info', '收藏/关注')">收藏</a>]	
+[<a href="http://bbs.chinaunix.net/archiver/?tid-2083672.html" target="_blank">本帖文本页</a>]
+[<a href="#" onclick="showDialog($('sharewin').innerHTML, 'info', '分享')" style="color: blue;">推荐此主题给朋友</a>] 
+</span>
+</td>
+<td nowrap="nowrap" align="right">
+<select onchange="if(this.options[this.selectedIndex].value != '') {
+window.location=('forumdisplay.php?fid='+this.options[this.selectedIndex].value+'&amp;sid=1pb31l') }">
+<option selected="selected" value="">版块跳转</option>
+<optgroup label="--Linux操作系统"><option value="216">新手园地</option><option value="269">&nbsp; &nbsp; &nbsp; 硬件问题</option><option value="217">Linux系统管理</option><option value="218">Linux网络问题</option><option value="223">Linux环境编程</option><option value="271">Linux桌面系统</option><option value="221">国产Linux</option></optgroup><optgroup label="--Unix操作系统"><option value="5">BSD</option><option value="127">&nbsp; &nbsp; &nbsp; BSD文档中心</option><option value="9">AIX</option><option value="124">&nbsp; &nbsp; &nbsp; AIX文档中心</option><option value="10">AS400</option><option value="6">Solaris</option><option value="128">&nbsp; &nbsp; &nbsp; Solaris文档中心</option><option value="8">HP-UX</option><option value="129">&nbsp; &nbsp; &nbsp; HP文档中心</option><option value="7">SCO UNIX</option><option value="130">&nbsp; &nbsp; &nbsp; SCO文档中心</option><option value="118">互操作专区</option><option value="12">IRIX</option><option value="11">Tru64 UNIX</option><option value="41">Mac OS X</option></optgroup><optgroup label="--IT运维架构"><option value="141">门户网站运维</option><option value="233">集群和高可用</option><option value="232">服务器应用</option><option value="235">监控和防护</option><option value="283">虚拟化技术</option><option value="185">架构设计</option><option value="285">行业应用和管理</option></optgroup><optgroup label="--IT基础设施"><option value="45">服务器及硬件技术</option><option value="184">&nbsp; &nbsp; &nbsp; 服务器资源下载</option><option value="180">云计算</option><option value="181">&nbsp; &nbsp; &nbsp; 云计算文档中心</option><option value="182">&nbsp; &nbsp; &nbsp; 云计算业界</option><option value="183">&nbsp; &nbsp; &nbsp; 云计算资源下载</option><option value="34">存储备份</option><option value="125">&nbsp; &nbsp; &nbsp; 存储文档中心</option><option value="126">&nbsp; &nbsp; &nbsp; 存储业界</option><option value="145">&nbsp; &nbsp; &nbsp; 存储资源下载</option><option value="194">&nbsp; &nbsp; &nbsp; Symantec技术交流区</option><option value="29">安全技术</option><option value="30">网络技术</option><option value="131">&nbsp; &nbsp; &nbsp; 网络技术文档中心</option></optgroup><optgroup label="--程序设计"><option value="23">C/C++</option><option value="84">&nbsp; &nbsp; &nbsp; GUI编程</option><option value="142">&nbsp; &nbsp; &nbsp; Functional编程</option><option value="224">内核源码</option><option value="220">&nbsp; &nbsp; &nbsp; 内核问题</option><option value="222">移动开发</option><option value="265">&nbsp; &nbsp; &nbsp; 移动开发技术资料</option><option value="24">Shell</option><option value="25">Perl</option><option value="26">Java</option><option value="133">&nbsp; &nbsp; &nbsp; Java文档中心</option><option value="27">PHP</option><option value="135">&nbsp; &nbsp; &nbsp; php文档中心</option><option value="55">Python</option><option value="132">&nbsp; &nbsp; &nbsp; Python文档中心</option><option value="116">Ruby</option><option value="226">CPU与编译器</option><option value="225">嵌入式开发</option><option value="227">驱动开发</option><option value="80">Web开发</option><option value="100">VoIP开发技术</option></optgroup><optgroup label="--数据库技术"><option value="17">MySQL</option><option value="136">&nbsp; &nbsp; &nbsp; MySQL文档中心</option><option value="21">Sybase</option><option value="19">Oracle</option><option value="18">PostgreSQL</option><option value="22">DB2</option><option value="20">Informix</option><option value="140">数据仓库与数据挖掘</option><option value="292">NoSQL技术</option></optgroup><optgroup label="--综合交流区"><option value="46">IT业界新闻与评论</option><option value="32">IT职业生涯</option><option value="293">&nbsp; &nbsp; &nbsp; 猎头招聘</option><option value="82">IT图书与评论</option><option value="156">&nbsp; &nbsp; &nbsp; CU技术图书大系</option><option value="247">&nbsp; &nbsp; &nbsp; Linux书友会</option><option value="54">二手交易</option><option value="249">下载共享</option><option value="250">Linux文档专区</option><option value="53">IT培训与认证</option><option value="295">&nbsp; &nbsp; &nbsp; 培训交流</option><option value="191">&nbsp; &nbsp; &nbsp; 认证培训</option></optgroup><optgroup label="--休闲生活"><option value="31">清茶斋</option><option value="115">投资理财</option><option value="39">运动地带</option><option value="40">快乐数码摄影</option><option value="168">&nbsp; &nbsp; &nbsp; 摄影器材</option><option value="134">&nbsp; &nbsp; &nbsp; 摄影比赛专区</option><option value="121">IT爱车族</option><option value="96">旅游天下</option></optgroup><optgroup label="--站务及频道"><option value="2">站务交流</option><option value="51">博客SNS站务交流区</option><option value="123">CU活动专区</option><option value="207">&nbsp; &nbsp; &nbsp; Power活动专区</option><option value="169">&nbsp; &nbsp; &nbsp; 拍卖交流区</option></optgroup></select>
+<select onchange="if(this.options[this.selectedIndex].value != '')
+window.location=('forumdisplay.php?fid='+this.options[this.selectedIndex].value+'&amp;sid=1pb31l')">
+<option selected="selected" value="">最近访问的版块</option>
+<option value="217">&nbsp; &nbsp; &nbsp; Linux系统管理</option><option value="31">&nbsp; &nbsp; &nbsp; 清茶斋</option><option value="216">&nbsp; &nbsp; &nbsp; 新手园地</option><option value="23">&nbsp; &nbsp; &nbsp; C/C++</option><option value="24">&nbsp; &nbsp; &nbsp; Shell</option></select>
+</td>
+</tr>
+</tbody></table>
+</div>
+
+<div id="wrap" class="wrap s_clear threadfix">
+<div class="forumcontrol" style="display: none;">
+<table cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="modaction">
+</td>
+<td align="right">
+<div class="p_bar"><a class="p_curpage">1</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_num">2</a><a href="http://bbs.chinaunix.net/thread-2083672-3-1.html" class="p_num">3</a><a href="http://bbs.chinaunix.net/thread-2083672-4-1.html" class="p_num">4</a><a href="http://bbs.chinaunix.net/thread-2083672-5-1.html" class="p_num">5</a><a href="http://bbs.chinaunix.net/thread-2083672-6-1.html" class="p_num">6</a><a href="http://bbs.chinaunix.net/thread-2083672-7-1.html" class="p_num">7</a><a href="http://bbs.chinaunix.net/thread-2083672-8-1.html" class="p_num">8</a><a href="http://bbs.chinaunix.net/thread-2083672-9-1.html" class="p_num">9</a><a href="http://bbs.chinaunix.net/thread-2083672-10-1.html" class="p_num">10</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_redirect">&#8250;&#8250;</a><a href="http://bbs.chinaunix.net/thread-2083672-19-1.html" class="p_redirect">&#8250;|</a><a class="p_pages" style="padding: 0px;"><input class="p_input" name="custompage" onkeydown="if(event.keyCode==13) {window.location='viewthread.php?tid=2083672&amp;extra=page%3D1&amp;page='+this.value; return false;}" type="text"></a></div><span class="pageback" id="visitedforums" onmouseover="$('visitedforums').id = 'visitedforumstmp';this.id = 'visitedforums';showMenu({'ctrlid':this.id})"><a href="http://bbs.chinaunix.net/forum-224-1.html">返回列表</a></span>
+<span class="replybtn" id="post_reply" prompt="post_reply"><a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672" onclick="showWindow('reply', this.href);return false;">回复</a></span>
+<span class="postbtn" id="newspecial" prompt="post_newthread" onmouseover="$('newspecial').id = 'newspecialtmp';this.id = 'newspecial';showMenu({'ctrlid':this.id})"><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224" onclick="showWindow('newthread', this.href);return false;">发帖</a></span>
+</td>
+</tr>
+</tbody></table>
+</div>
+
+<ul class="popupmenu_popup postmenu" id="newspecial_menu" style="display: none;">
+<li><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224" onclick="showWindow('newthread', this.href);doane(event)">发新话题</a></li><li class="poll"><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224&amp;special=1">发布投票</a></li><li class="reward"><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224&amp;special=3">发布悬赏</a></li><li class="activity"><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224&amp;special=4">发布活动</a></li></ul>
+
+<div id="postlist" class="mainbox viewthread">
+
+<table style="border-collapse: collapse; border-left: 1px solid rgb(0, 0, 0); border-top: 1px solid rgb(0, 0, 0); border-right: 1px solid rgb(0, 0, 0);" width="98%" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
+<tbody><tr class="header">
+<td width="80%">
+<font style="color: rgb(255, 255, 255);">阅读</font>&nbsp;&nbsp;98674&nbsp;&nbsp; 
+<font style="color: rgb(255, 255, 255);">回复</font>&nbsp;&nbsp;182</td>
+<td style="color: rgb(255, 255, 255);" align="right">
+<!-- JiaThis Button BEGIN -->
+<div id="ckepop">
+<a href="http://www.jiathis.com/share/?uid=1514483" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank">分享到：</a>
+<a class="jiathis_button_tsina"></a>
+<a class="jiathis_button_qzone"></a>
+<a class="jiathis_button_kaixin001"></a>
+<a class="jiathis_button_douban"></a>
+<a class="jiathis_button_renren"></a>
+<a class="jiathis_button_twitter"></a>
+<a class="jiathis_button_fb"></a>
+</div>
+<script src="thread-2083672-1-1_files/jia.js" type="text/javascript" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+</td>
+</tr>
+</tbody></table><div id="post_14590056"><table id="pid14590056" summary="pid14590056" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#f0f3fa">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#f0f3fa">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=1814076" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">独孤九贱</font></a>
+<em>(九贱)</em>	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590056" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590056_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=1814076" onclick="hideMenu('userinfo14590056');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=1814076&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_0" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-1814076.html" target="_blank">独孤九贱</a>
+<em>(九贱)</em><em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>1814076&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=%B6%C0%B9%C2%BE%C5%BC%FA&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>2249</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=%B6%C0%B9%C2%BE%C5%BC%FA&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>35</u></a>&nbsp;</dd><dt>积分</dt><dd>5456&nbsp;</dd><dt>可用积分</dt><dd>5456 &nbsp;</dd><dt>信誉积分</dt><dd>102 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>70&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd><dt>来自</dt><dd>山城重庆&nbsp;</dd><dt>在线时间</dt><dd>253 小时&nbsp;</dd><dt>注册时间</dt><dd>2003-08-12&nbsp;</dd><dt>最后登录</dt><dd>2011-07-21&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://wpa.qq.com/msgrd?V=1&amp;Uin=6339611&amp;Site=ChinaUnix.net&amp;Menu=yes" target="_blank" title="QQ"><img src="thread-2083672-1-1_files/qq.gif" alt="QQ"></a><a href="http://my.chinaunix.net/space.php?uid=1814076" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://www.skynet.org.cn/" target="_blank" title="查看个人网站"><img src="thread-2083672-1-1_files/forumlink.gif" alt="查看个人网站"></a><a href="http://bbs.chinaunix.net/space-uid-1814076.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590056')"><a href="http://bbs.chinaunix.net/space-uid-1814076.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_005.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=14" target="_blank">大天使</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips6.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=%B6%C0%B9%C2%BE%C5%BC%FA&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>2249</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=%B6%C0%B9%C2%BE%C5%BC%FA&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>402</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=%B6%C0%B9%C2%BE%C5%BC%FA&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>35</u></a>&nbsp;</dd><dt>可用积分</dt><dd>5456 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>来自</dt><dd>山城重庆&nbsp;</dd><dt>在线时间</dt><dd>253 小时&nbsp;</dd><dt>注册时间</dt><dd>2003-08-12&nbsp;</dd><dt>最后登录</dt><dd>2011-07-21&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=1814076" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=1814076" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=1814076" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div id="threadstamp"></div><div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;extra=page%3D1&amp;ordertype=1" class="left">[倒序看帖]</a>
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590056" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590056&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590056&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590056" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/viewthread.php?tid=2083672', '帖子地址已经复制到剪贴板')"><em>1</em>楼</a>
+
+<span id="authorfeed"></span><em id="authorposton14590056">发表于 2008-01-15 16:32</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=1814076" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_0"></div><div id="ad_thread3_0"></div><div id="ad_thread4_0"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage firstpost">
+<div id="threadtitle">
+</div>
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590056">要过年了，发个年终总结贴，只是个人理解，不包正确哈。<br>
+<br>
+本贴涉及的硬件平台是X86，如果是其它平台，嘻嘻，不保证能一一对号入座，但是举一反三，我想是完全可行的。<br>
+<br>
+<font size="5">一、概念</font><br>
+<br>
+<font size="4">物理地址(physical address)</font><br>
+用于<span href="tag.php?name=%C4%DA%B4%E6" onclick="tagshow(event)" class="t_tag">内存</span>芯片级的单元寻址，与处理器和CPU连接的地址总线相对应。<br>
+——这个概念应该是这几个概念中最好理解的一个，但是值得一提的是，虽然可以直接把物理地址理解成插在机器上那根内存本身，把内存看成一个从0字节一直到最大空量逐字节的编号的大数组，然后把这个数组叫做物理地址，但是事实上，这只是一个硬件提供给<span href="tag.php?name=%C8%ED%BC%FE" onclick="tagshow(event)" class="t_tag">软件</span>的抽像，内存的寻址方式并不是这样。所以，说它是“与地址总线相对应”，是更贴切一些，不过抛开对物理内存寻址方式的考虑，直接把物理地址与物理的内存一一对应，也是可以接受的。也许错误的理解更利于形而上的抽像。<br>
+<br>
+<font size="4">虚拟内存(virtual memory)</font><br>
+这是对整个内存（不要与机器上插那条对上号）的抽像描述。它是相对于物理内存来讲的，可以直接理解成“不直实的”，“假的”内存，例如，一个0x08000000内存地址，它并不对就物理地址上那个大数组中0x08000000 - 1那个地址元素；<br>
+之所以是这样，是因为现代<span href="tag.php?name=%B2%D9%D7%F7%CF%B5%CD%B3" onclick="tagshow(event)" class="t_tag">操作系统</span>都提供了一种内存管理的抽像，即虚拟内存（virtual memory）。进程使用虚拟内存中的地址，由操作<span href="tag.php?name=%CF%B5%CD%B3" onclick="tagshow(event)" class="t_tag">系统</span>协助相关硬件，把它“转换”成真正的物理地址。这个“转换”，是所有问题讨论的关键。<br>
+有了这样的抽像，一个程序，就可以使用比真实物理地址大得多的地址空间。（拆东墙，补西墙，银行也是这样子做的），甚至多个进程可以使用相同的地址。不奇怪，因为转换后的物理地址并非相同的。<br>
+——可以把连接后的程序反编译看一下，发现连接器已经为程序分配了一个地址，例如，要调用某个函数A，代码不是call A，而是call 
+0x0811111111 ，也就是说，函数A的地址已经被定下来了。没有这样的“转换”，没有虚拟地址的概念，这样做是根本行不通的。<br>
+打住了，这个问题再说下去，就收不住了。<br>
+<br>
+<font size="4">逻辑地址(logical address)</font><br>
+Intel为了兼容，将远古时代的段式内存管理方式保留了下来。逻辑地址指的是机器语言指令中，用来指定一个操作数或者是一条指令的地址。以上例，我们说的连接器为A分配的0x08111111这个地址就是逻辑地址。<br>
+——不过不好意思，这样说，好像又违背了Intel中段式管理中，对逻辑地址要求，“一个逻辑地址，是由一个段标识符加上一个指定段内相对地址的偏移量，
+表示为 [段标识符：段内偏移量]，也就是说，上例中那个0x08111111，应该表示为[A的代码段标识符: 
+0x08111111]，这样，才完整一些”<br>
+<br>
+<font size="4">线性地址(linear address)或也叫虚拟地址(virtual address)</font><br>
+跟逻辑地址类似，它也是一个不真实的地址，如果逻辑地址是对应的硬件平台段式管理转换前地址的话，那么线性地址则对应了硬件页式内存的转换前地址。<br>
+<br>
+-------------------------------------------------------------<br>
+CPU将一个虚拟内存空间中的地址转换为物理地址，需要进行两步：首先将给定一个逻辑地址（其实是段内偏移量，这个一定要理解！！！），CPU要利用其段式内存管理单元，先将为个逻辑地址转换成一个线程地址，再利用其页式内存管理单元，转换为最终物理地址。<br>
+<br>
+这样做两次转换，的确是非常麻烦而且没有必要的，因为直接可以把线性地址抽像给进程。之所以这样冗余，Intel完全是为了兼容而已。<br>
+<br>
+<font size="5">2、CPU段式内存管理，逻辑地址如何转换为线性地址</font><br>
+一个逻辑地址由两部份组成，段标识符: 段内偏移量。段标识符是由一个16位长的字段组成，称为段选择符。其中前13位是一个索引号。后面3位包含一些硬件细节，如图：<br>
+
+
+<span style="position: absolute; display: none;" id="attach_441184" onmouseover="showMenu({'ctrlid':this.id,'pos':'13'})"><img src="thread-2083672-1-1_files/attachimg.gif" border="0"></span>
+<img src="thread-2083672-1-1_files/20080115_446d77416115bf806a6eolV4lJub7IYi.jpg" file="http://life.chinaunix.net/bbsfile/linux/month_0801/20080115_446d77416115bf806a6eolV4lJub7IYi.jpg" id="aimg_441184" onmouseover="showMenu({'ctrlid':this.id,'pos':'12'})" alt="Snap1.jpg" width="613">
+
+<div class="t_attach" id="aimg_441184_menu" style="position: absolute; display: none;">				
+<a href="http://bbs.chinaunix.net/attachment.php?aid=NDQxMTg0fDk2MGUwMzJkfDEzMTEyMzg5MzF8NDJlN3BUOENVL2gwaHBZeVVvTmNKaEtrOGpTSnpmVzN1TjA2c2tQd0ROSkgwUmM%3D&amp;nothumb=yes" title="Snap1.jpg" target="_blank"><strong>下载</strong></a> (9.27 KB)<br>
+
+<div class="t_smallfont"><span href="tag.php?name=2008" onclick="tagshow(event)" class="t_tag">2008</span>-01-15 16:36</div>
+
+</div>
+
+<br>
+最后两位涉及权限检查，本贴中不包含。<br>
+<br>
+索引号，或者直接理解成数组下标——那它总要对应一个数组吧，它又是什么东东的索引呢？这个东东就是“段描述符(segment 
+descriptor)”，呵呵，段描述符具体地址描述了一个段（对于“段”这个字眼的理解，我是把它想像成，拿了一把刀，把虚拟内存，砍成若干的截——
+段）。这样，很多个段描述符，就组了一个数组，叫“段描述符表”，这样，可以通过段标识符的前13位，直接在段描述符表中找到一个具体的段描述符，这个描
+述符就描述了一个段，我刚才对段的抽像不太准确，因为看看描述符里面究竟有什么东东——也就是它究竟是如何描述的，就理解段究竟有什么东东了，每一个段描
+述符由8个字节组成，如下图：<br>
+
+
+<span style="position: absolute; display: none;" id="attach_441185" onmouseover="showMenu({'ctrlid':this.id,'pos':'13'})"><img src="thread-2083672-1-1_files/attachimg.gif" border="0"></span>
+<img src="thread-2083672-1-1_files/20080115_23beaf30e70dfb78f97bukhHmAGFgIdM.jpg" file="http://life.chinaunix.net/bbsfile/linux/month_0801/20080115_23beaf30e70dfb78f97bukhHmAGFgIdM.jpg" id="aimg_441185" onmouseover="showMenu({'ctrlid':this.id,'pos':'12'})" alt="Snap2.jpg" width="616">
+
+<div class="t_attach" id="aimg_441185_menu" style="position: absolute; display: none;">				
+<a href="http://bbs.chinaunix.net/attachment.php?aid=NDQxMTg1fGE5ZTgyOTQxfDEzMTEyMzg5MzF8NDJlN3BUOENVL2gwaHBZeVVvTmNKaEtrOGpTSnpmVzN1TjA2c2tQd0ROSkgwUmM%3D&amp;nothumb=yes" title="Snap2.jpg" target="_blank"><strong>下载</strong></a> (50.39 KB)<br>
+
+<div class="t_smallfont">2008-01-15 16:36</div>
+
+</div>
+
+<br>
+这些东东很复杂，虽然可以利用一个数据结构来定义它，不过，我这里只关心一样，就是Base字段，它描述了一个段的开始位置的线性地址。<br>
+<br>
+Intel设计的本意是，一些全局的段描述符，就放在“全局段描述符表(GDT)”中，一些局部的，例如每个进程自己的，就放在所谓的“局部段描述符表
+(LDT)”中。那究竟什么时候该用GDT，什么时候该用LDT呢？这是由段选择符中的T1字段表示的，=0，表示用GDT，=1表示用LDT。<br>
+<br>
+GDT在内存中的地址和大小存放在CPU的gdtr控制寄存器中，而LDT则在ldtr寄存器中。<br>
+<br>
+好多概念，像绕口令一样。这张图看起来要直观些：<br>
+
+
+<span style="position: absolute; display: none;" id="attach_441186" onmouseover="showMenu({'ctrlid':this.id,'pos':'13'})"><img src="thread-2083672-1-1_files/attachimg.gif" border="0"></span>
+<img src="thread-2083672-1-1_files/20080115_cbbab26241c63c1fdb5e9nKfEur4o24k.jpg" file="http://life.chinaunix.net/bbsfile/linux/month_0801/20080115_cbbab26241c63c1fdb5e9nKfEur4o24k.jpg" id="aimg_441186" onmouseover="showMenu({'ctrlid':this.id,'pos':'12'})" alt="Snap3.jpg" width="615">
+
+<div class="t_attach" id="aimg_441186_menu" style="position: absolute; display: none;">				
+<a href="http://bbs.chinaunix.net/attachment.php?aid=NDQxMTg2fDM0OGNmODQ3fDEzMTEyMzg5MzF8NDJlN3BUOENVL2gwaHBZeVVvTmNKaEtrOGpTSnpmVzN1TjA2c2tQd0ROSkgwUmM%3D&amp;nothumb=yes" title="Snap3.jpg" target="_blank"><strong>下载</strong></a> (20.55 KB)<br>
+
+<div class="t_smallfont">2008-01-15 16:36</div>
+
+</div>
+
+<br>
+首先，给定一个完整的逻辑地址[段选择符：段内偏移地址]，<br>
+1、看段选择符的T1=0还是1，知道当前要转换是GDT中的段，还是LDT中的段，再根据相应寄存器，得到其地址和大小。我们就有了一个数组了。<br>
+2、拿出段选择符中前13位，可以在这个数组中，查找到对应的段描述符，这样，它了Base，即基地址就知道了。<br>
+3、把Base + offset，就是要转换的线性地址了。<br>
+<br>
+还是挺简单的，对于软件来讲，原则上就需要把硬件转换所需的信息准备好，就可以让硬件来完成这个转换了。OK，来看看Linux怎么做的。<br>
+<br>
+<font size="5">3、Linux的段式管理</font><br>
+Intel要求两次转换，这样虽说是兼容了，但是却是很冗余，呵呵，没办法，硬件要求这样做了，软件就只能照办，怎么着也得形式主义一样。<br>
+另一方面，其它某些硬件平台，没有二次转换的概念，Linux也需要提供一个高层抽像，来提供一个统一的界面。所以，Linux的段式管理，事实上只是“哄骗”了一下硬件而已。<br>
+<br>
+按照Intel的本意，全局的用GDT，每个进程自己的用LDT——不过Linux则对所有的进程都使用了相同的段来对指令和数据寻址。即<span href="tag.php?name=%D3%C3%BB%A7" onclick="tagshow(event)" class="t_tag">用户</span>数据段，用户代码段，对应的，内核中的是内核数据段和内核代码段。这样做没有什么奇怪的，本来就是走形式嘛，像我们写年终总结一样。<br>
+include/asm-i386/segment.h<br>
+<div class="blockcode"><div id="code0"><ol><li>#define GDT_ENTRY_DEFAULT_USER_CS&nbsp; &nbsp; &nbsp; &nbsp; 14<br>
+</li><li>#define __USER_CS (GDT_ENTRY_DEFAULT_USER_CS * 8 + 3)<br>
+</li><li><br>
+</li><li>#define GDT_ENTRY_DEFAULT_USER_DS&nbsp; &nbsp; &nbsp; &nbsp; 15<br>
+</li><li>#define __USER_DS (GDT_ENTRY_DEFAULT_USER_DS * 8 + 3)<br>
+</li><li><br>
+</li><li>#define GDT_ENTRY_KERNEL_BASE&nbsp; &nbsp; &nbsp; &nbsp; 12<br>
+</li><li><br>
+</li><li>#define GDT_ENTRY_KERNEL_CS&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (GDT_ENTRY_KERNEL_BASE + 0)<br>
+</li><li>#define __KERNEL_CS (GDT_ENTRY_KERNEL_CS * 8)<br>
+</li><li><br>
+</li><li>#define GDT_ENTRY_KERNEL_DS&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (GDT_ENTRY_KERNEL_BASE + 1)<br>
+</li><li>#define __KERNEL_DS (GDT_ENTRY_KERNEL_DS * 8)</li></ol></div><em onclick="copycode($('code0'));">复制代码</em></div><br>
+把其中的宏替换成数值，则为：<br>
+<div class="blockcode"><div id="code1"><ol><li>#define __USER_CS 115&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;[00000000 1110&nbsp;&nbsp;0&nbsp;&nbsp;11]<br>
+</li><li>#define __USER_DS 123&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;[00000000 1111&nbsp;&nbsp;0&nbsp;&nbsp;11]<br>
+</li><li>#define __KERNEL_CS 96&nbsp; &nbsp;&nbsp; &nbsp;[00000000 1100&nbsp;&nbsp;0&nbsp;&nbsp;00]<br>
+</li><li>#define __KERNEL_DS 104&nbsp; &nbsp; [00000000 1101&nbsp;&nbsp;0&nbsp;&nbsp;00]</li></ol></div><em onclick="copycode($('code1'));">复制代码</em></div><br>
+
+<br>
+方括号后是这四个段选择符的16位二制表示，它们的索引号和T1字段值也可以算出来了<br>
+<div class="blockcode"><div id="code2"><ol><li> __USER_CS&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;index= 14&nbsp; &nbsp;T1=0<br>
+</li><li>__USER_DS&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;index= 15&nbsp; &nbsp;T1=0<br>
+</li><li>__KERNEL_CS&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;index=&nbsp;&nbsp;12&nbsp;&nbsp;T1=0<br>
+</li><li>__KERNEL_DS&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;index= 13&nbsp; &nbsp;T1=0</li></ol></div><em onclick="copycode($('code2'));">复制代码</em></div><br>
+
+<br>
+T1均为0，则表示都使用了GDT，再来看初始化GDT的内容中相应的12-15项(arch/i386/head.S)：<br>
+<div class="blockcode"><div id="code3"><ol><li>&nbsp; &nbsp; &nbsp; &nbsp; .quad 0x00cf9a000000ffff&nbsp; &nbsp; &nbsp; &nbsp; /* 0x60 kernel 4GB code at 0x00000000 */<br>
+</li><li>&nbsp; &nbsp; &nbsp; &nbsp; .quad 0x00cf92000000ffff&nbsp; &nbsp; &nbsp; &nbsp; /* 0x68 kernel 4GB data at 0x00000000 */<br>
+</li><li>&nbsp; &nbsp; &nbsp; &nbsp; .quad 0x00cffa000000ffff&nbsp; &nbsp; &nbsp; &nbsp; /* 0x73 user 4GB code at 0x00000000 */<br>
+</li><li>&nbsp; &nbsp; &nbsp; &nbsp; .quad 0x00cff2000000ffff&nbsp; &nbsp; &nbsp; &nbsp; /* 0x7b user 4GB data at 0x00000000 */</li></ol></div><em onclick="copycode($('code3'));">复制代码</em></div><br>
+
+<br>
+按照前面段描述符表中的描述，可以把它们展开，发现其16-31位全为0，即四个段的基地址全为0。<br>
+<br>
+这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，“在Linux下，逻辑地址与线性地址总是一致（是一致，不是有些人说的相同）的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。！！！”<br>
+<br>
+忽略了太多的细节，例如段的权限检查。呵呵。<br>
+<br>
+Linux中，绝大部份进程并不例用LDT，除非使用<span href="tag.php?name=Win" onclick="tagshow(event)" class="t_tag">Win</span>e ，仿真<span href="tag.php?name=Windows" onclick="tagshow(event)" class="t_tag">Windows</span>程序的时候。<br>
+<br>
+<font size="5">4.CPU的页式内存管理</font><br>
+<br>
+CPU的页式内存管理单元，负责把一个线性地址，最终翻译为一个物理地址。从管理和效率的角度出发，线性地址被分为以固定长度为单位的组，称为页
+(page)，例如一个32位的机器，线性地址最大可为4G，可以用4KB为一个页来划分，这页，整个线性地址就被划分为一个
+tatol_page[2^20]的大数组，共有2的20个次方个页。这个大数组我们称之为页目录。目录中的每一个目录项，就是一个地址——对应的页的地
+址。<br>
+<br>
+另一类“页”，我们称之为物理页，或者是页框、页桢的。是分页单元把所有的物理内存也划分为固定长度的管理单位，它的长度一般与内存页是一一对应的。<br>
+<br>
+这里注意到，这个total_page数组有2^20个成员，每个成员是一个地址（32位机，一个地址也就是4字节），那么要单单要表示这么一个数组，就要占去4MB的内存空间。为了节省空间，引入了一个二级管理模式的机器来组织分页单元。文字描述太累，看图直观一些：<br>
+
+
+<span style="position: absolute; display: none;" id="attach_441187" onmouseover="showMenu({'ctrlid':this.id,'pos':'13'})"><img src="thread-2083672-1-1_files/attachimg.gif" border="0"></span>
+<img src="thread-2083672-1-1_files/20080116_df60e28590bbda258d8cRX7n2zBpGJ9Z.jpg" file="http://life.chinaunix.net/bbsfile/linux/month_0801/20080116_df60e28590bbda258d8cRX7n2zBpGJ9Z.jpg" id="aimg_441187" onmouseover="showMenu({'ctrlid':this.id,'pos':'12'})" alt="Snap1.jpg" width="611">
+
+<div class="t_attach" id="aimg_441187_menu" style="position: absolute; display: none;">				
+<a href="http://bbs.chinaunix.net/attachment.php?aid=NDQxMTg3fGMzMzVmNjQyfDEzMTEyMzg5MzF8NDJlN3BUOENVL2gwaHBZeVVvTmNKaEtrOGpTSnpmVzN1TjA2c2tQd0ROSkgwUmM%3D&amp;nothumb=yes" title="Snap1.jpg" target="_blank"><strong>下载</strong></a> (23.21 KB)<br>
+
+<div class="t_smallfont">2008-01-16 10:35</div>
+
+</div>
+
+<br>
+如上图，<br>
+1、分页单元中，页目录是唯一的，它的地址放在CPU的cr3寄存器中，是进行地址转换的开始点。万里长征就从此长始了。<br>
+2、每一个活动的进程，因为都有其独立的对应的虚似内存（页目录也是唯一的），那么它也对应了一个独立的页目录地址。——运行一个进程，需要将它的页目录地址放到cr3寄存器中，将别个的保存下来。<br>
+3、每一个32位的线性地址被划分为三部份，面目录索引(10位)：页表索引(10位)：偏移(12位)<br>
+依据以下步骤进行转换：<br>
+1、从cr3中取出进程的页目录地址（操作系统负责在调度进程的时候，把这个地址装入对应寄存器）；<br>
+2、根据线性地址前十位，在数组中，找到对应的索引项，因为引入了二级管理模式，页目录中的项，不再是页的地址，而是一个页表的地址。（又引入了一个数组），页的地址被放到页表中去了。<br>
+3、根据线性地址的中间十位，在页表（也是数组）中找到页的起始地址；<br>
+4、将页的起始地址与线性地址中最后12位相加，得到最终我们想要的葫芦；<br>
+<br>
+这个转换过程，应该说还是非常简单地。全部由硬件完成，虽然多了一道手续，但是节约了大量的内存，还是值得的。那么再简单地验证一下：<br>
+1、这样的二级模式是否仍能够表示4G的地址；<br>
+页目录共有：2^10项，也就是说有这么多个页表<br>
+每个目表对应了：2^10页；<br>
+每个页中可寻址：2^12个字节。<br>
+还是2^32 = 4GB<br>
+<br>
+<font color="Red">2、这样的二级模式是否真的节约了空间；<br>
+也就是算一下页目录项和页表项共占空间 (2^10 * 4 + 2 ^10 *4) = 8KB。哎，……怎么说呢！！！</font><br>
+红色错误，标注一下，后文贴中有此讨论。。。。。。<br>
+按&lt;深入理解<span href="tag.php?name=%BC%C6%CB%E3%BB%FA" onclick="tagshow(event)" class="t_tag">计算机</span>系统&gt;中的解释,二级模式空间的节约是从两个方面实现的:<br>
+A、如果一级页表中的一个页表条目为空，那么那所指的二级页表就根本不会存在。这表现出一种巨大的潜在节约，因为对于一个典型的程序，4GB虚拟地址空间的大部份都会是未分配的；<br>
+B、只有一级页表才需要总是在主存中。虚拟<span href="tag.php?name=%B4%E6%B4%A2" onclick="tagshow(event)" class="t_tag">存储</span>器系统可以在需要时创建，并页面调入或调出二级页表，这就减少了主存的压力。只有最经常使用的二级页表才需要缓存在主存中。——不过Linux并没有完全享受这种福利，它的页表目录和与已分配页面相关的页表都是常驻内存的。<br>
+<br>
+值得一提的是，虽然页目录和页表中的项，都是4个字节，32位，但是它们都只用高20位，低12位屏蔽为0——把页表的低12屏蔽为0，是很好理解的，因
+为这样，它刚好和一个页面大小对应起来，大家都成整数增加。计算起来就方便多了。但是，为什么同时也要把页目录低12位屏蔽掉呢？因为按同样的道理，只要
+屏蔽其低10位就可以了，不过我想，因为12&gt;10，这样，可以让页目录和页表使用相同的数据结构，方便。<br>
+<br>
+本贴只介绍一般性转换的原理，扩展分页、页的保护机制、PAE模式的分页这些麻烦点的东东就不啰嗦了……可以参考其它专业书籍。<br>
+<br>
+<font size="5">5.Linux的页式内存管理</font><br>
+原理上来讲，Linux只需要为每个进程分配好所需数据结构，放到内存中，然后在调度进程的时候，切换寄存器cr3，剩下的就交给硬件来完成了（呵呵，事实上要复杂得多，不过偶只分析最基本的流程）。<br>
+<br>
+前面说了i386的二级页管理架构，不过有些CPU，还有三级，甚至四级架构，Linux为了在更高层次提供抽像，为每个CPU提供统一的界面。提供了一个四层页管理架构，来兼容这些二级、三级、四级管理架构的CPU。这四级分别为：<br>
+<br>
+页全局目录PGD（对应刚才的页目录）<br>
+页上级目录PUD（新引进的）<br>
+页中间目录PMD（也就新引进的）<br>
+页表PT（对应刚才的页表）。<br>
+<br>
+整个转换依据硬件转换原理，只是多了二次数组的索引罢了，如下图：<br>
+
+
+<span style="position: absolute; display: none;" id="attach_441188" onmouseover="showMenu({'ctrlid':this.id,'pos':'13'})"><img src="thread-2083672-1-1_files/attachimg.gif" border="0"></span>
+<img src="thread-2083672-1-1_files/20080116_3a1b1ea4249e4a3ce05fZnTyR3rfXy3h.jpg" file="http://life.chinaunix.net/bbsfile/linux/month_0801/20080116_3a1b1ea4249e4a3ce05fZnTyR3rfXy3h.jpg" id="aimg_441188" onmouseover="showMenu({'ctrlid':this.id,'pos':'12'})" alt="Snap2.jpg" width="609">
+
+<div class="t_attach" id="aimg_441188_menu" style="position: absolute; display: none;">				
+<a href="http://bbs.chinaunix.net/attachment.php?aid=NDQxMTg4fDVkMjc0N2YwfDEzMTEyMzg5MzF8NDJlN3BUOENVL2gwaHBZeVVvTmNKaEtrOGpTSnpmVzN1TjA2c2tQd0ROSkgwUmM%3D&amp;nothumb=yes" title="Snap2.jpg" target="_blank"><strong>下载</strong></a> (26.06 KB)<br>
+
+<div class="t_smallfont">2008-01-16 10:35</div>
+
+</div>
+
+<br>
+那么，对于使用二级管理架构32位的硬件，现在又是四级转换了，它们怎么能够协调地工作起来呢？嗯，来看这种情况下，怎么来划分线性地址吧！<br>
+从硬件的角度，32位地址被分成了三部份——也就是说，不管理软件怎么做，最终落实到硬件，也只认识这三位老大。<br>
+从软件的角度，由于多引入了两部份，，也就是说，共有五部份。——要让二层架构的硬件认识五部份也很容易，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。<br>
+这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，也不会出错，也就是说大家共建了和谐计算机系统。<br>
+<br>
+这样，虽说是多此一举，但是考虑到64位地址，使用四层转换架构的CPU，我们就不再把中间两个设为0了，这样，软件与硬件再次和谐——抽像就是强大呀！！！<br>
+<br>
+例如，一个逻辑地址已经被转换成了线性地址，0x08147258，换成二制进，也就是：<br>
+0000100000 0101000111 001001011000<br>
+内核对这个地址进行划分<br>
+PGD = 0000100000<br>
+PUD = 0<br>
+PMD = 0<br>
+PT = 0101000111<br>
+offset = 001001011000<br>
+<br>
+现在来理解Linux针对硬件的花招，因为硬件根本看不到所谓PUD,PMD，所以，本质上要求PGD索引，直接就对应了PT的地址。而不是再到PUD和
+PMD中去查数组（虽然它们两个在线性地址中，长度为0，2^0 =1，也就是说，它们都是有一个数组元素的数组），那么，内核如何合理安排地址呢？<br>
+从软件的角度上来讲，因为它的项只有一个，32位，刚好可以存放与PGD中长度一样的地址指针。那么所谓先到PUD，到到PMD中做映射转换，就变成了保
+持原值不变，一一转手就可以了。这样，就实现了“逻辑上指向一个PUD，再指向一个PDM，但在物理上是直接指向相应的PT的这个抽像，因为硬件根本不知
+道有PUD、PMD这个东西”。<br>
+<br>
+然后交给硬件，硬件对这个地址进行划分，看到的是：<br>
+页目录 = 0000100000<br>
+PT = 0101000111<br>
+offset = 001001011000<br>
+嗯，先根据0000100000(32)，在页目录数组中索引，找到其元素中的地址，取其高20位，找到页表的地址，页表的地址是由内核动态分配的，接着，再加一个offset，就是最终的物理地址了。<br>
+<br>
+[<i> 本帖最后由 独孤九贱 于 2009-9-22 20:36 编辑 </i>]</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590056"></div>
+<div class="useraction">
+</div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#f0f3fa">
+<div class="signatures" style="max-height: 200px;">__________________________________<br>寻寻觅觅下一个港口</div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_0"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"><!--//div id="ad_interthread"></div//--></td>
+</tr>
+</tbody></table>
+<script type="text/javascript" reload="1">aimgcount[14590056] = [441184,441185,441186,441187,441188];attachimgshow(14590056);</script>
+</div><div id="post_14590057"><table id="pid14590057" summary="pid14590057" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#fafbfc">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#fafbfc">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=9758675" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">ghosTM55</font></a>
+<em>(Thomas Yao)</em>	
+	
+</div>
+	
+<p>菜鸟</p><div class="popupmenu_popup userinfopanel" id="userinfo14590057" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590057_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=9758675" onclick="hideMenu('userinfo14590057');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=9758675&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_1" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-9758675.html" target="_blank">ghosTM55</a>
+<em>(Thomas Yao)</em><em>当前离线
+</em>
+</p>
+<p class="customstatus">菜鸟</p>
+<dl class="s_clear"><dt>UID</dt><dd>9758675&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=ghosTM55&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>665</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=ghosTM55&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>积分</dt><dd>1063&nbsp;</dd><dt>可用积分</dt><dd>1063 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>30&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd><dt>来自</dt><dd>上海&nbsp;</dd><dt>在线时间</dt><dd>7 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-03-12&nbsp;</dd><dt>最后登录</dt><dd>2010-11-29&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=9758675" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://www.ghostunix.org/" target="_blank" title="查看个人网站"><img src="thread-2083672-1-1_files/forumlink.gif" alt="查看个人网站"></a><a href="http://bbs.chinaunix.net/space-uid-9758675.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590057')"><a href="http://bbs.chinaunix.net/space-uid-9758675.html" target="_blank"><img src="thread-2083672-1-1_files/avatar.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=12" target="_blank">风云使者</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips5.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=ghosTM55&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>665</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=ghosTM55&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>32</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=ghosTM55&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>可用积分</dt><dd>1063 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>来自</dt><dd>上海&nbsp;</dd><dt>在线时间</dt><dd>7 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-03-12&nbsp;</dd><dt>最后登录</dt><dd>2010-11-29&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=9758675" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=9758675" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=9758675" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590057" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590057&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590057&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590057" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590057', '帖子地址已经复制到剪贴板')"><em>2</em>楼</a>
+
+<em id="authorposton14590057">发表于 2008-01-15 16:37</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=9758675" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_1"></div><div id="ad_thread3_1"></div><div id="ad_thread4_1"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<h2>学习了</h2>
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590057"><img src="thread-2083672-1-1_files/em02.gif" smilieid="71" alt="" border="0"> <img src="thread-2083672-1-1_files/em02.gif" smilieid="71" alt="" border="0"> <img src="thread-2083672-1-1_files/em02.gif" smilieid="71" alt="" border="0"></td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590057"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#fafbfc">
+<div class="signatures" style="max-height: 200px;">__________________________________<br>Thomas Yao<br>
+Shanghai Linux User Group<br>
+<br>
+Twitter.com/ghosTM55<br>
+http://www.ghosTunix.org</div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_1"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590058"><table id="pid14590058" summary="pid14590058" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#f0f3fa">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#f0f3fa">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=8875199" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">netentsec</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590058" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590058_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=8875199" onclick="hideMenu('userinfo14590058');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=8875199&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_2" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-8875199.html" target="_blank">netentsec</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>8875199&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=netentsec&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>18</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=netentsec&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>1</u></a>&nbsp;</dd><dt>积分</dt><dd>24&nbsp;</dd><dt>可用积分</dt><dd>24 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>10&nbsp;</dd><dt>在线时间</dt><dd>1 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-04-25&nbsp;</dd><dt>最后登录</dt><dd>2009-06-17&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=8875199" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-8875199.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590058')"><a href="http://bbs.chinaunix.net/space-uid-8875199.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_002.gif"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=10" target="_blank">侠客</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips1.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=netentsec&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>18</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=netentsec&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>10</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=netentsec&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>1</u></a>&nbsp;</dd><dt>可用积分</dt><dd>24 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>在线时间</dt><dd>1 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-04-25&nbsp;</dd><dt>最后登录</dt><dd>2009-06-17&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=8875199" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=8875199" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=8875199" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590058" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590058&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590058&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590058" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590058', '帖子地址已经复制到剪贴板')"><em>3</em>楼</a>
+
+<em id="authorposton14590058">发表于 2008-01-15 16:48</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=8875199" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_2"></div><div id="ad_thread3_2"></div><div id="ad_thread4_2"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590058">深入浅出，讲的好，期待下文<img src="thread-2083672-1-1_files/em28.gif" smilieid="99" alt="" border="0"></td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590058"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#f0f3fa">
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_2"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590059"><table id="pid14590059" summary="pid14590059" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#fafbfc">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#fafbfc">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=20509266" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">sisi8408</font></a>
+<em>(linux八哥)</em>	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590059" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590059_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20509266" onclick="hideMenu('userinfo14590059');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=20509266&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_3" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-20509266.html" target="_blank">sisi8408</a>
+<em>(linux八哥)</em><em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>20509266&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=sisi8408&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>709</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=sisi8408&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>积分</dt><dd>569&nbsp;</dd><dt>可用积分</dt><dd>569 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>20&nbsp;</dd><dt>在线时间</dt><dd>7 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-12-22&nbsp;</dd><dt>最后登录</dt><dd>2011-01-16&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=20509266" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-20509266.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590059')"><a href="http://bbs.chinaunix.net/space-uid-20509266.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_004.gif"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=30" target="_blank">光明使者</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips5.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=sisi8408&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>709</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=sisi8408&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>39</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=sisi8408&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>可用积分</dt><dd>569 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>在线时间</dt><dd>7 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-12-22&nbsp;</dd><dt>最后登录</dt><dd>2011-01-16&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=20509266" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=20509266" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20509266" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590059" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590059&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590059&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590059" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590059', '帖子地址已经复制到剪贴板')"><em>4</em>楼</a>
+
+<em id="authorposton14590059">发表于 2008-01-15 20:07</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=20509266" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_3"></div><div id="ad_thread3_3"></div><div id="ad_thread4_3"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590059">赞一个。。。。。。。。。</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590059"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#fafbfc">
+<div class="signatures" style="max-height: 200px;">__________________________________<br>东直门外大街<br>
+张字85号<br>
+丁字96号<br>
+</div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_3"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590060"><table id="pid14590060" summary="pid14590060" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#f0f3fa">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#f0f3fa">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=7798714" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">duanius</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590060" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590060_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=7798714" onclick="hideMenu('userinfo14590060');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=7798714&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_4" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank">duanius</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>7798714&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>908</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>积分</dt><dd>2164&nbsp;</dd><dt>可用积分</dt><dd>2164 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>50&nbsp;</dd><dt>在线时间</dt><dd>315 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-10-01&nbsp;</dd><dt>最后登录</dt><dd>2011-05-31&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=7798714" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590060')"><a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_004.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=13" target="_blank">光明使者</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips5.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>908</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>100</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>可用积分</dt><dd>2164 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>在线时间</dt><dd>315 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-10-01&nbsp;</dd><dt>最后登录</dt><dd>2011-05-31&nbsp;</dd></dl><p>状态：...保密...</p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=7798714" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=7798714" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=7798714" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590060" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590060&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590060&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590060" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590060', '帖子地址已经复制到剪贴板')"><em>5</em>楼</a>
+
+<em id="authorposton14590060">发表于 2008-01-15 21:14</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=7798714" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_4"></div><div id="ad_thread3_4"></div><div id="ad_thread4_4"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590060">说的不错&nbsp; &nbsp;比ulk第二章更直白 人性化<br>
+<br>
+[<i> 本帖最后由 duanius 于 2008-1-15 21:15 编辑 </i>]</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590060"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#f0f3fa">
+<div class="signatures" style="max-height: 200px;">__________________________________<br>又懒又贪玩的笨蛋。。。</div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_4"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590061"><table id="pid14590061" summary="pid14590061" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#fafbfc">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#fafbfc">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=20338767" style="margin-left: 20px; font-weight: 800;">
+<img class="authicon" id="authicon14590061" src="thread-2083672-1-1_files/teammo.gif" onclick="showauthor(this, 'userinfo14590061')">
+				
+<font face="Fixedsys">flw2</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590061" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590061_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20338767" onclick="hideMenu('userinfo14590061');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=20338767&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_5" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-20338767.html" target="_blank">flw2</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>20338767&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=flw2&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>5393</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=flw2&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>积分</dt><dd>11923&nbsp;</dd><dt>可用积分</dt><dd>11923 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">10 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>90&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd><dt>在线时间</dt><dd>319 小时&nbsp;</dd><dt>注册时间</dt><dd>2005-11-19&nbsp;</dd><dt>最后登录</dt><dd>2011-06-25&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://wpa.qq.com/msgrd?V=1&amp;Uin=3733035&amp;Site=ChinaUnix.net&amp;Menu=yes" target="_blank" title="QQ"><img src="thread-2083672-1-1_files/qq.gif" alt="QQ"></a><a href="http://my.chinaunix.net/space.php?uid=20338767" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-20338767.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590061')"><a href="http://bbs.chinaunix.net/space-uid-20338767.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_003.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=25" target="_blank">法师</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips8.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=flw2&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>5393</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=flw2&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>172</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=flw2&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>可用积分</dt><dd>11923 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">10 (本版:0)</dd><dt>在线时间</dt><dd>319 小时&nbsp;</dd><dt>注册时间</dt><dd>2005-11-19&nbsp;</dd><dt>最后登录</dt><dd>2011-06-25&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=20338767" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=20338767" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20338767" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590061" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590061&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590061&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590061" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590061', '帖子地址已经复制到剪贴板')"><em>6</em>楼</a>
+
+<em id="authorposton14590061">发表于 2008-01-16 09:34</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=20338767" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_5"></div><div id="ad_thread3_5"></div><div id="ad_thread4_5"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590061">支持一个，LZ超级高手</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590061"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#fafbfc">
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_5"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590062"><table id="pid14590062" summary="pid14590062" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#f0f3fa">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#f0f3fa">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=20332568" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">achlice</font></a>
+	
+	
+</div>
+	
+<p>二手艺术家</p><div class="popupmenu_popup userinfopanel" id="userinfo14590062" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590062_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20332568" onclick="hideMenu('userinfo14590062');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=20332568&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_6" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-20332568.html" target="_blank">achlice</a>
+<em>当前离线
+</em>
+</p>
+<p class="customstatus">二手艺术家</p>
+<dl class="s_clear"><dt>UID</dt><dd>20332568&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=achlice&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>6115</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=achlice&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>5</u></a>&nbsp;</dd><dt>积分</dt><dd>33198&nbsp;</dd><dt>可用积分</dt><dd>33198 &nbsp;</dd><dt>信誉积分</dt><dd>160 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">210 (本版:)</dd><dt>空间积分</dt><dd>3 &nbsp;</dd><dt>阅读权限</dt><dd>90&nbsp;</dd><dt>来自</dt><dd>china&nbsp;</dd><dt>在线时间</dt><dd>779 小时&nbsp;</dd><dt>注册时间</dt><dd>2005-11-05&nbsp;</dd><dt>最后登录</dt><dd>2011-07-12&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=20332568" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-20332568.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590062')"><a href="http://bbs.chinaunix.net/space-uid-20332568.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_002.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=26" target="_blank">法师</a></em></p>
+</div>
+<p><a href="http://bbs.chinaunix.net/thread-1093271-1-1.html" target="_blank" title="CU奥运火炬传递手2008"><img src="thread-2083672-1-1_files/aoyun.gif" alt="CU奥运火炬传递手2008" height="19" width="16" border="0"></a>&nbsp;<img src="thread-2083672-1-1_files/pips8.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=achlice&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>6115</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=achlice&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>805</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=achlice&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>5</u></a>&nbsp;</dd><dt>可用积分</dt><dd>33198 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">210 (本版:0)</dd><dt>来自</dt><dd>china&nbsp;</dd><dt>在线时间</dt><dd>779 小时&nbsp;</dd><dt>注册时间</dt><dd>2005-11-05&nbsp;</dd><dt>最后登录</dt><dd>2011-07-12&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=20332568" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=20332568" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=20332568" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590062" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590062&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590062&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590062" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590062', '帖子地址已经复制到剪贴板')"><em>7</em>楼</a>
+
+<em id="authorposton14590062">发表于 2008-01-16 10:14</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=20332568" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_6"></div><div id="ad_thread3_6"></div><div id="ad_thread4_6"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590062">见了好帖子然后回复 ，是一种美德， 比如像我，一直都 是这样做的～～<br>
+<br>
+<br>
+<br>
+ 看了内核源代码 情景 分析 ，从 8086 讲到80286，&nbsp;&nbsp;80386，&nbsp;&nbsp;终于明白，这是怎么回事儿了～～<br>
+<br>
+[<i> 本帖最后由 achlice 于 2008-1-28 15:53 编辑 </i>]</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590062"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#f0f3fa">
+<div class="signatures" style="max-height: 200px;">__________________________________<br><font size="7"><font color="Red">河南linuxer QQ群：45884249</font></font><br>
+<img src="thread-2083672-1-1_files/20080625_4f6a7501da8c847721f6vVPQZr5NhR3C.html" onload="if(this.width>screen.width*0.7) {this.resized=true; this.width=screen.width*0.7; this.alt='Click here to open new window\nCTRL+Mouse wheel to zoom in/out';}" onmouseover="if(this.width>screen.width*0.7) {this.resized=true; this.width=screen.width*0.7; this.style.cursor='hand'; this.alt='Click here to open new window\nCTRL+Mouse wheel to zoom in/out';}" onclick="if(!this.resized) {return true;} else {window.open(this.src);}" onmousewheel="return imgzoom(this);" alt="" border="0"></div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_6"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590063"><table id="pid14590063" summary="pid14590063" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#fafbfc">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#fafbfc">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=8563418" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">qps104</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590063" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590063_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=8563418" onclick="hideMenu('userinfo14590063');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=8563418&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_7" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-8563418.html" target="_blank">qps104</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>8563418&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=qps104&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>148</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=qps104&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>积分</dt><dd>192&nbsp;</dd><dt>可用积分</dt><dd>192 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">5 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>10&nbsp;</dd><dt>在线时间</dt><dd>64 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-02-28&nbsp;</dd><dt>最后登录</dt><dd>2010-10-26&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=8563418" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-8563418.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590063')"><a href="http://bbs.chinaunix.net/space-uid-8563418.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_003.gif"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=10" target="_blank">圣骑士</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips3.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=qps104&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>148</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=qps104&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>8</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=qps104&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>可用积分</dt><dd>192 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">5 (本版:0)</dd><dt>在线时间</dt><dd>64 小时&nbsp;</dd><dt>注册时间</dt><dd>2007-02-28&nbsp;</dd><dt>最后登录</dt><dd>2010-10-26&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=8563418" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=8563418" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=8563418" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590063" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590063&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590063&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590063" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590063', '帖子地址已经复制到剪贴板')"><em>8</em>楼</a>
+
+<em id="authorposton14590063">发表于 2008-01-16 11:16</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=8563418" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_7"></div><div id="ad_thread3_7"></div><div id="ad_thread4_7"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590063">好文,加深了我对3种地址的理解</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590063"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#fafbfc">
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_7"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590064"><table id="pid14590064" summary="pid14590064" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#f0f3fa">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#f0f3fa">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=96018" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">yj1804</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590064" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590064_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=96018" onclick="hideMenu('userinfo14590064');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=96018&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_8" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-96018.html" target="_blank">yj1804</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>96018&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=yj1804&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>171</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=yj1804&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>积分</dt><dd>154&nbsp;</dd><dt>可用积分</dt><dd>154 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>10&nbsp;</dd><dt>在线时间</dt><dd>183 小时&nbsp;</dd><dt>注册时间</dt><dd>2003-11-28&nbsp;</dd><dt>最后登录</dt><dd>2011-07-20&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=96018" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-96018.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590064')"><a href="http://bbs.chinaunix.net/space-uid-96018.html" target="_blank"><img src="thread-2083672-1-1_files/avatar.gif"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=10" target="_blank">精灵</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips4.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=yj1804&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>171</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=yj1804&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>47</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=yj1804&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>0</u></a>&nbsp;</dd><dt>可用积分</dt><dd>154 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>在线时间</dt><dd>183 小时&nbsp;</dd><dt>注册时间</dt><dd>2003-11-28&nbsp;</dd><dt>最后登录</dt><dd>2011-07-20&nbsp;</dd></dl><p>状态：<font color="#999999">...当前离线...</font></p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=96018" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=96018" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=96018" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590064" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590064&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590064&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590064" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590064', '帖子地址已经复制到剪贴板')"><em>9</em>楼</a>
+
+<em id="authorposton14590064">发表于 2008-01-16 17:20</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=96018" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_8"></div><div id="ad_thread3_8"></div><div id="ad_thread4_8"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590064">好文,赞一个<br>
+PS.推荐大家看毛德操的"LINUX内核源代码情景分析"一书, 里面讲解也比较详细</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590064"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#f0f3fa">
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_8"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div><div id="post_14590065"><table id="pid14590065" summary="pid14590065" cellpadding="0" cellspacing="0">
+<tbody><tr var="" bgcolor="#fafbfc">
+<td class="postauthor" rowspan="2" var="" width="18%" bgcolor="#fafbfc">
+<div class="postinfo">
+<a target="_blank" href="http://bbs.chinaunix.net/space.php?uid=7798714" style="margin-left: 20px; font-weight: 800;">
+				
+<font face="Fixedsys">duanius</font></a>
+	
+	
+</div>
+	
+<div class="popupmenu_popup userinfopanel" id="userinfo14590065" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo14590065_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=7798714" onclick="hideMenu('userinfo14590065');showWindow('sendpm', this.href);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://bbs.chinaunix.net/my.php?item=buddylist&amp;newbuddyid=7798714&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_9" title="加为好友" onclick="ajaxmenu(this, 3000);doane(event);">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank">duanius</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>7798714&nbsp;</dd><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>908</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>积分</dt><dd>2164&nbsp;</dd><dt>可用积分</dt><dd>2164 &nbsp;</dd><dt>信誉积分</dt><dd>100 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:)</dd><dt>空间积分</dt><dd>0 &nbsp;</dd><dt>阅读权限</dt><dd>50&nbsp;</dd><dt>在线时间</dt><dd>315 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-10-01&nbsp;</dd><dt>最后登录</dt><dd>2011-05-31&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://my.chinaunix.net/space.php?uid=7798714" target="_blank" title="个人空间"><img src="thread-2083672-1-1_files/home.gif" alt="个人空间"></a>
+<a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank" title="查看详细资料"><img src="thread-2083672-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div>
+<div class="avatar" onmouseover="showauthor(this, 'userinfo14590065')"><a href="http://bbs.chinaunix.net/space-uid-7798714.html" target="_blank"><img src="thread-2083672-1-1_files/avatar_004.jpeg"></a></div>
+<p><em><a href="http://bbs.chinaunix.net/faq.php?action=grouppermission&amp;searchgroupid=13" target="_blank">光明使者</a></em></p>
+</div>
+<p>&nbsp;<img src="thread-2083672-1-1_files/pips5.gif">&nbsp;</p>
+<dl class="profile s_clear"><dt>帖子</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=post&amp;bbs=1&amp;forums=all" target="_blank"><u>908</u></a>&nbsp;</dd><dt>主题</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=title&amp;bbs=1&amp;forums=all" target="_blank"><u>100</u></a>&nbsp;</dd><dt>精华</dt><dd><a href="http://s.chinaunix.net/bbs.php?q=&amp;username=duanius&amp;st=titlejh&amp;bbs=1&amp;forums=all" target="_blank"><u>2</u></a>&nbsp;</dd><dt>可用积分</dt><dd>2164 &nbsp;</dd><dt>专家积分</dt><dd style="width: 110px;">0 (本版:0)</dd><dt>在线时间</dt><dd>315 小时&nbsp;</dd><dt>注册时间</dt><dd>2006-10-01&nbsp;</dd><dt>最后登录</dt><dd>2011-05-31&nbsp;</dd></dl><p>状态：...保密...</p>
+  
+<p>
+[<a href="http://my.chinaunix.net/space.php?uid=7798714" target="_blank" alt="进入此会员的CU微博" style="color: blue;"><b>微博</b></a>]
+[<a href="http://blog.chinaunix.net/dir.php?uid=7798714" target="_blank" alt="进入此会员的CU博客"><b>博客</b></a>]
+[<a href="http://bbs.chinaunix.net/pm.php?action=new&amp;uid=7798714" target="_blank" alt="给此会员发送站内短信"><b>短信</b></a>] 
+</p>
+
+</td>
+<td class="postcontent postbody">
+<div class="postinfo">
+<strong>
+<em>
+<a href="javascript:;" onclick="scrollTo(0,0);"><img src="thread-2083672-1-1_files/top.gif" alt="顶部" border="0"></a>
+
+<a href="http://bbs.chinaunix.net/misc.php?action=report&amp;fid=224&amp;tid=2083672&amp;pid=14590065" onclick="showWindow('report', this.href);doane(event);">[报告]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;reppost=14590065&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[回复]</a>
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;repquote=14590065&amp;extra=page%3D1&amp;page=1" onclick="showWindow('reply', this.href);return false;">[引用]</a>
+
+</em>
+</strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<a title="复制本帖链接" id="postnum14590065" href="javascript:;" onclick="setCopy('http://bbs.chinaunix.net/redirect.php?goto=findpost&amp;ptid=2083672&amp;pid=14590065', '帖子地址已经复制到剪贴板')"><em>10</em>楼</a>
+
+<em id="authorposton14590065">发表于 2008-01-16 18:51</em>
+ | <a href="http://bbs.chinaunix.net/viewthread.php?tid=2083672&amp;page=1&amp;authorid=7798714" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<hr class="top_hr">
+<div class="defaultpost">
+<div id="ad_thread2_9"></div><div id="ad_thread3_9"></div><div id="ad_thread4_9"></div>
+
+<div class="postact s_clear" style="float: right;">
+<p>
+</p>
+</div>
+
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_14590065">好文好文&nbsp;&nbsp;隐隐中透着一种和谐美</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_14590065"></div>
+</div>
+
+</div>
+</td></tr>
+<tr><td class="postcontent postbottom" bgcolor="#fafbfc">
+<div class="signatures" style="max-height: 200px;">__________________________________<br>又懒又贪玩的笨蛋。。。</div>
+<br>
+<hr class="ad_hr">
+<div class="ad_textlink1" id="ad_thread1_9"><a href="http://bbs.chinaunix.net/thread-3565236-1-1.html" target="_blank" style="color: green;"><b>ChinaUnix拍卖活动火热开启！</b></a>|<a target="_blank" href="http://bbs.chinaunix.net/thread-3558404-1-1.html" style="color: red;"><b>
+ChinaUnix社区Python编程大赛！</b></a> | <a href="http://bbs.chinaunix.net/thread-3562078-1-1.html" target="_blank" style="color: blue;"><b>7月31日企业开源实践沙龙-西安站</b></a>|  <a href="http://bbs.chinaunix.net/thread-3565585-1-1.html" target="_blank" style="color: rgb(142, 35, 107);"><b>Iptables使用问题大讨论！</b></a> 
+</div></td>
+</tr>
+<tr class="threadad" height="2" bgcolor="#ffffff">
+<td class="postauthor" bgcolor="#ffffff"></td>
+<td class="adcontent" bgcolor="#ffffff"></td>
+</tr>
+</tbody></table>
+</div></div>
+<div id="postlistreply" class="mainbox viewthread"><div id="post_new" class="viewthread_table" style="display: none;"></div></div>
+<div class="subtable" style="padding: 5px 5px 5px 0px;">
+<table style="border-collapse: collapse;" width="98%" align="center" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td nowrap="nowrap">
+<span id="newspecial" prompt="post_newthread" onmouseover="$('newspecial').id = 'newspecialtmp';this.id = 'newspecial';showMenu({'ctrlid':this.id})">
+<a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224&amp;extra=page%3D1" onclick="showWindow('newthread', this.href);return false;"><img src="thread-2083672-1-1_files/new_topic.gif" alt="" border="0"></a> </span>
+
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;extra=page%3D1"><img src="thread-2083672-1-1_files/new_reply.gif" alt="" border="0"></a>&nbsp;
+<a href="http://www.chinaunix.net/">首页</a> &#187; 
+<a href="http://bbs.chinaunix.net/index.php">论坛</a>
+ 
+<!-- &raquo; <a href="listthread.php" style="color:#FF0000">汇总贴列表</a> --> 
+ &#187; <a href="http://bbs.chinaunix.net/forum-224-1.html">内核源码</a> &#187; </td>
+<td nowrap="nowrap" align="right">
+<div class="p_bar"><a class="p_curpage">1</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_num">2</a><a href="http://bbs.chinaunix.net/thread-2083672-3-1.html" class="p_num">3</a><a href="http://bbs.chinaunix.net/thread-2083672-4-1.html" class="p_num">4</a><a href="http://bbs.chinaunix.net/thread-2083672-5-1.html" class="p_num">5</a><a href="http://bbs.chinaunix.net/thread-2083672-6-1.html" class="p_num">6</a><a href="http://bbs.chinaunix.net/thread-2083672-7-1.html" class="p_num">7</a><a href="http://bbs.chinaunix.net/thread-2083672-8-1.html" class="p_num">8</a><a href="http://bbs.chinaunix.net/thread-2083672-9-1.html" class="p_num">9</a><a href="http://bbs.chinaunix.net/thread-2083672-10-1.html" class="p_num">10</a><a href="http://bbs.chinaunix.net/thread-2083672-2-1.html" class="p_redirect">&#8250;&#8250;</a><a href="http://bbs.chinaunix.net/thread-2083672-19-1.html" class="p_redirect">&#8250;|</a><a class="p_pages" style="padding: 0px;"><input class="p_input" name="custompage" onkeydown="if(event.keyCode==13) {window.location='viewthread.php?tid=2083672&amp;extra=page%3D1&amp;page='+this.value; return false;}" type="text"></a></div></td></tr>
+</tbody></table>
+</div>
+
+<form method="post" name="modactions" id="modactions">
+<input name="formhash" value="b5d849a5" type="hidden">
+<input name="optgroup" type="hidden">
+<input name="operation" type="hidden">
+<input name="listextra" value="page%3D1" type="hidden">
+</form>
+
+<script type="text/javascript">var tagarray = ['linux','java','php','web','服务器','Oracle','招聘','微软','Windows','云计算','mysql','python','videoserver','sqlserver','ftp','server','北京','安全','shell','apache','ibm','Sun','数据库','perl','手机开发','运维','pdf','工程师','Ruby','应用程序','软件','cluster','Win','上海','solaris','软件工程','中间件','培训','FreeBSD','IIS','AIX','others','android','ppt','SAP','嵌入式','虚拟机','互联网','操作系统','VMware','计算机','unix','开发','用户','小型机','IT技术社区','技术论坛','raid','求助','IBMx86','编程','技术','dell','samba','DB2','时间','软件开发','Virtualization','2003','proxyserver','请教','Cloud','Novell','IBMpower','2008','redhat','应用','awk','CISA','DNS','存储','数据挖掘','系统','认证','虚拟化','内存','职位','CISSP','CISP','网络','信息安全','集群','sed','文件','Computing','media','嵌入式培训','DBA','google','深圳'];var tagencarray = ['linux','java','php','web','%B7%FE%CE%F1%C6%F7','Oracle','%D5%D0%C6%B8','%CE%A2%C8%ED','Windows','%D4%C6%BC%C6%CB%E3','mysql','python','videoserver','sqlserver','ftp','server','%B1%B1%BE%A9','%B0%B2%C8%AB','shell','apache','ibm','Sun','%CA%FD%BE%DD%BF%E2','perl','%CA%D6%BB%FA%BF%AA%B7%A2','%D4%CB%CE%AC','pdf','%B9%A4%B3%CC%CA%A6','Ruby','%D3%A6%D3%C3%B3%CC%D0%F2','%C8%ED%BC%FE','cluster','Win','%C9%CF%BA%A3','solaris','%C8%ED%BC%FE%B9%A4%B3%CC','%D6%D0%BC%E4%BC%FE','%C5%E0%D1%B5','FreeBSD','IIS','AIX','others','android','ppt','SAP','%C7%B6%C8%EB%CA%BD','%D0%E9%C4%E2%BB%FA','%BB%A5%C1%AA%CD%F8','%B2%D9%D7%F7%CF%B5%CD%B3','VMware','%BC%C6%CB%E3%BB%FA','unix','%BF%AA%B7%A2','%D3%C3%BB%A7','%D0%A1%D0%CD%BB%FA','IT%BC%BC%CA%F5%C9%E7%C7%F8','%BC%BC%CA%F5%C2%DB%CC%B3','raid','%C7%F3%D6%FA','IBMx86','%B1%E0%B3%CC','%BC%BC%CA%F5','dell','samba','DB2','%CA%B1%BC%E4','%C8%ED%BC%FE%BF%AA%B7%A2','Virtualization','2003','proxyserver','%C7%EB%BD%CC','Cloud','Novell','IBMpower','2008','redhat','%D3%A6%D3%C3','awk','CISA','DNS','%B4%E6%B4%A2','%CA%FD%BE%DD%CD%DA%BE%F2','%CF%B5%CD%B3','%C8%CF%D6%A4','%D0%E9%C4%E2%BB%AF','%C4%DA%B4%E6','%D6%B0%CE%BB','CISSP','CISP','%CD%F8%C2%E7','%D0%C5%CF%A2%B0%B2%C8%AB','%BC%AF%C8%BA','sed','%CE%C4%BC%FE','Computing','media','%C7%B6%C8%EB%CA%BD%C5%E0%D1%B5','DBA','google','%C9%EE%DB%DA'];parsetag(14590056);</script><div class="forumcontrol s_clear" style="">
+<table class="narrow" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td style="padding: 5px; font-weight: bold; color: rgb(255, 255, 255);" height="30" valign="middle">
+&nbsp;&nbsp;快速回复主题
+</td>
+<td align="right">
+</td>
+</tr>
+</tbody></table>
+</div>
+
+<script src="thread-2083672-1-1_files/bbcode.js" type="text/javascript"></script>
+<script type="text/javascript">
+var postminchars = parseInt('2');
+var postmaxchars = parseInt('20000');
+var disablepostctrl = parseInt('0');
+</script>
+<style>
+#append_parent_smilies td {
+padding-top:8px;
+padding-bottom:8px;
+}
+#f_post td {
+padding:5px;
+}
+</style>
+<div id="f_post" class="mainbox viewthread">
+<form method="post" id="fastpostform" action="post.php?action=reply&amp;fid=224&amp;tid=2083672&amp;extra=page%3D1&amp;replysubmit=yes&amp;infloat=yes&amp;handlekey=fastpost" onsubmit="return fastpostvalidate(this)">
+<table cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor" style="padding-left: 15px; width: 150px;">
+                        <div class="postoptions">
+                                <h5>选项</h5>
+                                <p><label><input class="checkbox" name="parseurloff" id="parseurloff" value="1" type="checkbox"> 禁用 URL 识别</label></p>
+                                <p><label><input class="checkbox" name="smileyoff" id="smileyoff" value="1" type="checkbox"> 禁用 </label><a href="http://bbs.chinaunix.net/faq.php?action=faq&amp;id=5&amp;messageid=32" target="_blank">Smilies</a></p>
+                                <p><label><input class="checkbox" name="bbcodeoff" id="bbcodeoff" value="1" type="checkbox"> 禁用 </label><a href="http://bbs.chinaunix.net/faq.php?action=faq&amp;id=5&amp;messageid=18" target="_blank">Discuz!代码</a></p>
+                                                                <p><label><input class="checkbox" name="usesig" value="1" checked="checked" type="checkbox"> 使用个人签名</label></p>
+                                <p><label><input class="checkbox" name="attention_add" id="attention_add" nochecked="checked" value="1" type="checkbox">关注此主题的新回复</label></p>
+                                                        </div>
+</td>
+<td class="postcontent" valign="top" align="left">
+<table border="0">
+<tbody><tr>
+<td style="width: 605px;">
+<input name="formhash" value="b5d849a5" type="hidden">
+<input name="subject" value="" type="hidden">
+
+<span id="fastpostreturn"></span>
+<div class="editor_tb">
+<span class="right">
+<a href="http://bbs.chinaunix.net/post.php?action=reply&amp;fid=224&amp;tid=2083672" onclick="return switchAdvanceMode(this.href)">高级模式</a>
+<span class="pipe">|</span>
+<span id="newspecialtmp" onmouseover="$('newspecial').id = 'newspecialtmp';this.id = 'newspecial';showMenu({'ctrlid':this.id})"><a href="http://bbs.chinaunix.net/post.php?action=newthread&amp;fid=224" onclick="showWindow('newthread', this.href);return false;">发新话题</a></span>
+</span><link rel="stylesheet" type="text/css" href="thread-2083672-1-1_files/style_7_seditor.css">
+<div>
+<a href="javascript:;" title="粗体" class="tb_bold" onclick="seditor_insertunit('fastpost', '[b]', '[/b]')">B</a>
+<a href="javascript:;" title="颜色" class="tb_color" id="fastpostforecolor" onclick="showColorBox(this.id, 2, 'fastpost')">Color</a>
+<a href="javascript:;" title="图片" class="tb_img" onclick="seditor_insertunit('fastpost', '[img]', '[/img]')">Image</a>
+<a href="javascript:;" title="插入链接" class="tb_link" onclick="seditor_insertunit('fastpost', '[url]', '[/url]')">Link</a>
+<a href="javascript:;" title="引用" class="tb_quote" onclick="seditor_insertunit('fastpost', '[quote]', '[/quote]')">Quote</a>
+<a href="javascript:;" title="代码" class="tb_code" onclick="seditor_insertunit('fastpost', '[code]', '[/code]')">Code</a>
+<a href="javascript:;" class="tb_smilies" id="fastpostsmilies" onclick="showMenu({'ctrlid':this.id,'evt':'click','layer':2});return false">Smilies</a>
+<script src="thread-2083672-1-1_files/smilies_var.js" type="text/javascript" reload="1"></script>
+<script type="text/javascript" reload="1">smilies_show('fastpostsmiliesdiv', 8, 'fastpost');</script>
+</div></div>
+<textarea rows="5" cols="80" name="message" id="fastpostmessage" onkeydown="seditor_ctlent(event, 'fastpostvalidate($(\'fastpostform\'))');" tabindex="4" class="txtarea" style="height: 150px;"></textarea>
+<p><button type="submit" name="replysubmit" id="fastpostsubmit" value="replysubmit" tabindex="5" class="button">发表回复</button>
+<input id="fastpostrefresh" type="checkbox"> <label for="fastpostrefresh">回帖后跳转到最后一页</label></p><script type="text/javascript">if(getcookie('discuz_fastpostrefresh') == 1) {$('fastpostrefresh').checked=true;}</script>
+
+</td>
+<td valign="top" align="left">
+<div id="append_parent_smilies" style="width: 300px;"><div class="smilieslist" style="" id="append_parent_smilies_menu"><div style="overflow: hidden;" id="fastpostsmiliesdiv"><div class="smiliesgroup"><ul><li><a href="javascript:;" hidefocus="true" class="current" id="fastpoststype_1" onclick="smilies_switch('fastpostsmiliesdiv', '8', 1, 1, 'fastpost');if(CURRENTSTYPE) {$('fastpoststype_'+CURRENTSTYPE).className='';}this.className='current';CURRENTSTYPE=1;doane(event);">默认表情</a></li><li><a href="javascript:;" hidefocus="true" id="fastpoststype_2" onclick="smilies_switch('fastpostsmiliesdiv', '8', 2, 1, 'fastpost');if(CURRENTSTYPE) {$('fastpoststype_'+CURRENTSTYPE).className='';}this.className='current';CURRENTSTYPE=2;doane(event);">酷猴</a></li><li><a href="javascript:;" hidefocus="true" id="fastpoststype_3" onclick="smilies_switch('fastpostsmiliesdiv', '8', 3, 1, 'fastpost');if(CURRENTSTYPE) {$('fastpoststype_'+CURRENTSTYPE).className='';}this.className='current';CURRENTSTYPE=3;doane(event);">呆呆男</a></li></ul></div><div id="fastpostsmiliesdiv_data"><table id="fastpostsmiliesdiv_table" cellpadding="0" cellspacing="0"><tbody><tr><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 17)" onclick="seditor_insertunit('fastpost', ':em03:')" id="fastpostsmilie_147_td"><img id="smilie_147" src="thread-2083672-1-1_files/em03.gif" alt=":em03:" height="12" width="17"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':sleepy:')" id="fastpostsmilie_209_td"><img id="smilie_209" src="thread-2083672-1-1_files/sleepy.gif" alt=":sleepy:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em17:')" id="fastpostsmilie_139_td"><img id="smilie_139" src="thread-2083672-1-1_files/em17.gif" alt=":em17:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':wink:')" id="fastpostsmilie_59_td"><img id="smilie_59" src="thread-2083672-1-1_files/icon_wink.gif" alt=":wink:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':outu:')" id="fastpostsmilie_164_td"><img id="smilie_164" src="thread-2083672-1-1_files/tu.gif" alt=":outu:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':mrgreen:')" id="fastpostsmilie_69_td"><img id="smilie_69" src="thread-2083672-1-1_files/icon_mrgreen.gif" alt=":mrgreen:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':shutup:')" id="fastpostsmilie_208_td"><img id="smilie_208" src="thread-2083672-1-1_files/shutup.gif" alt=":shutup:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':curse:')" id="fastpostsmilie_206_td"><img id="smilie_206" src="thread-2083672-1-1_files/curse.gif" alt=":curse:" height="20" width="20"></td></tr><tr><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':dizzy:')" id="fastpostsmilie_207_td"><img id="smilie_207" src="thread-2083672-1-1_files/dizzy.gif" alt=":dizzy:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em20:')" id="fastpostsmilie_136_td"><img id="smilie_136" src="thread-2083672-1-1_files/em20.gif" alt=":em20:" height="12" width="13"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em14:')" id="fastpostsmilie_127_td"><img id="smilie_127" src="thread-2083672-1-1_files/em14.gif" alt=":em14:" height="12" width="13"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em18:')" id="fastpostsmilie_138_td"><img id="smilie_138" src="thread-2083672-1-1_files/em18.gif" alt=":em18:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':shock:')" id="fastpostsmilie_40_td"><img id="smilie_40" src="thread-2083672-1-1_files/icon_eek.gif" alt=":shock:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em16:')" id="fastpostsmilie_140_td"><img id="smilie_140" src="thread-2083672-1-1_files/em16.gif" alt=":em16:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em09:')" id="fastpostsmilie_141_td"><img id="smilie_141" src="thread-2083672-1-1_files/em09.gif" alt=":em09:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em21:')" id="fastpostsmilie_135_td"><img id="smilie_135" src="thread-2083672-1-1_files/em21.gif" alt=":em21:" height="12" width="13"></td></tr><tr><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':lol:')" id="fastpostsmilie_47_td"><img id="smilie_47" src="thread-2083672-1-1_files/icon_lol.gif" alt=":lol:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':P')" id="fastpostsmilie_51_td"><img id="smilie_51" src="thread-2083672-1-1_files/icon_razz.gif" alt=":P" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em15:')" id="fastpostsmilie_126_td"><img id="smilie_126" src="thread-2083672-1-1_files/em15.gif" alt=":em15:" height="12" width="13"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':oops:')" id="fastpostsmilie_54_td"><img id="smilie_54" src="thread-2083672-1-1_files/icon_redface.gif" alt=":oops:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':cry:')" id="fastpostsmilie_55_td"><img id="smilie_55" src="thread-2083672-1-1_files/icon_cry.gif" alt=":cry:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':evil:')" id="fastpostsmilie_56_td"><img id="smilie_56" src="thread-2083672-1-1_files/icon_evil.gif" alt=":evil:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em02:')" id="fastpostsmilie_71_td"><img id="smilie_71" src="thread-2083672-1-1_files/em02.gif" alt=":em02:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':m01:')" id="fastpostsmilie_70_td"><img id="smilie_70" src="thread-2083672-1-1_files/em01.gif" alt=":m01:" height="12" width="13"></td></tr><tr><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 23)" onclick="seditor_insertunit('fastpost', ':em08:')" id="fastpostsmilie_142_td"><img id="smilie_142" src="thread-2083672-1-1_files/em08.gif" alt=":em08:" height="11" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':roll:')" id="fastpostsmilie_58_td"><img id="smilie_58" src="thread-2083672-1-1_files/icon_rolleyes.gif" alt=":roll:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':D')" id="fastpostsmilie_28_td"><img id="smilie_28" src="thread-2083672-1-1_files/icon_biggrin.gif" alt=":D" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 21)" onclick="seditor_insertunit('fastpost', ':em10:')" id="fastpostsmilie_131_td"><img id="smilie_131" src="thread-2083672-1-1_files/em10.gif" alt=":em10:" height="15" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 30)" onclick="seditor_insertunit('fastpost', ':luya:')" id="fastpostsmilie_165_td"><img id="smilie_165" src="thread-2083672-1-1_files/luya.gif" alt=":luya:" height="14" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':)')" id="fastpostsmilie_31_td"><img id="smilie_31" src="thread-2083672-1-1_files/icon_smile.gif" alt=":)" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em05:')" id="fastpostsmilie_145_td"><img id="smilie_145" src="thread-2083672-1-1_files/em05.gif" alt=":em05:" height="12" width="13"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em06:')" id="fastpostsmilie_144_td"><img id="smilie_144" src="thread-2083672-1-1_files/em06.gif" alt=":em06:" height="12" width="13"></td></tr><tr><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 15)" onclick="seditor_insertunit('fastpost', ':em28:')" id="fastpostsmilie_99_td"><img id="smilie_99" src="thread-2083672-1-1_files/em28.gif" alt=":em28:" height="15" width="15"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 30)" onclick="seditor_insertunit('fastpost', ':em29:')" id="fastpostsmilie_98_td"><img id="smilie_98" src="thread-2083672-1-1_files/em29.gif" alt=":em29:" height="10" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 19)" onclick="seditor_insertunit('fastpost', ':em30:')" id="fastpostsmilie_97_td"><img id="smilie_97" src="thread-2083672-1-1_files/em30.gif" alt=":em30:" height="19" width="19"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 31)" onclick="seditor_insertunit('fastpost', ':em27:')" id="fastpostsmilie_114_td"><img id="smilie_114" src="thread-2083672-1-1_files/em27.gif" alt=":em27:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':emn23:')" id="fastpostsmilie_95_td"><img id="smilie_95" src="thread-2083672-1-1_files/emn23.gif" alt=":emn23:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 20)" onclick="seditor_insertunit('fastpost', ':emn10:')" id="fastpostsmilie_96_td"><img id="smilie_96" src="thread-2083672-1-1_files/emn10.gif" alt=":emn10:" height="20" width="20"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 13)" onclick="seditor_insertunit('fastpost', ':em26:')" id="fastpostsmilie_115_td"><img id="smilie_115" src="thread-2083672-1-1_files/em26.gif" alt=":em26:" height="12" width="13"></td><td onmouseover="smilies_preview('fastpost', 'fastpostsmiliesdiv', this, 19)" onclick="seditor_insertunit('fastpost', ':em51:')" id="fastpostsmilie_108_td"><img id="smilie_108" src="thread-2083672-1-1_files/em51.gif" alt=":em51:" height="20" width="11"></td></tr></tbody></table></div><div class="smilieslist_page" id="fastpostsmiliesdiv_page"><div class="pags_act"><a href="javascript:;" onclick="smilies_switch('fastpostsmiliesdiv', '8', 1, 4, 'fastpost');doane(event);">上页</a><a href="javascript:;" onclick="smilies_switch('fastpostsmiliesdiv', '8', 1, 2, 'fastpost');doane(event);">下页</a></div>1/4</div></div></div></div>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</form>
+</div>
+<script type="text/javascript">
+var div = $('fastpost' + 'smilies_menu');
+div.id = 'append_parent_smilies_menu';
+div.style.display = '';
+//div.style.border = '0';
+$('append_parent_smilies').appendChild(div);
+</script>
+
+
+
+<table style="border-collapse: collapse;" width="98%" align="center" border="0" cellpadding="5" cellspacing="5">
+<tbody><tr><td nowrap="nowrap">
+</td><td nowrap="nowrap" align="right">
+<select onchange="if(this.options[this.selectedIndex].value != '') {
+window.location=('forumdisplay.php?fid='+this.options[this.selectedIndex].value+'&amp;sid=1pb31l') }">
+<option selected="selected" value="">版块跳转</option>
+<optgroup label="--Linux操作系统"><option value="216">新手园地</option><option value="269">&nbsp; &nbsp; &nbsp; 硬件问题</option><option value="217">Linux系统管理</option><option value="218">Linux网络问题</option><option value="223">Linux环境编程</option><option value="271">Linux桌面系统</option><option value="221">国产Linux</option></optgroup><optgroup label="--Unix操作系统"><option value="5">BSD</option><option value="127">&nbsp; &nbsp; &nbsp; BSD文档中心</option><option value="9">AIX</option><option value="124">&nbsp; &nbsp; &nbsp; AIX文档中心</option><option value="10">AS400</option><option value="6">Solaris</option><option value="128">&nbsp; &nbsp; &nbsp; Solaris文档中心</option><option value="8">HP-UX</option><option value="129">&nbsp; &nbsp; &nbsp; HP文档中心</option><option value="7">SCO UNIX</option><option value="130">&nbsp; &nbsp; &nbsp; SCO文档中心</option><option value="118">互操作专区</option><option value="12">IRIX</option><option value="11">Tru64 UNIX</option><option value="41">Mac OS X</option></optgroup><optgroup label="--IT运维架构"><option value="141">门户网站运维</option><option value="233">集群和高可用</option><option value="232">服务器应用</option><option value="235">监控和防护</option><option value="283">虚拟化技术</option><option value="185">架构设计</option><option value="285">行业应用和管理</option></optgroup><optgroup label="--IT基础设施"><option value="45">服务器及硬件技术</option><option value="184">&nbsp; &nbsp; &nbsp; 服务器资源下载</option><option value="180">云计算</option><option value="181">&nbsp; &nbsp; &nbsp; 云计算文档中心</option><option value="182">&nbsp; &nbsp; &nbsp; 云计算业界</option><option value="183">&nbsp; &nbsp; &nbsp; 云计算资源下载</option><option value="34">存储备份</option><option value="125">&nbsp; &nbsp; &nbsp; 存储文档中心</option><option value="126">&nbsp; &nbsp; &nbsp; 存储业界</option><option value="145">&nbsp; &nbsp; &nbsp; 存储资源下载</option><option value="194">&nbsp; &nbsp; &nbsp; Symantec技术交流区</option><option value="29">安全技术</option><option value="30">网络技术</option><option value="131">&nbsp; &nbsp; &nbsp; 网络技术文档中心</option></optgroup><optgroup label="--程序设计"><option value="23">C/C++</option><option value="84">&nbsp; &nbsp; &nbsp; GUI编程</option><option value="142">&nbsp; &nbsp; &nbsp; Functional编程</option><option value="224">内核源码</option><option value="220">&nbsp; &nbsp; &nbsp; 内核问题</option><option value="222">移动开发</option><option value="265">&nbsp; &nbsp; &nbsp; 移动开发技术资料</option><option value="24">Shell</option><option value="25">Perl</option><option value="26">Java</option><option value="133">&nbsp; &nbsp; &nbsp; Java文档中心</option><option value="27">PHP</option><option value="135">&nbsp; &nbsp; &nbsp; php文档中心</option><option value="55">Python</option><option value="132">&nbsp; &nbsp; &nbsp; Python文档中心</option><option value="116">Ruby</option><option value="226">CPU与编译器</option><option value="225">嵌入式开发</option><option value="227">驱动开发</option><option value="80">Web开发</option><option value="100">VoIP开发技术</option></optgroup><optgroup label="--数据库技术"><option value="17">MySQL</option><option value="136">&nbsp; &nbsp; &nbsp; MySQL文档中心</option><option value="21">Sybase</option><option value="19">Oracle</option><option value="18">PostgreSQL</option><option value="22">DB2</option><option value="20">Informix</option><option value="140">数据仓库与数据挖掘</option><option value="292">NoSQL技术</option></optgroup><optgroup label="--综合交流区"><option value="46">IT业界新闻与评论</option><option value="32">IT职业生涯</option><option value="293">&nbsp; &nbsp; &nbsp; 猎头招聘</option><option value="82">IT图书与评论</option><option value="156">&nbsp; &nbsp; &nbsp; CU技术图书大系</option><option value="247">&nbsp; &nbsp; &nbsp; Linux书友会</option><option value="54">二手交易</option><option value="249">下载共享</option><option value="250">Linux文档专区</option><option value="53">IT培训与认证</option><option value="295">&nbsp; &nbsp; &nbsp; 培训交流</option><option value="191">&nbsp; &nbsp; &nbsp; 认证培训</option></optgroup><optgroup label="--休闲生活"><option value="31">清茶斋</option><option value="115">投资理财</option><option value="39">运动地带</option><option value="40">快乐数码摄影</option><option value="168">&nbsp; &nbsp; &nbsp; 摄影器材</option><option value="134">&nbsp; &nbsp; &nbsp; 摄影比赛专区</option><option value="121">IT爱车族</option><option value="96">旅游天下</option></optgroup><optgroup label="--站务及频道"><option value="2">站务交流</option><option value="51">博客SNS站务交流区</option><option value="123">CU活动专区</option><option value="207">&nbsp; &nbsp; &nbsp; Power活动专区</option><option value="169">&nbsp; &nbsp; &nbsp; 拍卖交流区</option></optgroup></select>
+<select onchange="if(this.options[this.selectedIndex].value != '')
+window.location=('forumdisplay.php?fid='+this.options[this.selectedIndex].value+'&amp;sid=1pb31l')">
+<option selected="selected" value="">最近访问的版块</option>
+<option value="217">&nbsp; &nbsp; &nbsp; Linux系统管理</option><option value="31">&nbsp; &nbsp; &nbsp; 清茶斋</option><option value="216">&nbsp; &nbsp; &nbsp; 新手园地</option><option value="23">&nbsp; &nbsp; &nbsp; C/C++</option><option value="24">&nbsp; &nbsp; &nbsp; Shell</option></select>
+</td>
+<td width="100">
+</td></tr>
+</tbody></table>
+
+<div id="favoritewin" style="display: none;">
+<h5>
+<a href="javascript:;" onclick="ajaxget('my.php?item=favorites&amp;tid=2083672', 'favorite_msg');return false;" class="lightlink">[收藏此主题]</a>&nbsp;
+<a href="javascript:;" onclick="ajaxget('my.php?item=attention&amp;action=add&amp;tid=2083672', 'favorite_msg');return false;" class="lightlink">[关注此主题的新回复]</a>
+</h5>
+<span id="favorite_msg"></span>
+</div>
+
+<div id="sharewin" style="display: none;">
+<h5>
+<a href="javascript:;" onclick="setCopy('我理解的逻辑地址、线性地址、物理地址和虚拟地址(补充完整了)\nhttp://bbs.chinaunix.net/viewthread.php?tid=2083672', '帖子地址已经复制到剪贴板<br />您可以用快捷键 Ctrl + V 粘贴到 QQ、MSN 里。')" class="lightlink">[通过 QQ、MSN 分享给朋友]</a><br><br>
+<a href="javascript:;" class="lightlink" onclick="hideWindow('confirm');showWindow('sendpm', 'pm.php?action=new&amp;operation=share&amp;tid=2083672');">[通过站内短消息分享给朋友]</a>
+</h5>
+</div>
+
+</div><div class="ad_footerbanner" id="ad_footerbanner1"></div>
+
+
+<!----广告 begin------------>
+
+<!----广告 end------------>
+<table width="98%" align="center" bgcolor="#ffffff" border="0" cellpadding="8" cellspacing="0">
+<tbody><tr class="outertxt"><td>
+<table style="font-size: 11px; font-family: Tahoma,Arial;" align="center" cellpadding="0" cellspacing="0"><tbody><tr>
+<td align="center">
+Copyright &#169; 2001-2010 ChinaUnix.net All Rights Reserved 
+&nbsp;&nbsp;&nbsp;
+联系我们：<img src="thread-2083672-1-1_files/adminmail.gif" height="12" width="139" border="0">
+
+<p>感谢所有关心和支持过ChinaUnix的朋友们&nbsp;&nbsp;&nbsp;&nbsp;转载本站内容请注明原作者名及出处</p>
+
+ <a href="http://www.it168.com/images/icp.jpg" target="_blank">京ICP证:060528号</a>
+<br>
+北京市公安局海淀分局网监中心备案编号：1101082001 
+</td></tr>
+<tr><td align="center"><br><br>
+<a href="http://bbs.chinaunix.net/member.php?action=clearcookies&amp;formhash=b5d849a5">清除 Cookies</a> - <a href="http://www.chinaunix.net/" target="_blank">ChinaUnix</a>
+ - <a href="http://bbs.chinaunix.net/archiver/" target="_blank">Archiver</a> - <a href="http://bbs.chinaunix.net/wap/" target="_blank">WAP</a> - <a href="#top">TOP</a>
+</td></tr>
+</tbody></table>
+
+<!-- 统计 START -->
+<script src="thread-2083672-1-1_files/pv.js" type="text/javascript"></script>
+<script>
+function sendPV(){
+    var pvTrack = new PvTrack();
+    pvTrack.type = 35; // 频道类别ID
+    pvTrack.channel = 22; // 频道ID
+   
+    pvTrack.pageType = 0;
+    pvTrack.track();
+}
+window.setTimeout("sendPV()", 0);
+</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-20237423-2']);
+  _gaq.push(['_setDomainName', '.chinaunix.net']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script> 
+<div style="display: none;">
+<script type="text/javascript"> 
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F0ee5e8cdc4d43389b3d1bfd76e83216b' type='text/javascript'%3E%3C/script%3E"));
+</script><script src="thread-2083672-1-1_files/h.js" type="text/javascript"></script>
+</div>
+
+<!-- ..统计 END --></td></tr></tbody></table></div></center></body></html>

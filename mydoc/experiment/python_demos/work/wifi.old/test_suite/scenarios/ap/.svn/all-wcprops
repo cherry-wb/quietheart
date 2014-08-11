@@ -1,0 +1,203 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scenarios/ap
+END
+scenario_set_Algorithms.json
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/amazon/!svn/ver/866/Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.json
+END
+scenario_login.py
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_login.py
+END
+scenario_logout.py
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_logout.py
+END
+scenario_set_wireless_SSID.json
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/amazon/!svn/ver/837/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.json
+END
+scenario_set_wireless_SSID_Broadcast.py
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/amazon/!svn/ver/1259/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/amazon/!svn/ver/816/Management/wifi/test_suite/scenarios/ap/__init__.py
+END
+scenario_set_wireless_transmissionRate.json
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/amazon/!svn/ver/978/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.json
+END
+scenario_set_wireless_keyRenewal.json
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/amazon/!svn/ver/837/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.json
+END
+scenario_set_DNS.json
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/amazon/!svn/ver/848/Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.json
+END
+scenario_set_ChannelWidth.py
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/amazon/!svn/ver/1259/Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.py
+END
+scenario_set_Algorithms.py
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/1266/Management/wifi/test_suite/scenarios/ap/scenario_set_Algorithms.py
+END
+scenario_set_wireless_SSID.py
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/1266/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID.py
+END
+scenario_set_wireless_transmissionRate.py
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_transmissionRate.py
+END
+scenario_set_wireless_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/amazon/!svn/ver/819/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.json
+END
+scenario_set_wireless_keyRenewal.py
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_keyRenewal.py
+END
+scenario_set_DNS.py
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_set_DNS.py
+END
+scenario_set_channel.json
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/amazon/!svn/ver/819/Management/wifi/test_suite/scenarios/ap/scenario_set_channel.json
+END
+scenario_set_security_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/amazon/!svn/ver/850/Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.json
+END
+scenario_set_dhcp.json
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scenarios/ap/scenario_set_dhcp.json
+END
+scenario_set_wireless_mode.py
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/1266/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_mode.py
+END
+scenario_reset_Route.json
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/amazon/!svn/ver/863/Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.json
+END
+scenario_set_wireless_passphrase.json
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/amazon/!svn/ver/848/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.json
+END
+scenario_set_channel.py
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/1266/Management/wifi/test_suite/scenarios/ap/scenario_set_channel.py
+END
+scenario_set_radio_off.json
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/848/Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.json
+END
+scenario_set_security_mode.py
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_set_security_mode.py
+END
+scenario_login.json
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/amazon/!svn/ver/819/Management/wifi/test_suite/scenarios/ap/scenario_login.json
+END
+scenario_set_dhcp.py
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scenarios/ap/scenario_set_dhcp.py
+END
+scenario_logout.json
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/amazon/!svn/ver/819/Management/wifi/test_suite/scenarios/ap/scenario_logout.json
+END
+scenario_set_wireless_SSID_Broadcast.json
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/amazon/!svn/ver/837/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_SSID_Broadcast.json
+END
+scenario_reset_Route.py
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/1242/Management/wifi/test_suite/scenarios/ap/scenario_reset_Route.py
+END
+scenario_set_wireless_passphrase.py
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/amazon/!svn/ver/1241/Management/wifi/test_suite/scenarios/ap/scenario_set_wireless_passphrase.py
+END
+scenario_set_radio_off.py
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/amazon/!svn/ver/1259/Management/wifi/test_suite/scenarios/ap/scenario_set_radio_off.py
+END
+scenario_set_ChannelWidth.json
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/850/Management/wifi/test_suite/scenarios/ap/scenario_set_ChannelWidth.json
+END

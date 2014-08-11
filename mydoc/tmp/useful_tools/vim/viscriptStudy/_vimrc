@@ -1,0 +1,55 @@
+" A very simple vim resource.
+" By zhaohp@neusoft.com
+" At 2010-10-19 11:23
+
+" Use Vim settings, rather then Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+set nocompatible
+
+" allow backspacing over everything in insert mode
+set backspace=indent,eol,start
+
+" keep a backup file
+set backup
+set backupdir=/tmp
+
+" keep 50 lines of command line history
+set history=50
+
+" show the cursor position all the time
+set ruler
+
+" display incomplete commands
+set showcmd
+
+" do incremental searching
+set incsearch
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+if &t_Co > 2 || has("gui_running")
+  syntax on
+  set hlsearch
+endif
+
+" always set autoindenting on
+set autoindent
+
+" always show line number
+set nu
+
+" tab width is as 4 space chars
+set tabstop=4
+
+" recognize file type, helpful when writing codes, scripts or makefiles
+filetype on
+
+" do not wrap long lines
+set nowrap
+
+" use dark background theme
+colorscheme evening
+
+" support east-world characters
+set encoding=utf-8
+set fileencodings=ucs-bom,iso-2022-jp-3,iso-2022-jp,eucjp-ms,euc-jisx0213,euc-jp,sjis,cp932,utf-8

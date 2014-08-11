@@ -1,0 +1,22 @@
+这里收集了一些关于
+make
+./configure
+之类的的一些经验。
+
+*具有了一个程序的源代码想要把它安装到你的机器上面，一般如下三步：
+./configure
+make
+make install
+三步的含义分别是：配置应用程序的一些参数，如编译选项，安装位置等；编译应用程序；安装应用程序。关键的地方是配置，每个应用程序大致./configure的命令内容差不多，具体也有一些差异，需要运行./configure =-help或者查看这个configure脚本究竟做了什么。
+
+*对于某一个软件，如果make install的时候，指定安装的目录，则一般：
+#./configure --prefix=/usr/local/
+这里，指定的目录是/usr/local/,当然这样指定的前提是configure要有--prefix的支持，一般需要在配置之前最好查看一下configure的帮助，不过一般的软件都支持这些通用的配置。
+
+*使用arm体系来编译一个软件：
+#./configure --target=arm-linux –host=arm-linux
+这里，arm体系是除了intel的x86cpu之外的另外cpu架构中的一种，当然也需要软件有arm体系的支持，查看软件的帮助文档即可知道。
+
+*编译的时候，使用指定的编译工具编译：
+#make CC=/usr/local/arm/2.95.3/bin/arm-linux-gcc
+这里，指定编译的工具不是一般的gcc了，而是arm-linux-gcc,这一步要指定arm-linux-gcc的位置编译出来的东西是arm体系上面可以运行的。

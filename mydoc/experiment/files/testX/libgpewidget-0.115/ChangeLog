@@ -1,0 +1,2943 @@
+2007-03-28  Florian Boor <florian@kernelconcepts.de>
+
+    * Release 0.115
+    * Some minor fixes
+
+2006-12-29  Philippe De Swert <philippedeswert@scarlet.be>
+    * colordialog.c : remove unused function
+    * pixmaps.c : fix warnings
+
+2006-12-28  Neal H. Walfield  <neal@gnu.org>
+    * autogen.sh: Just use autoreconf and intltoolize.
+
+2006-08-16  Florian Boor <florian@kernelconcepts.de>
+
+    * tray.c (gpe_system_tray_dock): Call gdk_notify_startup_complete()
+      to make startup notification for dock applications work.
+
+2006-08-02  Florian Boor <florian@kernelconcepts.de>
+
+    * colorrenderer.c: Fix memory hole.
+    * gpetimesel.c (do_popup): Handle destruction in callback, fixes
+      critical warnings.
+      (popup_destroyed): New function.
+
+2006-07-31  Florian Boor <florian@kernelconcepts.de>
+
+    * gpe/colorrenderer.h: Add copyright date.
+    * Release 0.114.
+    * Makefile.am: Remove accidentally added test stuff.
+    * Makefile.am: Add new components.
+    * colorrenderer.c: New file.
+    * gpe/colorrenderer.h: New file.
+
+2006-07-18  Florian Boor <florian@kernelconcepts.de>
+
+    * Makefile.am: Add library to infoprint dependency to make parallel builds 
+      work again.
+    * gpetimesel.c (gpe_time_sel_init): Make sizing depend on screen size. 
+	* COPYING.LIB: Add license file.
+
+2006-07-17  Florian Boor <florian@kernelconcepts.de>
+
+	* Release version 0.113
+	* Makefile.am: Add po/stamp-it to DISTCLEANFILES to make distcheck
+          happy.
+	* doc/tmpl/*: Some updates to cover new widgets and some automated
+                      stuff.
+	* gpetimesel.c (gpe_time_sel_init): Fix wrap behaviour to make 
+	popup fit on smaller screens
+
+2006-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* colordialog.c (BUTTON_ROWS): New macro.
+	(BUTTON_COLS): Likewise.
+	(struct _GpeColorDialogPrivate): Add fields button, buttons_colors
+	and button_colors_count.
+	(button_colors): New variable.
+	(set_widget_color_str): Make static.
+	(set_widget_color_gdk): Set all states.
+	(color_button_clicked): New function.
+	(build_colorbox): Add a matrix of buttons at the top of the
+	dialog.
+	(gpe_color_dialog_set_button_colors): New function.
+	(gpe_color_dialog_new): Only set INITCOLOR if not NULL.
+
+2006-05-15 Philippe De Swert <philippedeswert@scarlet.be>
+
+	* colordialog.c : fix compile warning due to missing cast
+	* gpewindowlist.c: fix type-tunned compiler warning
+	* translabel.c: fix type-tunned compiler warning
+
+2006-05-15  Neal H. Walfield  <neal@gnu.org>
+
+	* gpetimesel.c (GTK_TYPE_NUM_CELL_RENDERER): New marco.
+	(NUM_CELL_RENDERER): Likewise.
+	(NUM_CELL_RENDERER_CLASS): Likewise.
+	(NUM_CELL_RENDERER_GET_CLASS): Likewise.
+	(NumCellRendererClass): New typedef.
+	(num_parent_class): New variable.
+	(NumCellRenderer): New typedef.
+	(num_cell_renderer_get_type): New function.
+	(num_cell_renderer_class_init): Likewise.
+	(num_cell_renderer_finalize): Likewise.
+	(get_layout): Likewise.
+	(num_cell_renderer_get_size): Likewise.
+	(num_cell_renderer_render): Likewise.
+	(num_cell_renderer_new): Likewise.
+	(num_cell_data_func): Likewise.
+	(find_deepest_window): Turn recursive function into an iterative
+	function.
+	(adj_change): New function.
+	(do_popup): Create SEL->HOUR_ADJ and SEL_MINUTE_ADJ here.
+	(insert_text_handler): Remove function.
+	(combo_entry_change): New function.
+	(entry_key_press_event): Likewise.
+	(hour_model): New variable.
+	(minute_model): New variable.
+	(squash_pointer): New function.
+	(gpe_time_sel_init): Rewrite to use GtkComboBoxEntry's.
+	(gpe_time_sel_show): Remove function.
+	(gpe_time_sel_get_time): Update to use the GtkComboBoxEntry's and
+	clamp the values within sane ranges.
+	(gpe_time_sel_set_time): Update to use the GtkComboBoxEntry's.
+
+2006-05-13  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.112 released.
+
+2006-05-13  Phil Blundell  <pb@reciva.com>
+
+	* gpetimesel.c (gpe_time_sel_init): Adjust packing options on
+	entry widgets.
+
+2006-05-13  Florian Boor <florian@kernelconcepts.de>
+
+	* gpetimesel.c (gpe_time_sel_init): Set width of entrys to two chars.
+
+2006-05-06  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.111 released.
+
+2006-05-06  Phil Blundell  <pb@reciva.com>
+
+	* gpetimesel.c (note_change): Update the entry fields if
+	appropriate.
+	(find_deepest_window, propagate_button_event): New.
+	(do_popup): Set grab on toplevel window not clock face.  Create
+	spin buttons, put them in a box, and factor this into shape
+	calculations.
+	(button_press, button_release): Propagate events as appropriate.
+	Keep in step with do_popup grab behaviour.
+	(insert_text_handler, update_from_entry): New.	
+	(gpe_time_sel_init): Create entry fields not spinbuttons.
+	* gpe/gpetimesel.h (struct _GpeTimeSel): Add hour_edit,
+	minute_edit, p_hbox, dragging, editing.
+
+2006-04-20  Florian Boor <florian@kernelconcepts.de>
+
+    * colordialog.c, gpewindowlist.c: Fix some documentation issues.
+
+2006-04-19  Florian Boor <florian@kernelconcepts.de>
+
+    * doc/tmpl/*: Add documentation framework for new colour widgets.
+
+2006-04-18  Florian Boor <florian@kernelconcepts.de>
+
+    * colordialog.c: Improved preview area.
+    
+2006-04-17  Florian Boor <florian@kernelconcepts.de>
+
+    * colordialog.c: Terminate button list, fix includes.
+      Check if colour was allocated successfully. 
+
+2006-04-15  Florian Boor <florian@kernelconcepts.de>
+
+    * Makefile.am: Add new files.
+    * colordialog.*: Shiny new GPE colour selection dialog.
+    * color-slider.*: New files incuding a new slider widget with coloured 
+      background. Derived from the old GtkWidget SpColorSlider by 
+      Lauris Kaplinski.
+
+2006-03-20  Florian Boor <florian@kernelconcepts.de>
+
+    * pixmaps.c (gpe_icon_free_dynamic): New destructor function.
+      (gpe_load_icons, gpe_try_find_icon): Use destructor function.
+
+2006-03-20  Florian Boor <florian@kernelconcepts.de>
+
+    * pixmaps.c (gpe_load_icons): Use glib function to determine homedir.
+      Support calling this function multiple times:
+      - Clear pblist if already initialized.
+      - Set destructor function to pixbufs.
+      (gpe_set_theme), (gpe_find_icon_scaled_free): New functions.
+      (gpe_load_one_icon): Try loading from default icon locations (like
+      /usr/share/pixmaps and PREFIX /share/pixmaps) too.
+    * pixmaps.h: Add new functions (gpe_set_theme, gpe_find_icon_scaled_free)
+    * pixmaps.c, pixmaps.h: Use compatible but more portable gchar instead 
+      of char data type.
+    * pixmaps.sgml: Fix typo.
+    * Makefile.am: Remove obsolete gpe-iconlist stuff.
+    * gpewindowlist.sgml: Add some documentation.
+    * gpewindowbits.c: Document gpe_get_window_icon().
+
+2006-03-01  Florian Boor <florian@kernelconcepts.de>
+
+	* Version 0.110 released.
+	* doc/libgpewidget-docs.sgml: Change license of documentation to
+          become the same like library license (LGPL).
+
+2006-02-04  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.109 released.
+
+2006-02-04  Phil Blundell  <pb@reciva.com>
+
+	* gpetimesel.c (struct _GpeTimeSelClass): Add "changed", "clock".
+	(gpe_time_sel_emit_changed): New function.
+	(note_change): Likewise.
+	(gpe_time_sel_init): Connect signal handler to GtkAdjustments.
+	(gpe_time_sel_class_init): Register "changed" signal.
+	(gpe_time_sel_set_time): Say that the time is changing.
+	(button_press): Call gtk_grab_remove.
+	* gpe/gpetimesel.h (struct _GpeTimeSel): Add "changing_time".
+	
+	* gpe/gtkdatecombo.h (struct _GtkDateComboClass): Add "changed".
+	* gtkdatecombo.c (gtk_date_combo_emit_changed): New function.
+	(click_calendar): Call it.
+	(verify_date): Likewise.  Make static.
+	(gtk_date_combo_class_init): Register "changed" signal.
+
+2006-02-02  Phil Blundell  <pb@reciva.com>
+
+	* configure.ac: Say whether gtk-doc is, in fact, enabled.
+
+2006-02-02  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.108 released.
+
+2006-02-01  Florian Boor <florian@kernelconcepts.de>
+
+    * gtkdatecombo.c (verify_date): Unset date if edit is empty.
+    Fix missing set/unset status changes. Fixes #1490.
+
+2006-01-29  Phil Blundell  <pb@reciva.com>
+
+	* mkinstalldirs: New file.
+
+2006-01-16  Phil Blundell  <pb@reciva.com>
+
+	* gpeclockface.c (gpe_clock_face_expose): Increase minute hand
+	length to 0.9 * radius.  Respect clock->border when using Cairo.
+	(struct _GpeClockFace): New member border_set.
+	(gpe_clock_face_set_border): New function.
+	(gpe_clock_face_do_set_radius): Set border based on radius if not
+	explicitly set.
+	(gpe_clock_face_init): Clear clock->border_set.
+
+	* gpe/gpeclockface.h (gpe_clock_face_set_border): New prototype.
+
+2006-01-13  Florian Boor <florian@kernelconcepts.de>
+
+	* Makefile.am: Remove debian files from EXTRA_DIST.
+
+2006-01-08  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.107 released.
+
+2006-01-08  Phil Blundell  <pb@reciva.com>
+
+	* infoprint-main.c: New file.
+	* Makefile.am (infoprint_SOURCES, bin_PROGRAMS): New.
+
+	* gpeclockface.c (DEFAULT_HAND_WIDTH): New.
+	(struct _GpeClockFace): New member hand_width_set.
+	(gpe_clock_face_expose) [HAVE_CAIRO]: Draw central black "spindle"
+	to hide ends of hands.
+	(gpe_clock_face_do_set_radius): New.
+	(gpe_clock_face_size_allocate): Call it.
+	(gpe_clock_face_set_radius): Likewise.
+	(gpe_clock_face_init): Clear clock->hand_width_set.  Use
+	DEFAULT_HAND_WIDTH as default hand width.
+	(gpe_clock_face_set_hand_width): Set clock->hand_width_set.
+
+2006-01-08  Phil Blundell  <pb@reciva.com>
+
+	* gpeclockface.c (struct _GpeClockFace): New member radius_set.
+	(gpe_clock_face_expose): Improve non-cairo drawing code.
+	(gpe_clock_face_size_allocate): Allow radius to follow size
+	allocation if not specified explicitly.  Try harder to get a
+	square allocation from parent container.
+	(gpe_clock_face_size_request): Tweak arithmetic.
+	(gpe_clock_face_init): Clear clock->radius_set.
+	(gpe_clock_face_set_radius): Set clock->radius_set.
+
+	* Makefile.am (GPEWIDGET_CFLAGS) [CAIRO]: Add -DHAVE_CAIRO.
+	* configure.ac: Make "--disable-cairo" work as expected.  Use
+	cairo by default if it's installed, and mention it in the
+	configuration summary.  Add automake conditional for CAIRO.
+
+2006-01-03  Florian Boor <florian@kernelconcepts.de>
+
+	* Version 0.106 released.
+	* Makefile.am: Remove not existing debian/compat from EXTRA_DIST. 
+    
+2006-01-02  Phil Blundell  <pb@reciva.com>
+
+	* screensize.c (gdk_screen_width): Fix signed/unsigned warnings.
+	(gdk_screen_height): Likewise.
+	* translabel.c (filter): Likewise.
+	* gpewindowbits.c (gpe_get_wm_class): Likewise.
+	(gpe_get_window_name): Likewise.
+	* gpehelp.c (gpe_show_help): Fix g_free(const char *) warning.
+
+2005-12-16 Philippe De Swert <philippedeswert@scarlet.be>
+
+	* Makefile.am : Added the necessary entries for building the gpedialog stuff
+	* gpe-dialog.c : New file containing the gpe_info_dialog 
+	* gpe/gpe-dialog.h : Include file that fits in with gpe-dialog.c
+	* gpehelp.c : Fixed some warnings
+
+2005-11-25  Florian Boor <florian@kernelconcepts.de>
+
+	* Makefile.am, 
+	  hildon/gpe.conf: Provide GPE data backup configuration for Maemo 
+	                   environment. (With this libgpewidget not only ensures 
+					   the existence of ~/.gpe but it makes sure it is backuped.)
+
+2005-10-16  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.105 released.
+
+2005-10-16  Phil Blundell  <pb@reciva.com>
+
+	* doc/Makefile.am (GTKDOC_CC, GTKDOC_LD): Delete definitions that
+	automake seems to dislike.
+
+	Patch from Magnus Bergman:
+	* gpeclockface.c: Fix compile problems when BACKGROUND_IMAGE
+	disabled.
+	(gpe_clock_face_expose): Use gdk_draw_pixbuf if available.
+	Correct exposure calculation and hour numbering.  Perform lazy
+	loading of pixmaps if required.
+	(gpe_clock_face_init): Don't load pixmaps here.
+
+2005-10-13  Florian Boor <florian@kernelconcepts.de>
+
+	* Release Version 0.104
+	* configure.ac: Update version number.
+
+2005-08-30  Florian Boor <florian@kernelconcepts.de>
+
+	* Makefile.am: Fix install location for pixmaps.
+
+2005-08-18  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/gpehelp.sgml: Update browser list, add reference to example. 
+
+2005-08-14  Florian Boor <florian@kernelconcepts.de>
+
+	* Release Version 0.103
+	* configure.ac: New Version: 0.103
+
+2005-08-11  Florian Boor <florian@kernelconcepts.de>
+
+	* gtkadatecombo.c: Fix signal handler and update from gtk_signal
+                           functions to g_signal.
+
+2005-08-07  Phil Blundell  <pb@reciva.com>
+
+	* gpeclockface.c: Keep up with Cairo API changes.
+
+2005-07-25  Florian Boor <florian@kernelconcepts.de>
+
+	* gtkdatecombo.c: Remove signal handler workaround which isn't 
+	                  necessary anymore.
+
+2005-06-23  Phil Blundell  <pb@reciva.com>
+
+	* configure.ac (DEPS): Demand glib-2.0 >= 2.6.
+
+2005-06-19  Phil Blundell  <pb@reciva.com>
+
+	* Version 0.102 released.
+
+2005-06-19  Florian Boor <florian@kernelconcepts.de>
+
+	*  Makefile.am: Remove debian/compat from EXTRA_DIST.
+
+2005-06-19  Phil Blundell  <pb@reciva.com>
+
+	* gpewindowlist.c: Add some documentation.
+	(gpe_window_list_get_type): Return value is GType, not GtkType.
+	* gpe/gpewindowlist.h: Keep in step.
+
+	* dirbrowser.c (scan_dir): Accept symlinks to directories.  Use
+	stat to find the type of an object if readdir doesn't know.
+
+2005-06-15  Florian Boor <florian@kernelconcepts.de>
+
+	* translabel.c: Fix compile error with NLS enabled.
+	
+2005-06-08  Florian Boor <florian@kernelconcepts.de>
+
+	* translabel.c: Some more changes to support systems without NLS.
+	* dirbrowser.c, errorbox.c, gpetimesel.c, gtksimplemenu.c, pixmaps.c,
+	  question.c, smallbox.c, translabel.c: Make i8n stuff depend on ENABLE_NLS.
+
+2005-06-06  Florian Boor <florian@kernelconcepts.de>
+
+	* gpehelp.c: Fix double-freeing some data in some situation.
+	* gpehelp.c: Add documentation, rename and relocate configfile.
+	* doc/tmpl/gpehelp.sgml: Remove documentation.
+
+2005-06-04  Philippe De Swert  <philippedeswert@scarlet.be>
+	
+	* gpehelp.c: added new handling of help
+	* gpe/gpehelp.h: modified according to changes in gpehelp.c
+
+2005-06-04  Florian Boor <florian@kernelconcepts.de>
+
+	* configure.ac: Version to 0.101, new switch: --enable-hildon
+	* configure.ac, Makefile.am: Add support to configure for maemo environment.
+	* gtkdatecombo.c, pixmaps.c: Obey some minor differences between plain
+	                             GTK and maemo environment.
+
+2005-05-26  Luc Pionchon  <luc@handhelds.org>
+
+	* autogen.sh : do not call ./configure 
+
+2005-05-03  Florian Boor <florian@kernelconcepts.de>
+
+	* gpe/gpe-iconlist.h, gpe-iconlist.sgml: Add some warnings about obsolete
+	                                         GpeIconList widget.
+
+2005-05-02  Phil Blundell  <pb@reciva.com>
+
+	* translabel.c: Add documentation.
+	* doc/tmpl/translabel.sgml: Likewise.
+
+2005-04-30  Florian Boor <florian@kernelconcepts.de>
+
+	* Some more documentation, 83% covered now.
+
+2005-04-29  Florian Boor <florian@kernelconcepts.de>
+
+	* configure.ac: We need gtk-doc 1.2 or later.
+	* Some documentation (GpeClockFace, GtkSimpleMenu)
+
+2005-04-24  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/gtk-doc.make: Fixed some \-related confusion.
+	* gpe/spacing.h: Some more documentation.
+
+2005-04-22  Florian Boor <florian@kernelconcepts.de>
+
+	* Released Version 0.100
+	* Makefile.am: Some cleanup.
+	* configure.ac: Version to 0.100
+	* doc/gtk-doc.make: New file providing improved gtk-doc support. 
+	                    It was necessary to modify this file a little bit to 
+						make distcheck work.
+	* doc/Makefile.am: Change to a documentation Makefile.am from template.
+	                   The friendly message is still there!
+	* doc/.cvsignore: Add some more files to ignore.
+	* doc/tmpl/*sgml: Some updates in generated sections.
+
+2005-04-20  Florian Boor <florian@kernelconcepts.de>
+	
+	* Makefile.am: Add missing gpehelp.h
+
+2005-04-20  Phil Blundell  <pb@mebius.nexus.co.uk>
+
+	* doc/Makefile.am (doc): Don't raise an error if gtk-doc is missing.
+
+2005-04-19  Phil Blundell  <pb@mebius.nexus.co.uk>
+
+	* doc/Makefile.am (doc): Add friendly message when trying to build
+	documentation without gtk-doc.
+
+2005-04-19  Phil Blundell  <pb@mebius.nexus.co.uk>
+
+	* configure.ac: Set version to 0.99
+
+2005-04-19  Phil Blundell  <pb@mebius.nexus.co.uk>
+
+	* configure.ac: Require cairo >= 0.4.0.
+
+	* Makefile.am (INCLUDE): Add -Wall.
+
+	* gpeclockface.c: Include strlen.h and cairo-xlib.h to fix
+	warnings.
+	(draw_hand): Replace cairo_set_alpha/cairo_set_rgb_color with
+	cairo_set_source_rgba.
+	(gpe_clock_face_expose): Likewise.
+
+2005-04-19  Phil Blundell  <pb@reciva.com>
+
+	Add auto-linguas support:
+	* gpe-tp.am: New files.
+	* Makefile.am: Include it.
+	* tp/po-extract-linguas, tp/po-wget-last: New files.
+
+2005-04-14  Florian Boor <florian@kernelconcepts.de>
+
+	* libgpewidget-uninstalled.pc.in: Fixed path to library.
+	* configure.ac, libgpewidget-uninstalled.pc.in: Add and update
+          generating libgpewidget-uninstalled.pc.
+	* doc/.cvsignore: New file.
+
+2005-04-14  Florian Boor <florian@kernelconcepts.de>
+
+	* Introducing autotools...
+	* configure.ac: Update version to 0.98
+
+2005-04-08  Florian Boor <florian@kernelconcepts.de>
+
+	* init.c, spacing.c, spacing.h: Add automatic adjusting of scaling factor.
+	* gtksimplemenu.c: Fixed typo.
+
+2005-04-06  Florian Boor <florian@kernelconcepts.de>
+
+	* gtksimplemenu.c, gpe/gtksimplemenu.h: 
+	  Removed obsolete gtk_simple_menu_get_result. Unified some names.
+	* gtksimplemenu.c, doc/tmpl/gtksimplemenu.sgml: 
+	  Some more documentation and formating fixes.
+	* tray.c, doc/tmpl/tray.sgml: Some documentation.
+	* Fixed broken documentation.
+
+2005-04-06  Florian Boor <florian@kernelconcepts.de>
+
+    * stylus.c: Documentation, some formating fixes.
+    * doc/tmpl/stylus.sgml: Some documentation.
+
+2005-03-31  Florian Boor <florian@kernelconcepts.de>
+
+	* gpeiconlistitem.c, doc/tmpl/gpeiconlistitem.sgml: Documentation.
+
+2005-03-30  Florian Boor <florian@kernelconcepts.de>
+
+	* errorbox.c, picturebutton.c, question.c: Removed inclusion of render.h.
+
+2005-03-18  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/Makefile: Support for documentation in code.
+	* gtksimplemenu.c, doc/tmpl/gtksimplemenu.sgml: Some documentaton.
+
+2005-03-17  Florian Boor <florian@kernelconcepts.de>
+
+	* Removed obsolete files, removed obsolete sections from manual.
+
+2005-03-16  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: More documentation (Popup).
+
+2005-03-14  Florian Boor <florian@kernelconcepts.de>
+
+	* pixmaps.c, popup.c: Fixed some formating.
+	* doc/tmpl/*.sgml: More documentation (Pixmaps, Popup).
+
+2005-03-11  Florian Boor <florian@kernelconcepts.de>
+
+	* render.c, gpe/render.h, doc/libgpewidget-render.html: removed (obsolete)
+	* Makefile: Update members.
+
+2005-03-09  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: More documentation (Init, Spacing).
+	
+2005-03-04  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: More documentation (Smallbox, Render).
+
+2005-03-03  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: More documentation (Question).
+
+2005-02-14  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/i*.sgml: More documentation.
+
+2005-02-13  Florian Boor <florian@kernelconcepts.de>
+
+	* gpehelp.c: Add support for gpe-helpviewer. Use PREFIX for apps to call.
+	* doc/tmpl/*.sgml: More documentation (GpeDateCombo).
+
+2005-02-07  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/style.css: Added style definition file for documentation.
+	
+2005-02-07  Florian Boor <florian@kernelconcepts.de>
+
+	* Makefile: Don't build documentation per default.
+	* doc/tmpl/gpetimesel.sgml: More documentation.
+	
+2005-02-02  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: More documentation (GpeIconList*).
+
+2005-02-02  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: Documentation improvement.
+
+2005-01-31  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/*.sgml: Documentation improvement.
+	* gpehelp.c: Formating fix, fixed typo.
+
+2005-01-28  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/tmpl/gpeclockface.sgml: Documentation improvement.
+	* doc/tmpl/gpeiconlist.sgml: Documentation improvement.
+
+2005-01-27  Florian Boor <florian@kernelconcepts.de>
+
+	* doc/*: Add documentation framework.
+	* Makefile: Add stuff to build documentation (target: doc). 
+
+2005-01-05  Phil Blundell  <philb@gnu.org>
+
+	* Version 0.97 released.
+	
+2005-01-05  Phil Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Remove what, gpetooltips2.
+	* init.c (gpe_application_init): Don't call gpe_what_init.
+	* what.c, what.h, gpetooltips2.c: Deleted.
+
+2004-11-27  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.96 released.
+
+2004-11-16  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeiconlistview.c (struct _GPEIconListView): Delete bgcolor.
+	Add bg_gc, bg_color, bg_alpha.
+	(gpe_icon_list_view_set_bg_pixmap): Avoid calling gdk_pixbuf_ref
+	if pixbuf is NULL.
+	(_gpe_icon_list_view_do_set_bg): New.
+	(gpe_icon_list_view_set_bg_color): Break down color into
+	components.  Call _gpe_icon_list_view_do_set_bg if realized.
+	(apply_translucency): Use component information from il->bg_color.
+	(_gpe_icon_list_view_expose): Border is not conditional on
+	bgpixmap.  Draw flat background with bg_color if pixmap not set.
+	Remove bogus call to gtk_paint_flat_box.
+	(_gpe_icon_list_view_realize): Call _gpe_icon_list_view_do_set_bg.
+	(gpe_icon_list_view_init): Use gpe_icon_list_view_set_bg_color.
+
+2004-10-18  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.95 released.
+
+2004-10-18  Phil Blundell  <pb@nexus.co.uk>
+
+	* popup.c (gpe_popup_menu_position): Only factor allocation.x into
+	coordinates if widget is windowless.
+
+2004-10-12  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.94 released.
+
+2004-10-12  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeiconlistview.c (_gpe_icon_list_view_do_set_border): New
+	function.
+	(gpe_icon_list_view_set_border_color): Use it.
+	(_gpe_icon_list_view_realize): Likewise.
+
+2004-10-09  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.93 released.
+
+2004-10-09  Phil Blundell  <pb@nexus.co.uk>
+
+	* gtkdatecombo.c (popdown_calendar): New function.
+	(gtk_date_combo_button_press): Likewise.
+	(popup_grab_on_window): Likewise.
+	(click_calendar): Use popdown_calendar to remove popup.
+	(drop_calendar): Likewise.  Set grabs on popup window.
+	(update_text): Reformat.
+	(gtk_date_combo_destroy): New function.
+	(gtk_date_combo_init): Revert change of 2004-10-07.  Take
+	reference to popup window.  Set signal handler for button presses.
+	(gtk_date_combo_class_init): Initialise destroy method.
+	(gtk_date_combo_get_type): Use GType, not GtkType.
+	(gtk_date_combo_new): Likewise.
+
+2004-10-07  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.92 released.
+
+2004-10-07  Phil Blundell  <pb@nexus.co.uk>
+
+	* gtkdatecombo.c (gtk_date_combo_init): Set widget->parent on
+	calendar popup window.
+
+2004-10-04  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.91 released.
+
+2004-10-04  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeiconlistview.c (gpe_icon_list_view_set_border_width): New.
+	(struct _GPEIconListView): New member border_width.
+	(_gpe_icon_list_view_expose): Factor border_width into y
+	coordinates.  Position label using cell_y.
+	(_gpe_icon_list_view_recalc_size): Include border width in
+	requested height.
+	* gpe/gpeiconlistview.h (gpe_icon_list_view_set_border_width): New
+	prototype.
+
+2004-10-04  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistview.c (struct _GPEIconListView): New members
+	border_gc, border_color, border_set.
+	(LABEL_YMARGIN): Reduce to 2.
+	(ROW_PADDING): New.  Set to 8.
+	(TOP_MARGING): Set to 0.
+	(il_icon_height): Take ROW_PADDING into account.
+	(gpe_icon_list_view_set_border_color): New.
+	(_gpe_icon_list_view_expose): Clamp translucent region to extents
+	of background pixmap.  Draw border if selected.  Replace hardcoded
+	offset with TOP_MARGIN.
+	(_gpe_icon_list_view_recalc_size): Don't add in TOP_MARGIN.
+	Subtract out "extra" ROW_PADDING.
+	(_gpe_icon_list_view_realize): Make GC for border if required.
+	(_gpe_icon_list_view_cancel_popup): Reformat.
+	(gpe_icon_list_view_set_textpos): Likewise.
+	* gpe/gpeiconlistview.h (gpe_icon_list_view_set_border_color): New
+	prototype.
+
+2004-09-06  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.90 released.
+
+2004-09-02  Phil Blundell  <pb@nexus.co.uk>
+
+	* infoprint.c: New file.
+	* gpe/infoprint.h: Likewise.
+	* Makefile (MEMBERS): Add infoprint.
+	(HEADERS): Add infoprint.h.
+
+2004-08-23  Phil Blundell  <pb@nexus.co.uk>
+
+	* Makefile: Version 0.89 released.
+
+2004-08-23  Phil Blundell  <pb@nexus.co.uk>
+
+	* dirbrowser.c (gpe_create_dir_browser): Honour supplied path.
+	* gpeclockface.c (gpe_clock_face_size_request): Require a couple
+	of extra pixels on top of radius.
+
+2004-08-08  Phil Blundell  <pb@nexus.co.uk>
+
+	* Makefile: Version 0.88 released.
+
+2004-08-08  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeiconlistview.c (apply_translucency): New function.
+	(_gpe_icon_list_view_expose): Draw translucent box if background
+	pixmap is set.
+
+2004-08-07  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.87 released.
+
+2004-08-07  Phil Blundell  <pb@nexus.co.uk>
+
+	* popup.c (gpe_popup_menu_position): Factor in widget allocation
+	to X coordinate.
+
+2004-07-16  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.86 released.
+
+2004-07-14  Florian Boor <florian.boor@kernelconcepts.de>
+	
+	* gtkdatecombo.c: Is freely editable now and checks date according
+                          current locale settings.
+	* gtkdatecombo.c: Reset date to something more useful if ignore_year
+                          is turned off.
+	* gtkdatecombo.*: gtk_date_combo_ignore_year() New method to
+                          switch wether year is displayed or not.
+        * gtkdatecombo.c: Minor formating changes.
+
+2004-07-14  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.85 released.
+
+2004-07-14  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistview.c (LABEL_YMARGIN): Set to 17.
+	(_gpe_icon_list_view_expose): Tweak text positioning.
+	(_gpe_icon_list_view_recalc_size): Set req->width appropriately.
+
+2004-07-12  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeiconlistview.c: (PARENT_HANDLER): Delete.
+	(_gpe_icon_list_view_expose): Reformat.
+	(_gpe_icon_list_view_button_release): Likewise.
+	(_gpe_icon_list_view_recalc_size): Make second parameter
+	GtkRequisition*, and fill this in.  Take allocation from
+	widget->allocation.
+	(_gpe_icon_list_view_resize): New function.
+	(gpe_icon_list_view_add_item): Call _gpe_icon_list_view_resize,
+	not _gpe_icon_list_view_recalc_size.
+	(gpe_icon_list_view_add_item_pixbuf): Likewise.
+	(gpe_icon_list_view_remove_item): Likewise.
+	(gpe_icon_list_view_clear): Likewise.
+	(gpe_icon_list_view_set_icon_size): Likewise.
+	(gpe_icon_list_view_set_textpos): Likewise.
+	(_gpe_icon_list_view_size_request): New function.
+	(_gpe_icon_list_view_size_allocate): Ignore changes of height.
+	Call _gpe_icon_list_view_resize, not
+	_gpe_icon_list_view_recalc_size.
+	(gpe_icon_list_view_class_init): Set up size_request method.
+	
+2004-07-05  Florian Boor <florian.boor@kernelconcepts.de>
+
+	* Makefile: Added "-I." to PACKAGE_CPPFLAGS avoiding compile
+                    failure.
+
+2004-06-30  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.84 released.
+
+2004-06-30  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistitem.c (gpe_icon_list_item_get_pixbuf): New function.
+	(gpe_icon_list_item_set_pixbuf): Likewise.
+	(gpe_icon_list_item_set_parent): Likewise.
+	* gpe/gpeiconlistitem.h (gpe_icon_list_item_set_parent): Add
+	prototype.
+	(gpe_icon_list_item_set_pixbuf): Likewise.
+	(gpe_icon_list_item_get_pixbuf): Likewise.
+	(struct _GPEIconListItem): Add parent.
+	* gpeiconlistview.c (_gpe_icon_list_view_check_icon_size): Make
+	global.
+	(_gpe_icon_list_view_queue_redraw): New function.
+	(_gpe_icon_list_view_expose): Reformat newly added code.
+	(gpe_icon_list_view_add_item): Call gpe_icon_list_item_set_parent.
+	(gpe_icon_list_view_add_item_pixbuf): Likewise.
+	
+2004-06-30  Philip Blundell  <philb@gnu.org>
+
+	* gpe/gpeiconlistview.h (struct _GPEIconListView): Move to ...
+	* gpeiconlistview.c: ... here.
+
+2004-06-15  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add gpeiconlistitem.h.
+
+2004-06-23  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (LINGUAS): Add es.
+
+2004-06-10  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.83 released.
+
+2004-06-08  Florian Boor <florian.boor@kernelconcepts.de>
+	
+	* gpeiconlistview.c: Fixed widget updating on text position change.
+
+2004-06-07  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistview.c (_gpe_icon_list_view_recalc_size): Don't call
+	gtk_widget_set_usize; just update the requisition and re-negotiate
+	with parent.  Correct logic in TEXT_BELOW case.
+
+2004-06-07  Florian Boor <florian.boor@kernelconcepts.de>
+	
+	* gpeiconlictview.[c,h]: Added new listview layout with text right
+                                 besides of icons.
+
+2004-06-02  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add gpeclockface.h.
+
+2004-05-31  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.82 released.
+
+2004-05-31  Philip Blundell  <philb@gnu.org>
+
+	* gpewindowbits.c (gpe_get_client_window_list): Improve error checking.
+	(gpe_get_wm_class): Likewise.
+
+2004-05-31  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.81 released.
+
+2004-05-31  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_size_request): Add one to radius
+	around all edges.
+
+2004-05-28  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.80 released..
+
+2004-05-27  Philip Blundell  <philb@gnu.org>
+
+	* stylus.c: Include <stdlib.h> to fix warning.
+
+	* Makefile (MEMBERS): Remove tap.
+	* tap.h: Deleted.
+	* init.c (gpe_application_init): Delete call to tap_hold_init.
+	* tap.c: Delete; moved to libgtkstylus.
+
+	* gpewindowbits.c (gpe_get_wm_leader): New function.
+	(gpe_get_window_property): Likewise.
+	* gpewindowlist.c (struct _GPEWindowListClass): Add window-added
+	and window-removed signals.
+	(gpe_window_list_emit_list_changed,
+	gpe_window_list_emit_active_window_changed,
+	gpe_window_list_emit_window_added,
+	gpe_window_list_emit_window_removed): New functions.
+	(window_cmp, add_window_before, remove_window, do_get_clients,
+	gpe_window_list_changed): Likewise.
+	(gpe_window_list_list_changed,
+	gpe_window_list_active_window_changed): Deleted.
+	(gpe_window_list_class_init): Register new signals.
+	(gpe_window_list_get_clients): Return GList*.
+	(gpe_window_list_new): Call gpe_window_list_changed.
+	(window_filter): Keep in step with signal changes.
+	* gpe/gpewindowlist.h (gpe_get_wm_leader,
+	gpe_get_window_property): New prototypes.
+	(struct _GPEWindowList): Add windows.
+	(gpe_window_list_get_clients): Return GList*.
+
+2004-05-23  Philip Blundell  <philb@gnu.org>
+
+	* gpewindowbits.c (gpe_get_wm_class): New function.
+	(gpe_get_window_name): Improve error handling.
+	(gpe_get_window_icon): Likewise.
+	* gpe/gpewindowlist.h (gpe_get_wm_class): New prototype.
+
+2004-05-22  Philip Blundell  <philb@gnu.org>
+
+	* gpewindowlist.c (gpe_window_list_get_clients): New function.
+	* gpewindowbits.c (gpe_get_client_window_list): Copy returned
+	data.  Mark as obsolescent.
+	* gpe/gpewindowlist.h (gpe_window_list_get_clients): First
+	argument is GPEWindowList*.
+
+2004-05-22  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (PACKAGE_CFLAGS, PACKAGE_LDFLAGS): No longer need Render.
+
+	* gpewindowlist.c (gpe_window_list_list_changed): Make static.
+	(gpe_window_list_active_window_changed): Likewise.
+	(gpe_window_list_init): Install event filter on root window.
+	(gpe_window_list_fini): Uninstall it here.
+	* gpe/gpewindowlist.h (struct _GPEWindowList): Add
+	net_client_list_atom, net_active_window_list_atom.  Replace
+	display with screen.
+	(window_filter): Emit signals when list or active window changes.
+	(initialize, gpe_get_client_window_list, gpe_get_window_name,
+	gpe_get_window_icon): Move to ...
+	* gpewindowbits.c: ... here.  New file.	
+
+	* gpeiconlistview.c (_gpe_icon_list_view_expose): Avoid crash if
+	icon can't be loaded.
+	(_gpe_icon_list_view_realize): Delete unused variable.
+	
+2004-05-21  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistview.c: Remove dependency on GtkDrawingArea.
+	(_gpe_icon_list_view_realize): New function.
+	(_gpe_icon_list_size_allocate): Rewrite.
+	(_gpe_icon_list_init): No need to add events.
+	(_gpe_icon_list_class_init): Set ->realize method.  Parent is
+	GTK_TYPE_WIDGET.
+	(gpe_icon_list_view_get_type): Parent is GTK_TYPE_WIDGET.
+	* gpe/gpeiconlistview.h: Keep in step.
+
+2004-05-21  Philip Blundell  <philb@gnu.org>
+
+	* stylus.c (gpe_stylus_mode): Also select stylus mode if
+	GPE_PRETEND_STYLUS is set in the environment.
+
+	* gpeiconlistview.c (_gpe_icon_list_view_popup): Deleted.
+	(_gpe_icon_list_view_button_press): Emit show-popup signal on
+	button 3 click, even if no icon under pointer.
+
+2004-05-21  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistview.c (gpe_icon_list_view_init): Make embolden FALSE
+	by default.
+	(_gpe_icon_list_view_expose): Remove backing pixbuf; draw into the
+	window directly.
+
+2004-05-16  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c: Use Cairo to draw hands, if enabled.  Remove
+	support for drawing with Render directly.
+
+	* Makefile: Include $(PACKAGE_LDFLAGS) in final link.
+	
+2004-05-16  Philip Blundell  <philb@gnu.org>
+
+	* Makefile: Version 0.79 released.
+
+2004-05-16  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c: Add Cairo support.
+	(draw_hand): Fix data type in non-RENDER case.
+	(gpe_clock_face_set_hand_width): New function.
+	* gpe/gpeclockface.h (gpe_clock_face_set_hand_width): New
+	prototype.
+
+	* Makefile: Add Cairo support.
+	(HEADERS): Add gpeiconlistview.h.
+
+2004-05-16  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (struct _GpeClockFace): Add border, hand_width,
+	use_background_image, label_hours.
+	(draw_hand): Use floating point for all positions.
+	(gpe_clock_face_expose): Allow background image to be configured
+	on/off at runtime.
+	(gpe_clock_face_init): Initialise new struct members.
+	(gpe_clock_face_set_radius): New.
+	(gpe_clock_face_set_use_background_image): Likewise.
+	(gpe_clock_face_set_label_hours): Likewise.
+
+	* gpe/gpeclockface.h (gpe_clock_face_set_radius): Add prototype.
+	(gpe_clock_face_set_use_background_image): Likewise.
+	(gpe_clock_face_set_label_hours): Likewise.
+	
+	* gpeiconlistview.c: New file.
+	* gpe/gpeiconlistview.h: Likewise.
+
+	* gpeiconlist.gob: Implement in terms of GPEIconListView.
+	(gpe_iconlist_update_icon_item_with_udata): Deleted.
+	(gpe_iconlist_remove_item_with_udata): Likewise.
+	* gpe-iconlist.c, gpe/gpe-iconlist.h: Regenerated.
+
+	* gpeiconlistitem.c (gpe_icon_list_item_get_type): GType, not GtkType.
+	* gpe/gpeiconlistitem.h: Likewise.
+
+2004-03-11  Florian Boor <florian.boor@kernelconcepts.de>
+	
+	* gpehelp.c: Fixed parameters for application start.
+
+2004-03-07  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add tray.h and popup.h.
+
+2004-03-07  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.78 released.
+
+2004-03-07  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (ipkg): Also depend on all.
+	(PACKAGE_CPPFLAGS, PACKAGE_CFLAGS, PACKAGE_LDFLAGS): Set instead
+	of CPPFLAGS, CFLAGS, LDFLAGS.
+
+2004-03-01  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.77 released.
+
+2004-03-01  Phil Blundell  <pb@nexus.co.uk>
+
+	* dirbrowser.c (scan_dir): Sort the entries.  Remove debugging
+	spew when opendir fails.
+	(gpe_create_dir_browser): Make "OK" button the default.
+
+2004-02-29  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.76 released.
+
+2004-02-29  Philip Blundell  <philb@gnu.org>
+
+	* tap.c (THRESHOLD): Set to 4 for better behaviour on jittery
+	touchscreens.
+
+2004-02-21  Florian Boor <florian.boor@kernelconcepts.de>
+
+	* gpehelp.c: Some minor improvements and comments.
+	* gpehelp.c, gpehelp.h: New files implementing gpe_show_help().
+	* removed gpe/about.h: Obsolete header file.
+	
+2004-02-19  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.75 released.
+
+2004-02-19  Florian Boor <florian.boor@kernelconcepts.de>
+
+	* what.c (filter_func): Filter not visible widgets.
+
+2004-02-15  Philip Blundell  <philb@gnu.org>
+
+	* gtksimplemenu.c: Delete redundant "item-changed" signal.
+
+2004-02-08  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpeclockface.c (gpe_clock_face_expose): Tweak handling of 12am
+	vs 12pm.
+
+	* Makefile (IN_LIBGPEWIDGET): Define.
+
+2004-01-18  Philip Blundell  <philb@gnu.org>
+
+	* windows.c: Add object interface.  Rename to ...
+	* gpewindowlist.c: ... this.
+	* gpe/windows.h: Rename to ...
+	* gpe/gpewindowlist.h: ... this.
+
+2003-11-08  Moray Allan  <moray@handhelds.org>
+
+	* debian/copyright: Cosmetic changes to keep lintian happy.
+
+2003-10-19  Philip Blundell  <philb@gnu.org>
+
+	* windows.c (initialize): New function.
+	(gpe_get_client_window_list): Call it to intern required atoms.
+	(gpe_get_window_name): Likewise.
+	(gpe_get_window_icon): Likewise.
+
+	* Makefile: Use STANDARD_CFLAGS, STANDARD_LDFLAGS, STANDARD_CPPFLAGS.
+
+2003-10-18  Philip Blundell  <philb@gnu.org>
+
+	* gpe/popup.h: Include Xlib.h to avoid undefined types.
+
+2003-10-18  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.74 released.
+	
+2003-10-18  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (_button_release): Check for NULL item before
+	attempting to emit signal.  [Bug #1045, reported by Florian Boor.]
+
+2003-10-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.73 released.
+
+2003-10-13  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (CFLAGS, LDFLAGS).  Use $(GTKFLAGS).  Include flags for
+	Render.
+	(LINGUAS): Add cs.
+
+	* debian/control (Build-Depends): Require libxrender-dev.
+
+2003-09-27  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.72 released.
+	
+2003-09-27  Philip Blundell  <philb@gnu.org>
+
+	* gpetimesel.c (spin_button_output): New function.
+	(gpe_time_sel_init): Use it as output callback for spinbuttons.
+
+	* dirbrowser.c (gpe_create_dir_browser): Correct order of action
+	buttons.
+
+2003-09-24  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.71 released.
+	
+2003-09-24  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_button_press): Remove redundant
+	code relating to second hand.  Take absolute value of both hour
+	and minute angles.
+	(gpe_clock_face_motion_notify): Add somewhat-tortuous logic to
+	cope with dragging across 12 o'clock.
+
+2003-09-20  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (install-devel): Install .pc file in correct directory.
+
+2003-09-15  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.70 released.
+
+2003-09-13  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (struct _GpeClockFace): Add backing_poly_gc.
+	(draw_hand): Undo mistaken use of "thick" for number of points in
+	non-RENDER code path.  Use backing_poly_gc for drawing in this
+	case.
+	(gpe_clock_face_expose): Fix unused warning when HAVE_XRENDER.
+	Clear backing pixmap to background colour on every redraw,
+	otherwise repeated compositing of pixmap causes problems.  Set
+	clip rectangle for backing_poly_gc.
+	(gpe_clock_face_prepare_xrender): Create backing_poly_gc if
+	necessary.  Set foreground colour for backing_gc to be same as
+	normal widget background.
+	(gpe_clock_face_unprepare_xrender): Delete backing_poly_gc.
+	(gpe_clock_face_init): Set backing_poly_gc to NULL.
+
+2003-09-12  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.69.1 released.
+
+2003-09-12  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (install-devel): Respect $(DESTDIR) when installing .pc
+	file.
+	(clean): Also remove .pc files.
+
+	* libgpewidget.pc.in (Libs): Use ${libs}, etc.
+	* libgpewidget-uninstalled.pc.in (Libs): Only use full path with -L.
+
+2003-09-12  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.69 released.
+
+2003-09-12  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (all): Build .pc files.
+	(install-devel): Also install $(PACKAGE).pc.
+	* libgpewidget-uninstalled.pc.in: New file.
+	* libgpewidget.pc.in: Likewise.
+
+2003-09-09  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.68 released.
+
+2003-09-09  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (_recalc_size): Use gtk_widget_set_usize instead
+	of gtk_drawing_area_size.  Call viewport's size_allocate method
+	rather than manually fiddling with the scrollbar adjustments.
+
+2003-09-08  Philip Blundell  <philb@gnu.org>
+
+	* Makefile: Pre-expand CFLAGS and LDFLAGS to avoid repeated
+	invocations of pkg-config.
+
+2003-09-06  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.67 released.
+	
+2003-09-06  Philip Blundell  <philb@gnu.org>
+
+	* familiar/control (Source): Added.
+	
+	* gpeiconlist.gob (init): Set vertical scrollbar policy to
+	ALWAYS.  Replace gtk_signal functions with g_signal.  Reformat.
+	(new): Reformat.
+
+2003-09-05  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.66 released.
+
+2003-09-05  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (install-program): Install background images again.
+
+	* gpeclockface.c (HAVE_XRENDER): New macro.  Only define if
+	XRENDER 0.5 or later is detected.
+	(struct _GpeClockFace): Elide RENDER support if !HAVE_XRENDER.
+	(draw_hand): Likewise.
+	(gpe_clock_face_prepare_xrender): Likewise.
+	(gpe_clock_face_unprepare_xrender): Likewise.
+	(gpe_clock_face_realize): Likewise.
+	(gpe_clock_face_init): Likewise.
+
+2003-08-31  Nils Faerber <nils@kernelconcepts.de>
+
+	* gpeclockface.c: Added new hand for seconds
+	* gpetimesel.c: Take care of new second hand of gpeclockface
+	* gpe/gpeclockface.h: Updated prototype to reflect second hand
+	* TODO: Avoid draggability of gpeclockface hands when using it
+	as a time display (not edit)
+
+2003-08-29  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_prepare_xrender): Clear backing
+	pixmap to widget background colour.
+	(gpe_clock_face_button_press): Take hour modulo 12 when
+	calculating angle of hand.
+
+2003-08-22  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.65 released.
+
+2003-08-22  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_unrealize): Move RENDER related
+	code to ...
+	(gpe_clock_face_unprepare_xrender): ... here.  New function.
+	(gpe_clock_face_size_allocate): New function.
+	(gpe_clock_face_class_init): Register above in method structure.
+	(adjustment_value_changed): Use gtk_widget_queue_draw.
+	(gpe_clock_face_expose): Only use clip rectangle on the backing
+	pixmap.
+
+2003-08-05  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (LINGUAS): Add nl.
+	* po/nl.po: New file, courtesy Elros Cyriatan.
+
+2003-07-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.64 released.
+
+2003-07-26  Phil Blundell  <pb@nexus.co.uk>
+
+	* Makefile: Don't ship clock background pixmaps.
+
+	* gpeclockface.c (BACKGROUND_IMAGE): New macro, not defined.
+	(gpe_clock_face_get_shape): New function.
+	(get_bg_gc): Deleted.
+	(gpe_clock_expose): Draw clock manually if !BACKGROUND_IMAGE.
+	(gpe_clock_face_init): Only load background images if BACKGROUND_IMAGE.
+	* gpe/gpeclockface.h (gpe_clock_face_get_shape): New prototype.
+	
+	* gpetimesel.c (do_popup): Set shape of popup window.
+
+2003-07-16  Moray Allan  <moray@sermisy.org>
+
+	* Makefile: Added gtksimplemenu.h to HEADERS.
+
+2003-07-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.63 released.
+
+2003-07-13  Phil Blundell  <pb@nexus.co.uk>
+
+	* pixmaps.c: Remove GTK1 legacy code.
+
+	* gpeiconlist.gob: Reformat.
+	(set_item_icon, remove_item): New.
+	(remove_item_with_udata, update_icon_item_with_udata): Note
+	obsoletion.
+	(MAYBE_PRINTF): Delete macro and all uses.
+ 	(TOP_MARGIN): Define.
+	(_recalc_size): Use it.  Don't touch X size.
+	(COL_WIDTH): Delete.
+	* gpe-iconlist.c, gpe/gpe-iconlist.h: Regenerate.
+
+2003-07-06  Moray Allan  <moray@sermisy.org>
+
+	* gtksimplemenu.c (gtk_simple_menu_class_init): Removed legacy GTK1
+	code.
+
+2003-07-06  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (LINGUAS): Add sv.
+	* po/sv.po: New file, courtesy Christian Rose.	
+
+2003-06-26  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (LINGUAS): Add wa.
+	* po/wa.po: New file, courtesy Pablo Saratxaga.
+
+2003-05-05  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.62 released.
+	
+2003-05-05  Philip Blundell  <philb@gnu.org>
+
+	* what.c (filter_func): Only mind allocation x/y coords for
+	windowless widgets.
+
+2003-04-22  Philip Blundell  <philb@gnu.org>
+
+	* po/ga.po: New file, courtesy Kevin Patrick Scannell.
+	* Makefile (LINGUAS): Add ga.
+
+2003-04-21  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.61 released.
+	
+2003-04-21  Philip Blundell  <philb@gnu.org>
+
+	* errorbox.c (do_gpe_perror_box): New function.
+	(gpe_perror_box): Call it.
+	(gpe_perror_box_nonblocking): New function.
+	* gpe/errorbox.h (gpe_perror_box_nonblocking): Add prototype.
+
+2003-04-18  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.60 released.
+	
+2003-04-18  Philip Blundell  <philb@gnu.org>
+
+	* gpe/tray.h (gpe_system_tray_send_message): Add prototype.
+	(gpe_system_tray_cancel_message): Likewise.
+
+	* tray.c (atom_names): Add SYSTEM_TRAY_MESSAGE_DATA.
+	(SYSTEM_TRAY_MESSAGE_DATA): Define.
+	(atoms): Add another slot.
+	(MAX_DATA_BYTES): New.
+	(old_error_handler, trapped_error_code, error_handler,
+	trap_errors, untrap_errors): Deleted.
+	(tray_send_opcode): Use gdk_error_trap_push and gdk_error_trap_pop
+	in place of above functions.  Use gdk_flush instead of XSync.
+	(gpe_system_tray_send_message): New.
+	(gpe_system_tray_cancel_message): Likewise.
+	(gpe_system_tray_dock): Intern extra atom.
+	
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.59 released.
+	
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* Makefile: Remove GTK 1 support.
+	* gtkrc: Obsolete; deleted.
+
+	* gpeiconlist.gob (_recalc_size): Reformat.  Only adjust height;
+	leave width alone.
+	(update_icon_item_with_udata): Pass allocation for drawing area,
+	not enclosing container, to _recalc_size.
+	(remove_item_with_udata): Likewise.
+	(add_item): Likewise.
+	(add_item_pixbuf): Likewise.
+	(clear): Likewise.
+	(set_icon_size): Likewise.
+	(size_allocate): Likewise.
+	(_button_release): Pass event to IconListItem.
+	(_button_press): Likewise.
+	* gpe-iconlist.c: Regenerated.
+
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.58 released.
+	
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* gtktimesel.c: Rename to ...
+	* gpetimesel.c: ... this.
+	* gpe/gtktimesel.h: Rename to ...
+	* gpe/gpetimesel.h: ... this.
+	* Makefile (MEMBERS): Adjust accordingly.
+
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.57 released.
+
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* gtktimesel.c (button_press): New function.
+	(button_release): Likewise.
+	(do_popup): Likewise.
+	(gtk_time_sel_init): Set wrap on for buttons.  Add popup support.
+	(parent_class): Remove explicit zero init.
+
+	* gpeclockface.c (gpe_clock_face_realize): Connect signal handlers
+	here.
+	(gpe_clock_face_unrealize): Disconnect them here.
+	(gpe_clock_face_new): Don't do anything at all with them here.
+	(struct _GpeClockFace): Add hour_handler, minute_handler.
+
+2003-04-13  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (struct _GpeClockFace): Add grabbed, do_grabs.
+	(gpe_clock_face_init): Initialise above new members.
+	(gpe_clock_face_button_press): Only grab if instructed.  Mind
+	result of gdk_pointer_grab.
+	(gpe_clock_face_button_release): Only ungrab pointer if we grabbed
+	it earlier.
+	(gpe_clock_face_set_do_grabs): New function.
+	* gpe/gpeclockface.h (gpe_clock_face_set_do_grabs): Add prototype.
+
+2003-04-12  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_unrealize): Reinstate
+	XftDrawDestroy.  Remove XRenderFreePicture calls.
+
+	* smallbox.c (smallbox_x2): Swap order of buttons.
+	(smallbox_x): Likewise.
+
+	* gpeclockface.c (struct _GpeClockFace): Add can_render.
+	(gpe_clock_face_realize): Check for sufficiently new RENDER
+	extension.
+	(draw_hand): Add fallback in case of missing RENDER.
+	(gpe_clock_face_prepare_xrender): Likewise.
+	(gpe_clock_face_unrealize): Likewise.
+
+2003-04-12  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_motion_notify): Advance hour hand
+	when minute hand is dragged past midnight.
+	(draw_hand): Optimise calculation of vertices for polygon.
+	(calc_angle): Rename to ...
+	(angle_from_xy): ... this.  All callers updated.
+
+2003-04-12  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (gpe_clock_face_realize): Remove pointer motion
+	bits from event mask.
+	(gpe_clock_face_unrealize): Disable call to XftDrawDestroy.
+
+2003-04-12  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c (struct _GpeClockFace): Add hour_angle,
+	minute_angle.
+	(hand_angles): New function.
+	(gpe_clock_face_expose): Use precomputed angles.
+	(gpe_clock_face_motion_notify): Call hand_angles.
+	(adjustment_value_changed): Likewise.
+	(gpe_clock_face_new): Likewise.
+
+	* Makefile (install-program): Install pixmaps for clock face in
+	$PREFIX/share/libgpewidget, not $PREFIX/share/gpe/pixmaps.
+	* gpeclockface.c (gpe_clock_face_init): Look for pixmaps in new
+	location.
+	
+	* picturebutton.c (gpe_button_new_from_stock): Fix packing error.
+
+2003-04-07  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (LINGUAS): Add fr.
+	* po/fr.po: New file, courtesy Luc Pionchon.
+
+	* po/pt.po: Updated, courtesy Luis Oliveira.
+	
+	* po/id.po: Updated, courtesy Tedi Heriyanto.
+
+2003-04-05  Phil Blundell  <pb@nexus.co.uk>
+
+	* gpe/gpeiconlistitem.h (gpe_icon_list_item_button_press,
+	gpe_icon_list_item_button_release): Add prototypes.
+
+	* gpeiconlistitem.c (gpe_icon_list_item_class_init): Register
+	signals.
+	(gpe_icon_list_item_button_press): New function.
+	(gpe_icon_list_item_button_release): New function.
+	(_GPEIconListItemClass): Add button_press, button_release.
+
+2003-04-01  Philip Blundell  <philb@gnu.org>
+
+	* gpeclockface.c: New file.
+	* gpe/gpeclockface.h: Likewise.
+	* Makefile (MEMBERS): Add gpeclockface.
+
+	* pixmaps/clock.png, pixmaps/clock24.png,
+	pixmaps/day-night-wheel.png: New files.
+	* Makefile (install-program): Install them.
+
+2003-03-31  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlistitem.c: New file.
+	* gpe/gpeiconlistitem.h: Likewise.
+	* Makefile (MEMBERS): Add gpeiconlistitem.
+
+	* gpeiconlist.gob: Use new GPEIconListItem class in place of
+	struct IL_Icon.
+	(new_icon): Return type is GObject*.
+	(_check_icon_size): Second argument is GObject*.
+	(add_item, add_item_pixbuf): Return the new object.
+	* gpe-iconlist.c, gpe/gpe-iconlist.h: Regenerate.
+
+2003-03-30  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Remove gtkdatesel.h.
+	(MEMBERS): Remove gtkdatesel.
+	* gtkdatesel.c: Deleted; moved to ../gpe-calendar.
+	* gpe/gtkdatesel.h: Likewise.
+
+	* pixmaps.c (gpe_find_icon_pixmap): Add linker warning.
+
+	* picturebutton.c (gpe_picture_button): Fix formatting.
+	(gpe_picture_button_aligned): Likewise.  Use
+	gtk_image_new_from_pixbuf in place of gpe_render_icon.
+	(gpe_button_new_from_stock): Just call gtk_button_new_from_stock
+	for BOTH case.
+
+	* gtktimesel.c (gtk_time_sel_init): Fix off-by-one errors.
+
+	* gpe/pixmaps.h: Add #error to catch attempted GTK 1 builds.
+
+2003-03-29  Philip Blundell  <philb@gnu.org>
+
+	* gtksimplemenu.c (gtk_simple_menu_append_item): Don't attach
+	signal handler to item.
+	(note_activation): Deleted.
+	(gtk_simple_menu_get_result): Just call
+	gtk_option_menu_get_history.  Add link warning about obsolescence.
+	(struct _GtkSimpleMenu): Delete ->item.
+	(gtk_simple_menu_init): Don't initialise ->item.
+
+2003-03-29  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.56 released.
+
+2003-03-28  Philip Blundell  <philb@gnu.org>
+
+	* gtktimesel.c: New file.
+	* gpe/gtktimesel.h: Likewise.
+	* Makefile (MEMBERS): Add gtktimesel.	
+
+2003-03-28  Luc Pionchon  <luc@handhelds.org>
+
+	* gpeiconlist.gob (size_allocate): recalc *after* the size is allocated.
+	(_recalc): base drawing area size on adj->page_size.
+	(gpe-iconlist.[ch]): regenerate.
+
+2003-03-24  Philip Blundell  <philb@gnu.org>
+
+	* what.c (gpe_what_init): Don't lookup X atoms.  Don't intern
+	STRING.
+	(send_text): Use XA_STRING.
+
+2003-03-24  Philip Blundell  <philb@gnu.org>
+
+	* what.c (gpe_what_init): Note that gpe-what is initialized.
+	(gpe_what_mark_widget): Do nothing if this isn't the case.
+
+	* about.c: Deleted.
+	* gpetooltips.c: Likewise.
+	* gtkgpepixmap.c: Likewise.
+	* Makefile: Remove GTK 1 support.
+
+2003-03-24  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.55 released.
+
+2003-03-24  Philip Blundell  <philb@gnu.org>
+
+	* translabel.c (label_translation): Correct property names.
+
+2003-03-24  Luc Pionchon  <luc@handhelds.org>
+
+	* gpeiconlist.gob (_recalc_size): use viewport's allocation to
+	update the drawinf area.
+	(init): keep a ref to the viewport.
+
+2003-03-23  Luc Pionchon  <luc@handhelds.org>
+
+	* gpeiconlist.gob (set_icon_xmargin): new function.
+	(il_row_height): now checks if flag_show_title is set.
+	(il_col_width): now use icon_xmargin parameter. Uses only one margin each side.
+
+2003-03-23  Damien Tanner  <dctanner@dctanner>
+
+	* popup_menu.c (popup_menu_button_new_type_color): Returns GdkColor to callback.
+
+2003-03-23  Phil Blundell  <pb@nexus.co.uk>
+
+	* Version 0.54 released.
+
+2003-03-23  Phil Blundell  <pb@nexus.co.uk>
+
+	* tap.c: Avoid generating clicks during drag.
+
+2003-03-22  Phil Blundell  <pb@nexus.co.uk>
+
+	* translabel.c (gtk_label_new_with_translation): Remove typecast
+	to fix warning.
+
+	* windows.c (gpe_get_window_icon): Add typecast to fix warning.
+
+2003-03-19  Philip Blundell  <philb@gnu.org>
+
+	* smallbox.c (smallbox_x): Try to use correct spacing.  Remove
+	spurious gtk_widget_show calls.  Don't force window size, just set
+	the default.
+	(smallbox_x2): Likewise.
+
+	* pixmaps.c (gpe_find_icon_scaled): Don't unref original pixbuf.
+
+	* Makefile (LINGUAS): Add pt.
+
+ 	* po/pt.po: New file from Translation Project, courtesy Luis
+	Oliveira.
+
+2003-03-16  Luc Pionchon  <luc@handhelds.org>
+
+	* picturebutton.c (gpe_picture_button_aligned): New function, adds
+	alignment to gpe_picture_button.
+	* gpe/picturebutton.h : Likewise.
+	(GpePositionType) New type to handle position, same as
+	GtkPositionType, add _POS_CENTER
+	* gpeiconlist.gob (set_show_title): New public function to allow
+	titleless iconlist
+	(_expose): render title only with show_title mode, and if non NULL
+	title
+	* gpe-iconlist.[ch]: regenerate.
+	
+2003-03-16  Luc Pionchon  <luc@handhelds.org>
+
+	* gpeiconlist.gob (set_bg_color): New public function to set the
+	bg color
+	(update_icon_item_with_udata): New public function to update an
+	icon
+	(remove_item_with_udata): New public function to remove an icon
+	(_find_from_udata): New private function used by
+	update_icon_item_with_udata() and remove_item_with_udata.
+
+2003-03-15  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.53 released.
+	
+2003-03-15  Philip Blundell  <philb@gnu.org>
+
+	* pixmaps.c (gpe_find_icon_scaled): New.
+	* gpe/pixmaps.h (gpe_find_icon_scaled): Add prototype.	
+
+2003-03-12  Colin Marquardt  <colin@marquardt-home.de>
+
+	* question.c (gpe_question_ask): Make label selectable as it can
+	contain useful information that one might want to copy.
+	(gpe_question_ask): Add comment pointing to a mail about
+	UrgencyHint.
+
+2003-03-11  Philip Blundell  <philb@gnu.org>
+
+	* gpe/init.h: Add extern "C" { ... } gunk.
+	* gpe/errorbox.h: Likewise.
+	* gpe/gtkdatesel.h: Likewise.
+	* gpe/pixmaps.h: Likewise.
+	* gpe/popup.h: Likewise.  Also add multiple #include guard.
+
+2003-03-09  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.52 released.
+	
+2003-03-09  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (_expose): Don't cache full-size images that are
+	backed by files on disk.
+	* gpe-iconlist.c: Regenerate.
+
+2003-03-09  Damien Tanner  <dctanner@gekk>
+
+	* dirbrowser.c (ok_clicked): The window will hide itself before
+	calling the handler, this is so the user will recieve some visual
+	feedback that something is being done about loading the path.
+
+2003-03-08  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gpe/spacing.h: Define GPE_GNOME_SCALING.
+
+2003-03-08  Philip Blundell  <philb@gnu.org>
+
+	* po/id.po: New file from Translation Project.
+	* Makefile (LINGUAS): Add id.
+
+2003-03-07  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.51 released.
+
+2003-03-07  Damien Tanner  <dctanner@gekk>
+
+	* gpe/popup_menu.h (popup_menu_button_new_type_color): new color
+	popup menu.
+
+	* popup_menu.c: Add code popup and if the child's height is larger
+	than the screen size it will be packed into a GtkScrolledWindow.
+
+2003-03-07  Damien Tanner  <dctanner@handhelds.org>
+
+	* gpe/popup_menu.h: New popup_menu code taken from gpe-word.
+
+2003-03-07  Damien Tanner  <dctanner@handhelds.org>
+
+	* popup_menu.c: New popup_menu code taken from gpe-word.
+
+2003-03-07  Damien Tanner  <dctanner@handhelds.org>
+
+	* Makefile (MEMBERS): Add popup_menu
+
+2003-03-06  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add question.h, windows.h.
+	(install-devel): Use -f when linking.
+
+2003-03-05  Philip Blundell  <philb@gnu.org>
+
+	* windows.c (gpe_get_window_name): Check return code from
+	gdk_error_trap_pop.
+	(gpe_get_window_icon): Likewise.
+	
+	* what.c (send_text): Add error trapping.
+
+2003-03-04  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.50 released.
+	
+2003-03-04  Philip Blundell  <philb@gnu.org>
+
+	* init.c (gpe_application_init): Tolerate NULL argc and/or argv.
+
+2003-03-02  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Add windows.
+	* windows.c: New file.
+	* gpe/windows.h: Likewise.
+
+2003-03-02  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.49 released
+
+2003-03-02  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Add popup.
+	* popup.c: New file.
+	* gpe/popup.h: Likewise.
+
+2003-03-01  Philip Blundell  <philb@gnu.org>
+
+	* render.c: Include <stdlib.h> to quash warning.
+
+	* tray.c (gpe_system_tray_dock): Call XSetCommand with saved
+	arguments.  Use XInternAtoms.
+	(filter): Adjust appropriately.
+	(tray_send_opcode): Likewise.
+
+	* init.c (gpe_saved_args): New function.
+	(gpe_application_init): Save a copy of argument list.
+	* gpe/init.h (gpe_saved_args): Add prototype.
+
+2003-02-23  Philip Blundell <philb@gnu.org>
+
+	* Version 0.48 released
+
+2003-02-23  Colin Marquardt  <colin@marquardt-home.de>
+
+	* question.c (gpe_question_ask): Allow pango markup in label.
+	(gpe_question_ask): Make conform to Gnome HIG.
+	(gpe_question_ask): Set decorations so that it doesn't even get a
+	title bar when no title is requested.
+	(on_qn_button_clicked): Make static.
+	(add_button): Make static.
+	(gpe_question_ask): Convert to GtkDialog.
+
+2003-02-23  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add translabel.h
+	(MEMBERS): Add translabel.
+
+	* gpe/translabel.h: New file.
+	* translabel.c: Likewise.
+
+2003-02-23  Colin Marquardt  <colin@marquardt-home.de>
+
+	* spacing.h: Move constant and function prototypes here.
+
+2003-02-21  Philip Blundell  <philb@gnu.org>
+
+	* familiar/control1 (Depends): Add libgpewidget1-locale*.
+
+2003-02-20  Philip Blundell  <pb@nexus.co.uk>
+
+	* po/de.po: New file from Translation Project.
+	* Makefile (LINGUAS): Add de.
+
+2003-02-19  Colin Marquardt  <colin@marquardt-home.de>
+
+	* spacing.c: Add link in comment. Change license to LGPL.
+
+2003-02-16  Philip Blundell  <philb@gnu.org>
+
+	* picturebutton.c (gpe_picture_button): If icon name starts with
+	"!", it's a stock item.
+
+2003-02-15  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (BINPACKAGE): Define.
+
+	* dirbrowser.c: Fix warnings.
+
+2003-02-15  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.47 released.
+	
+2003-02-15  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (install): Don't call install-mo.  Use install -s
+	rather than install -D.
+
+	* question.c (add_button): Use GObject functions.
+	(gpe_question_ask): Likewise.  If icon name starts with "!", take
+	it as a stock item name.
+
+	* errorbox.c (do_gpe_error_box): Use GtkMessageDialog.
+
+	* dirbrowser.c: Rewrite.
+
+	* gtkdatesel.c (_): Use dgettext not gettext.
+	* gtksimplemenu.c (_): Deleted.
+
+2003-02-15  Philip Blundell  <pb@nexus.co.uk>
+
+	* Makefile (LINGUAS): Add ro.
+
+2003-02-12  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.46 released.
+
+2003-02-12  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_init): Use "month_view" pixmap
+	for the button if it exists.
+
+	* question.c (add_button): New parameter box.  Pack buttons into
+	this container.
+	(gpe_question_ask): Use plain GtkWindow in place of GtkDialog.  If
+	no title desired, set window as no decorations and provide a frame.
+	(gpe_question_ask_yn): Add link warning to discourage use.
+
+2003-02-11  Philip Blundell  <philb@gnu.org>
+
+	* stylus.c (gpe_stylus_mode): Add missing _ to property name.
+	Optimise a little.  Fix small memory leak.
+
+	* tap.c: Fix warnings.
+	* tray.c: Likewise.
+	* gtkdatecombo.c: Likewise.
+	* what.c: Likewise.
+	* smallbox.c: Likewise.
+	* render.c: Likewise.  Improve warning message.
+
+2003-02-11  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.45 released.
+
+2003-02-11  Philip Blundell  <philb@gnu.org>
+
+	* question.c (add_button): If text starts with '!', take it as the
+	name of a stock item.
+
+2003-02-02  Philip Blundell  <philb@gnu.org>
+
+	* what.c (gpe_what_init): Add missing underscore to property name.
+
+2003-02-01  Philip Blundell  <philb@gnu.org>
+
+	* question.c (gpe_question_ask): Set line wrapping on.
+
+	* Makefile (clean): Depend on clean-po.
+	(LINGUAS): Remove en_AU.
+
+	* po/en_AU.po: Deleted.
+
+	* pixmaps.c (gpe_load_one_icon): Remove redundancy in error message.
+
+	* errorbox.c (do_gpe_error_box): Use stock button.
+	* smallbox.c (smallbox_x2): Likewise.
+	(smallbox_x): Likewise.
+
+	* debian/control, debian/changelog: Update.
+
+2003-01-27  Philip Blundell  <philb@gnu.org>
+
+	* debian/changelog: Update.
+	* debian/control: Likewise.
+	* debian/copyright: Likewise.
+	* debian/libgpewidget0.dirs, debian/libgpewidget0.files: Removed.
+	* debian/libgpewidget1.dirs, debian/libgpewidget1.files: New.
+
+2003-01-26  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (VERSION, CVSBUILD): Define.
+	(BUILD): Define.  Use it to find makefile fragments.
+	(ipkg, dpkg, upstream): Delete.
+	(install-devel): Headers are in gpe/.
+
+2003-01-25  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.44 released.
+
+2003-01-25  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_week_starts_monday): Add
+	GTK_CALENDAR_SHOW_HEADING to options.
+
+2003-01-24  Philip Blundell  <philb@gnu.org>
+
+	* pixmaps.c (gpe_set_window_icon): Use gtk_window_set_icon.
+
+2003-01-18  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.43 released.
+	
+2003-01-18  Philip Blundell  <philb@gnu.org>
+
+	* picturebutton.c (gpe_button_new_from_stock): Remove stray ";"
+	after conditional.  Reformat.  Use SMALL_TOOLBAR icons.
+
+2003-01-07  Philip Blundell  <philb@gnu.org>
+
+	* picturebutton.c (gpe_button_new_from_stock): Remove stray debug.
+
+2003-01-07  Damien Tanner  <dctanner@handhelds.org>
+
+	* picturebutton.c (gpe_button_new_from_stock): Avoid mnemonic
+	problem.
+	
+2003-01-07  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.42 released.
+
+2003-01-06  Damien Tanner  <dctanner@handhelds.org>
+
+	* picturebutton.c (gpe_button_new_from_stock): New.
+	* gpe/picturebutton.h (gpe_button_new_from_stock): Likewise.
+	(GPE_BUTTON_TYPE_ICON, GPE_BUTTON_TYPE_LABEL,
+	GPE_BUTTON_TYPE_BOTH): Likewise.
+
+2003-01-05  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Remove gtkminifilesel.
+	(HEADERS): Remove gtkminifilesel.h.
+	* gtkminifilesel.c: Deleted.
+	* gpe/gtkminifilesel.h: Likewise.
+
+	* link-warning.h: New file.
+	* render.c: Note that gpe_render_icon is obsolete and should not
+	be used.
+
+2003-01-05  Philip Blundell  <philb@gnu.org>
+
+	* render.c (gpe_render_icon): Just call gtk_image_new_from_pixbuf.
+	(gpe_render_pixmap_alpha): Delete.
+	(gpe_render_pixmap): Likewise.
+	* gpe/render.h (gpe_render_pixmap): Delete.
+	(gpe_render_pixmap_alpha): Likewise.
+	* gtkgpepixmap2.c: Delete.
+	* Makefile (MEMBERS): Remove gtkgpepixmap2.
+	
+2003-01-05  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.41 released.
+
+2003-01-05  Philip Blundell  <philb@gnu.org>
+
+	* gpe/gtkdatesel.h (gtk_date_sel_set_month_style): New prototype.
+	(GtkDateSelMonthStyle): New enum.
+	* gtkdatesel.c 	(struct _GtkDateSel): New member month_style.
+	(month_update): Respect selected style.
+	(gtk_date_sel_set_month_style): New.
+	(make_field): Fix warnings.
+
+2003-01-04  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.40 released.
+
+2003-01-04  Philip Blundell  <philb@gnu.org>
+
+	* tap.c (filter): Don't require release event to have same window
+	handle as press event.
+
+2003-01-04  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.39 released.
+
+2003-01-04  Philip Blundell  <philb@gnu.org>
+
+	* tray.c (gpe_system_tray_dock): Remove accidental dependency on
+	multihead-aware libgdk-x11.
+
+	* init.c (gpe_application_init): Only do tap'n'hold in stylus mode.
+
+2003-01-04  Philip Blundell  <philb@gnu.org>
+
+	* gpe/what.h: Move to ...
+	* what.h: ... here.
+	
+	* tap.c, tap.h: New files.  Highly experimental code to convert
+	tap-and-hold into button 3 clicks.
+	* Makefile (MEMBERS): Add tap.
+	* init.c (gpe_application_init): Fix warning.  Call tap_hold_init.
+
+2003-01-04  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob, gpe-iconlist.[ch]: Oops, fix it right this time!
+
+2003-01-04  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob: Use the _obvious_ rendering fix pb suggested.
+	(ie. back out my last change)
+
+	* gpe-iconlist.[ch]: regenerate.
+
+2003-01-01  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.38 released.
+
+2003-01-01  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_init): When in stylus mode, allow
+	a single click to select the day.
+
+	* gtkdatesel.c (week_update): Format week number with %V not %W.
+
+	* what.c (gpe_what_handle_event): Delete.
+	(filter_func): Use tip_private if not NULL.
+
+	* gtkdatecombo.c (gtk_date_combo_week_starts_monday): New
+	function.
+	(update_text, click_calendar, drop_calendar): Reformat.
+	* gpe/gtkdatecombo.h (gtk_date_combo_week_starts_monday): Add
+	prototype.
+
+	* gtkdatesel.c (make_field): Reduce padding.
+
+2003-01-01  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob: Unbolden on popup (ugly rendering otherwise).
+
+	* gpe-iconlist.c, gpe/gpe-iconlist.h: Regenerate.
+
+2002-12-30  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.37 released.
+
+2002-12-30  Philip Blundell  <philb@gnu.org>
+
+	* gtkminifilesel.c (set_members): Use gpe_try_find_icon.
+
+2002-12-29  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.36 released.
+
+2002-12-29  Philip Blundell  <philb@gnu.org>
+
+	* gtkminifilesel.c (set_members): Remove character set conversion.
+	Print error if opendir fails.  Don't free data since CList will do
+	that.
+	(selection_made): Remove character set conversion.
+	(gtk_mini_file_selection_get_filename): Likewise.
+
+	* what.c (filter_func): Check window ID too.
+
+2002-12-28  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.35 released.
+
+2002-12-28  Philip Blundell  <philb@gnu.org>
+
+	* what.c: New implementation.
+	* gpetooltips2.c (gpe_tooltips_set_tip): Mark widget for
+	interactive help.
+	* tray.c: Remove include of <stdio.h>.
+
+2002-12-27  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.34 released.
+
+2002-12-26  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Add tray.
+	* tray.c: New file.
+	* gpe/tray.h: Likewise.
+	
+2002-12-23  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.33 released.
+
+2002-12-23  Philip Blundell  <philb@gnu.org>
+
+	Merge changes from hacked-iconlist-branch:
+	* gpeiconlist.gob (LABEL_YMARGIN, LABEL_XMARGIN, COL_WIDTH):
+	Define.
+	(il_label_height, il_icon_size, il_row_height, il_col_width): New
+	macros.
+	(struct ILIcon): New member pb_scaled.
+	(GPE:IconList): New members icon_size, label_height.
+	(init): Initialise label_height.
+	(bg_set_pixmap): New method.
+	(_check_icon_size): New function.
+	(_title_height): Make argument GPEIconList*.
+	(_expose): Use il_col_width and il_row_height in place of
+	hardcoded constants.  Use il_label_height rather than calling 
+	_title_height repeatedly.  Use prescaled icon from pb_scaled.
+	Allow icon width to float and centre pixmap accordingly.
+	(_recalc_size): New function, broken out from size_allocate.
+	(new_icon): Initialise pb_scaled to NULL.
+	(add_item): Call _recalc_size.  Don't force widget redraw.
+	(add_item_pixbuf): Likewise.  Call _check_icon_size to rescale
+	newly added pixbuf. 
+	(clear): Unref scaled pixbuf too.  Call _recalc_size.
+	(set_icon_size): New method.
+	(_get_rowcol): Remove spurious floating point usage.  Replace
+	hard-coded constants with il_col_width / il_row_height as
+	appropriate.  Make first argument GPEIconList*.
+	(_refresh_containing): Use il_col_width and il_row_height as
+	appropriate.  Make first argument GPEIconList*.
+	(_button_release): Pass iconlist to _refresh_containing and
+	_get_rowcol.  Set mcol and mrow to -1 prior to generating
+	"clicked" event.
+	(_popup): Don't clear selection here.
+	(popup_removed): New method.
+	(button_press): Pass iconlist to _refresh_containing and
+	_get_rowcol.
+	* gpe-iconlist.c, gpe/gpe-iconlist.h: Regenerated.
+
+2002-12-22  Philip Blundell  <philb@gnu.org>
+
+	* gpe/pixmaps.h: Include gtk/gtk.h.
+
+2002-12-22  Philip Blundell  <philb@gnu.org>
+
+	* pixmaps.c (gpe_set_window_icon): New function.
+	(gpe_find_icon_pixmap): Don't check return code from
+	gpe_find_icon.
+	* gpe/pixmaps.h (gpe_set_window_icon): New prototype.
+
+	* what.c (gpe_what_init): Use gpe_try_find_icon rather than
+	gpe_find_icon.  On failure, display an error and give up
+	initialisation.
+
+	* pixmaps.c (gpe_find_icon): Don't attempt lazy loading.  If the
+	icon isn't in the cache, give an error.
+	
+2002-12-22  Philip Blundell  <philb@gnu.org>
+
+	* pixmaps.c (gpe_try_find_icon): New function.
+	(gpe_find_icon): Implement in terms of above.  Display error box
+	and halt the program if icon cannot be found.
+
+	* gpe/pixmaps.h (gpe_try_find_icon): New prototype.
+	* errorbox.c (do_gpe_error_box): Use gpe_try_find_icon rather than
+	gpe_find_icon.  Cope with missing pixmap.
+	* picturebutton.c (gpe_picture_button): Likewise.
+	* question.c (gpe_question_ask): Likewise.
+	
+2002-12-22  Philip Blundell  <philb@gnu.org>
+
+	* pixmaps.c (gpe_load_one_icon): Improve error handling.
+	(gpe_load_icons): Allow multiple calls.
+	(gpe_find_icon): Reformat.
+
+2002-12-20  Philip Blundell  <pb@nexus.co.uk>
+
+	* Version 0.32 released.
+
+2002-12-20  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (_title_height): Unref PangoLayout to avoid
+	memory leak.
+	(_expose): Likewise.
+
+2002-12-19  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (_get_icon): Remove spurious "*col" term from
+	loop condition.
+
+2002-12-18  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob: Include <string.h> to fix warning.
+	(MAYBE_PRINTF): New macro.  Use it for debug chatter 
+	so this can be disabled when not wanted.
+	(GPE:IconList): New member flag_embolden.
+	(_expose): Don't render selected item in bold if above is false.
+	(new_icon): New argument pb.
+	(add_item): Pass extra arg to add_item as NULL.  Refresh screen
+	after adding new item.
+	(add_item_pixbuf): New function.
+	(set_embolden): Likewise.
+	(clear): Likewise.
+	(popup): Don't grab the pointer.
+	gpe-iconlist.[ch]: Re-generate.
+
+2002-12-15  Philip Blundell  <philb@gnu.org>
+
+	* gtksimplemenu.c (gtk_simple_menu_append_item): Add missing
+	gtk_widget_show.
+
+2002-12-14  Philip Blundell  <philb@gnu.org>
+
+	* gpeiconlist.gob (MAYBE_PRINTF): New macro.  Use it for
+	debug chatter so this can be disabled when not wanted.
+	(GPE:IconList): New member flag_embolden.
+	(_expose): Don't render selected item in bold if above is false.
+	(new_icon): New argument pb.
+	(add_item): Pass extra arg to add_item as NULL.  Refresh screen
+	after adding new item.
+	(add_item_pixbuf): New function.
+	(set_embolden): Likewise.
+	(clear): Likewise.
+
+	* errorbox.c (do_gpe_error_box): Renamed from gpe_error_box.  New
+	argument block.  Don't call gtk_main if this is false, instead
+	return immediately.
+	(gpe_error_box): Call above with block=TRUE.
+	(gpe_error_box_nonblocking): Likewise, with block=FALSE.
+	* gpe/errorbox.h (gpe_error_box_fmt): Add prototype.	
+
+2002-12-14  Philip Blundell  <philb@gnu.org>
+
+	* po/en_AU.po (Content-Type): Charset is iso-8859-1.
+
+2002-12-04  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.31 released.
+
+2002-12-04  Philip Blundell  <philb@gnu.org>
+
+	* gtkminifilesel.c (set_members): Convert strings to utf8.
+	(selection_made): Convert strings to locale encoding.
+	(gtk_mini_file_selection_get_filename): Likewise.
+
+2002-12-01  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.30 released.
+
+2002-12-01  Philip Blundell  <philb@gnu.org>
+
+	* gtksimplemenu.c (gtk_simple_menu_flush): New function.
+	* gpe/gtksimplemenu.h (gtk_simple_menu_flush): Add prototype.
+
+	* smallbox.c (smallbox_x2): Use picture buttons.  Correctly
+	extract entry field from combo box.
+
+2002-11-30  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.29 released.
+	
+2002-11-30  Philip Blundell  <philb@gnu.org>
+
+	* gtkgpepixmap2.c (gtk_gpe_pixmap_init): Add missing
+	initialisations.
+	* gtkgpepixmap.c (gtk_gpe_pixmap_init): Likewise.
+
+	* gtksimplemenu.c (gtk_simple_menu_class_init): Rename signal from
+	"changed" to "item-changed" to avoid name clash.
+
+2002-11-30  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.28 released.
+
+2002-11-30  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (ipkg): Depend on clean.
+
+	* render.c (gpe_render_icon): Handle SELECTED state too.
+
+	* gtkgpepixmap2.c (gtk_gpe_pixmap_expose): Draw appropriate pixmap.
+	(gtk_gpe_pixmap_set_selected): New.
+	* gpe/gtkgpepixmap.h (struct _GtkGpePixmap): Add pixmap_selected.
+	(gtk_gpe_pixmap_set_selected): Add prototype.
+	* gtkgpepixmap.c (gtk_gpe_pixmap_set_selected): New.
+	
+2002-11-14  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob, gpe-iconlist.c, gpe/gpe-iconlist.h:
+	don't send the clicked signal if there is no icon
+	don't popup a menu if there is no icon
+	unboldify the icon when the popup handler is called
+
+2002-11-14  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob, gpe-iconlist.c, gpe/gpe-iconlist.h:
+	update to latest, LOTS of changes:
+	 loads more debugging output (for now)
+	 use g_object_[set/get]_data not gtk_object_...
+	 basic popup menu support
+
+2002-11-12  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob, gpe-iconlist.c, gpe/gpe-iconlist.h:
+	don't advance through a NULL pointer (thanks pb), fixes #144
+
+2002-11-10  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (GTK2): Default on.
+
+	* gpe/errorbox.h (gpe_error_box, gpe_perror_box): Argument is const.
+	* errorbox.c (gpe_perror_box): Likewise.
+	* errorbox.c (gpe_error_box): Likewise.
+
+	* gpe/gtkminifilesel.h (gtk_mini_file_selection_get_directory):
+	Add prototype.
+	(struct _GtkMiniFileSelection): Member "directory" is const gchar *.
+	* gtkminifilesel.c (gtk_mini_file_selection_get_directory): New
+	function.
+	(set_directory): Pathname is const gchar *.  Use g_strdup_printf
+	rather than malloc/strcpy.
+	(create_new_directory): Fix warnings.
+	(rename_file): Likewise.
+	(delete_file): Likewise.  Mark strings for translation.
+	(ask_rename_file): Delete spurious "destroy" handler.  Fix
+	formatting.  Improve prompts.  Mark strings for translation.
+	(ask_delete_file): Likewise.
+	(menu_change_directory): Use gchar for strings.
+	(set_directory_menu): Likewise.  Fix formatting.
+	(gtk_mini_file_selection_init): Likewise.  Zero fs->directory
+	earlier.  Use g_get_current_dir rather than get_current_dir_name.
+	(ask_rename_file): Fix formatting.
+	(set_members): Likewise.
+	(kill_window): Likewise.
+	(selection_made): Use g_strdup in place of strdup.
+	(gtk_mini_file_selection_set_directory): Likewise.
+	(enter_struck): Don't strdup directory name.
+
+2002-10-25  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob: Add a LGPL and copyright notice
+	* gpe-iconlist.c: regenerate from .gob
+
+2002-10-20  Moray Allan  <moray@handhelds.org>
+
+	* pixmaps.c (gpe_find_icon): Removed unnecessary abort().
+	* question.c (gpe_question_ask): Cope with failure to find an icon;
+	allow NULL icon to signify that a button should be text-only.
+
+2002-10-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.27 released.
+
+2002-10-13  Philip Blundell  <philb@gnu.org>
+
+	* errorbox.c (gpe_error_box): Set line wrap on when GTK2 is in use.
+
+	* po/en_AU.po: New file.
+	* Makefile (LINGUAS): Add en_AU.
+
+2002-10-13  Robert Mibus  <mibus@handhelds.org>
+
+	* gpeiconlist.gob: add gob source for the GPEIconList widget
+
+	* gpe-iconlist.c: add generated C source
+
+	* gpe/gpe-iconlist.h.: add generated header
+
+	* Makefile: build iconlist files from .gob when needed;
+	add gpe-iconlist.o to OBJS
+
+2002-10-06  Philip Blundell  <philb@gnu.org>
+
+	* smallbox.c (smallbox_x): Use picture buttons.
+
+2002-09-30  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.26 released.
+
+2002-09-30  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_class_init): Don't override
+	destroy method.
+	(gtk_date_combo_destroy): Delete.
+	(gtk_date_combo_init): Don't gtk_widget_ref (calw).
+
+2002-09-17  Colin Marquardt  <colin@marquardt-home.de>
+
+	* Makefile (HEADERS): Add "spacing.h".
+	(MEMBERS): Add "spacing".
+
+	* spacing.c: New file containing the gpe_get_* accessor functions.
+
+	* gpe/spacing.h: New file containing the prototypes for the
+	gpe_get_* functions.
+
+2002-09-14  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.24 released.
+
+2002-09-12  Pierre Tardy  <tardyp@free.fr>
+
+	* gtkminifilesel.c (gtk_mini_file_selection_set_directory): New
+	function.
+	* gpe/gtkminifilesel.h (gtk_mini_file_selection_set_directory):
+	Add prototype.
+
+2002-09-08  Philip Blundell  <philb@gnu.org>
+
+	* gpe/gtksimplemenu.h: New file.
+	* gtksimplemenu.c: Likewise.
+	* Makefile (MEMBERS): Add gtksimplemenu.
+
+2002-09-08  Robert Mibus  <mibus@handhelds.org>
+
+	* question.[ch]: Fix bug #85 (dc's mis-commit ;-)
+
+2002-09-07  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gtkrc: Add gpe_labels style. This is just black for now, until
+	we decide on a nice style (if at all).
+
+2002-09-01  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.23 released.
+	
+2002-09-01  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_clear): Fix warning.
+
+2002-09-05  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gtkrc: Removed gpe_username style.
+
+	* init.c (gpe_application_init): Move gtk_rc_add_default_file()
+	calls before gtk_init() since they have no effect otherwise.
+ 
+	* gtkrc: Removed the gpe-ownerinfo bg image.
+	New style 'gpe_ownerinfo_labels': give labels like "Name",
+	"E-Mail" etc. a special style.
+
+2002-08-29  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gtkrc: Add some info about font specs in pixels vs. points.
+
+2002-08-26  Pierre Tardy  <tardyp@free.fr>
+
+        * errorbox.c (gpe_error_box): the dialog acts now like a proper dialog.
+        * question.c (gpe_question_ask): fixed a memory leak where the
+	fake window will never be freed.
+
+2002-08-25  Luc Pionchon <luc.pionchon@welho.com>
+
+	* about.c: scale down to 48x48 gpe_logo; and support for app_icon on window
+
+2002-08-25  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.22 released.
+
+2002-08-25  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatesel.c (gtk_date_sel_init): Initialise day_clamped correctly.
+
+2002-08-24  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.21 released.
+
+2002-08-24  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (gtk_date_combo_clear): New function.
+	(gtk_date_combo_init): Set combo->set to TRUE.
+	(click_calendar): Likewise.
+	* gpe/gtkdatecombo.h (gtk_date_combo_clear): Add prototype.
+	(struct _GtkDateCombo): New member "set".
+
+2002-08-23  Philip Blundell  <philb@gnu.org>
+
+	* render.c (gpe_render_pixmap_alpha): Renamed from
+	gpe_render_pixmap.  New argument "overall_alpha".  Use background
+	colour for fully transparent regions.
+	(gpe_render_pixmap): Implement in terms of above.
+	* gpe/render.h (gpe_render_pixmap_alpha): Add prototype.
+
+2002-08-22  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.20 released.
+
+2002-08-23  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatecombo.c (click_calendar): Hide combo->calw, not the
+	calendar itself.  Note that the calendar is not open.
+
+2002-08-23  Joe McCarthy  <mccarthy@engrng.pitt.edu>
+
+	* gtkdatesel.c (gtk_date_sel_set_time): emit changed signal.
+
+2002-08-22  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.18 released.
+
+2002-08-22  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatesel.c (make_field): Don't show the buttons.
+
+2002-08-20  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.17 released.
+
+2002-08-20  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatesel.c (make_field): Show the arrows.
+	* errorbox.c (gpe_error_box): Always print errors to stderr.
+
+2002-08-19  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.16 released.
+
+2002-08-19  Philip Blundell  <philb@gnu.org>
+
+	* init.c (gpe_application_init): Call gtk_init before other gtk
+	functions.  Optimise a bit.  Avoid creating .gpe if home dir is
+	unset or the root directory.  Avoid memory leaks when returning
+	failure.  Improve error messages.
+	
+	* Makefile (ipkg): Force debug off.
+	(install): Don't ship gtkrc in gtk2 package.
+
+	* gtkdatesel.c (gtk_date_sel_init): Create all widgets unconditionally.
+
+2002-08-18  Colin Marquardt  <colin@marquardt-home.de>
+
+	* pixmaps.c (gpe_load_one_icon): Add linebreak before icon name in
+	error message.
+
+2002-08-17  Pierre Tardy  <tardyp@free.fr>
+
+	* init.c (gpe-init):  fixed the FIXME,when checking/creating ~/.gpe
+
+2002-08-12  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.15 released.
+
+2002-08-12  Philip Blundell  <philb@gnu.org>
+
+	* gtkminifilesel.c (button_pressed): Fix return code.
+	(button_released): Likewise.
+
+	* Makefile: Only build "about" for GTK 1.
+	(CPPFLAGS): Search ./gpe for headers.
+	(update-po): Delete, replaced by Makefile.translation.
+
+2002-08-11  Philip Blundell  <philb@gnu.org>
+
+	* smallbox.h (struct box_desc2): New.
+	(smallbox_x2): New prototype.
+	* smallbox.c (make_combo): New function.
+	(smallbox_x2): Likewise.
+
+	* gtkminifilesel.c (menu_timeout_id): Don't initialise explicitly.
+	(rename_file): Reformat slightly.  Use gpe_perror_box.
+	(create_new_directory): Likewise.  Fix memory leak.  Make new
+	directory with mode 777.
+	(popup_menu_activate): Reformat slightly.  Mark strings for
+	translation.  Remove unused variables.
+	(popup_menu_later): Delete dead assignment.
+	(popup_menu_cancel): Reformat "if" statement.
+	(selection_made): Don't refer to widget after emitting COMPLETED
+	signal, in case it was destroyed.
+	(ask_delete_file): Correct window title.  Mark strings for
+	translation.  Reformat slightly.
+	(ask_rename_file): Grab focus into entry widget.  Mark strings for
+	translation.
+
+2002-08-05  Damien Tanner <dc@magenet.com>
+
+	* gtkminifilesel.c: Add tap-n-hold
+	* about.[ch]: New module
+	* question.[ch]: New module (Thanks to mibus)
+
+2002-08-06  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gtkrc: Add gpe-ownerinfo background image.
+
+2002-08-05  Philip Blundell  <philb@gnu.org>
+
+	* familiar/control1: New file.
+	* Makefile (ipkg): Use it when building for GTK 2.
+
+2002-08-04  Philip Blundell  <philb@gnu.org>
+
+	* gtkdatesel.c: Rewrite using label and button widgets.
+	* gtkdatesel.h (GtkDateSelMode): New enum.
+	(gtk_date_sel_new): Argument is GtkDateSelMode.
+
+	* render.c (gpe_render_pixmap): Correct alpha in composited image.
+
+	* Makefile (SONAME): Use libgpewidget.so.1 if building for GTK 2.
+	(CFLAGS, LDFLAGS): Conditionalise on GTK version.
+	(libgpewidget.a): New target.
+	(MEMBERS): Delete gpedialog, gtksmallentry, nocursor.  Build
+	appropriate versions of gtkgpepixmap and gpetooltips for GTK in
+	use.
+
+	* gpedialog.c: Deleted.
+	* gtksmallentry.c: Likewise.
+	* nocursor.c: Likewise.
+
+2002-08-03  Philip Blundell  <philb@gnu.org>
+
+	* gtkgpepixmap.h (gtk_gpe_pixmap_set_build_insensitive): Second
+	argument is gboolean.
+	* gtkgpepixmap.c (gtk_gpe_pixmap_set_build_insensitive): Likewise.
+	* gtkgpepixmap2.c: New file.
+
+	* dirbrowser.c (gpe_create_dir_browser): Use GTK_WINDOW_TOPLEVEL
+	instead of GTK_WINDOW_DIALOG.
+	* gpetooltips2.c: New file.
+
+	* pixmaps.c (gpe_load_one_icon): Add conditionals for GTK 2.
+	* pixmaps.h: Include gdk.h.
+	* gtkdatecombo.c (gtk_date_combo_get_type): Correct type of return
+	value.
+	* gtkminifilesel.c (gtk_mini_file_selection_get_type): Likewise,
+	(gtk_mini_file_selection_class_init): Add conditionals for GTK 2.
+
+2002-07-25  Colin Marquardt  <colin@marquardt-home.de>
+
+	* errorbox.c (gpe_perror_box): Add line break so that we have a
+	better chance of seeing the whole string.
+
+2002-07-21  Colin Marquardt  <colin@marquardt-home.de>
+
+	* gtkrc: Remove boldness (and thus explicit setting of the font)
+	from style gpe_login_result.
+
+2002-07-21  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.14 released.
+	
+2002-07-21  Philip Blundell  <philb@gnu.org>
+
+	* init.c (gpe_application_init): Avoid free of uninitialised
+	pointer.  Fix memory leak when mkdir fails.
+
+	* gtkgpepixmap.c (gtk_gpe_pixmap_set_active): New function.
+	(gtk_gpe_pixmap_expose): Draw active pixmap if appropriate.
+	* gtkgpepixmap.h (gtk_gpe_pixmap_set_active): Add prototype.
+	(struct _GtkGpePixmap): Add pixmap_active.
+	* render.c (gpe_render_icon): Render ACTIVE state too.
+
+2002-07-20  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.13 released
+
+2002-07-20  Philip Blundell  <philb@gnu.org>
+
+	* init.c (gpe_application_init): Don't attempt to create ~/.gpe when
+	HOME not set.
+
+2002-07-20  Colin Marquardt  <colin@marquardt-home.de>
+
+	* init.c (gpe_application_init): Free user_gtkrc_file.
+
+	* gtkrc: Rename gpe_login_incorrect to gpe_login_result.
+
+	* init.c (gpe_application_init): Fix user gtkrc file.
+
+	* Makefile: Install gtkrc file.
+
+	* init.c (gpe_application_init): Add default resource files, doesn't work yet.
+
+2002-07-17  Philip Blundell  <pb@nexus.co.uk>
+
+	* Version 0.12 released
+
+2002-07-17  Philip Blundell  <pb@nexus.co.uk>
+
+	* dirbrowser.c (gpe_create_dir_browser): Unify message text.
+	* po/libgpewidget.pot: New.
+
+2002-07-15  Philip Blundell  <philb@gnu.org>
+
+	* stylus-mode.c: Deleted.
+
+2002-07-13  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.11 released
+
+2002-07-13  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Remove what.h
+
+	* pixmaps.c (gpe_load_icons): Return FALSE if any icons failed to
+	load, rather than calling exit.
+
+	* what.c (close_clicked): Remove spurious argument.
+	(gpe_what_init): Set style[GTK_STATE_PRELIGHT] too.
+	(do_widget): Display private text too, if it's different from the
+	normal tip.
+	(gpe_what_init): Create second label and pack it into a vbox.
+
+2002-07-13  Philip Blundell  <philb@gnu.org>
+
+	* init.c (gpe_application_init): Call gpe_what_init.
+	* what.c (what_init): Rename to gpe_what_init; replace
+	with dummy function that does nothing.
+	* what.h (what_init): Rename prototype appropriately.
+	
+2002-07-11  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (MEMBERS): Add screensize, gpedialog.
+	* screensize.c: New file.
+	* gpedialog.c: New file.
+
+2002-07-10  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add picturebutton.h, dammit.
+
+2002-07-10  Philip Blundell  <philb@gnu.org>
+
+	* Makefile (HEADERS): Add what.h, stylus.h
+
+2002-07-10  Philip Blundell  <philb@gnu.org>
+
+	* debian/rules (build): Set PREFIX=/usr
+	* debian/control: Add more build-depends
+	
+2002-07-09  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.10 released.
+
+2002-07-09  Philip Blundell  <philb@gnu.org>
+
+	* nocursor.c (gdk_window_set_cursor): Remove stray debugging.
+
+2002-07-09  Philip Blundell  <philb@gnu.org>
+
+	* Version 0.09 released.
+
+2002-07-09  Philip Blundell  <philb@gnu.org>
+
+	* gpetooltips.c: New file.
+	* Makefile (MEMBERS): Add gpetooltips.
+
+	* stylus-mode.c: New file.
+
+	* Makefile (MEMBERS): Add stylus, nocursor.
+
+	* nocursor.c: New file.
+	* stylus.c, stylus.h: Likewise.
+
+2002-06-22  Philip Blundell  <philb@gnu.org>
+
+	* gtkminifilesel.c (gtk_mini_file_selection_get_filename): Don't
+	append a slash to directory name if it was "/".
+	(enter_struck): New function.
+	(gtk_mini_file_selection_init): Call it when user presses RETURN.
+	(set_members): Omit anything starting with '.'.
+	(selection_made): Handle "/" directory specially.  Put focus back
+	in entry widget.
+
+2002-06-21  Philip Blundell  <pb@debian.org>
+
+	* render.c (gpe_render_pixmap): Render with no alpha if passed
+	NULL bgcol.
+	(gpe_render_icon): Tolerate NULL style.  Abort on NULL pixbuf.
+
+2002-06-21  Philip Blundell  <pb@debian.org>
+
+	* Makefile (clean): Remove $(DEPS) too.
+
+2002-06-21  Philip Blundell  <pb@debian.org>
+
+	* Version 0.08 released.
+
+2002-06-20  Philip Blundell  <pb@debian.org>
+
+	* Makefile (MEMBERS): Add what.
+	* what.c: New file.
+	* what.h: Likewise.
+
+2002-06-20  Philip Blundell  <pb@debian.org>
+
+	* errorbox.c (gpe_error_box): Remove call to gpe_load_icons.
+
+	* pixmaps.c (gpe_load_icons): Abort if called more than once.
+
+2002-06-20  Philip Blundell  <pb@debian.org>
+
+	* picturebutton.c (gpe_picture_button): Tweak packing so that icon
+	and text stay close together.
+
+	* errorbox.c (gpe_error_box): Realize window before creating
+	picture button.
+
+	* gtkminifilesel.c (menu_change_directory): Fix warning.
+	(gtk_mini_file_selection_size_request): Likewise.
+	* picturebutton.c (gpe_picture_button): Likewise.
+
+	* init.c (gpe_application_init): Test for existence of $HOME before
+	attempting to create ~/.gpe.
+
+	* pixmaps.c (gpe_load_pixmaps, gpe_find_pixmap): Deleted.
+	(gpe_load_one_icon): New function, broken out from...
+	(gpe_load_icons): ... here.  Tolerate NULL filename, just use
+	the short name in that case.
+	(gpe_find_icon): Attempt lazy loading of images if lookup fails.
+	* pixmaps.h (gpe_load_pixmaps, gpe_find_pixmap, struct pix): Deleted.
+
+2002-06-19  Philip Blundell <pb@nexus.co.uk>
+
+	* Version 0.07 released.
+
+2002-06-18  Philip Blundell  <pb@debian.org>
+
+	* picturebutton.c (gpe_picture_button): Omit label if text is NULL.
+
+2002-06-18  Moray Allan  <moray@sermisy.org>
+
+	* errorbox.c (gpe_error_box): Add a test in case we're already
+	trying to bring up an error box (if so, print to stderr instead).
+
+2002-06-17  Philip Blundell  <pb@debian.org>
+
+	* gtkminifilesel.c (gtk_mini_file_selection_init): Use picture 
+	buttons.
+
+2002-06-17  Philip Blundell  <pb@debian.org>
+
+	* render.c (gpe_render_pixmap): Tweak for better code generation.
+	Use high 8 bits of GdkColor information.
+	(gpe_render_icon): Don't render prelight if it would be the same
+	as the normal pixmap.
+
+	* picturebutton.c (gpe_picture_button): Add padding around label.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* Makefile (MEMBERS): Add picturebutton.
+	* picturebutton.h: New file.
+	* picturebutton.c: Likewise.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* render.c (gpe_render_icon): Use GtkGpePixmap in place of GtkPixmap.
+
+	* gtkgpepixmap.h (GTK_TYPE_GPE_PIXMAP): Correct definition.
+	* gtkgpepixmap.h: Replace GTK_IS_PIXMAP with GTK_IS_GPE_PIXMAP.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* Makefile (MEMBERS): Add gtkgpepixmap.
+	* gtkgpepixmap.c: New file.
+	* gtkgpepixmap.h: Likewise.
+
+	* errorbox.c: Use dgettext not gettext.
+	* gtkminifilesel.c: Likewise.
+	* pixmaps.c: Likewise.
+	* smallbox.c: Likewise.
+
+	* pixmaps.c (gpe_load_icons): New function.
+	(gpe_find_icon): Likewise.
+	(gpe_find_icon_pixmap): Likewise.
+	* pixmaps.h (struct gpe_icon): New.
+	(gpe_load_icons): New prototype.
+	(gpe_find_icon): Likewise.
+	(gpe_find_icon_pixmap): Likewise.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* Makefile (install-devel, upstream, dpkg): New rules.
+	(clean): Remove libgpewidget.so symlink.
+	(ipkg): Expect files in familiar subdir.
+	(PREFIX): Default to /usr/local.
+	(PACKAGE, HEADERS): Define.
+	(install): Use $(PREFIX).
+	* control, postinst: Moved to...
+	* familiar/control, familiar/postinst: ... here.
+	* debian/changelog, debian/control, debian/dirs, debian/docs, 
+	debian/libgpewidget-dev.dirs, debian/libgpewidget-dev.files, 
+	debian/libgpewidget0.dirs, debian/libgpewidget0.files, 
+	debian/postinst, debian/postrm, debian/rules: New files.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* errorbox.c: Add missing #include <stdio.h>.
+	* control (Version): Set to 0.05
+
+2002-06-16  Luis Oliveira  <luismbo@netcabo.pt>
+
+       * errorbox.c (gpe_error_box): Set label padding to 4 when packing.
+
+2002-06-16  Philip Blundell  <pb@debian.org>
+
+	* errorbox.c (gpe_error_box_fmt): New function.
+	* errorbox.h (gpe_error_box_fmt): Add prototype.
+	Patch from Luis Oliveira <luismbo@netcabo.pt>
+
+2002-06-15  Philip Blundell  <pb@debian.org>
+
+	* errorbox.c (gpe_error_box): Use gpe_render_icon to alpha-blend
+	pixmap.
+	* render.c (gpe_render_icon): Correct alpha calculation.
+
+2002-06-15  Philip Blundell  <pb@debian.org>
+
+	* render.c: New file.
+	* render.h: Likewise.
+	* Makefile (MEMBERS): Add render.
+
+	* init.c (gpe_application_init): Don't call gdk_imlib_init.
+	* pixmaps.c: Use gdk_pixbuf rather than gdk_imlib.
+	* errorbox.c: Likewise.
+	* Makefile: Add gdk-pixbuf flags to compile and link.

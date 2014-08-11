@@ -1,0 +1,9 @@
+如果你不小心误删除了一个重要的文件，如rm -rf kkk ,而kkk是你的一个非常重要的文件，你肯定非常痛苦，这时你千万不能惊慌，应该马上停止向你的硬盘写入任何文件。它完全是可以恢复的。(我这里专门针对 ext2文件系统写了如下的内容，其它的文件系统也有办法，我以后在写)： 
+#debugfs /dev/hda1(被删除文件所在的分区) 
+debugfs:lsdel 
+就可列出你最近被删除文件的inode表，大致如下： 
+Inode Owner Mode Size Blocks Time deleted 
+依此是节点表号，属主，文件属性(即读、写等)，大小，block(一般1block=1K),被删除时的时间。有了这些信息，你应该能很快就判断出那个文件是你想恢复的。这时用 
+debugfs:dump <你想恢复的inode表值> /home/directory(到那个目录) 
+OK！就这么简单,在/home/directory中可以找到它。
+

@@ -1,0 +1,15 @@
+http://soft.zdnet.com.cn/software_zone/2007/1101/597591.shtml
+这个模块管理工具是创建模块依赖关系的列表，有几个参数我们注意一下就行了，目前的的Linux 发行版所用的内核是2.6x版本，是自动解决依赖关系，所以这个命令知道就行了；模块之前也有依赖关系，比如我们想驱动USB 移动硬盘，目前有两种驱动，一种是udev ，在内核中有，但目前不太稳定；另一种办法是用usb-storage驱动，而usb-storage 依赖的模块是scsi 模块，所以我们要用usb-storage 的模块，也得把scsi 编译安装；
+
+再举个例子：sata的硬盘，在Linux中的设备表示的是/dev/sd* ，比如 /dev/sda，/dev/sdb 等... 系统要驱动 sata硬盘，则需要把sata在内核中选中，或编译成模块，或内置于内核之中，在此同时，还需要在内核中选中ide ，scsi 的支持等；
+
+depmod 工具的洋文原意：depmod — program to generate modules.dep and map files.（我译的：为modules.dep 文件或映射文件创建依赖关系） 
+[root@localhost beinan]# depmod  -a    
+注：为所有列在/etc/modprobe.conf 或/etc/modules.conf  中的所
+有模块创建依赖关系，并且写入到modules.dep文件；
+[root@localhost beinan]# depmod -e     
+注：列出已挂载但不可用的模块；
+[root@localhost beinan]# depmod  -n    
+注：列出所有模块的依赖关系，但仅仅是输出出来 
+（Write the dependency file on stdout only）
+注：modules.dep 位于 /lib/modules/内核版本 目录 

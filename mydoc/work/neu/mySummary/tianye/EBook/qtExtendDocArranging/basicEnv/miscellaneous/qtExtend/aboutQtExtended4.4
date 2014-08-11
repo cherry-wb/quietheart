@@ -1,0 +1,197 @@
+QT-extended是基于QT-embedded开发的手持设备用户界面和应用程序平台。
+参考文档 http://doc.qt.nokia.com/qtextended4.4/
+
+
+有关编译的一些文档条目汇总
+http://qt.nokia.com/doc/qtextended4.4/buildsystem/overviews.html
+
+大致介绍了编译QtExtended的过程(readed)
+http://doc.qt.nokia.com/qtextended4.4/building-guide.html
+
+大致介绍Qbuild系统并且后面给出了详细信息的链接(readed)
+http://doc.qt.nokia.com/qtextended4.4/buildsystem/bas-introduction-to-qbuild-1.html
+
+介绍了如何在虚拟以及实际板子上面运行Qt Extended(readed)
+http://doc.qt.nokia.com/qtextended4.4/running-qtextended.html
+
+非常简单地介绍了可在pri文件中确定编译什么(readed)
+http://doc.qt.nokia.com/qtextended4.4/buildsystem/task-deciding-what-to-build-1.html
+
+介绍Project Files（.pro文件)(readed)
+http://qt.nokia.com/doc/qtextended4.4/buildsystem/over-project-files-1.html
+
+创建运行在QtExtended中的一个新的应用程序的方法(readed)
+http://qt.nokia.com/doc/qtextended4.4/application.html
+
+关于如何进行交叉编译的简单步骤(readed)
+http://doc.qt.nokia.com/qtextended4.4/syscust-crosscompile.html
+需要配合《综合性的指导》中的Device-specific Configuration
+
+使用qconfig配置qt成qtembed的方法(注意并不是配置qtextended)(readed)
+http://doc.qt.nokia.com/qtextended4.4/qt-embedded-features.html
+
+编写一个服务类型的插件（readed）
+http://qt.nokia.com/doc/qtextended4.4/server-plugins-exampletask.html
+
+综合性的指导
+http://doc.qt.nokia.com/qtextended4.4/integration-guide.html#introduction
+这篇文章比较长，阅读到：Porting
+
+关于qbuild(readed)
+http://doc.trolltech.com/qtextended4.4/qbuild/overviews.html
+这里是qbuild的文档列表，里面的内容比较简单，但是文档中有额外的连接。
+
+似乎不错的还没有看过的文档：
+http://doc.qt.nokia.com/qtextended4.4/buildsystem/index.html
+http://doc.qt.nokia.com/qtextended4.4/buildsystem/tasks.html
+http://doc.qt.nokia.com/qtextended4.4/tut-index.html
+http://doc.qt.nokia.com/qtextended4.4/tut-deviceexample.html
+http://doc.qt.nokia.com/qtextended4.4/qtopiadesktop/overviews.html
+
+关于desktop文件的:
+http://doc.qt.nokia.com/qtextended4.4/desktopfiles.html
+
+
+
+
+
+
+
+
+
+其他资料
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc7910121b2eb9ec7b604742848561375ff21c41b1b6612d2a0276b7cdccd81b8cbbc2282c8322337a1ed11113d51ef89d5125b67ad605b7bb5cbafaa63dd3e98e909909119100127bf0e7fd5c1760cd7881152693a08e49654866bcfa4115e82f753ee921&p=8b2a9f15d9c047e407b0df0c5854&user=baidu
+qt-extended-opensource4.4.3不同方式的编译
+2009-06-16 17:02
+
+下载qt-extended-opensource-src-4.4.3.tar.gz并解压到/home/work/desktop下
+并在该目录下创建目录build
+#cd /home/work/desktop
+#tar -zxvf qt-extended-opensource-src-4.4.3.tar.gz
+#mkdir build
+#cd build
+设置环境变量：
+#export QPEDIR=/home/work/desktop/bulid
+#export QTOPIA_DEPOT_PATH=/home/work/desktop/qt-extended-4.4.3
+修改源码包：
+裁减Qtopia core的库
+# vi qtopiacore/qconfig-qpe.h
+首先注释掉关于鼠标光标的宏定义，让程序运行时，触摸屏中央有光标出现：
+// Qtopia Core
+/*
+#ifndef QT_NO_QWS_CURSOR
+# define QT_NO_QWS_CURSOR
+#endif
+*/
+
+/*
+#ifndef QT_NO_QWS_MOUSE
+# define QT_NO_QWS_MOUSE
+#endif
+#ifndef QT_NO_QWS_MOUSE_AUTO
+# define QT_NO_QWS_MOUSE_AUTO
+#endif
+*/
+
+其它宏定义根据需要进行注释。
+
+保存后将qconfig-qpe.h拷贝到global目录。
+
+# cp qtopiacore/qconfig-qpe.h qtopiacore/qt/src/corelib/global/qconfig-qpe.h
+
+注释掉其他文件里的QT_NO_QWS_CURSOR的定义
+
+# vi qtopiacore/qt/src/corelib/global/qfeatures.h
+
+注释掉如下内容：
+
+/*
+#if !defined(QT_NO_QWS_CURSOR) && (defined(QT_NO_CURSOR))
+#define QT_NO_QWS_CURSOR
+#endif
+*/
+
+保存退出。
+
+
+# vi qtopiacore/qt/src/corelib/global/qglobal.h
+注释掉以下内容：
+//#    define QT_NO_QWS_CURSOR
+保存退出。
+
+
+修改时区信息
+
+# vi src/libraries/qtopia/qtimezone.cpp
+将其中的/usr/share/zoneinfo 改为/home/work/desktop/zoneinfo,保存退出。
+
+*********************************************本机编译qt-extended*********************************
+#cd desktop
+解压qt-extended-opensource-src-4.4.3.tar.gz源码
+#mkdir build
+#../configure -qbuild-qt -image /home/work/desktop/target -prefix /home/work/desktop/target
+#bin/build
+#bin/build image //安装到了target目录下
+编译安装完运行
+#bin/runqtopia
+*************************************************************************************************
+
+*****************************************经典编译****************************************
+
+#$QTOPIA_DEPOT_PATH/configure -release -image /home/work/desktop/target -prefix /home/work/desktop/target -xplatform linux-arm-g++ -arch arm -displaysizes 640x480 -build-qt -extra-qt-embedded-config "-xplatform qws/linux-arm-g++ -embedded arm -qconfig qpe -shared -little-endian -webkit -qt-kbd-usb -qt-libpng -qt-libjpeg -qt-gif -depths 4,8,16,32 -qt-mouse-tslib -I/home/work/mytslib/include -L/home/work/mytslib/lib" 2>../qtopiaconfigureERR.txt
+
+-remove-module modem -remove-module bluetooth -remove-module drm -remove-module infrared
+添加上这几个参数试试
+
+-verbose 添加出错信息 对定位错误有点用
+
+#bin/qbuild 2>../makeQt-extendedERR.txt
+
+#bin/qbuild image
+
+配置选项：
+-xplatform linux-arm-g++ -arch arm //目标平台为arm-linux,体系结构为arm。
+-extra-qt-embedded-config //为qt-extended 配置选项。（-extra-qtopiacore-config //为Qtopia core 配置选项。）
+-xplatform qws/linux-arm-g++ -embedded arm //目标平台编译配置文件使用qtopiacore/qt/mkspecs/qws/linux-arm-g++目录下的配置文件，嵌入式平台为arm。
+-qconfig qpe //使用配置文件qconfig-qpe.h，若使用qconfig-large.h配置文件，则使用-qconfig large选项
+
+-qt-mouse-tslib
+-I/home/work/mytslib/include -L/home/work/mytslib/lib
+支持tslib，并在后面添加上刚才编译的tslib的头文件和库。
+
+2>../qtopiaconfigureERR.txt//最后将配置过程中的错误输出到qtopiaconfigureERR.txt中
+
+*****************************************************************************************
+
+******************************device编译*************************************************
+#cd desktop
+解压qt-extended-opensource-src-4.4.3.tar.gz源码
+#mkdir build
+************* 配置修改qt-extended-4.4.3/devices的目录；
+
+按照n810的配置创建自己所需要的环境目录，主要修改的地方、文件：
+1、修改mkspecs/qws/linux-nokia-g++/qmake.conf文件
+a、用自己的交叉编译工具替换arm-linux-*
+b、将自己编译的tslib的目录指定到QMAKE_LIVBS和QMAKE_INCLUDES参数中
+2、修改configure.common
+configure.common 文件 Read for both desktop and device builds (before the other file).
+按照自己的需要来裁剪参数模块
+3、修改configure：
+configure配置的是qtopia-core的参数（Read for device builds.）
+a、-xplatform linux-nokia-g++
+b、在该文档的最后添加自己所需要的参数,如-extra-qt-embedded-config "-webkit -qt-kbd-usb -qt-libpng -qt-libjpeg -qt-gif"
+
+4、修改configure-qvfb
+configure-qvfb文件 read for desktop build
+按照自己的需要裁剪
+5、修改environment
+This script (if it exists) is sourced before re-running configure and before Makefile calls Makefile.target
+
+* a、修改主要的参数；TOOLCHAIN=* 指定自己的交叉编译工具
+b、PKG_CONFIG_PREFIX和PKG_CONFIG_PATH做适当的调整
+*********************
+#cd build
+#../configure -device n810 2>../configureERR.txt
+#bin/qbuild
+#bin/qbuild image
+

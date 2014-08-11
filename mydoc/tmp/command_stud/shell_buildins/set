@@ -1,0 +1,33 @@
+用set改变 shell选项
+用户可以在$提示符下用set命令来设置或取消shell的选项。使用-设置选项，+取消相应
+选项，大多数UNIX系统允许a,e,f,h,k,n,u,v和x的开关设置/取消。
+
+*如果shell中有一个命令返回值非0则立即退出shell:
+$set -e
+这样，设置之后，如果某个命令返回非0则立即退出。
+举个例子:
+$set -e
+$ls -a
+11              diary.txt          mix.sed     split1
+$ls asdfasdsdfsw
+ls: cannot access asdfasdsdfsw: No such file or directory
+这里就退出shell了。ls返回的结果$?=1,所以退出了shell
+
+*取消之前的set -e:
+$set +e
+这样，再运行错的时候就不会退出shell了。
+
+查看set的帮助不是用man set,而是用man sh
+
+*指定脚本的参数为start：
+$set start
+$. script.sh
+这里，如果直接执行./script.sh或者. ./script.sh会运行脚本。如果设置了set start,那么，会把$1设置为start,这样用. ./script.sh执行脚本的时候，相当于用./script.sh start来运行了。
+set还可以设置脚本的参数, $1, $2, 等等.
+set -- "First one" "second" "third:one" "" "Fifth: :one"
+set a b c      # 这样也会设置位置参数.
+
+*设置shell脚本运行的时候显示每一条执行的命令：
+$set -x
+
+具体信息可以参见："help set"的帮助信息。

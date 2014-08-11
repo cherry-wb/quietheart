@@ -1,0 +1,4 @@
+可以修改当前系统键盘的映射。
+
+*查看当前系统的键盘modifier key和keycode的映射表.
+xmodmap

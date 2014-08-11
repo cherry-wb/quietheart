@@ -1,0 +1,3 @@
+*查看一个网络的ip地址：
+host www.baidu.com
+这会返回baidu的ip地址。

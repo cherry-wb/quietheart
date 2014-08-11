@@ -1,0 +1,346 @@
+http://hi.baidu.com/yxzb/blog/item/d071bf99cf48cd0f6e068cc2.html
+
+Excel VBA程序的编写
+摘要：本文通过代码演示，介绍如何从Active Directory中检索信息并将信息显示在带格式的Excel工作表中。
+（注：本文摘自Microsoft Corporation 技术人员Greg Stemp的文章，稍作修改。在文章中，估且先不要管Active Directory，可看看文章所介绍的有关Excel程序编写的相关知识，肯定会有所帮助的。所有示例及图示均在工作簿Excel代码编写示例.xls中）
+使用 Excel：快速回顾
+我们可以仅仅使用下面两行代码就能创建 Excel工作簿：
+****************************************
+Sub BuildWorkbook()
+Dim objExcel as Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Workbooks.Add
+End Sub
+****************************************
+在默认情况下，您在任何时候创建的 Excel 工作簿都运行在不可见的窗口之中。要实际地看一看所创建的Excel 工作簿，需要将 Visible 属性设置为 TRUE，如下所示：
+****************************************
+Sub BuildWorkbook()
+Dim objExcel as Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Workbooks.Add
+objExcel.Visible = True
+End Sub
+****************************************
+上面的三行代码将在屏幕上显示一个空白的电子表格。
+将数据添加到电子表格中
+当电子表格关闭时，您可以很容易地将数据添加到电子表格中。首先您简单地引用一个单元格，然后相应地设置值。例如，假设我们想要将文本“My Workbook”输入第一行第一列。试一试下面的代码，看看会发生什么：
+****************************************
+Sub addData()
+Dim objExcel as Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+objExcel.Cells(1, 1).Value = "My Workbook"
+End Sub
+****************************************
+当您运行这个代码后，会看到类似如下面图1所示的输出：
+
+图 1. 将数据写入 Excel 电子表格
+哈哈，很酷吧！如果您想要添加其他的数据，我们只需要多引用几个单元格并且设置合适的值就可以了。例如，下面的脚本将四种动物的名称添加到我们的电子表格中：
+****************************************
+Sub addDatas()
+Dim objExcel As Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+objExcel.Cells(1, 1).Value = "小猫"
+objExcel.Cells(1, 2).Value = "小狗"
+objExcel.Cells(1, 3).Value = "小兔"
+objExcel.Cells(1, 4).Value = "小猪"
+End Sub
+****************************************
+当您运行这段代码后，会看到类似如下图2所示的输出：
+
+图 2. 将数据写入 Excel 电子表格中的多个单元格
+现在，真的非常酷……！嗯，不错，您真行！但这还不够，是吗？可以将数据添加到电子表格是一件了不起的事哦，不过，让我们考虑一下这个问题。我们为什么愿意在 Excel 中显示数据而不愿意在命令窗口中显示数据或将其保存到文本文件中呢？我们之所以愿意这么做，最可能的原因并不是选择这两种方法会让您花大量的精力去安排数据的格式。至少我们可以说将数据输出到命令窗口或保存到文本文件会缺少某种美感。这就是我们愿意使用Excel的原因；Excel使您能够创建格式漂亮、易于阅读的输出。但是在这里我们还无法保证有格式漂亮的输出；毕竟，您可能连“小猫”或“小狗”这样的名字都读不到。因此，在进一步讨论之前，让我们先来谈一谈Excel中的格式设置。
+Excel中的格式设置
+如果您曾经使用过 Excel，您就知道在 Excel 中设置格式是多么的容易：您只需选择一两个单元格，然后就可以应用某种格式了(更改字体大小、更改单元格的背景颜色、将文本设置为黑体等等，想做什么都可以)。在程序化地使用Excel时，您也可以做同样的事情。例如，仅仅通过使用一些设置格式的命令，您就可以设置活动单元格(即您正在输入的单元格)的格式。下面的代码将单词“My Workbook”输入到第1行第1列的单元格中，然后进行如下操作：
+1、将文本设为黑体(通过将Bold属性设置为TRUE)。
+2、将字体大小设为 24(通过将Size属性设置为 24)。
+3、将字体颜色设为红色(通过将ColorIndex属性设置为3)。
+****************************************
+Sub Setformat()
+Dim objExcel As Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+objExcel.Cells(1, 1).Value = "My Workbook"
+objExcel.Cells(1, 1).Font.Bold = TRUE
+objExcel.Cells(1, 1).Font.Size = 24
+objExcel.Cells(1, 1).Font.ColorIndex = 3
+End Sub
+****************************************
+当您运行这个代码时，您会看到如下图3所示的输出：
+
+图 3. 将带格式的数据写入 Excel 电子表格
+屏住呼吸，怎么样？
+最好的是除了 ColorIndex 属性略显复杂之外（等一会儿我们将讨论它），这段代码是非常简单的。如果想要将文本设为斜体该怎么办？可以使用下面这行代码：
+****************************************
+objExcel.Cells(1, 1).Font.Italic = TRUE
+****************************************
+如果想要使用 Times New Roman 字体该怎么办？可以使用下面这行代码：
+*************************************************
+objExcel.Cells(1, 1).Font.Name = "Times New Roman"
+*************************************************
+注：遗憾的是，我们没有时间全面介绍您在处理时会使用的许多格式设置选项。不过，请您关注，我将在以后摘录一些很好的关于 Excel 对象模型的信息。
+好的，但 ColorIndex 属性又怎么样呢？虽然在 Excel 中有两种不同的方法更改颜色，但 ColorIndex 可能是最简单的（它还可以告诉您一些关于其他方法的内容）。在 Excel 中，有56种内置的颜色(索引号 1–56)可供您使用；您必须做的事情就是将 ColorIndex 属性的值设置为期望的索引号。唯一的问题就是：您如何知道索引号3是红色，而索引号4是您真正感兴趣的绿色阴影呢？
+下面这些简单的程序代码会向您显示所有的56个索引号都代表什么颜色： 
+*************************************************
+Sub TestColor()
+Dim objExcel As Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+Dim i As Integer
+For i = 1 to 56
+objExcel.Cells(i, 1).Value = i
+objExcel.Cells(i, 1).Interior.ColorIndex = i
+Next
+End Sub
+*************************************************
+当您运行这段代码后，您会看到如下图4所示的输出：
+
+图 4. Excel ColorIndex 值
+您可以看出，如果您想要将字体颜色设置为清绿色，则只需将 ColorIndex 设置为 8 就行了。
+顺便提一句，如果您仔细地看过了前面的代码，您现在就会知道如何设置单元格的背景颜色：只需使用 Interior.ColorIndex 属性就行了。例如，要将单元格的颜色设置为红色，可以使用下面的代码：
+*************************************************
+objExcel.Cells(1, 1).Interior.ColorIndex = 3
+*************************************************
+在继续讨论之前，先来为我们的格式设置代码做另外一件事。您可能会想得起来，我们的测试代码向我们显示以下图5所示的输出：
+
+图 5. 将带格式的数据写入 Excel 电子表格
+问题在哪里？嗯，首先单词“My Workbook”并没有全部显示在第一列中。那好，如果我们在第一行第二列中输入一些内容会怎么样呢？我们会看到类似于图6这样的输出：
+
+图 6. Excel 电子表格中大小设置不正确的列
+没有正确地得到我们所希望的输出类型。显然，我们需要做的是将第一列加宽一点。但怎么做呢？
+使用范围
+到此为止，我们还只是设置了活动单元的格式，为其更改字体大小、单元格颜色等等。然而，有时您需要使用多个单元格。或许您想要更改特定行中所有单元格的字体大小。或许您想要对您收集的所有数据进行排序。或许，和下面的例子一样，您想要重新设置整个列的大小。如果这样，您就需要使用范围，即一组指定的单元格。
+虽然有几种不同的方法指示范围中包含的单元格，但是它们有一点是共同的：它们都需要您创建 Range 对象的实例，然后 指定哪些单元格是该范围的一部分。例如，下面是一些创建范围的常用方法。
+要创建包含单个单元格的范围：
+*************************************************
+Set objRange2 = objExcel.Range("A1")
+*************************************************
+要创建包含整个列的范围：
+*************************************************
+Set objRange = objExcel.ActiveCell.EntireColumn
+*************************************************
+正如您所期望的，有相似的命令来创建包含整个行的范围：
+*************************************************
+Set objRange = objExcel.ActiveCell.EntireRow
+*************************************************
+如果您想要选择的行或列不同于带有活动单元格的行或列怎么办？没问题。使用所需的行或列中的一个单元格来创建范围，然后使用 Activate 方法来使其成为活动单元格。此时，设置代表整个行或列的范围。例如，下面这段代码使单元格 E5 成为活动单元格，然后通过选择整个行来创建包含第 5 行中的所有单元格的范围：
+*************************************************
+Set objRange = objExcel.Range("E5")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireRow
+*************************************************
+要创建包含一组单元格的范围：
+*************************************************
+Set objRange = objExcel.Range("A1:C10")
+*************************************************
+注意，您在这里做的是指定起点 (A1) 和终点 (C10)。Excel 会自动选择这两个点之间的所有单元，并把它们放在范围之中。
+要创建包含所有数据的范围：
+*************************************************
+Set objCell = objExcel.Range("A1").SpecialCells(11)
+*************************************************
+在这个例子中，11 是表示包含数据的电子表格中最后的单元格的参数。这个命令所创建的范围从单元格 A1 开始一直延伸到所有包含数据的单元格。
+为了进行演示，让我们再看一下前面的代码，看看我们是否能够使它变得更漂亮一点。在这个经过修改的代码中，我们将把动物的名称放在单列（而不是单行）中，并且我们将给该列加上粗体标签 (Name)。然后，仅仅是为了使它变得更美观一些，我们将：
+1、更改带标签的单元格 (1,1) 的背景颜色和字体颜色。
+2、创建包含我们正在使用的五个单元格的范围 (A1:A5) 并更改字体大小。
+3、创建包含带有四个动物名称的单元 (A2:A5) 的范围并更改背景颜色。
+4、选择列 A 并使用 Autofit 方法来重新设置列的大小，以便所有的文本都适合。
+代码如下：
+*************************************************
+Sub TestRange()
+Dim objExcel As Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+objExcel.Cells(1, 1).Value = "Name"
+objExcel.Cells(1, 1).Font.Bold = TRUE
+objExcel.Cells(1, 1).Interior.ColorIndex = 30
+objExcel.Cells(1, 1).Font.ColorIndex = 2
+objExcel.Cells(2, 1).Value = "小猫"
+objExcel.Cells(3, 1).Value = "小狗"
+objExcel.Cells(4, 1).Value = "小兔"
+objExcel.Cells(5, 1).Value = "小猪"
+Set objRange = objExcel.Range("A1","A5")
+objRange.Font.Size = 14
+Dim objRange As Range
+Set objRange = objExcel.Range("A2","A5")
+objRange.Interior.ColorIndex = 36
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.AutoFit
+End Sub
+*************************************************
+下面图7是最终的输出结果：
+
+图 7. Excel 电子表格中美观的格式
+数据排序
+您可以对Excel中的输出进行排序。将下面这两行代码放在上面的程序的末尾(我们等会儿解释这两行代码的含义)，然后再次运行程序：
+*************************************************
+Dim objRange2 As Range
+Set objRange2 = objExcel.Range("A1")
+objRange.Sort objRange2,,,,,,,1
+*************************************************
+您应该看到如下图8所示的输出：
+
+图 8. Excel 电子表格中经过排序的数据
+您必须按范围对 Excel 中的数据进行排序。因而，您需要创建一个范围，它包含您想要按其进行排序的列的第一个单元格。因为我们想要按列A进行排序，所以我们创建的范围包含单个单元格：A1。下面这行代码的作用就在于此：
+*************************************************
+Set objRange2 = objExcel.Range("A1")
+*************************************************
+这种 Sort 方法看起来很疯狂(这么多逗号！)，但这是因为我们仅仅按单列进行排序。当您在 Excel 中对一些内容进行排序时，您必须依次指定所有的排序参数；如果您不使用参数，则将其保留为空。下表对这些参数进行了总结。
+*************************************************
+参数位置 说明
+1 按第一列进行排序。必须将其指定为范围。
+2第一列的排序次序。将其设置为 1 表示升序（默认），将其设置为 2 表示降序。
+3按第二列进行排序。必须将其指定为范围。
+4不用于脚本。将其保留为空。
+5第二列的排序次序。
+6按第三列进行排序。必须将其指定为范围。
+7第三列的排序次序。
+8指示将要进行排序的数据是否有标题行。将其设置为 1，指示该数据有标题行；将其设置为 0，指示该数据没有标题行；而0可以让 Excel 确认数据是否有标题行。
+*************************************************
+下面是在我们的示例代码中解释排序参数 objRange2,,,,,,,1 的方式：
+*************************************************
+参数 说明
+objRange2按第一列进行排序。在我们的例子中，这是包含单元格 A1 的范围。
+, 第一列的排序次序。我们不使用这个参数，所以将其保留为空。
+, 按第二列进行排序。我们不使用这个参数，所以将其保留为空。
+, 不用于脚本。将其保留为空。
+, 第二列的排序次序。我们不使用这个参数，所以将其保留为空。
+, 按第三列进行排序。我们不使用这个参数，所以将其保留为空。
+, 第三列的排序次序。
+1指示将要进行排序的数据有标题行。
+*************************************************
+在稍后的代码中，我们将举例对两个不同的列进行排序。
+哦，从 Active Directory 中提取数据
+我们将要做的事情是编写一个程序代码来搜索 Active Directory 并提取每个用户帐号的信息；然后，我们使用这些信息来建立公司电话目录。注意，当我向您展示用于搜索 Active Directory 的代码时，我们将不会采用任何方式来讨论这些代码；毕竟，这是一个关于 Excel 的话题。(如果您想要获得更多关于使用程序代码来搜索 Active Directory 的信息，您可以参考其它一些参考资料)
+首先，让我们来看一看下面这段代码，然后我们将对相关的部分做一些介绍：
+*************************************************
+Const ADS_SCOPE_SUBTREE = 2
+Sub GetDataAD()
+Dim objExcel As Application
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+objExcel.Cells(1, 1).Value = "Last name"
+objExcel.Cells(1, 2).Value = "First name"
+objExcel.Cells(1, 3).Value = "Department"
+objExcel.Cells(1, 4).Value = "Phone number"
+Dim objConnection, objCommand
+Set objConnection = CreateObject("ADODB.Connection")
+Set objCommand =   CreateObject("ADODB.Command")
+objConnection.Provider = "ADsDSOObject"
+objConnection.Open "Active Directory Provider"
+Set objCommand.ActiveConnection = objConnection
+objCommand.Properties("Page Size") = 100
+objCommand.Properties("Searchscope") = ADS_SCOPE_SUBTREE
+objCommand.CommandText = _
+"SELECT givenName, SN, department, telephoneNumber FROM " _
+& "'LDAP://dc=fabrikam,dc=microsoft,dc=com' WHERE " _
+& "objectCategory='user'"
+Dim objRecordSet
+Set objRecordSet = objCommand.Execute
+objRecordSet.MoveFirst
+Dim x As Integer
+x = 2
+Do Until objRecordSet.EOF
+objExcel.Cells(x, 1).Value = _
+objRecordSet.Fields("SN").Value
+objExcel.Cells(x, 2).Value = _
+objRecordSet.Fields("givenName").Value
+objExcel.Cells(x, 3).Value = _
+objRecordSet.Fields("department").Value
+objExcel.Cells(x, 4).Value = _
+objRecordSet.Fields("telephoneNumber").Value
+x = x + 1
+objRecordSet.MoveNext
+Loop
+Dim objRange As Range
+Set objRange = objExcel.Range("A1")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.Autofit
+Set objRange = objExcel.Range("B1")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.Autofit
+Set objRange = objExcel.Range("C1")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.Autofit
+Set objRange = objExcel.Range("D1")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.Autofit
+Set objRange = objExcel.Range("A1").SpecialCells(11)
+Dim objRange2 As Range
+Set objRange2 = objExcel.Range("C1")
+Dim objRange3 As Range
+Set objRange3 = objExcel.Range("A1")
+objRange.Sort objRange2,,objRange3,,,,,1
+End Sub
+*************************************************
+确实，这段代码看起来 有点复杂。但实际上，它非常简单。例如，看到了用斜体字显示的代码行了吗？嗯，现在，我们完全可以忽略它们。它们用于： 
+1、创建可见的 Excel 实例（您已经知道如何去做了）。
+2、标记四个用于输出的列 (Last name、First name、Department、Phone number)。您也已经知道如何去做了。
+3、搜索 fabrikam.com 域并检索所有用户帐号的 SN（姓或名）、givenName（名）、department 和 telephoneNumber 属性。如果您不知道如何去做，可以参考其它相关资料。
+事实上，只有开始编写这些用黑体字显示的代码行之后，程序编写才开始变得有趣：
+*************************************************
+x = 2
+Do Until objRecordSet.EOF
+objExcel.Cells(x, 1).Value = _
+objRecordSet.Fields("SN").Value
+objExcel.Cells(x, 2).Value = _
+objRecordSet.Fields("givenName").Value
+objExcel.Cells(x, 3).Value = _
+objRecordSet.Fields("department").Value
+objExcel.Cells(x, 4).Value = _
+objRecordSet.Fields("telephoneNumber").Value
+x = x + 1
+objRecordSet.MoveNext
+Loop
+*************************************************
+这是我们从 Active Directory 中实际提取数据并将其显示在 Excel 中的地方。为此，我们首先将变量 x 的值设置为 2。该变量指示电子表格中的当前行。我们为什么从第二行开始而不从第一行开始呢？其原因很简单，我们把列标题放在了第一行。因此，我们从第二行开始显示数据。
+接下来，我们创建一个循环来循环显示返回记录集中的所有记录。循环中的第一个命令是：
+*************************************************
+objExcel.Cells(x, 1).Value = _
+objRecordSet.Fields("SN").Value
+*************************************************
+这段代码选择第 2 行（用 x 表示）第 1 列，并且将该值设置为 objRecordSet.Fields("SN")。这是记录集中第一个用户的 SN（姓）。然后，脚本转到第 2 行第 2 列，并且将该单元格的值设置为用户的 givenName（名）。在为 department 和 telephoneNumber 执行了相同的操作之后，脚本将 x 增加 1（从而使 x = 3）。然后，它循环处理记录集中的下一个记录，并将数据显示在第 3 行中。这样继续下去，直到所有的用户数据都添加到电子表格中为止。
+换句话说，就是您从Active Directory 中提取数据并将其显示在 Excel 中。您首先检索数据，然后简单地将指定单元格的值设置为从 Active Directory 中提取的值。通过使用简单的 Do Loop 循环并将行号每次增 1，您可以显示记录集中的每一项的信息。就是这么简单！
+脚本的剩余部分纯粹就是点缀了。例如，这段代码将活动范围设置为单元格 A1，选择整个列，然后使用 Autofit 方法来重新设置该列的大小，这样所有的数据就都可以显示在屏幕上。该代码然后对列 B、C 和 D 重复这个过程。
+*************************************************
+Set objRange = objExcel.Range("A1")
+objRange.Activate
+Set objRange = objExcel.ActiveCell.EntireColumn
+objRange.Autofit
+*************************************************
+代码的最后四行对所有的返回数据进行排序，首先按部门名称进行排序，然后按姓进行排序。程序首先创建包含所有数据的范围，然后为单元格 C1（按第一列进行排序）和单元格 A1（按第二列进行排序）创建单独的范围。此时，程序调用 Sort 方法，将单独的范围对象作为参数传入。（相信我：这听起来虽然有点复杂，但是它真的非常简单！） 
+如果您在填充了电子表格之后想要自动保存它，该怎么做呢？如果与这个例子的情况一样，就只要在脚本的末尾加上下面这段代码就行了；这三行代码将电子表格保存为 C:\Scripts\Phone_Directory.xls 并退出Excel 应用程序：
+*************************************************
+Set objWorkbook = objExcel.ActiveWorkbook
+objWorkbook.SaveAs("C:\Scripts\Phone_Directory.xls")
+objExcel.Quit
+*************************************************
+如果不想退出Excel 实例，只要不加上最后一行就可以了。
+记住，您并不限于显示 Excel 中的 Active Directory 信息。例如，下面是一个非常简单的 WMI 脚本程序，它检索运行在计算机上的所有服务的状态和名称，然后将这些信息显示在 Excel 中。
+*************************************************
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+objExcel.Workbooks.Add
+x = 1
+strComputer = "."
+Set objWMIService = GetObject _
+("winmgmts:\\" & strComputer & "\root\cimv2")
+Set colServices = objWMIService.ExecQuery _
+("Select * From Win32_Service")
+For Each objService in colServices
+objExcel.Cells(x, 1) = objService.Name
+objExcel.Cells(x, 2) = objService.State
+x = x + 1
+Next
+*************************************************
+虽然相当简单，但是它为您提供了一些创建脚本程序的基础。

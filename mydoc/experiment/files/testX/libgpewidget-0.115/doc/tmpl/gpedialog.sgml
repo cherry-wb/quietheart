@@ -1,0 +1,35 @@
+<!-- ##### SECTION Title ##### -->
+gpedialog
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION gpe_info_dialog ##### -->
+<para>
+
+</para>
+
+@text: 
+
+
+<!-- ##### FUNCTION gpe_info_dialog_nonblocking ##### -->
+<para>
+
+</para>
+
+@text: 
+
+

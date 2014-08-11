@@ -1,0 +1,123 @@
+主要内容：
+目前的工作
+实现思路
+添加的可能位置
+修改日志
+其它补充
+
+
+目前的工作：
+===========
+通过一个硬件的按钮，实现只播放一帧（向前或者向后）。
+
+实现思路：
+===========
+对原来的设置速度进行扩展，添加两个参数：
+
+添加的可能位置
+===========
+之1，
+zou3Kernel/include/zou3sysconapi.h:MEDIAPLAYSPEED_t
+之2，
+zou3Sc/deck/deckControl/deckConvert.c:deckPlaySpeedConvertMediaToDeck
+zou3App/include/zou3deck.h:DECK_PLAY_SPEED
+之3,
+zou3Sc/deck/player/playSpeedManage.c:playSpeedParameterCheck
+之4，
+zou3Sc/deck/player/playInterface.c:playSpeedSet
+zou3Sc/deck/player/playSpeedManage.h:PLAY_SPEED_CHANGE_TYPE_t
+
+添加代码的位置：
+zou3Sc/deck/deckControl/deckMediaBlockApi.c:mediaDkPlaySpeedSet()中的deckSpeedCheck之后还是，
+zou3SC2P/UIF/RPC/STUB/sc2pStubDkWrapper.c:sc2pStubMediaDkPlaySpeedSet的mediaDkPlaySpeedSet之前加上：
+if(speed == 8)
+{
+	if(暂停)//是
+	{
+		speed = 0;
+		goto setspeed;//pauseoff();
+		播放一帧之后；
+		one_frame1_pauseon:
+		speed = 1;
+		goto setspeed;//pauseon();
+		//问题：再生一时停止???
+	}
+	one_frame1_end:
+	(设置回正常吗？)
+	return ret;
+}
+else if(speed==9)
+{//逆向
+	if(暂停)
+	{
+		speed=5;
+		goto setspeed;//反向
+		on_frame2_pauseoff:
+		speed = 0;
+		goto setspeed;//pauseoff();
+		播放一帧之后；
+		one_frame2_pauseon:
+		speed = 1;
+		goto setspeed;//pauseon();
+	}
+	one_frame2_end:
+	(设置回正常吗？)
+	return ret;
+}
+...
+if(speed == 8)
+{
+	if(0==speed)
+	{
+		goto one_frame1_pauseon;
+	}
+	else if(1 == speed)
+	{
+		goto one_frame1_end;
+	}
+}
+else if(speed==9)
+{
+	if(5==speed)
+	{
+		goto one_frame2_pauseoff;
+	}
+	else if(0 == speed)
+	{
+		goto one_frame2_pauseon;
+	}
+	else if(1 == speed)
+	{
+		goto one_frame2_end;
+	}
+}
+...
+return pResult;
+
+修改日志
+===========
+zou3SC2P/UIF/RPC/STUB/sc2pStubDkWrapper.c:sc2pStubMediaDkPlaySpeedSet
+修改的PlaySpeed.ttl脚本，添加了f和b命令。参见
+/root/tmp/work
+
+其它补充
+===========
+参照脚本：DeckSim.ttl
+        strcompare mainCommand 'pauseon'
+        if result=0 then 
+            save_status = status
+            status = 'PAUS'
+            include '.\Sub\PauseOn.ttl'
+        endif
+
+        strcompare mainCommand 'pauseoff'
+        if result=0 then 
+            status = save_status
+            include '.\Sub\PauseOff.ttl'
+        endif
+
+        strcompare mainCommand 'speed'
+        if result=0 then 
+            include '.\Sub\PlaySpeed.ttl'
+        endif
+

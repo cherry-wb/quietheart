@@ -1,0 +1,19 @@
+http://hi.baidu.com/tcxiaochuan/blog/item/fb71a2f0d57ea2cb7931aaf4.html
+Writeback和Writethrough区别
+2009-03-05 15:10
+
+Write caching 或 write-through
+
+write-through意思是写操作根本不使用缓存。数据总是直接写入磁盘。关闭写缓存，可释放缓存用于读操作。（缓存被读写操作共用）
+
+Write caching可以提高写操作的性能。数据不是直接被写入磁盘；而是写入缓存。从应用程序的角度看，比等待完成磁盘写入操作要快的多。因此，可以提高写性能。由控制器将缓存内未写入磁盘的数据写入磁盘。表面上看，Write cache方式比write-through方式的读、写性能都要好，但是也要看磁盘访问方式和磁盘负荷了。
+write-back（write cache）方式通常在磁盘负荷较轻时速度更快。负荷重时，每当数据被写入缓存后，就要马上再写入磁盘以释放缓存来保存将要写入的新数据，这时如果数据直接写入磁盘，控制器会以更快的速度运行。因此，负荷重时，将数据先写入缓存反而会降低吞吐量。
+
+Starting and stopping cache flushing levels
+
+这两个设置影响控制器如何处理未写入磁盘的缓存内数据，并且只在write-back cache方式下生效。缓存内数据写入磁盘称为flushing.你可以配置Starting and stopping cache flushing levels值，这个值表示占用整个缓存大小的百分比。当缓存内未写入磁盘的数据达到starting flushing value时，控制器开始flushing（由缓存写入磁盘）。当缓存内未写入磁盘数据量低于stop flush value时，flushing过程停止。控制器总是先flush旧的缓存数据。缓存内未写入数据停留超过20秒钟后被自动flushing.
+典型的start flushing level是80%。通常情况下，stop flushing level也设置为80%。也就是说，控制器不允许超过80%的缓存用于write-back cache,但还是尽可能保持这一比例。如果你使用此设置，可以在缓存内存更多的未写入数据。这有利于提高写操作的性能，但是要牺牲数据保护。如果要得到数据保护，你可以使用较低的start and stop values。通过对这两个参数的设置，你可以调整缓存的读、写性能。经测试表明，使用接近的start and stop flushing levels时性能较好。如果stop level value远远低于start value，在flushing时会导致磁盘拥塞。
+
+Cache block size
+这个值指缓存分配单元大小，可以是4K或16K。选择合适的值，可以明显的改善缓存使用性能。
+如果应用程序更多时候访问小于8K的数据，而将cache block size设置为16K，每次访问仅使用一部分cache block。在16K的cache block里总是存储8K或更小的数据，意味着只有50%的缓存容量被有效使用，使性能下降。对于随机I/O和小数据块的传送，4K比较合适。另一方面，如果是连续I/O 并使用大的segment size，最好选择16K。大的cache block size意味着cache block数量少并可缩短缓存消耗延时。另外，对于同样大小的数据，cache block size大一些，需要的缓存数据传送量更小。

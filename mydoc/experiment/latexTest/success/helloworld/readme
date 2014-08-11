@@ -1,0 +1,12 @@
+编写helloworld.tex之后：
+1，转换成dvi格式：
+$latex helloworld.tex
+这样转换成了一个dvi的中间格式，可以使用$evince helloworld.dvi查看生成的文件。
+
+2,转换成pdf格式：
+$pdflatex helloworld.tex
+这样直接把helloworld.tex转换成了pdf格式，
+
+或者:
+$dvipdfm helloworld.dvi
+这样把helloworld.dvi格式转换成了pdf格式的helloworld.pdf

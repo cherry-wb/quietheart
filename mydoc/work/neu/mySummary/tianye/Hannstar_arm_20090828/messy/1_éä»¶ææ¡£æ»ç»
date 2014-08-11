@@ -1,0 +1,219 @@
+当前使用的平台：
+Aspen M平台
+
+已有的附件资料总结
+=================
+手持移动，计算，消费平台的解决方案，
+如果采用了aspen,那么如下：
+*Marvell Sheeva PJ1 CPU
+*Up to 1.2GHz
+*WMMX2
+*HW 2D
+*S/W 720p video
+
+----------
+处理器对照表：
+这里只列出了采用Aspen解决方案的处理器对照表：
+1)AspenL:
+CPU:400 MHz, Sheeva Pj1 w/WMMx2
+CPU ISA:ARMv5/xScale
+L1 Cache 32KB/32KB
+L2 Cache 64KB
+Memory:Lp-DDR 156MHz DDR2 400 MHz (DDR2-800)x16
+Display: UptoXGA
+Graphics: 2D/Scaler
+Video:-
+Additional Blocks:Qdeo^TM ICR
+KeyPeriherals:5-in-1 Card Reader,USB
+Process/Package:55nm,BGA
+
+2)AspenM:
+*CPU:800 MHz, Sheeva Pj1 w/WMMx2
+*CPU ISA:ARMv5/xScale
+L1 Cache 32KB/32KB
+L2 Cache 128KB
+*Memory:Lp-DDR 156MHz DDR2 400 MHz (DDR2-800)x16
+Display: Upto WUXGA
+Graphics: 2D/Scaler
+Video:Up to D1 using WMMX2
+Additional Blocks:Qdeo^TM ICR
+KeyPeriherals:FE,5-in-1 Card Reader,USB
+Process/Package:55nm,BGA
+
+3)PXA168 AspenP:
+CPU:1.2GHz, Sheeva Pj1 w/WMMx2
+CPU ISA:ARMv5/xScale
+L1 Cache 32KB/32KB
+L2 Cache 128KB
+Memory:Lp-DDR 156MHz DDR2 533 MHz (DDR2-1066)x16
+Display: Upto WUXGA
+Graphics: 2D/Scaler
+Video:Up to 720p using WMMX2
+Additional Blocks:Qdeo^TM ICR
+KeyPeriherals:PCle,FE,5-in-1 Card Reader,USB
+Process/Package:55nm,BGA
+
+另外更为高档的有：
+Dove, PXA310-Monahans-LV, MMP2
+
+-------------------------------------
+对AspenM处理器相关参数的解释：
+*CPU:800 MHz, Sheeva Pj1 w/WMMx2
+(这里的WMMx2,参见"关于WMMX2")
+根据资料可知，这是一种指令集用于图形加速技术的指令集合，对于视频解码等的一种比较先进的技术，但是不是硬解码。
+
+*CPU ISA:ARMv5/xScale
+（关于xScale参见"关于xScale"）
+ARMv5系列，支持xScale核。支持Xscale内核，相比于ARM处理器，XScale功耗更低，系统伸缩性更好，同时核心频率也得到提高,还支持高效通讯指令，其中一个主要的扩展就是无线MMX.
+
+L1 Cache 32KB/32KB
+L2 Cache 128KB
+这里指定了缓存的大小。更多关于缓存的信息，可以参见"关于缓存".
+
+*Memory:Lp-DDR 156MHz DDR2 400 MHz (DDR2-800)x16
+关于DDR信息参见"关于DDR".
+
+*Display: Upto WUXGA
+(显示的参数，宽屏扩展图形阵列见"杂项"，或者"关于WUXGA")
+根据资料可知，属于高档产品，支持分辨率可达到1920x1200、纵横比为16:10,按16：10比例的加宽本本屏幕，适合于DVD影片的长宽比，所以看DVD时不会有图象变形或两边图象显示不出来的问题。
+
+*Graphics: 2D/Scaler
+(关于图形加速器的参数，2D图形加速，支持Scaler.详见"关于图形加速")
+根据资料可知，显卡对2D（比如2D游戏，PhotoShop这类的软件）图形都有硬件上的加速功能,支持图像的缩放功能（由Scaler提供）
+
+*Video:Up to D1 using WMMX2
+采用WMMX2指令集合的D1解码(软解码)。
+
+Additional Blocks:Qdeo^TM ICR
+
+KeyPeriherals:FE,5-in-1 Card Reader,USB(参见后面"杂项"的"AspenM的KeyPeriherals")
+Process/Package:55nm,BGA
+支持5-in-1的读卡器。FE,快速以太网。USB设备。
+-------------------------------------
+
+Aspen SKU比较
+						AspenLite	Aspen L		Aspen M			Aspen P
+Package                LQFP-128    BGA-320       BGA-320         BGA-320
+GPS BB                      -           -            -                -
+Max CPU Speed           400 MHz     400 MHz      800 MHz          1.2 GHz
+WMMX2                     Yes         Yes          Yes              Yes
+Memory               LP-DDR1-200 LP-DDR1-200   LP-DDR1-200     LP-DDR1-200
+(x16 DRAM)            DDR2-400     DDR2-400     DDR2-800        DDR2-1066
+L1, L2 Caches         32/32/0 KB  32/32/64 KB  32/32/128 KB    32/32/128 KB
+LCD Max Res, Color    XGA 18bpp   XGA 24bpp   WUXGA 24bpp      WUXGA 24bpp
+2D and QdeoTM ICR          Yes         Yes          Yes              Yes
+Video Decode                -           -     MPEG-4 up to D1 MPEG-4 up to 720P
+USB2.0 HS + PHY*         1 OTG       1 OTG    1 OTG, 1 host    1 OTG, 1 host
+xD Picture Card           Yes         Yes          Yes              Yes
+CompactFlash+               -         Yes          Yes              Yes
+FE MAC                      -           -          Yes              Yes
+PCIe2.0 x1 Lane             -           -            -              Yes
+DRAM 2nd Chip Select        -           -            -              Yes
+
+
+一些基本概念
+============
+SoC
+	概念
+	System on Chip的缩写，称为系统级芯片,也有称片上系统,意指它是一个产品,是一个有专用目标的集成电路,其中包含完整系统并有嵌入软件的全部内容.
+
+	简介
+	一般说来, SoC称为系统级芯片,也有称片上系统,意指它是一个产品,是一个有专用目标的集成电路,其中包含完整系统并有嵌入软件的全部内容。同时它又是一种技术, 用以实现从确定系统功能开始,到软/硬件划分,并完成设计的整个过程。从狭义角度讲,它是信息系统核心的芯片集成,是将系统关键部件集成在一块芯片上;从广义角度讲, SoC是一个微小型系统,如果说中央处理器(CPU)是大脑,那么SoC就是包括大脑、心脏、眼睛和手的系统。
+
+	Soc发展趋势及存在的问题
+	当前芯片设计业正面临着一系列的挑战,系统芯片SoC已经成为IC设计业界的焦点, SoC性能越来越强,规模越来越大。
+	问题：
+	1)设计的复杂性很大
+	SoC芯片的规模一般远大于普通的ASIC,同时由于深亚微米工艺带来的设计困难等,使得SoC设计的复杂度大大提高。
+	2）仿真与验证耗时，复杂。
+	在SoC设计中,仿真与验证是SoC设计流程中最复杂、最耗时的环节,约占整个芯片开发周期的50%～80% ,采用先进的设计与仿真验证方法成为SoC设计成功的关键。
+
+	发展趋势，是系统集成能力快速发展:
+	SoC技术的发展趋势是基于SoC开发平台,基于平台的设计是一种可以达到最大程度系统重用的面向集成的设计方法,分享IP核开发与系统集成成果,不断重整价值链,在关注面积、延迟、功耗的基础上,向成品率、可靠性、EMI 噪声、成本、易用性等转移,使系统级集成能力快速发展。
+
+	(这里，IC表示电路,ASIC即Application Specific Integrated Circuit,是专用集成电路。目前，在集成电路界ASIC被认为是一种为专门目的而设计的集成电路。)
+
+	SoC技术的特点
+　　半导体工艺技术的系统集成
+　　软件系统和硬件系统的集成
+　　SoC具有以下几方面的优势，因而创造其产品价值与市场需求：
+　　降低耗电量
+　　减少体积
+　　增加系统功能
+　　提高速度
+　　节省成本
+
+主要摘自百度百科：
+更多内容参考：http://baike.baidu.com/view/58056.htm
+-------------
+Aspen
+	AspenTech是世界上用于优化处理器制造业的软件的主要提供商。
+	使用集成的aspenONE解决方案，处理器生产商能够实现优化他们设计，生产，支持链最好的实践。进而，AspenTech客户能够更好地达到他们的最好的操作目标：增加产量，填补空白，降低成本，提高效率。
+	AspenTech解决方案实际已经被每个主要的处理器生产商应用了。
+
+主要摘自:http://www.aspentech.com/corporate/index.cfm
+更多资料参考：http://www.aspentech.com/corporate/index.cfm
+------
+Aspen Plus是大型通用流程模拟系统，源于美国能源部七十年代后期在麻省理工学院（MIT）组织的会战，开发新型第三代流程模拟软件。该项目称为“过程工程的先进系统”（Advanced System for Process Engineering，简称ASPEN），并于1981年底完成。1982年为了将其商品化，成立了AspenTech公司，并称之为Aspen Plus。该软件经过20多年来不断地改进、扩充和提高，已先后推出了十多个版本，成为举世公认的标准大型流程模拟软件，应用案例数以百万计。全球各大化工、石化、炼油等过程工业制造企业及著名的工程公司都是Aspen Plus的用户。
+摘自：http://www.zhjrm.com/ns_detail.asp?id=500105&nowmenuid=500009&previd=0
+----------------
+AP
+	AP就是应用处理器,根据如下得知。
+
+	手机的硬件实现方式主要有3种：
+    * 只用基带芯片，通常称作feature phone。
+	* 基带芯片加协处理器（CP，通常是多媒体加速器）。这类产品以MTK方案为典型代表，MTK全系列的产品基本上都属于这样的方案，展讯等其他公司也在推类似的产品。这是增强了多媒体功能的feature phone。
+	* 基带芯片+应用处理器（AP），也就是通常说的智能手机（smart phone）。有的方案将应用处理器和基带处理器做到一颗芯片里面，例如高通的MSM7200A。它有一个ARM11核（应用处理器）和一个ARM9核（基带处理器），两者通过共享内存通信。当然，智能手机也可以使用增强影音处理能力的协处理器。 
+
+摘自：http://blog.csdn.net/fmddlmyy/archive/2008/02/03/2080637.aspx
+------------------
+
+杂项
+=======
+WUXGA
+　　宽屏超级扩展图形阵列（Widescreen Ultra eXtended Graphics Array或WUXGA）是一种分辨率为1920x1200、纵横比为16:10的UXGA格式。这种纵横比在二十一世纪初的高档15和17英寸笔记本电脑上得到应用。
+
+摘自：http://baike.baidu.com/view/419044.htm
+------
+其他显示相关：
+VGA ：全称是Video Graphics Array，这种屏幕现在一般在本本里面已经绝迹了，是很古老的本本使用的屏幕，支持最大分辨率为640×480，但现在仍有一些小的便携设备还在使用这种屏幕。 
+
+SVGA ：全称Super Video Graphics Array，属于VGA屏幕的替代品，最大支持800×600分辨率，屏幕大小为12.1英寸，由于像素较低所以目前采用这一屏幕的本本也是少之又少了。 
+
+XGA ：全称Extended Graphics Array，这是一种目前笔记本普遍采用的一种LCD屏幕，市面上将近有80%的笔记本采用了这种产品。它支持最大1024×768分辨率，屏幕大小从10.4英寸、12.1英寸、13.3英寸到14.1英寸、15.1英寸都有。 
+
+SXGA+ ：全称Super Extended Graphics Array，作为SXGA的一种扩展SXGA+是一种专门为笔记本设计的屏幕。其显示分辨率为1400×1050。由于笔记本LCD屏幕的水平与垂直点距不同于普通桌面LCD，所以其显示的精度要比普通17英寸的桌面LCD高出不少。 
+
+UVGA ：全称Ultra Video Graphics Array，这种屏幕应用在15英寸的屏幕的本本上，支持最大1600×1200分辨率。由于对制造工艺要求较高所以价格也是比较昂贵。目前只有少部分高端的移动工作站配备了这一类型的屏幕。
+
+WXGA(Wide Extended Graphics Array)：作为普通XGA屏幕的宽屏版本，WXGA采用16:10的横宽比例来扩大屏幕的尺寸。其最大显示分辨率为1280×800。由于其水平像素只有800，所以除了一般15英寸的本本之外，也有12.1英寸的本本采用了这种类型的屏幕。
+
+WXGA+(Wide Extended Graphics Array)：这是一种WXGA的的扩展，其最大显示分辨率为1280×854。由于其横宽比例为15:10而非标准宽屏的16:10。所以只有少部分屏幕尺寸在15.2英寸的本本采用这种产品。
+
+WSXGA+(Wide Super Extended Graphics Array)：其显示分辨率为1680×1050，除了大多数15英寸以上的宽屏笔记本以外，目前较为流行的大尺寸LCD-TV也都采用了这种类型的产品。
+
+WUXGA(Wide Ultra Video Graphics Array)：和5:3规格中的UXGA一样，WUXGA屏幕是非常少见的，其显示分辨率可以达到1920×1200。由于售价实在是太高所以鲜有笔记本厂商采用这种屏幕。 
+
+摘自：http://zhidao.baidu.com/question/11975249.html
+
+----------------
+WXGA：全称Wide Extended Graphics Array，按16：10比例的加宽本本屏幕，适合于DVD影片的长宽比，所以看DVD时不会有图象变形或两边图象显示不出来的问题。这种屏幕支持 1280×800像素，也是目前最常见的本本屏幕，90%以上的笔记本都在采用这种屏幕。
+WSXGA+：全称Wide Super Extended Graphics Array，最大支持1680×1050像素。
+WUXGA：全称Wide Ultra Extended Graphics Array，最大支持1920x1200像素。
+
+摘自：
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece7631046893b4c4380143fd3d1027fa3c215cc791b1c0c3cbbe43a3655599393732246e51c0ffdf14665470437c69ddf893acacd933f5e8f3045030bf745&p=8377d715d9c24afd0be2903f4f55&user=baidu
+http://blog.163.com/royhjm/
+-----------------------
+
+AspenM的KeyPeriherals:
+1)关于5-in-1 Card Reader
+什么是5-in-1 Card Reader?(http://zhidao.baidu.com/question/12536220.html)
+读卡器啊,可以把数码相机的SD,MMC之类的卡上的数据读进电脑里.
+另外，(http://zhidao.baidu.com/question/53122208.html?fr=qrl&cid=111&index=1&fr2=query)
+6 in 1 Card Reader 
+6合1读卡器
+可以通过插入后USB连接电脑来读取六种记忆卡里的内容
+产品规格∶ 六种记忆卡,包括: SmartMedia/SD/MMC/Memory Stick/CompactFlash/IBM Microdrive
+又如下:
+它是一台存取存储卡的装置，有了它可以让你使用CF、MD、SM、MMC、SD、MS来存取数据，像是使用数码相机拍照后的图片就可以直接使用它存到您的计算机里 CF: Compact Flash Card type I type II SM: Smart Media Card MMC: Multi Media Card SD: Secure Digital Card MS: Memory Stick 

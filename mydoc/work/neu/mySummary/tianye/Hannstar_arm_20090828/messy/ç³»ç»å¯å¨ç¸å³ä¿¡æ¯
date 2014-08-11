@@ -1,0 +1,230 @@
+一、没有连接显示屏幕：
+系统启动时间(没有连接显示屏幕):60s
+
+启动系统之后运行了一些命令来查看系统相关的信息，如下：
+查看cpu信息
+~ # cat /proc/cpuinfo
+Processor       : Marvell 88SV331x rev 3 (v5l)
+BogoMIPS        : 635.69
+Features        : swp half thumb fastmult edsp iwmmxt
+CPU implementer : 0x41
+CPU architecture: 5TE
+CPU variant     : 0x1
+CPU part        : 0x926
+CPU revision    : 3
+
+Hardware        : PXA168 Avengers lite Development Platform
+Revision        : 0000
+Serial          : 0000000000000000
+
+
+查看内存信息
+~ # cat /proc/meminfo
+MemTotal:         254592 kB  <=====总内存256M
+MemFree:          182752 kB  <=====空闲内存183M
+Buffers:            2512 kB
+Cached:            40572 kB
+SwapCached:            0 kB
+Active:            34508 kB
+Inactive:          25348 kB
+Active(anon):      17044 kB
+Inactive(anon):        0 kB
+Active(file):      17464 kB
+Inactive(file):    25348 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB                                                          
+AnonPages:         16792 kB                                                          
+Mapped:            15592 kB                                                          
+Slab:               4888 kB                                                          
+SReclaimable:       2532 kB                                                          
+SUnreclaim:         2356 kB                                                          
+PageTables:          548 kB                                                          
+NFS_Unstable:          0 kB                                                          
+Bounce:                0 kB                                                          
+WritebackTmp:          0 kB                                                          
+CommitLimit:      127296 kB                                                          
+Committed_AS:      32016 kB                                                          
+VmallocTotal:     745472 kB                                                          
+VmallocUsed:        2216 kB                                                          
+VmallocChunk:     740348 kB                      
+
+
+#top
+top - 00:02:16 up 2 min,  1 user,  load average: 0.43, 0.36, 0.15
+Tasks:  51 total,   1 running,  50 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.3% us,  0.3% sy,  0.0% ni, 99.3% id,  0.0% wa,  0.0% hi,  0.0% si
+Mem:    254592k total,    72380k used,   182212k free,     2884k buffers
+Swap:        0k total,        0k used,        0k free,    40668k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 1365 root      20   0  2404 1080  868 R  1.0  0.4   0:00.25 top                
+    1 root      20   0  1592  568  504 S  0.0  0.2   0:02.42 init               
+    2 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      RT  -5     0    0    0 S  0.0  0.0   0:00.00 watchdog/0         
+    5 root      15  -5     0    0    0 S  0.0  0.0   0:00.01 events/0           
+    6 root      15  -5     0    0    0 S  0.0  0.0   0:00.01 khelper            
+   12 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 suspend            
+  172 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kblockd/0          
+  179 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 ksuspend_usbd      
+  185 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 khubd              
+  188 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kseriod            
+  203 root      15  -5     0    0    0 S  0.0  0.0   0:00.83 kmmcd              
+  227 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pdflush            
+  228 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pdflush            
+  229 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kswapd0            
+  231 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 aio/0              
+
+ 根据信息可知，系统启动之后，内存占用72380K,
+
+查看内核版本
+# uname -r
+2.6.28
+
+查看加载的模块
+# lsmod
+Module                  Size  Used by
+libertas_sdio          13896  0 
+libertas              170944  1 libertas_sdio
+galcore                40912  0 
+
+查看pci设备
+# lspci
+-sh: lspci: not found
+
+查看usb设备
+ # lsusb
+Bus 001 Device 001: ID 1d6b:0002  
+
+查看当前内存大小：
+# free -m |grep "Mem" | awk '{print $2}'
+248
+
+
+杂
+# cat /proc/devices                                                                  
+Character devices:                                                                   
+  1 mem                                                                              
+  4 /dev/vc/0                                                                        
+  4 tty                                                                              
+  4 ttyS                                                                             
+  5 /dev/tty                                                                         
+  5 /dev/console                                                                     
+  5 /dev/ptmx                                                                        
+  7 vcs                                                                              
+ 10 misc                                                                             
+ 13 input                                                                            
+ 14 sound                                                                            
+ 29 fb                                                                               
+ 55 bma020_device                                                                    
+ 81 video4linux                                                                      
+ 90 mtd                                                                              
+108 ppp                                                                              
+116 alsa                                                                             
+128 ptm                                                                              
+136 pts                                                                              
+180 usb                                                                              
+188 ttyUSB                                                                           
+189 usb_device                                                                       
+199 galcore                                                                          
+252 usb_endpoint                                                                     
+253 usbmon                                                                           
+254 rtc                                                                              
+                                                                                     
+Block devices:                                                                       
+  1 ramdisk                                                                          
+259 blkext                                                                           
+  7 loop                                                                             
+  8 sd                                                                               
+ 31 mtdblock                                                                         
+ 65 sd                                                                               
+ 66 sd                                                                               
+ 67 sd                                                                               
+ 68 sd                                                                               
+ 69 sd                                                                               
+ 70 sd                                                                               
+ 71 sd                                                                               
+128 sd                                                                               
+129 sd                                                                               
+130 sd                                                                               
+131 sd                                                                               
+132 sd                                                                               
+133 sd                                                                               
+134 sd                                                                               
+135 sd                                                                               
+179 mmc                                                                              
+
+
+二、连接显示屏幕之后：
+启动时间59秒
+
+查看系统资源占用情况：
+#top
+top - 00:01:34 up 1 min,  1 user,  load average: 0.43, 0.26, 0.10
+Tasks:  51 total,   1 running,  50 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0% us,  0.3% sy,  0.0% ni, 75.7% id, 23.9% wa,  0.0% hi,  0.0% si
+Mem:    254592k total,    72140k used,   182452k free,     2712k buffers
+Swap:        0k total,        0k used,        0k free,    40668k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 1363 root      20   0  2404 1080  868 R  0.3  0.4   0:00.18 top                
+    1 root      20   0  1592  568  504 S  0.0  0.2   0:02.38 init               
+    2 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      RT  -5     0    0    0 S  0.0  0.0   0:00.00 watchdog/0         
+    5 root      15  -5     0    0    0 S  0.0  0.0   0:00.01 events/0           
+    6 root      15  -5     0    0    0 S  0.0  0.0   0:00.02 khelper            
+   12 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 suspend            
+  172 root      15  -5     0    0    0 S  0.0  0.0   0:00.01 kblockd/0          
+  179 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 ksuspend_usbd      
+  185 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 khubd              
+  188 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kseriod            
+  203 root      15  -5     0    0    0 S  0.0  0.0   0:00.85 kmmcd              
+  227 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pdflush            
+  228 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pdflush            
+  229 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 kswapd0            
+  231 root      15  -5     0    0    0 S  0.0  0.0   0:00.00 aio/0              
+
+内存情况：
+# cat /proc/meminfo                                                                
+MemTotal:         254592 kB                                                          
+MemFree:          182452 kB                                                          
+Buffers:            2712 kB                                                          
+Cached:            40668 kB                                                          
+SwapCached:            0 kB                                                          
+Active:            34736 kB                                                          
+Inactive:          25396 kB                                                          
+Active(anon):      17024 kB
+Inactive(anon):        0 kB                                                          
+Active(file):      17712 kB                                                          
+Inactive(file):    25396 kB                                                          
+Unevictable:           0 kB                                                          
+Mlocked:               0 kB                                                          
+SwapTotal:             0 kB                                                          
+SwapFree:              0 kB                                                          
+Dirty:                 0 kB                                                          
+Writeback:             0 kB                                                          
+AnonPages:         16772 kB                                                          
+Mapped:            15596 kB                                                          
+Slab:               4900 kB                                                          
+SReclaimable:       2536 kB                                                          
+SUnreclaim:         2364 kB                                                          
+PageTables:          548 kB                                                          
+NFS_Unstable:          0 kB                                                          
+Bounce:                0 kB                                                          
+WritebackTmp:          0 kB                                                          
+CommitLimit:      127296 kB                                                          
+Committed_AS:      32000 kB                                                          
+VmallocTotal:     745472 kB                                                          
+VmallocUsed:        2216 kB                                                          
+VmallocChunk:     740348 kB                                                          
+
+由上可知，资源占用的情况和没有连接显示屏幕是基本上相同，(实际没有连接显示屏幕的时候也启动了X)。
+
+hal提供的相关信息：
+#lshal
+输出参见文件halinfo

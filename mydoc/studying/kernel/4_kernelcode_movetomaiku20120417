@@ -1,0 +1,49 @@
+介绍内核代码简单的架构。
+内容：
+XX、vfs学习总结
+
+XX、vfs学习总结
+===================
+20120311
+参考：http://www.ibm.com/developerworks/cn/linux/l-vfs/
+1,vfs文件树的建立与"rootfs"的挂载
+mnt_init:
+a,init_rootfs(注册rootfs文件系统)->
+b,init_mount_tree->
+do_kern_mount：
+创建好superblock,dentry,inode,mnt等并挂载好，填充好相应的成员（例如这些结构之间相互指向的指针，以及inode的操作函数）。
+create_mnt_ns：
+将挂载以及当前路径信息添加到进程中去。
+
+2,在vfs中创建新目录
+实际就是创建一个inode，以及dentry，其它的基本不变。
+因为在一个文件系统中，所以只有一个superblock。
+
+3,在vfs中挂载文件系统
+挂载的时候，是将新文件系统挂到旧文件系统的dentry上面，新文件系统有自己的dentry,mnt,superblock,inode，
+核心是将对 VFS 目录树中某一目录的操作转化为具体安装到其上的实际文件系统的对应操作。
+
+转换关键代码是：
+while (d_mountpoint(dentry) && __follow_down(&nd->mnt, &dentry));
+可知当访问此挂载点，
+如果旧文件系统dentry被安装过，那么dentry->d_mounted==1，即d_mountpoint(dentry)==1，
+然后根据dentry以及其所在挂载结构mnt来索引，并修改mnt为新文件系统的mnt，dentry为新mnt上的dentry
+可知，嵌套挂载的时候，最新的挂载会隐藏以前的挂载。在循环的时候根据dentry->d_mounted成员就完成了转换。
+
+4,挂载linux的根文件系统：
+过程大致是：
+(1)首先要确定待安装的 ext2 文件系统的来源.
+例如我们将硬盘的sda1分区做为linux根文件系统。
+
+(2)确定 ext2 文件系统在 VFS中的安装点
+文件系统安装到 VFS 目录树下的哪个安装点并不重要(VFS 的根目录除外)，只要是这个安装点在 VFS 树中是存在的，并且内核对它没有另外的用途，关键是要将进程的根目录和当前工作目录设定好。
+初始化期间，Linux 将hda1 上的 ext2 文件系统安装到了 "/root" 上后，通过如下调用设定当前进程的根目录：
+sys_mount(".", "/", NULL, MS_MOVE, NULL);
+sys_chroot("."); 
+这样，以后进程的根目录就变成了vfs中的一个子目录了。
+一般来说，linux会将其根文件系统安装在vfs下面的root目录中。
+
+(3)具体的安装过程。
+前面已经讲述。
+
+由上面可知，在用户空间下，所看到的“根文件系统”只是VFS 这棵大树的一叶。VFS中的其他部分存在于内存，用户一般无法看见。

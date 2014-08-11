@@ -1,0 +1,173 @@
+ls [OPTION]... [FILE]...
+[功能]
+列出目录中的文件内容。
+
+[描述]
+ls是Linux下一个比较常用的命令，其使用频率与cd相比不相上下，默认ls只列出文件内容的修改时间。
+参数详解：
+-a 显示所有文件及目录(ls默认不会显示以"."开头的隐藏文件)
+-i 输出文件i节点索引信息
+-l 列出文件的详细信息。包括文件名称，权限，所有者，文件大小，最后修改日期等信息
+-r 将文件相反次序显示(默认依英文次序显示)
+-A 作用同-a，但不会显示"."和".."
+-F 在文件后加一符号以表示文件类型，常见符号为："*"表示可执行文件；"/"表示目录;
+"@"表示符号链接；"|"表示FIFOs等等。
+-R 同时列出所有子目录下的文件
+-1 每行只输出一个文件，这里是数字"1"，而不是字母"l"。
+
+另外，ls还支持显示SELinux的属性，具体参见man手册。
+
+[举例]
+*列出./opt目录下的文件：
+$ls ./opt/
+eclipse  xmind-portable-3.2.1.201011212218.zip_FILES
+这里，ls会列出传给它参数对应的那个目录的内容。可以使用通配符列出特定文件，例如"ls *.c"会列出所有.c结尾的文件。
+
+*列出当前目录下的文件：
+$ls
+astah_test  cpptest    hello   lsof_test       minicom_script1  pre_test    svn_study  translate.sh
+chrome      grep_test  hello2  minicom_script  minicom.sh       scriptdemo  testsh.sh  wordpress
+这样，省略参数的ls，会列出当前目录下的文件名（不区分目录和文件类型）。
+
+*列出当前目录文件，并且显示详细信息：
+# ls -l
+总计 132
+drwxrwxr-x 2 quietheart quietheart 4096 04-07 14:23 astah_test
+drwxrwsrwx 9 quietheart quietheart 4096 2010-10-26 chrome
+drwxrwxr-x 4 quietheart quietheart 4096 04-06 10:35 cpptest
+drwxrwxr-x 2 quietheart quietheart 4096 03-28 14:19 grep_test
+drwxrwxrwx 7 quietheart quietheart 4096 04-02 08:35 hello
+drwxrwxr-x 2 quietheart quietheart 4096 02-01 14:44 hello2
+drwxrwxr-x 2 quietheart quietheart 4096 03-24 09:36 lsof_test
+-rw-rw-r-- 1 quietheart quietheart  507 12-30 11:32 minicom_script
+-rw-rw-r-- 1 quietheart quietheart   25 2010-12-29 minicom_script1
+-rw-rw-r-- 1 quietheart quietheart  465 12-31 10:28 minicom.sh
+drwxrwxr-x 2 quietheart quietheart 4096 04-02 08:34 pre_test
+-rw-r--r-- 1 quietheart quietheart  655 2010-12-29 scriptdemo
+lrwxrwxrwx 1 root       root         10 06-30 13:51 scriptdemo.symbol -> scriptdemo
+drwxrwxr-x 4 quietheart quietheart 4096 01-21 16:19 svn_study
+-rwxrwxrwx 1 quietheart quietheart  108 2010-11-26 testsh.sh
+-rwxrwxrwx 1 quietheart quietheart  444 2010-11-11 translate.sh
+drwxr-xr-x 2 root       root       4096 05-11 16:37 wordpress
+这里，依次显示了文件的类型权限，硬链接数，属主，属组，大小，日期，时间，名称。这里比较难以理解的是第一列的类型权限，和第二列的硬链接数。类型权限，例如"drwxrwxr-x"，其含义是第一个字符表示类型(这里的d表示目录,l表示链接，c表示字符设备文件其他的类型不细说了)，以后的9个字符分别三个一组,每组的三个字符分别表示相应用户的读写执行权限，可以通过"chmod"来修改，第一组"rwx"表示当前用户权限,权限为可读可写可执行，第二组"rwx"表示当前组权限,权限为可读可写可执行，第三组"r-x"表示其他用户权限，权限可读不可写不可执行；硬链接数，表示该文件使用ln命令建立了多少个硬链接（通过硬链接引用文件，需要对硬链接有所理解）。如果文件是软链接(通过ln -s建立的)那么同时会显示那个软链接指向谁，例如这里的symbol。
+
+*列出当前目录文件，并且以比较有好的方式显示详细信息：
+$ls -lh
+总计 128K
+drwxrwxr-x 2 quietheart quietheart 4.0K 04-07 14:23 astah_test
+drwxrwsrwx 9 quietheart quietheart 4.0K 2010-10-26 chrome
+drwxrwxr-x 4 quietheart quietheart 4.0K 04-06 10:35 cpptest
+drwxrwxr-x 2 quietheart quietheart 4.0K 03-28 14:19 grep_test
+drwxrwxrwx 7 quietheart quietheart 4.0K 04-02 08:35 hello
+drwxrwxr-x 2 quietheart quietheart 4.0K 02-01 14:44 hello2
+drwxrwxr-x 2 quietheart quietheart 4.0K 03-24 09:36 lsof_test
+-rw-rw-r-- 1 quietheart quietheart  507 12-30 11:32 minicom_script
+-rw-rw-r-- 1 quietheart quietheart   25 12-29 15:53 minicom_script1
+-rw-rw-r-- 1 quietheart quietheart  465 12-31 10:28 minicom.sh
+drwxrwxr-x 2 quietheart quietheart 4.0K 04-02 08:34 pre_test
+-rw-r--r-- 1 quietheart quietheart  655 12-29 16:43 scriptdemo
+drwxrwxr-x 4 quietheart quietheart 4.0K 01-21 16:19 svn_study
+-rwxrwxrwx 1 quietheart quietheart  108 2010-11-26 testsh.sh
+-rwxrwxrwx 1 quietheart quietheart  444 2010-11-11 translate.sh
+drwxr-xr-x 2 root       root       4.0K 05-11 16:37 wordpress
+这里，通过-h选项指定的内容很容易阅读。
+
+*列出当前目录文件，包含隐藏文件：
+$ls -a
+.  astah_test  cpptest    hello   lsof_test       minicom_script1  miniiiii  pre_test    svn_study  translate.sh
+..  chrome      grep_test  hello2  minicom_script  minicom.sh       mmmmm     scriptdemo  testsh.sh  wordpress
+这里，"."和".."就是隐藏的文件，分别表示当前目录和父目录。linux默认将以"."开头的文件视为隐藏文件，隐藏文件一般看不到，需要通过-a选项显示。
+
+*列出文件，不列出匹配了指定模式的文件：
+$ls --hide=*.c
+这样，所有当前目录下的".c"后缀文件不会被列出，这里，这个选项会被"-a"或"-A"覆盖。"ls --hide=*"什么也不列出了。
+
+*按照大小列出文件：
+$ls -lS
+输入之后，输出如下：
+total 12
+-rwxrwxrwx 1 root root 3500 2009-07-21 15:18 patch_files
+-rwxrwxrwx 1 root root 1145 2009-07-30 14:55 ls
+-rwxrwxrwx 1 root root  530 2009-07-29 13:28 echo
+-rwxrwxrwx 1 root root  270 2009-07-29 13:28 tar补充
+-rwxrwxrwx 1 root root  149 2009-07-30 13:49 grep补充
+-rwxrwxrwx 1 root root  144 2009-07-30 12:05 set
+-rwxrwxrwx 1 root root  132 2009-07-30 13:09 pidof
+-rwxrwxrwx 1 root root   62 2009-07-30 13:31 cmp
+drwxrwxrwx 1 root root    0 2009-07-30 12:56 files
+这里,-S选项将把文件由大到小列出来。
+
+*按照大小反向列出文件：
+$ls -lSr
+输入之后，输出如下：
+total 12
+drwxrwxrwx 1 root root    0 2009-07-30 12:56 files
+-rwxrwxrwx 1 root root   62 2009-07-30 13:31 cmp
+-rwxrwxrwx 1 root root  132 2009-07-30 13:09 pidof
+-rwxrwxrwx 1 root root  144 2009-07-30 12:05 set
+-rwxrwxrwx 1 root root  149 2009-07-30 13:49 grep补充
+-rwxrwxrwx 1 root root  270 2009-07-29 13:28 tar补充
+-rwxrwxrwx 1 root root  530 2009-07-29 13:28 echo
+-rwxrwxrwx 1 root root  669 2009-07-30 14:45 ls
+-rwxrwxrwx 1 root root 3500 2009-07-21 15:18 patch_files
+这里，加上-r选项，输出的次序将完全相反。
+
+*按照时间次序由新到旧输出文件：
+$ ls -lt
+输入之后，输出如下：
+total 12
+-rwxrwxrwx 1 root root 1146 2009-07-30 14:56 ls
+-rwxrwxrwx 1 root root  149 2009-07-30 13:49 grep补充
+-rwxrwxrwx 1 root root   62 2009-07-30 13:31 cmp
+-rwxrwxrwx 1 root root  132 2009-07-30 13:09 pidof
+drwxrwxrwx 1 root root    0 2009-07-30 12:56 files
+-rwxrwxrwx 1 root root  144 2009-07-30 12:05 set
+-rwxrwxrwx 1 root root  530 2009-07-29 13:28 echo
+-rwxrwxrwx 1 root root  270 2009-07-29 13:28 tar补充
+-rwxrwxrwx 1 root root 3500 2009-07-21 15:18 patch_files
+这里，我们需要注意，ls命令一般仅对三种时间之一进行排序显示。默认来说，当使用-l或者-t选项的时候，这个时间是modification time(文件内容修改时间);-u选项则使用access time(读取，访问时间);-c选项则使用changed-statustime(文件索引节点改变时间)。
+
+*列出文件，如果文件是目录则增加一个'/'目录标识：
+$ ls -lp
+输入之后，输出如下：
+total 12
+-rwxrwxrwx 1 root root   62 2009-07-30 13:31 cmp
+-rwxrwxrwx 1 root root  530 2009-07-29 13:28 echo
+drwxrwxrwx 1 root root    0 2009-07-30 12:56 files/
+-rwxrwxrwx 1 root root  149 2009-07-30 13:49 grep补充
+-rwxrwxrwx 1 root root 1771 2009-07-30 14:58 ls
+-rwxrwxrwx 1 root root 3500 2009-07-21 15:18 patch_files
+-rwxrwxrwx 1 root root  132 2009-07-30 13:09 pidof
+-rwxrwxrwx 1 root root  144 2009-07-30 12:05 set
+-rwxrwxrwx 1 root root  270 2009-07-29 13:28 tar补充
+这里，利用-p选项来增加目录标识。
+
+*列出文件，并标记出文件类型：
+$ ls -F
+输入之后，输出如下：
+apt-get学习*  cp*     grep补充*     ls*     patch*        ps*       set*
+basename*     echo*   id*           mknod*  patch_files*  read*     tar补充*
+cmp*          files/  install补充*  mount*  pidof*        sed补充*  type*
+这里，使用-F选项指定显示文件的类型。(如: 目录是以 /结尾, 而可执行文件以 *结尾)
+
+*列出文件，同时打印这个文件的索引节点：
+$ls -i
+输入之后，输出如下：
+64041 00_apueNetAddress  64662 01_apue的杂乱收获  64043 files  64042 progress  64153 systemCall
+
+*列出文件，打印大小：
+$ls -s
+输入之后，输出类似如下：
+总计 56
+16 a.out   8 main.cpp   8 myclass.cpp   8 myclass.h   8 mysubclass.cpp   8 mysubclass.h
+这里，可以和'-h'选项结合。
+
+*递归列出所有子目录文件：
+$ls -R
+这样，列出的内容不仅是当前目录，而且包括所有子目录的内容也列出来了。
+
+
+[其他]
+参考资料：
+"man ls"
+http://www.1zlinux.com/bbs/thread-249-1-1.html

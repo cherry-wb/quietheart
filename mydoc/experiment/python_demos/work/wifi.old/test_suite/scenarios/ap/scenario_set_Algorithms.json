@@ -1,0 +1,8 @@
+{
+	"name":"set_security_Algorithms",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_set_Algorithms.py"},
+	"reporter":["success","fail"],
+	"description":"set Algorithms of cisco ap"
+}
+

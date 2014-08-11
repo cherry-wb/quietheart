@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper]{article}
+
+%中文支持
+\usepackage{fontspec}
+%这里使用的是宋体字
+\setmainfont{AR PL UMing CN}
+%中文断行,如果没有这个中文断行就可能会有问题
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt 
+
+\begin{document}
+%最简单的盒子是 \mbox 和 \fbox。前者把一组对象组合起来,后者在此基础上加了个边框。
+%这里因为没有空行，所以mbox和fbox里面的内容连同hello都在同一行内
+hello,box1:
+\mbox{123 456 789 101112}
+\fbox{123 456 789 101112}
+
+%稍复杂的 \makebox 和 \framebox 提供了宽度和对齐方式控制选项。这里用 l、r、s 分别代表居左、居右和分散对齐。
+%语法:[宽度][对齐方式]{内容}
+hello box2:
+%为什么分散的参数不好用呢???？
+
+%无框
+\makebox[100pt][l]{居左}
+
+\makebox[100pt][r]{居右}
+
+\makebox[100pt][c]{居中}
+
+\makebox[100pt][s]{分散}
+
+%有框
+\framebox[100pt][l]{居左}
+
+\framebox[100pt][r]{居右}
+
+\framebox[100pt][c]{居中}
+
+\framebox[100pt][s]{分散}
+
+%大一些的对象比如整个段落可以用 \parbox 命令和 \minipage 环境,两者语法类似,也提供了对齐方式和宽度的选项。但是这里的对齐方式是指与周围内容的纵向关系,用 t、c、b 分别代表居顶、居中和居底对齐。
+hello box3:
+
+%parbox没有边框
+%语法:[对齐方式]{宽度}{内容}
+\parbox[c]{90pt}{锦瑟无端五十弦,\\一弦一柱思华年。}李商隐
+%这个可以编译通过，但是格式显示的有些问题不知道为什么
+%\begin{parbox}[c]{90pt}
+%锦瑟无端五十弦,\\一弦一柱思华年。
+%\end{parbox}李商隐
+
+%minipage没有边框
+%这个不知道为什么编译通不过去
+%\minipage[c]{90pt}{锦瑟无端五十弦,\\一弦一柱思华年。}李商隐
+%应该用这个
+%\begin{minipage}[position]{width}
+%text
+%\end{minipage}
+\begin{minipage}[c]{90pt}
+锦瑟无端五十弦,\\一弦一柱思华年。
+\end{minipage}李商隐
+
+\end{document}

@@ -1,0 +1,294 @@
+Using GNU Autotools读书笔记
+
+GNU Autotools是发布管理GNU软件包的一套非常著名的工具集合。我们在Linux下面下载的大多数源代码形式发布的软件包，都是采用这套工具生成的。熟练使用这套工具，可以让我们对Linux下面软件的编译安装过程了解的更为清晰。本文是对一本讲述该工具相关内容的书籍的简单整理，相比许多类似内容的书籍，这本书内容不错，本文后面给出其下载地址。
+原来的书籍是英文的，页数比较多，而且由于书籍是演示文稿格式的，所以许多页的内容都是重复性的，不利于阅读，这里将书中一些觉得比较关键的内容以笔记和索引方式记录下来，便于以后复习查找。前面部分侧重应用，讲述比较详细；后面侧重这个工具的运行原理以及一些输入输出文件的语法,内容比较多所以只给出索引简单叙述每个部分的大致内容。希望对需要的朋友有用^_^。
+
+主要内容：
+一、简单使用
+二、高级使用
+三、软件包管理相关
+四、发布相关
+五、AutoTools更为具体的信息
+六、其它
+
+
+一、简单使用
+=========
+1,常用make目标：
+参考p33
+"make all" 编译程序，库，以及文档等等（和"make"一样）。
+"make install" 安装可执行程序。
+"make install-strip" 和"make install"一样, 然后去掉调试信息。
+"make uninstall" 和"make install"功能一样。
+"make clean" 清除编译的中间文件（和"make all"功能相反）
+"make distclean" 除了前面的"make clean"之外，还清除所有"./configure"创建的中间文件。
+"make check" 如果有测试包的话，则运行之。
+"make installcheck" 如果支持的化，就检查已经安装的程序或者库。
+"make dist" 创建PACKAGE-VERSION.tar.gz发布包。.
+
+2,configure常用路径变量：
+参考p34
+./configure和安装路径相关的常用变量：
+变量名称			默认值
+prefix				"/usr/local"
+exec-prefix			prefix
+bindir				exec-prefix"/bin"
+libdir				exec-prefix"/lib"
+...
+includedir			prefix"/include"
+datarootdir			prefix"/share"
+datadir				datarootdir
+mandir				datarootdir"/man"
+infodir				datarootdir"/info"
+这些变量可以自行指定，例如指定prefix之后再进行安装,例如：
+./configure --prefix ~/usr
+make
+make install
+这里，--prefix后面可以有"="也可以没有。
+
+3,configure常用配置选项变量：
+参考p39
+./configure和配置相关的常用变量:
+CC				C编译器命令
+CFLAGS			C编译选项
+CXX				C++编译器命令
+CXXFLAGS		C++编译选项
+LDFLAGS			链接选项
+CPPFLAGS		C/C++预处理选项
+更多的选项可以参见"./configure --help"
+使用举例：
+./configure --prefix ~/usr CC=gcc-3 CPPFLAGS=-I$HOME/usr/include LDFLAGS=-L$HOME/usr/lib
+
+二、高级使用
+=========
+1，使用config.site做为configure的默认设置
+参考p43
+前面，我们使用"./configure --prefix ~/usr CC=gcc-3 CPPFLAGS=-I$HOME/usr/include LDFLAGS=-L$HOME/usr/lib"
+来指定configure的配置选项。我们可以使用config.site脚本来指定configure的配置选项。
+一般config.site的配置都在路径prefix"/share/config.site"下面。
+经过实践， config.site中就是指定一些运行的linux命令。
+
+**具体如下：
+$cat /home/quietheart/usr/share/config.site
+test -z "$CC" && CC=gcc-3
+test -z "$CPPFLAGS" && CPPFLAGS=-I$HOME/usr/include
+test -z "$LDFLAGS" && LDFLAGS=-L$HOME/usr/lib
+
+$./configure --prefix ~/usr
+这里将要使用/home/quietheart/usr做为prefix的值，
+所以./configure的时候会默认读取/home/quietheart/usr/share/config.site的内容。
+
+**一个实践的例子：
+假设我使用arm-linux-gcc交叉编译我的程序，那么
+
+$cat $(pwd)/target/share/config.site
+test -z "$CC" && CC=arm-sony-linux-gnueabi-gcc
+test -z "$CPPFLAGS" && CPPFLAGS=-g
+$./configure --prefix=$(pwd)/target --host=i686
+
+这里，需要用--host来指定编译的主机,否则无法编译通过。这里觉得不太好的地方就是要首先存在prefix指定的目录。
+
+2，独立存放编译中间文件
+参考p50
+目标文件，程序和库会在configure运行的地方被编译。
+
+**例如：
+$tar zxf ~/amhello-1.0.tar.gz
+$cd ~/amhello-1.0
+$mkdir build && cd build
+$../configure
+$make
+这样,源代码文件在∼/ amhello-1.0/; 编译生成的文件全部在∼/amhello-1.0/build/,多个体系结构可以共享同一套源代码。
+
+**一个比较常用的例子:
+假设两台机器，共享一个nfs服务器上面源代码，然后在各自的机器上面创建目录，用来保存编译的中间文件。
+
+共享代码的目录：
+$cd /nfs/src
+$tar zxf ~/amhello-1.0.tar.gz
+
+在第一台主机上面编译：
+$mkdir /tmp/amh && cd /tmp/amh
+$/nfs/src/amhello-1.0/configure
+$make && sudo make install
+
+在第二台主机上面编译：
+$mkdir /tmp/amh && cd /tmp/amh
+$/nfs/src/amhello-1.0/configure
+$make && sudo make install
+
+在第二台主机上面编译,并且共享数据文件：
+$mkdir /tmp/amh && cd /tmp/amh
+$/nfs/src/amhello-1.0/configure
+$make && sudo make install-exec
+
+这里，
+"make install" = "make install-exec" + "make install-data"
+"make install-exec" 安装的是依赖平台的文件。
+"make install-data" 安装的是和平台无关的文件（可以在各个平台之间共享的文件）。
+**
+
+3，交叉编译
+参考p63
+例如：
+$./configure --build i686-pc-linux-gnu --host i586-mingw32msvc
+$make
+$file hello.exe
+hello.exe: MS Windows PE 32-bit Intel 80386 console executable not relocatable
+这里，您需要有一个交叉编译工具链。
+交叉编译时候，configure的选项：
+"--build=BUILD" 指定在哪个系统上面编译这个包。
+"--host=HOST" 指定在哪个系统上面运行应用程序和库文件。
+"--target=TARGET" 只在编译编译工具的时候用到，指定编译工具创建的输出是用在哪个系统上面。
+对于简单的交叉编译，只需要一个"--host=HOST"选项。
+
+4，在安装的时候更改文件的名称
+参考p66
+为了防止系统已有和应用程序同名的命令,我们可以在configure的时候指定安装的文件的名称：
+应用程序的名称在生成configure脚本之前的configure.in中就已经指定了。
+"--program-prefix=PREFIX" 给应用程序的名称前面增加PREFIX前缀。
+"--program-suffix=SUFFIX" 给应用程序的名称后面增加SUFFIX后缀。
+"--program-transform-name=PROGRAM" 运行"set PROGRAM"(具体什么作用我也不知道，不过好象安装的文件名称不变)。
+
+例如：
+$./configure --program-prefix test-
+$make
+$sudo make install
+Will install hello as /usr/ local/ bin/ test-hello .
+这样，安装之后生成的程序就是test-hello。
+
+三、软件包管理相关
+=========
+参考p71
+安装时重新指定相对的根位置：
+DESTDIR用来在安装时候重新指定安装的根位置。
+例如：
+$./configure --prefix $(pwd)/target
+$make
+$make DESTDIR=$(pwd)/inst install
+$cd ~/inst
+$tar zcvf ~/amhello-1.0-i686.tar.gz
+这样会在当前目录下面生成一个inst目录，其中的内容是$(pwd)/target这样的目录结构（而不是和target一样的结构）;这样，解压的包可以用在多个机器上面。简单来说，就是把DESTDIR中指定的路径下的目录"inst"做为根目录，在这个根下生成"$prefix/target"。
+
+四、发布相关
+=========
+参考p74
+1，发布准备：
+"make dist" 创建PACKAGE-VERSION.tar.gz名称的软件包。
+"make distcheck" 类似前面的"make dist"但是它会做更多智能的检查，保证大多数情况下可用。它会检查VPATH编译，检查"make clean"和"make distclean","make uninstall"不会忽略文件,检查DESTDIR安装是有效的，它会运行测试套件（"make check"和"make installcheck"）.在发布一个包的时候，如果"make distcheck"没有通过，说明发布的软件包可能会让许多用户无法使用。
+
+2，依赖跟踪
+参考p76
+(这里的内容不是非常熟悉，以后有待研究。)
+可以在编译的时候，检测一些依赖关系。
+"--disable-dependency-tracking" 加速一次编译。
+"--enable-dependency-tracking" 不去掉慢速的依赖检测。
+
+3，内嵌包
+p72
+(这里的内容不是非常熟悉，以后有待研究。)
+一个软件包也可以发布一个它在子目录中使用的第三方的库。这样就有可能通过这种方法集合许多软件包，然后发布一个工具集合。
+对于安装者来说：
+有一个单个的用来configure,build,和install的软件包 。
+'configure'选项会被递归地传递给子软件包。
+'configure --help=recursive'会显示所有子软件包的帮助。
+对于维护者：
+便于集成；子软件包是自治的。
+
+五、AutoTools更为具体的信息
+=========
+下面的各个部分相当于一个便于检索的目录，在相应参考资料的相应地方都中都具体介绍了configure工具的工作过程，以及相关文件的内容等各方面的内容。
+
+参考p87
+此页通过一个图形描述了关于configure利用模板文件生成Makefile的具体过程，参见参考资料。
+主要是，configure根据*.in模板文件（例如Makefile.in,config.h.in等）生成相应的文件(Makefile,config.h等)。
+具体来说，是configure先生成config.status然后实际由config.status来生成上述具体的文件。
+
+参考p94
+这里通过给出GnuAutotools提供的特性来告诉我们这套工具为什么是我们需要的。(一些优点)
+
+参考p102
+此页通过一个图形描述了configure的输入模板文件(*.in)生成的具体过程，参见参考资料。
+主要是，autoreconf工具通过*.am,*.ac（例如config.ac)等生成相应的*.in模板文件（例如Makefile.in,config.h.in等）,以及configure脚本。
+
+参考p103~p117
+使用图形的方式，通过一个例子详细介绍了使用configure生成Makefile的全过程，以及生成期间每个文件的作用等等。
+过程大致如下：
+$ ls -R
+.:
+Makefile.am configure.ac src/
+./src:
+Makefile.am main.c
+$ autoreconf --install
+$ ./configure
+$ make
+$ src/hello
+$ make distcheck
+...
+========================================
+amhello archives ready for distribution:
+amhello-1.0.tar.gz
+========================================
+
+p131，相对细致地介绍了autotools两个核心组件(Autoconf和AutoMake)中，每个部分的作用（生成什么文件等）。
+p132~141,用图形相对细致地介绍了autotools生成的各种文件，以及生成相应文件对应的工具和生成的次序。
+p143告诉我们实际只需要一个'autoreconf'工具就能够自动地以正确的顺序运行相应的工具并且生成相应的文件了。
+(综上可知，最初我们需要提供的只是一份源代码，一个configure.ac以及相应的Makefile.am)
+p145-p154通过一个例子，大致介绍configure.ac文件每个部分的内容。
+p155-p162通过一个例子，介绍Makefile.am文件的内容。
+p167介绍了从confiure.ac 到 confiure 和 config.h.in实际发生的过程。
+p168~p251 介绍了m4相关内容，专注于如何使用m4命令来处理文件的宏替换，以及期间容易出现的问题。
+p256指明autoconf实际就是对m4语法的"包装"(即宏的引号''变成了中括号[]，定义了一些比较有用的宏，同时定义宏的关键字变成AC_DEFUN不是m4_define了)。
+autoconf文件中可以夹杂shell脚本，但是由于宏引号被autoconf替换成了'[]'所以shell脚本中不能出现'[]'。
+p266描述了autoconf中开始定义部分的内容(例如哪里定义了什么文件存放在哪里等等)。
+p273描述了autoconf文件中对一些应用程序的检查的相关宏书写形式。
+p276中描述了autoconf文件中一些其他特殊的动作宏(如打印消息，定义代码中的宏等)。
+p279中描述了autoconf文件对库进行检查的相关宏(检查库是否存在或者是否包含某些函数)。
+p283中描述了autoconf文件对头文件进行检查相关的宏。
+p290中描述了一些输出文件的命令(例如头文件，或者Makefile就是是通过*.in或者*.am生成的)。
+p303中告诉我们AutoMake会根据Makefile.am来创建Makefile.in
+p307介绍configure.ac中关于automake相关的选项以及声明。
+p316介绍Makefile.am中的总体语法结构。
+p323给出了一个Makefile.am表述的程序的完整例子以及解释。
+p329给出一个静态库的Makefile.am以及相应需要添加到configure.ac中的语句的完整例子以及解释。
+p337给出了在configure.ac中如何指定Makefile.am以及实际Makefile.am的内容如何反应出这个布局。
+p343描述了关于脚本中源代码路径的变量的注意事项,例如自己添加Makefile时候用$(srcdir)表示代码的路径。
+p348告诉我们如何为一个临时编译但是不用安装的库文件等定义相应的Makefile.am.
+p349告诉我们在Makefile.am中为一个指定的目标指定适合它自己的编译选项的方式。
+p352更进一步叙述了在Makefile.am中为特定的目标指定它自己的编译选项的方式。
+p359告诉我们使用make dist会将哪些文件纳入发行中去。
+p367,369描述Makefile.am中的条件编译的例子，以及configure.ac中为了满足条件而定义的变量。
+
+
+20110510review to here...
+以下内容，大致浏览。
+关于自定义的autoconf宏。
+p385给出了自定义autoconf宏的种类(上层的和下层的)。
+p388为了防止自定义宏和已有宏发生冲突，给出了一些预定义的命名空间。
+p391给出了一个需要自己定义宏的例子情况。
+p397给出了针对前面的情况，编写自定义的上层宏的部分内容。
+p402给出了针对前面的情况，编写自定义的上层宏的另一部分内容。
+p402-416是底层的宏相关(p411)???
+p416给出了一些编写autoconf宏的建议。
+p422给出了第三方宏相关的介绍，以及aclocal.m4.
+p426给出了定置并且使用自己的宏的方法。
+
+关于库
+p432介绍库的问题。主要说明不同系统处理库的机制不同。
+p435-p438给出了使用autoconf解决库的问题的方法(将所有库文件抽象成*.la，然后自动处理)。
+p439-p452给出了一个例子来展示autoconf解决编译库的过程(最后可以看到安装后linux上生成了*.a,*.la,*.so*文件)。
+p455告诉我们如何指定编译库的方式（静态或者动态）。
+p460介绍libtool
+p464关于库的版本化简介
+p467关于库的版本号
+p468库版本号的修改规则
+
+六、其它
+=========
+目前整理到此，随着学习和应用的深入，可能会对此有所更新。
+
+本书的下载地址是：
+http://download.csdn.net/down/1216372/vaqeteart
+如果无法下载，可以联系我。
+作者：QuietHeart
+Email：quiet_heart000@126.com

@@ -1,0 +1,7 @@
+1,what is the different between G_CALLBACK and G_SIGNAL_FUNC?
+answer:
+GTK_SIGNAL_FUNC is deprecated and should not be used in newly-written code.
+Just a macroized cast into a GtkSignalFunc. 
+2.if I remove the icon.jpg from a project even the bin file can run ,does this affect the binfile without the icon?
+answer:
+yes, the program can't find the icon,but it can run with a broken 'icon'.

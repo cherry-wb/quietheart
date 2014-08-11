@@ -1,0 +1,39 @@
+
+X Display Power Management Signaling (DPMS) 
+
+DPMS extension设计的目标是提供一个传统screen saver的逻辑扩展。
+它的执行独立于screensa，。塔河screen saver交互，并且DPMS能够服从用户或者screen saver应用程序。
+
+VESA（ Video Electronics Standards Association）规定了四种电源状态：
+0 DPMSModeOn      显示器打开状态中
+1 DPMSModeStandby 最轻度的节省电源，切换较快，这种状态会把显示器的水平同步信号关掉。
+2 DPMSModeSuspend 中度节省电源，切换速度稍慢，这种状态会把显示器的垂直同步信号关掉。
+3 DPMSModeOff     最大程度节省电源，切换速度慢于前两个，它会关闭垂直和水平同步信号。
+
+
+
+
+standby_timeout is the amount of time of inactivity before standby mode
+will be invoked. This is the lightest level of power savings, and the monitor is generally immediately ready
+upon detection of user activity. This is most often implemented by shutting off the horizontal sync signal to
+the monitor. A value of zero disables this mode.
+
+
+
+standby_timeout implemented by shutting off the horizontal sync signal to the monitor. 
+
+suspend_timeou is the middle level of power savings, resulting in a slightly longer recovery upon
+detection of activity. Suspend mode is most often implemented by pulsing the horizontal sync signal, and
+removing the vertical sync signal. 
+
+off_timeout specifies the amount of time of inactivity before the monitor is shut off. Off mode is the
+deepest level of power management, resulting in the greatest power savings and the longest recovery time.
+Off mode is most often implemented by removing both the horizontal and vertical signals. A value of zero
+disables this mode.
+
+
+
+
+The values of successive power levels must be greater than or equal to the value of the previous (non-zero)
+level. A BadValue error is generated if an illegal combination is detected.
+

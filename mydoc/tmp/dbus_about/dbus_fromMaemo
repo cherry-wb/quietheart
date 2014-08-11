@@ -1,0 +1,391 @@
+说了maemo下面dbus通信相关的内容，以及直接利用dbus进行通信，以及利用命令行发送dbus消息给程序。
+
+引自maemo diab教程
+这个教程的pdf文档可以在www.maemo.org网站上面找到.
+其他的dus比较好的官方资源：
+http://dbus.freedesktop.org/doc/dbus-specification.html
+http://dbus.freedesktop.org/doc/dbus-tutorial.html
+############20090506
+p189-195
+利用dbus，程序应该有一个服务文件？？即*.service,
+dbus通信有四个东西是需要的：
+1,服务名：通常*.service中有指定，名字是把域名倒过来的点分字符串形式
+2，对象名：一个服务名下面可能有多个对象名，名字一般是类似路径的字符串。
+3，对象接口名：可能会和服务名一样，也可以不一样。
+4，接口下的函数：就是程序下定义的某个函数。
+例如,通过Dbus命令行的方法，可以调用程序中的某一个函数：
+如下：
+run-standalone.sh dbus-send --print-reply \
+--type=method_call --dest=com.nokia.hello_world_app \
+/com/nokia/hello_world_app com.nokia.hello_world_app.hello_world_dialog_show
+
+这句话的意思是：
+调用服务名字：com.nokia.hello_world_app
+调用的服务名字下面的一个对象为：/com/nokia/hello_world_app
+调用该对象接口（com.nokia.hello_world_app）下面的一个函数（hello_world_dialog_show），这个函数没有参数。如果有参数的话，如下类似的调用：
+
+run-standalone.sh dbus-send --print-reply \
+--type=method_call --dest=org.freedesktop.Notifications \
+/org/freedesktop/Notifications org.freedesktop.Notifications.SystemNoteDialog
+string:’Hello, world!’ uint32:0 string:’NAO OK!’
+
+这里的函数有三个参数：string,uint32,string
+
+
+run-standalone.sh dbus-send --print-reply \
+--type=method_call --dest=org.gnome.PowerManager \
+/org/gnome/PowerManager org.gnome.PowerManager.myTest
+
+在这里，服务名字就是service文件里面的名字，
+对象名字一般是含斜线的，
+接口名字不一定非得和服务的名字一样。
+###################20090507
+p195-200
+利用Libdbus直接编写程序(远程调用函数):
+利用libdbus来编写D-Bus程序是比较底层的，这里进给出一些简单的代码片段：
+/*头文件的包含*/
+# include <dbus/dbus.h> /* Pull in all of D-Bus headers . */
+# include <stdio.h>     /* printf , fprintf , stderr */
+# include <stdlib .h>   /* EXIT_FAILURE , EXIT_SUCCESS */
+# include <assert .h>   /* assert */
+
+/*相应的变量定义*/
+# define SYSNOTE_NAME  "org.freedesktop.Notifications"/*公用服务名字*/
+# define SYSNOTE_OPATH "/org/freedesktop/Notifications"/*对象路径*/
+# define SYSNOTE_IFACE "org.freedesktop.Notifications"/*对象接口名字*/
+# define SYSNOTE_NOTE  "SystemNoteDialog"/*（接口下）待调用的函数名字*/
+
+	/*相关代码*/
+	int main(int argc , char ** argv) {
+		/*****************建立连接*****************/
+		/*连接bus的数据结构*/
+		DBusConnection * bus = NULL;
+		/*调用方法的消息结构*/
+		DBusMessage * msg = NULL;
+		/*存放D-Bus错误信息的结构，我们在堆栈里分配它，它会自动释放*/
+		DBusError error;
+		/*(对话框)将要显示的消息*/
+		const char* dispMsg = "Hello World !";
+		/*确认按钮上面显示的文字*/
+		const char* buttonText = "";
+		/*对话框图标的类型 (1 = OSSO_GN_ERROR ).*/
+		int iconType = 1;
+		/*清除错误信息*/
+		dbus_error_init (& error);
+		/*因为libdbus不使用GLib，所以这里用的是printf*/
+		printf (" Connecting to Session D-Bus\n");
+		/*获取连接bus,这里尽量共享其他进程的dbus*/
+		bus = dbus_bus_get ( DBUS_BUS_SESSION , & error );
+		/*捕捉错误，如果error非空则终止程序,自己编写的*/
+		terminateOnError (" Failed to open Session bus\n", & error );
+		assert (bus != NULL);
+		/*一个实用函数，检查是否有进程拥有这个公用的服务名字*/
+		if (! dbus_bus_name_has_owner (bus , SYSNOTE_NAME , & error )) {
+			fprintf (stderr , "Name has no owner on the bus !\n");
+			return EXIT_FAILURE ;
+		}
+		terminateOnError (" Failed to check for name ownership \n", & error );
+
+		/**********建立调用函数的消息*********************/
+		/* Construct a DBusMessage that represents a method call.
+		   Parameters will be added later . The internal type of the message
+		   will be DBUS_MESSAGE_TYPE_METHOD_CALL . */
+		printf (" Creating a message object \n");
+		/*建立dbus消息对象,以调用函数,函数的作用是显示对话框*/
+		msg = dbus_message_new_method_call ( SYSNOTE_NAME , /* 公用服务名字 */
+				SYSNOTE_OPATH , /* 对象路径 */
+				SYSNOTE_IFACE , /* 接口名字 */
+				SYSNOTE_NOTE ); /* 将要调用的函数 */
+
+		if (msg == NULL) {
+			fprintf (stderr , "Ran out of memory when creating a message \n");
+			exit( EXIT_FAILURE );
+		}
+
+		/*为消息添加函数的参数
+		  第一个参数：字符串类型的，用来显示对话框的提醒内容
+		  第二个参数：整数类型的，用来标志对话框的类型
+		  第三个参数：字符串类型的，用来显示确认按钮的内容
+		  注意：传递的都是参数值的地址
+		 */
+		if (! dbus_message_append_args (msg ,
+					DBUS_TYPE_STRING , &dispMsg ,
+					DBUS_TYPE_UINT32 , &iconType ,
+					DBUS_TYPE_STRING , & buttonText ,
+					DBUS_TYPE_INVALID )) {
+			fprintf (stderr , "Ran out of memory while constructing args\n");
+			exit( EXIT_FAILURE );
+		}
+		/*消息将要通过marshaling包装之后发送给dbus的deamon然后转发给对应的接收方*/
+		/*这里设置dbus deamon确认不给我们发送回应???，这样我们不需要知道消息是否发送到了*/
+		dbus_message_set_no_reply (msg , TRUE);
+		printf (" Adding message to client ’s send -queue \n");
+
+		/*************发送消息************/
+		/*一般消息建立完毕之后，将会放到一个队列里面，之后会一次性的全部发出，这样可以降低开销*/
+		if (! dbus_connection_send (bus , msg , NULL)) {
+			fprintf (stderr , "Ran out of memory while queueing message \n");
+			exit( EXIT_FAILURE );
+		}
+		printf (" Waiting for send -queue to be sent out\n");
+		/*使用这个函数会把队列里的消息立即发送出去*/
+		dbus_connection_flush (bus);
+		printf ("Queue is now empty \n");
+
+		/* Free up the allocated message . Most D-Bus objects have internal
+		   reference count and sharing possibility , so _unref () functions
+		   are quite common . */
+		dbus_message_unref (msg);
+		msg = NULL;
+
+		/*************通讯完毕释放资源***************/
+		/*这里因为一般是共享的，所以减少引用*/
+		dbus_connection_unref (bus);
+		bus = NULL;
+		printf (" Quitting ( success )\n");
+		return EXIT_SUCCESS ;
+
+	}
+
+static void terminateOnError ( const char* msg ,
+		const DBusError * error ) {
+	assert (msg != NULL);
+	assert (error != NULL);
+	if ( dbus_error_is_set (error )) {
+		fprintf (stderr , msg);
+		fprintf (stderr , " DBusError .name: %s\n", error ->name);
+		fprintf (stderr , " DBusError . message : %s\n", error -> message );
+		exit( EXIT_FAILURE );
+	}
+}
+
+
+/*****编译和运行******/
+#makefile
+# Define a list of pkg - config packages we want to use
+# pkg_packages := dbus -glib -1
+# PKG_CFLAGS := $(shell pkg - config --cflags $( pkg_packages ))
+# PKG_LDFLAGS := $(shell pkg - config --libs $( pkg_packages ))
+# # Additional flags for the compiler :
+# #    -g : Add debugging symbols
+# # -Wall : Enable most gcc warnings
+# ADD_CFLAGS := -g -Wall
+# # Combine user supplied , additional , and pkg - config flags
+# CFLAGS := $( PKG_CFLAGS ) $( ADD_CFLAGS ) $( CFLAGS )
+# LDFLAGS := $( PKG_LDFLAGS ) $( LDFLAGS )
+通过上述makefile可知编译的命令应该有：
+`pkg-config --cflags dbus-glib-1` `pkg-config --libs dbus-glib-1`
+运行需要用:
+run-standalone.sh:
+##############################
+(一下内容摘自maemo教程p201-202)
+有时候我们好奇为什么接口的名字要和服务的名字是一样的，这里，按照我的理解，如果接口的名字和服务的名字不是一样的，也就是不复用服务的名字，那么每一个接口的名字将会是唯一的，这和设计接口的思想是相背的（接口通常需要采用一个名字调用不同的功能）尽管也是很常见的情况。
+
+Libosso适用于maemo的程序,主要原因是它能够自动允许程序生存于task killing process.当一个程序没有在bus上面注册合适的DBus名称且被navigator启动起来，那么桌面环境就会在启动之后一定的时间间隔内执行task killing。
+##############################20090508
+(p200-207)
+利用libosso来进行Dbus调用：
+
+/*****头文件及宏定义*****/
+# include <libosso .h>
+   /* ... Listing cut for brevity ... */
+# define  SYSNOTE_NAME  "org. freedesktop . Notifications "
+# define  SYSNOTE_OPATH "/org/ freedesktop / Notifications "
+# define  SYSNOTE_IFACE "org. freedesktop . Notifications "
+# define  SYSNOTE_NOTE  " SystemNoteDialog "
+
+/*************创建和释放libosso的context************/
+int main(int argc , char ** argv) {
+
+ /*用于远程过程调用的libosso context*/ 
+osso_context_t * ossoContext = NULL;
+  g_print (" Initializing LibOSSO \n");
+
+/****需要注意的一点是程序的名字的注册是利用Makefile通过 (gcc) -D选项来指定的*****/
+/*初始化的时候，第2个参数是version没有被使用过，建议就用1.0，另外两个参数是废弃的参数，就全设置为0即可。*/
+  ossoContext = osso_initialize ( OSSO_SERVICE , "1.0", FALSE , NULL);
+  if ( ossoContext == NULL) {
+    g_error (" Failed to initialize LibOSSO \n");
+  }
+
+/******利用编写的runRPC进行远程调用（参见后面）************/
+  g_print (" Invoking the method call\n");
+  runRPC ( ossoContext );
+
+  g_print (" Shutting down LibOSSO \n");
+  /*释放相应的资源*/
+  osso_deinitialize ( ossoContext );
+  ossoContext = NULL;
+  g_print (" Quitting \n");
+  return EXIT_SUCCESS ;
+}
+
+/*
+*需要把程序的名字传递给osso_initialize,这个名字用来在D-Bus上面注册一个名字，组织task killer在过后把进程杀掉（假设通过task navigator启动）.*/
+
+
+/****************利用osso进行RPC(远程调用)的相关代码**************/
+
+/*编写的这个函数进行远程调用，这个函数将会被阻塞一直到被远程调用的函数返回,如果执行的时间很长的话可以有异步调用的方式解决这个问题*/
+static void runRPC ( osso_context_t * ctx) {
+
+/*下面是远程调用函数的参数*/
+/*参数1：对话框将要显示的消息*/
+   const char* dispMsg = "Hello SystemNote !\ nVia LibOSSO /sync.";
+/*参数2：对话框图标的类型*/
+   gint iconType = OSSO_GN_ERROR ;
+   /* Button label text to use , "" means leaving the defaults . */
+/*参数3：对话框按钮上面显示的文字*/
+   const char* labelText = "";
+
+/*存放调用远程调用的函数的返回值*/
+   osso_return_t result ;
+   /* Will hold the result of the method call (or error ). */
+/*存放被远程调用的函数的返回值*/
+   osso_rpc_t methodResult = {};
+   g_print (" runRPC called \n");
+   g_assert (ctx != NULL);
+
+/*进行远程调用（注意远程函数的参数不是传指针了）远程调用函数就是显示那个对话框*/
+   result = osso_rpc_run (ctx ,
+                             SYSNOTE_NAME ,        /*公共服务名字*/
+                             SYSNOTE_OPATH ,           /*对象路径*/
+                             SYSNOTE_IFACE ,             /*接口*/
+                             SYSNOTE_NOTE ,            /*远程方法名字*/
+                             & methodResult , /*远程方法的返回值*/
+                             /*下面三个是传递给远程方法的参数，以DBUS_TYPE_INVALID结尾，不传指针*/
+                             DBUS_TYPE_STRING , dispMsg ,
+                             DBUS_TYPE_UINT32 , iconType ,
+                             DBUS_TYPE_STRING , labelText ,
+                             DBUS_TYPE_INVALID );
+
+
+
+  if ( result != OSSO_OK ) {/*打印错误的信息是自己编写的见后面*/
+    g_error (" Error launching the RPC (%s)\n",
+              ossoErrorStr ( result ));
+  }
+  g_print ("RPC launched successfully \n");
+
+/*打印返回值信息,如果返回值是void那么就DBUS_TYPE_INVALID，并不是表示一个错误*/
+  g_print (" Method returns : ");
+  printOssoValue (& methodResult );/*打印结果信息的函数，这个函数是自己编写的，可以参见后面*/
+  g_print ("\n");
+  g_print (" runRPC ending \n");
+}
+
+/*libosso只能支持一个返回值，如果有多个返回值那么也只是返回第一个返回值*/
+
+/**
+调用远程调用函数的返回值状态
+ */
+static const gchar* ossoErrorStr ( osso_return_t errCode ) {
+   switch ( errCode ) {
+     case OSSO_OK :
+       return "No error ( OSSO_OK )";
+     case OSSO_ERROR :
+       return "Some kind of error occurred ( OSSO_ERROR )";
+     case OSSO_INVALID :
+       return "At least one parameter is invalid ( OSSO_INVALID )";
+     case OSSO_RPC_ERROR :
+       return "Osso RPC method returned an error ( OSSO_RPC_ERROR )";
+     case OSSO_ERROR_NAME :
+       return "( undocumented error ) ( OSSO_ERROR_NAME )";
+     case OSSO_ERROR_NO_STATE :
+       return "No state file found to read ( OSSO_ERROR_NO_STATE )";
+     case OSSO_ERROR_STATE_SIZE :
+       return "Size of state file unexpected ( OSSO_ERROR_STATE_SIZE )";
+    default :
+      return " Unknown / Undefined ";
+  }
+}
+
+/**处理打印远程调用函数结果的函数，这里libosso不能支持数组。*/
+static void printOssoValue (const osso_rpc_t * val) {
+   g_assert (val != NULL);
+   switch (val ->type) {
+      case DBUS_TYPE_BOOLEAN :
+        g_print (" boolean :%s", (val -> value .b == TRUE)?"TRUE":"FALSE ");
+        break ;
+      case DBUS_TYPE_DOUBLE :
+        g_print (" double :%.3f", val -> value .d);
+        break ;
+      case DBUS_TYPE_INT32 :
+        g_print ("int32 :%d", val -> value .i);
+        break ;
+      case DBUS_TYPE_UINT32 :
+        g_print (" uint32 :%u", val -> value .u);
+        break ;
+      case DBUS_TYPE_STRING :
+        g_print (" string :’%s’", val -> value .s);
+        break ;
+      case DBUS_TYPE_INVALID :
+        g_print (" invalid /void");
+        break ;
+      default :
+        g_print (" unknown (type =%d)", val ->type);
+        break ;
+   }
+}
+
+/*需要注意的是libosso的RPC不支持数组参数，所以函数的参数要简单*/
+
+/*运行*/
+[sbox-DIABLO_X86: ~/libosso-example-sync] > run-standalone.sh ./libosso-rpc-sync
+
+/*编译中需要注意的一点*/
+# define a list of pkg - config packages we want to use
+pkg_packages := glib -2.0 libosso
+# ... Listing cut for brevity ...
+libosso -rpc -sync: libosso -rpc -sync.c
+         $(CC) $( CFLAGS ) -DProgName =\" LibOSSOExample \" \
+           $< -o $@ $( LDFLAGS )
+这里就用-DProName定义了ProgName,(可以略微参考man gcc的'-D'选项).这个机制使得程序的名字可以在源代码的外部定义，这样一些代码就很容易被复用了。在这种情况下，libosso就通过Makefile来进行初始化了，可以控制程序的名字了。
+#############异步调用
+p208-212
+
+DBUS异步调用，通过一个回调函数来处理调用远程函数的返回值。
+代码我不详细列出了，这里仅仅给出几个关键的语句,过程和前面同步调用是类似的：
+/*********注册回调函数，然后调用远程方法就立即结束************/
+result = osso_rpc_async_run (state -> ossoContext ,
+                    SYSNOTE_NAME ,       /* 公共服务名 */
+                    SYSNOTE_OPATH ,          /* 对象路径 */
+                    SYSNOTE_IFACE ,            /* 接口名 */
+                    SYSNOTE_NOTE ,           /* 远程方法名 */
+                    rpcCompletedCallback ,       /* 回调函数名 */
+                    state ,           /* 用户的数据*/
+                    /* 下面是远程函数的参数. */
+                    DBUS_TYPE_STRING , dispMsg ,
+                    DBUS_TYPE_UINT32 , iconType ,
+                    DBUS_TYPE_STRING , labelText ,
+                    DBUS_TYPE_INVALID );
+/*********定义回调函数********/
+/*
+前两个参数是接口名和方法名。我们能够利用这个回调函数处理不同的远程调用函数返回值。
+然后远程方法的返回数据在retVal中，我们不用管它是怎么来的，也不用释放它。
+ */
+static void rpcCompletedCallback ( const gchar * interface ,
+                                     const gchar * method ,
+                                     osso_rpc_t * retVal ,
+                                     gpointer userData ) {
+   ApplicationState * state = ( ApplicationState *) userData ;
+   g_print (" rpcCompletedCallback called \n");
+   g_assert ( interface != NULL);
+   g_assert ( method != NULL);
+   g_assert ( retVal != NULL);
+   g_assert (state != NULL);
+   g_print (" interface : %s\n", interface );
+   g_print (" method : %s\n", method );
+
+/*注意，远程方法调用出现错误将会返回一个字符串，如果远程函数本身就返回一个字符串，那么就混了，目前也没有办法。如果返回类型是void的那么retVal的type于设置为DBUS_TYPE_INVALID*/
+  g_print (" result : ");
+  printOssoValue ( retVal );
+  g_print ("\n");
+  /* Tell the main loop to terminate . */
+  g_main_loop_quit (state -> mainloop );
+  g_print (" rpcCompletedCallback done\n");
+}
+############################
+20090514
+~p213
+关于设备

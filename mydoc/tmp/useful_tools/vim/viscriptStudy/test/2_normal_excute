@@ -1,0 +1,4 @@
+execute "set nonu"
+execute "normal Inew text \<Esc>"
+execute "normal o"
+execute "normal VG"

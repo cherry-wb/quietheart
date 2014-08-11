@@ -1,0 +1,159 @@
+﻿
+
+
+关于电源管理器
+
+                           
+
+
+
+
+
+
+吕凯
+
+
+
+
+内容：
+一、一些概念的澄清
+
+二、基本概念
+
+三、电源管理举例
+
+四、需要做的工作
+
+
+一些概念的澄清：
+===============
+http://ftp.gnome.org/pub/GNOME/sources/gnome-power-manager
+中的源代码doc里面的sleep-names.html里面详细介绍。
+------------
+1.简介：
+sleep相关的术语在不同的人有不同的观点。
+开发gnome-power-manager(一个在hal中的电源管理)的时候许多人会混淆一些概念。
+希望这篇文档能够让一些不正式的软件遵守最常用的命名方式。
+
+-------------
+2.Standby
+	Standby是这样的一种动作：Cpu以一种低电耗的状态运行着，但是并没有数据被保存在RAM或者硬盘上。standby和resume一般会耗费很少的一点时间，如果你在便携式电脑上面工作的时候移走了电池，那么，你的工作将会丢失。
+
+推荐的术语：
+	正向动作:STANDBY
+	反向动作：CONTINUE(或者在用户手册或翻译的时候使用RESUME)
+
+-------------
+3.Suspend
+	Suspend是这样的一种动作：电脑会冻结一切的活动，把工作数据拷贝到RAM上面。然后关闭掉屏幕，以非常低电耗的状态模式运行。suspend一般会花费几秒钟，resume也会花费几秒钟。
+
+推荐的术语：
+	正向动作：SUSPEND
+	反向动作:RESUME
+
+	Suspend非常适合描述计算机进入一个临时睡眠但是没有完全断电的状态。用户应该能理解,suspending工作和hibernating是不一样的。你在hibernated的时候可以启动到其他的操作系统，或者更换电池。
+	Resume非常适合描述用户un-suspends电脑，然后重新开始所有的工作。这之前也在pm-tools,HAL,和kernel以及Microsoft Windows里面使用。
+
+不好的术语：
+	Sleep
+	Standby
+	Suspend-to-RAM
+
+	Sleep没有涉及到时间相关的内容，所以它并不是好的描述方式，并且sleep在过去许多年来都用来表示standby和suspend以及hibernate.
+	Standby并没有指明究竟发生了什么，“standby什么呢？”，并且在内核中使用了，在ACPI电源保存状态的时候，很少会使用到。
+	Suspend-to-RAM也是个不好的描述，它让用户感觉需要知道抽象的硬件知识。s-t-r可能对于程序员来说是不错的，但是对于新用户来说并不直观。
+
+---------------
+4.Hibernate
+	Hibernate是这样的一种动作：计算机冻结所有的活动，把数据转存到硬盘上面，关闭掉显示器，并且关闭电源。可能Hibernate会消耗超过一分钟的时间把数据从ram上面转存到硬盘上.并且可能在thaw的时候会消耗将近40秒。
+
+推荐的术语：
+	正向动作：HIBERNATE
+	反向动作：THAW(或者在用户手册或翻译的时候使用RESUME)
+
+	Hibernate已经在pm-tools,HAL,kernel和Microsoft Windows使用了。
+	反向动作的名字对于最终用户IMO并不是很重要了。用户可能会点击一个Suspend按钮，但是不会是Resume按钮。这样，把thaw翻译成为非英语的语言的困难，我想可能是允许加入用户可见部分的hibernate和resume为合法的描述.
+
+不好的术语：
+	Wake
+	Suspend-to-disk
+
+	Wake和它的反义词sleep（不是hibernate）一样是不好的描述，Wake在过去用于从standby中wakeup,从hibernate中wakeup以及从suspend中wakeup。
+	Suspend-to-disk也是个不好的描述，它让用户觉得应该明白硬件的知识，用户凭什么需要知道写到RAM中要比写到硬盘中要快呢?
+
+-------------------------
+5.总结
+把这6个词汇弄清楚，会对整体的框架有一个很大的改观,交流起来也会更方便不会引起歧义。
+六个词汇从省电级别由低到高，来简单归纳如下：
+1)STANDBY,CONTINUE:cpu。
+2)SUSPEND,RESUME:cpu，显示器关闭，ram
+3)HIBERNATE,THAW:cpu,显示器，disk
+-------------------------
+
+
+基本概念
+========
+1.DPMS:
+------
+是X Display Power Management Signaling的简称。
+DPMS extension设计的目标是提供一个传统screen saver的逻辑扩展。
+它的执行独立于screensaver，它和screen saver交互，并且DPMS能够服从用户或者screen saver应用程序。
+
+2.VESA：
+------
+是 Video Electronics Standards Association的简称，规定了显示器的四种电源状态：
+0 DPMSModeOn      显示器打开状态中
+1 DPMSModeStandby 最轻度的节省电源，切换较快，这种状态会把显示器的水平同步信号关掉。
+2 DPMSModeSuspend 中度节省电源，切换速度稍慢，这种状态会把显示器的垂直同步信号关掉。
+3 DPMSModeOff     最大程度节省电源，切换速度慢于前两个，它会关闭垂直和水平同步信号。
+如果把1，2，3状态的timeout设置为0表示不使用。这三种状态的timeout延迟是递增的，后面的不会小于前面的，否则就是错误的。
+
+3.APM:
+------
+高级电源管理。它使用分层的方法来管理设备。APM-aware applications和 OS-specific 的APM driver通信，然后这个driver能够直接控制硬件设备。
+APM定义了两种接口：一种接口是 /dev目录下面的bios接口，如果用户应用程序有权限，它就能够通过这个接口控制设备。另一种是/proc目录下的接口，用户应用程序可以通过这个接口，获得APM的状态和电池的信息。
+尽管上面APM已经提供了一些信息，但是还不足以支持HAL,所以还需要在APM的proc接口中另外一些信息。
+
+4.HAL：
+------
+硬件抽象层。HAL的守护进程是系统范围的服务，它负责维护一个设备的对象的数据库。这个守护进程不仅从APM收集电源状态信息，也会从设备信息文件merging信息以及管理设备的对象的生存期。这个服务以一个守护进程的形式执行，任何用户可以请求获取特定的设备信息。
+ HAL可以提供D-Bus服务，电源管理的接口在HAL中进行注册，这个接口在org.freedesktop.Hal.
+当HAL提供系统内的service的时候，一个hald 进程就会启动。
+
+5.D-BUS:
+------
+可以实现程序之间的通信。D-bus是HAL和power policy application的桥梁。D-bus也提供了一些方便的工具，使得用户能够方便的与它进行通信。
+
+6.gnome-power-manager:
+---------------
+这是我们的电源管理程序，它实际是一个守护进程，是session级别的，通过它提供的一些D-Bus接口，我们也可以实现电源管理功能。
+
+7.总结
+------
+把上面的内容简单总结如下：
+DPMS，是和屏幕电源管理相关的,VESA规定了显示器的四种电源状态；APM是较为底层的电源管理机制，电源管理方面HAL是在APM之上的提供更方便的D-Bus接口控制相关电源管理信息;gnome-power-manager是电源管理守候进程，它运行在HAL之上，它接受用户发送的请求，然后把这个请求传到hal或者apm中，调用hal或者apm提供的相应接口。
+
+
+电源管理控制举例：
+==================
+1,关闭屏幕的方法：
+$xset dpms force off
+这里最后一个参数可以是standby,suspend,off这样都会“关闭屏幕”，移动鼠标会恢复幕。
+
+2,apm命令实现电源管理的步骤如下：
+1)加载apm模块:
+# modprobe apm_power
+2)测试suspend功能：
+$apm -s
+
+3,根据hal信息，利用D-Bus接口发送命令实现suspend功能：
+dbus-send --system --print-reply --type=method_call --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Suspend int32:0
+如果提供了hal层次的接口那么这样就会使机器进入suspend状态。
+
+
+=============
+1.深入Hal研究
+2.提取gnome-power-manager的接口
+3.利用gnome-power-manager接口实现电源管理
+4深入理解gnome-power-manager的工作机制
+

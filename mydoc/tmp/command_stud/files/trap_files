@@ -1,0 +1,24 @@
+http://linux.sheup.com/linux/linux812.htm
+如何使用命令trap来捕捉信号?
+添加记录: Linux 类别: Linux 发布日期: 2005.06.22
+
+
+它有三种形式分别对应三种不同的信号回应方式.
+第一种:
+　trap ""commands"" signal-list
+当脚本收到signal-list清单内列出的信号时,trap命令执行双引号中的命令.
+
+第二种:
+　trap signal-list
+trap不指定任何命令,接受信号的默认操作.默认操作是结束进程的运行.
+
+第三种:
+　trap "" "" signal-list
+trap命令指定一个空命令串,允许忽视信号. 
+
+
+----------------
+另外我用
+trap -lp好像打印的是全部的系统调用。
+和kill -l 的一样。
+好像kill可以发送信号。例如：kill -s 14

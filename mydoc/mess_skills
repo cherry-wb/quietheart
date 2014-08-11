@@ -1,0 +1,952 @@
+这里的内容：
+1）一些杂乱的系统命令以及配置
+2）意外发现的一些操作技巧
+3）解决亲身实践的问题：
+......有待整理......
+
+1）一些杂乱的系统命令以及配置{
+============================
+1,gtk-update-icon-cache -f /usr/share/icons/hicolor
+修改hildon-desktop statusbar上面图标，把/usr/share/icons/hicolor/40x40/hildon/...的图删掉都不起作用，后来才发现使用这个命令更新一下图标的缓存才行。
+2,xterm -e ...
+学习fvwm时候发现了这个命令，好奇-e选项在xterm中是什么意思，查看man手册一看才知道是指定将要执行的程序。
+3.查看linux的内核版本：
+可以使用uname -r来查看当前内核版本
+4.gcc的-D选项：
+可以在编译的时候给程序添加一个宏定义。例如我的程序test.c中没有定义'MY'这个宏，我可以利用如下命令：
+ gcc -o test test.c -DMY
+ 这样就相当于在我的源代码中添加了一个宏定义'#define MY'
+ gcc -o test test.c -DMY=1
+ 相当于添加了一个宏定义：'#define MY 1'
+gcc有一个--static选项，编译的时候静态链接，防止出现运行在其他的平台上面不行。
+5,vi ./可以打开目录。
+按I可以在不同的视图模式下面切换，其中有一种是树状。
+按p可以水平分割一个窗口预览光标文件。按v垂直。
+按P可以在上次的窗口中打开光标下的文件。
+6,我的/dev/sda1是一个et3格式的分区，现在重新安装系统，想把这个分区格掉，不知道该怎么办了，想大家请叫。
+ext2 : mke2fs /dev/hdXX
+ext3:  mke2fs -j /dev/hdXX
+7,vi中在一个函数上面按shift k可以打开该函数的man
+8,在命令行新开一个窗口，打开图形的文件浏览器：
+在命令行下面输入
+$nautilus
+这样，可以新开一个文件管理窗口，打开的是主目录，如果打开path路径，输入：
+$nautilus path
+这里不用&切换的后台了。root最好用："sudo nautilus --browser"这样可以有文件管理器的导航。
+9,鼠标右键启动命令终端，打开的窗口直接是当前文件浏览器下的窗口的方法：
+方法1）把当前目录所在的文件夹直接拖拽到已经打开的terminal终端，然后cd
+方法2)安装nautilus-open-terminal插件。
+10,gksudo可以实现这样的功能：
+运行这个程序之后可以选择某个用户，然后如果你有密码的话可以运行这个用户的权限了。
+11,设置上网改的文件：
+/etc/network/interfaces
+例如我的文件内容是：
+auto lo
+iface lo inet loopback
+
+
+auto eth0
+iface eth0 inet static
+address 10.1.14.122
+netmask 255.255.255.0
+gateway 10.1.14.1
+
+好用的是这个：
+===========
+auto lo
+iface lo inet loopback
+
+
+
+iface eth0 inet static
+address 10.1.14.122
+netmask 255.255.255.0
+gateway 10.1.14.1
+
+auto eth0
+===========
+需要注意的是auto eth0要放在最后，否则可能不好用。
+意义我不说了，一看就懂。
+12,我的evolution邮件系统坏了，然后我把/home/quietheart/.evolution文件删了，之后就好了。网上说可以把原来的.evolution里面的对应文件拷进去，我不知道拷哪些，所以没有做。
+13,SVN 的最新版本是HEAD,所以查看最新版本用：svn log -r HEAD
+14,export EDITOR=vi设置默认编辑器对svn，其他的不知道管不管用。
+15,在firefox中按[Ctrl]k可以跳到右侧的搜索框内搜索,[Ctrl]t可以新建一个空标签
+16,screen如果ctrl a S则分屏，ctrl a Q退出分屏
+17,ctrl Q退出，对于图形程序一般如此。
+18,firefox有一个vimperator插件，可以实现不用鼠标浏览网页，类似vim的操作很方便。
+19,vi中:set complete?可以查看complete选项的值.
+20,scp可以远程拷贝，如果里面不能拷贝，可能需要把/root/.ssh文件夹下的内容删除。
+21,有一个命令：
+xset -q
+这样会显示出standby,suspend等多久之后会被执行，这个命令实际是dpms（和显示电源相关的东西）相关的，由电源管理通知dpms,电源管理一般是利用screensaver的程序来计时的。
+xset dpms 3 3 3
+设置相应的值为3，之后3秒之后自动关屏幕。
+xset dpms force off
+或者off或者suspend或者standby等都直接关闭屏幕。
+sleep 1 && xset dpms force off加个sleep好点,不然容易点完马上就探测到鼠标事件了.
+22,vim无法语法彩色，这样：
+vi ~/.vimrc
+在其中加上一句：
+syntax on
+这样就行了。
+23,vim自动缩进：
+vi ~/.vimrc
+加上：
+set smartindent
+网上说加上两句，前面还要加set autoindent实际，不用也行，我实践了，但是只加autoindent却不行。
+24,vim缩进距离：
+在~/.vimrc加上如下：
+"第一行设置tab键为4个空格，第二行设置当行之间交错时使用4个空格
+set tabstop=4
+set shiftwidth=4
+25,ssh以用户登录机器，例如以用户lvkai登录10.1.14.90,两个方法：
+1)ssh lvkai@10.1.14.90
+2)ssh 10.1.14.90 -l lvkai
+
+26,一个非常好用的轻量级浏览器，可以填写日报：
+midori
+下载源代码的方法：
+apt-get source midori
+建立编译环境：
+apt-get build-dep midori
+编译并安装.
+
+27，远程拷贝，需要安装openssh-client/server
+然后：
+$scp quietheart@10.0.2.2:/home/quietheart/testfile ./
+会把机器10.0.2.2目录上的文件testfile拷贝到当前目录，如果拷目录需要用-r选项。
+
+28,利用ssh远程运行图形程序：
+$ssh 192.168.0.122 -l quietheart -X
+$ echo $DISPLAY
+localhost:10.0
+
+这样就可以利用xterm -display 192.168.0.155:0在本机(192.168.0.155)显示远程终端了。
+如果直接登录的话（ssh 192.168.0.122 -l quietheart）不行。
+实际有时可以在nautilus图形文件浏览器直接输入：ssh://****.这样还能够远程拷贝，很方便。
+
+29.有个可执行文件(prog)，运行的时候缺文件，则运行:
+$ldd prog会列出来它所需要的库和路径。如果没有这个文件会在结果里提示not found
+这些库应该可以考到你自己建立的文件夹里面，然后把这个路径添加到环境变量里面。
+
+30，想要查看系统信号的意义，利用：
+man 7 signal
+
+31,查看错误的含义：
+man 3 errno
+
+32,如何强行踢出某个用户：
+1)$who
+输出
+	quietheart tty1         2009-08-24 16:30
+	quietheart tty7         2009-08-24 08:32 (:0)
+	quietheart pts/1        2009-08-24 10:21 (:0:S.0)
+	quietheart pts/2        2009-08-24 10:21 (:0:S.1)
+	quietheart pts/3        2009-08-24 10:25 (:0:S.2)
+2)$sudo pkill -KILL -t tty1
+这样就把tty1上面的quiehteart给踢出去了。
+
+33.切换目录,保存目录到目录栈：
+pushd, popd, dirs
+这几个命令可以使得工作目录书签化, 就是可以按顺序向前或向后移动工作目录. 压栈的动作可以保存工作目录列表. 选项可以允许对目录栈做不同的操作.
+pushd dir-name把路径dir-name压入目录栈, 同时修改当前目录到dir-name.
+popd将目录栈最上边的目录弹出, 同时将当前目录修改为刚弹出来的那个目录.
+dirs列出所有目录栈的内容 (与$DIRSTACK变量相比较). 一个成功的pushd或者popd将会自动调用dirs命令.
+对于那些并没有对当前目录做硬编码, 并且需要对当前工作目录做灵活修改的脚本来说, 使用这些命令是再好不过了. 注意内建$DIRSTACK数组变量, 这个变量可以在脚本中进行访问, 并且它们保存了目录栈的内容. 
+
+34.列出机器上面的pci设备：
+lspci
+---------
+
+35.通过进程名字来杀掉进程，而不是进程号码。
+killall <procname>
+这里<procname>就是进程的名字，执行这个命令将会把所有名字为<procname>的进程杀掉。
+
+36.列出系统中的字体：
+$fc-list
+如果只列出中文的字体：
+$fc-list :lang=zh-cn
+例如会输出如下：
+AR PL UMing TW:style=Light
+AR PL UMing HK:style=Light
+AR PL UMing CN:style=Light
+AR PL UMing TW MBE:style=Light
+这里每一行都是一个字体的名字，这里UMing实际就是宋体。
+
+37.执行最新的以x为开头的命令：
+$!x
+这里只给出了一个字符匹配，实际可以是多个字符匹配.
+
+38,如果apt-get install无法连接，可能是因为：
+/etc/apt.conf文件的内容设置如下：
+Acquire {
+	http::Proxy "http://username:password@dl-proxyall.neusoft.com:8080"
+}
+39,gtk-vim-syntax是一个可以在vim下显示gtk语法高亮的插件。
+
+40,利用mount 挂载光盘镜像
+sudo mount -o loop image.iso /mnt
+这样就把镜像image.iso挂到/mnt目录下面了。
+
+41,使用apt-get upgrade会升级，但是要保证/etc/apt/sources.list的源地址和你的linux版本号一致，不要ubuntu8.04却用8.10的源进行升级，这样会把系统搞坏。另外apt-get update只是更新数据库索引和本地同步。
+
+42,开发时候有些库函数在man里面查看，需要装一个：
+apt-get install manpages-dev
+这样就可以用man查找一些库函数了，例如man printf.
+
+43,火狐切换标签的快捷键：
+[Ctrl][Tab]
+也可以[Ctrl][Shift][Tab]反方向切换。
+
+44,远程登录window桌面工具：rdesktop
+$rdesktop 10.1.14.122 -u Administrator -p <password>
+这里将用Administrator 密码<password>登录10.1.14.122.
+或者rdesktop-vrdp
+
+45,窗口控制的键盘快捷键(我使用的环境是Ubuntu的桌面)：
+Alt + F4 -关闭窗口
+Alt + F5 -取消最大化窗口 (恢复窗口原来的大小)
+Alt + F7 -移动窗口 ( 在窗口最大化的状态下无效)(这样可以按下方向键移动窗口，然后回车确定位置)
+Alt + F8 -改变窗口大小 (在窗口最大化的状态下无效)（这样可以按下方向键调整水平和垂直大小，回车确认）
+Alt + F9 -最小化窗口
+Alt + F10- 最大化窗口
+Alt + Space -打开控制菜单
+Alt + F1 -打开”应用程序”菜单（像windows的开始菜单）
+Alt + F2 -在GNOME中运行应用程序（像windows的运行框）
+F11全屏（如果有此模式的话）
+
+46,firefox中，恢复上次关闭的标签页：
+[Ctrl][Shift]T
+
+45,有一个有意思的软件：sl，当你输入sl的时候显示动画。（表示你用ls用反了）
+sudo apt-get install sl
+
+46,查看当前系统的键盘modifier key和keycode映射表：
+运行如下命令：
+$xmodmap
+
+47,将标准错误输出重定向到标准输出：
+./test 2>&1
+这样，会把test程序到2的输出重定位到文件描述符号1。
+./a.out 2>&1 > outfile
+会把2和1描述符号的内容都定位到outfile里面，不能用:
+./a.out > outfile 2>&1
+shell左右次序很重要。
+也可以用./a.out &>outfile
+
+48,有时候teminal终端里面的标签字窗口被拖拽出来了，想要把那个标签弄回去，目前的方法是：
+1)在脱离出来的子窗口中按[Ctrl][Shift]t.(即创建新标签使得脱离出来的子窗口有多个标签)
+2)把需要放回去的标签再拖拽到目标母窗口中。
+
+49,alsamixer这个命令使用alsa进行音量控制。会弹出一个命令行下面的"图形界面".
+
+50,查看加载驱动的设备文件的主设备号码：
+cat /proc/devices
+从设备号码是0就行。
+
+51,一个查看sql数据库信息的工具：
+sqlitebrowser
+
+52,在一个用户下挂起：
+用[Ctrl]z不行，要用如下命令：
+$suspend
+
+53,在xterm终端下面，的复制粘贴：
+如果想要粘贴x剪切板里面的内容，那么就[Ctrl][Shift]v
+如果复制vim选中的内容就[Ctrl][Shift]c
+
+54,ssh执行远程主机上面的一个命令：
+ssh lv-k@10.1.29.132 "ls"
+这样，会提示输入密码，输入之后会在ssh的主机上面执行ls,然后就登出了。
+
+55,svn 上面设置代理：
+有时，svn无法下载，因为可能是代理设置的不对，设置svn代理的地方在：
+~/.subversion/servers
+文件中，有好几个注释的，其中把如下打开：
+[global]
+http-proxy-host=***
+http-proxy-port=***
+http-proxy-exceptions=***
+不要忘记，前面不能有空格，变量含义很容易理解，其中http-proxy-exceptions是不使用代理的主机。
+
+56,
+师兄，
+>>> Linux 的api函数中有使得机器重启的函数吗？
+>>> 在普通用户下执行，不是root权限，
+谢谢师兄了，
+我最后找的方法是：用root权限执行，但是不用输入密码：
+在linux：vi /etc/sudoers 加入
+ALL ALL=NOPASSWD: /sbin/shutdown,/sbin/reboot （指定哪些命令不需要输入密码）
+这样就可以在普通用户下执行：
+Sudo reboot
+而不需要密码。
+
+还有一种方法是把指定的命令赋予指定的用户：比如把reboot赋予指定的用户zhizhubao
+# groupadd reboot
+# cd /usr/local
+# mkdir reboot
+# chown root:reboot reboot/
+# chmod 750 reboot/
+# cd reboot
+# cp /sbin/reboot .
+# chmod 4755 reboot
+# usermod -G reboot zhizunbao
+这个我试了不知道为什么不好用，
+网上都说好用，
+你帮我在你机器试试看看好用 吗
+（尝试之后，我的机器上好用）
+
+57,svn 上面想要建立一个目录的链接，那么这个目录和其链接添加到svn库中的时候，必须要同时add才行。
+这个是同事的经验，我还没有时间过。
+
+58，批量重新命名文件：
+*假设文件名为：*.cpp，重新命名为*.c，那么方法入如下：
+
+1)使用rename：
+#rename .cpp .c *.cpp
+
+2)使用awk+sh:
+ls *.cpp |awk '{sub(/.cpp$/,"")}{print $1}'|awk '{printf "mv %s.cpp %s.c\n",$1,$1}' |sh
+
+3)使用sed+正则+sh：
+ls *.cpp |sed 's/\(.*\).cpp/mv & \1.c/' |sh
+
+59上一条命令替换：
+*替换上一条命令中的一个短语（不能写在脚本里）
+$ ^foo^bar^
+当上一条命令是"ls foo"的时候，这时候变成"ls bar"。又是另外一个事件引用符（event designator），可以把上一条命令当中的foo替换成bar。
+实际最正规方法是用类似：
+$!!:s/foo/bar/
+这样类似vim的替换。
+或者$fc -s foo=bar
+
+*使用编辑器来敲命令：
+yourcommand <CTRL-x CTRL-e>
+这样，会打开编辑器，编辑器里面是"yourcommand"，然后可以继续编辑，然后退出之后（当然要保存退出），都会将编辑的内容执行一遍。这里，直接敲"<CTRL-x CTRL-e>"会打开一个空白文件。编辑器，可以在~/.bashrc里面放上比如export EDITOR=nano的命令来指定。
+
+*ubuntu11
+in gnome desktop environment, press "[windows]+w" can list all the windows dynamically.
+
+*set thunder bird's reply text before previous text:
+菜单 --> Edit --> Preferences --> Advanced --> Config Editor
+搜reply_on_top，把值改成1。
+============================
+1）一些杂乱的系统命令以及配置}
+
+2）意外发现的一些操作技巧{
+===========================
+意外发现：
+1.有时候在ubuntun下，alt+滑轮滚动可以改变当前窗口的透明度。
+2.在ubuntun下，evolution邮件系统字体太小了，ctrl+滑轮滚动可以改变字体大小。
+3.firefox浏览器中按ctrl b可以调出书签和搜索窗口栏（在左侧）
+4.firefox 中ctrl L可以回到地址栏输入新网址
+5.ubuntu:xterm下面如果ctrl -和ctrl shift =,两个命令会切换字体的大小
+6.firefox 中ctrl 鼠标滑轮可以调整字体大小
+7.vi下面按alt v 就垂直分割窗口了
+8.vi下面如果有折叠的代码那么可以按空格来打开它
+9.gedit下面如果按[Ctrl]w就会关闭当前的文件窗口
+10,有时候在文件操作界面下面按[Ctrl]t可以新开一个‘标签页’窗口
+11,vi下面直接make(如果有makefile)，之后回车可以定位到第一个错误,按:cc n，可以定位到第n个错误，:cw可以打开错误窗口。
+12,在vi下面，假设已经vsplit，调整窗口的位置，依次执行：
+[Ctrl]w   [Shift]h
+这样就导致右面的窗口跑到左面（假设刚才我的窗口是右面的窗口）了。同样l就跑到右面。
+13.用term打开当前图形界面下面的一个目录：
+1）图形虚拟终端中输入：cd
+2）把要打开的文件目录拖进去回车即可
+14.在gedit下如果按[Ctrl]d就会关闭当前行。
+15,terminal终端建立标签是[Ctrl][Shift]t,切换是：[Ctrl][PgDn]或[Ctrl][PgUp]
+16,命令行输入命令时候：[Ctrl]r之后可以部分匹配搜索，搜索部分之后，可以再次[Ctrl]r搜索上一个满足当前部分匹配的命令。
+17,建立一个以日期为后缀的文件：
+$touch test_`date +%y%m%d`
+这样文件名如：test_090716等等。
+18.按住键盘上面的windows键，然后滚动滑轮，屏幕会变大。别人的就不这样，不知道自己是怎么配置的。
+19.如下命令把输出变为大写：
+ls | tr 'a-z' 'A-Z'
+20,设置语言显示的方式：
+export LANG=zh_CN.utf8
+21,如果利用exec执行一个程序，那么当这个程序退出的时候，运行exec的shell会随之也退出。例如:
+exec vi 启动vi编辑器，如果退出vi编辑器，那么运行exec的shell就会退出了。
+-----------
+$ ldd /usr/bin/mesg
+ ldd是Library Dependency Display缩写, 它的作用是显示一个可执行程序必须使用的共享库.例如上面的命令结果如下：
+ libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0xb7eaf000)
+ /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0xb7feb000) 
+
+21,显示一个图形的模拟时钟:$xclock
+实际输入一个x然后[tab]可以发现许多这样的命令。
+
+22,待机suspend功能的实现：
+echo mem > /sys/power/state
+
+23,Ubuntu进入黑屏幕状态下，可以在终端下使用命令：
+$gnome-screensaver-command -a
+
+24,setterm是设置终端的，例如背景等等。
+
+25，/usr/share/doc下面的文档都是gz的，要看的话可以用
+zmore
+pager(就是less)
+26,关闭一个窗口：
+假设启动了一个文件管理器或者pdf阅读起，如果想关闭相应的窗口则：
+[Ctrl]w
+
+27,鼠标右键点击最大化按钮是水平最大化，中键点击是垂直最大化。
+
+28,svn export不会将.svn目录导出来，（未实践）
+29,使用[Ctrl]u和[Ctrl]k在终端上面分别会删除光标之前和之后的已经敲入的字符，再按[Ctrl]y会把刚刚删除的字符粘贴回来([Ctrl]w的也可粘贴回来,backspace和[Ctrl]H不行）。
+终端上输入[Ctrl]v会没有什么，但是会使之后的一个特殊字符例如[Ctrl]c不再具有特殊意义。
+
+30,显示bash的版本输入：
+[Ctrl]x[Ctrl]v
+例如在我的机器上面输入以上字符之后，显示：
+GNU bash, version 3.2.39(1)-release (i486-pc-linux-gnu)
+
+31,命令行中，在已经敲入的行首和行尾间来回切换跳转：
+[Ctrl]x[Ctrl]x
+这样就不用总按[Ctrl]a或者[Ctrl]e到行首或者行尾了。
+
+32,在vi下面，当前行或者用v选中一片区域之后，可以用如下方法左右缩进：
+左缩进：输入">>".
+右缩进：输入"<<".
+
+33.根据unicode码输入汉字：
+首先输入[Ctrl][Shift]u
+然后输入数字（unicode码，如‘一’的是4e00）
+最后回车。
+
+34.安装一个软件还要输入yes，用下面的就不用了，例如：
+sudo apt-get install zhcon -y
+
+35.firefox中，后退到上一个网页的键盘快捷键是：
+[Ctrl][
+或者[Alt][左方向]
+前进是：
+[Ctrl]]
+或者[Alt][右方向]
+
+36.vi中，删除当前字符一直到行尾：
+输入"D".
+另外,g$, g^, gj , gk 在行超过长度时好。
+j,k下上移动的是文本中的一行，当文本一行的长度超过屏幕的一行的时候，j,k移动的时候在屏幕上可能是移动多行。这时候可以用gj,gk来移动屏幕的一行而不是文本的一行。
+同理g^和g$是屏幕的行首行尾，而不是文本的行首行尾。
+
+37,openoffice中，选中字，然后[Ctrl]b会加粗。
+38,vi中，[Ctrl]y的作用是相对于光标的向下滚动一行。
+39,全屏幕终端启动输入法的时候，有时候在底部打字候选字框会只显示部分，这时候按一下上下方向键就把挡住的部分显示出来了。
+40,在桌面上面按[Ctrl]l可以打开一个小对话框提示你输入想要进入的目录，输入之后回车就会在新开一个文件管理窗口，其中打开相应的目录。
+41,在linux图形桌面中点击鼠标中键相当于双击，这样会打开对应的文件。
+在文件浏览器中点击中键还会新开一个“标签”，类似firefox的tab标签。
+
+42,使用dict.cn,划词翻译，在firefox上面会让字体变小，这时候切换到别的标签再切换回来就好了。
+43,beyond code compare是一个很好的windows下面的对比工具。
+44,在xteminal中如果打开了多个标签，如果在多个标签之间切换用[Ctrl][PageUp/Down]
+如果切换到指定标签例如第二个用[Alt]2
+45,放大缩小窗口用[Win]+鼠标滑轮，或者[Alt]+[数字键]
+46,所有颜色变化（好像是反显）的快捷键：
+在桌面上面按[Windows]+m,[Windows]+n也行。
+47,选中文件之后，按下空格就可以打开了。不用非得双击。
+48,windows邮件dat格式无法打开，那么后缀改为7z的看看。有时候能够打开，但是有时候无法。
+49,调出中文输入法：
+调出输入法除了[Ctrl][Spc]之外，还有[Alt]`
+50,使用文件管理器打开文件：
+[Ctrl][windows键]l
+这样会弹出一个框让你输入路径，回车之后就可以用nautilus文件管理器打开窗口进入相应的路径了。
+
+51,新装系统环境变量没有sbin的问题：
+不要用su
+要用su-
+因为su不会把/sbin添加到环境变量中去.
+要不一开始就用root登陆就行了。
+
+52,firefox中关闭一个标签的快捷键：[Ctrl]w
+
+53,ubuntu 11.10中
+windows键不松手，可以显示测边任务，然后按数字可以跳转指定任务，节省鼠标了。
+打开终端的快捷键：[Ctrl]+[Alt]+t
+
+54,ubuntu 11.10中
+/etc/hosts
+存放网络上面主机名称和ip地址之间的映射。这个配置文件修改之后立即生效，例如我无法通过"server"名字ping通"server"，却能够通过"server"主机的ip来ping通，这个时候可以修改/etc/hosts，添加server和它的ip之间的映射来达到目的。如果使用dns,yellow page或者NIS，那么不会用到这个文件，因为这些程序有自己的配置文件。其他操作系统也有类似文件。
+
+55, 去掉输入的显示：
+stty -echo
+这样，输入的字符不会显示出来，用于输入密码。
+恢复输入的显示：
+stty echo
+
+56,为什么sim卡不能热插拔，sd卡可以热插拔？
+因为sim卡的卡面两个金属片横向排列和插入方向垂直，插拔的时候可能导致内部金属器件直接将其连接上导致短路。
+sd卡是好扩纵向的卡槽芯，和插入方向一样，插拔时不会导致内金属器件直接将其连接上。
+
+===========================
+2）意外发现的一些操作技巧}
+
+3）解决亲身实践的问题：{
+============================
+1.WINE的中文字体显示方块的问题
+http://doc.linuxpk.com/81105.html
+运行wine regedit，打开注册表，找到HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes，删除所有键值（其实只要删除MS Shell Dlg和MS Shell Dlg2即可）。主要原因为tahoma字体在Linux下无法显示中文。
+2,查找不含c字符的文件（正则表达式的排除）：
+find ./ gpm-marsha*[^c]
+这样将会把后面具有c字符的文件名字排除（这样的方法也可以指定字符串如[^list]将排除"list"）。
+3,关于空格在正则表达式中的表示：可以使用"\s"来表示空格。
+4,手动设置网络：
+环境：ubuntu
+进行如下过程：
+1)改/etc/network/interfaces,为了设置网络信息。
+auto lo
+iface lo inet loopback
+
+
+
+iface eth0 inet static
+address 10.1.14.122
+netmask 255.255.255.0
+gateway 10.1.14.1
+
+auto eth0
+
+2)改/etc/resolv.conf,为了设置DNS
+### BEGIN INFO
+#
+# Modified_by:  NetworkManager
+# Process:      /usr/bin/NetworkManager
+# Process_id:   4655
+#
+### END INFO
+
+search none.org
+
+
+
+
+nameserver 210.83.210.155
+nameserver 202.107.117.11
+3)重启网络类似如下命令：
+/etc/rc.d/network.........sh restart
+
+5,打印出所有环境变量：
+$env
+貌似export也是。
+
+6,firefox中切换上一个和下一个标签的快捷键是：
+[Ctrl][Shift][Tab]
+[Ctrl][Tab]
+
+7,今天用$svn  checkout 或update  时显示:
+error  无法找到临时目录:Internal error  
+error can't find temporary directory:Internal error
+以前是没有问题,今天突然所有项目都这样,后来发现是svn服务器盘满,导致svn找不到临时目录存放文件所至，删除几个文件就行了.
+
+8,今天，师妹的机器上面scim拼音输入法无法调出来了，于是上网查找，发现了一篇文章说：
+1）安装scim
+$sudo apt-get install scim
+$sudo apt-get install scim-chinese(这里我的是scim-pinyin)
+2)修改配置：
+2.1)
+$sudo gedit /etc/environment
+    把LANG = en_US （其他语言不同）改为
+    LANG=en_US.UTF-8 或者 LANG=zh_CN.UTF-8
+2.2)
+完成了以上步骤，在使用之前还要先配置一个文件，配置方法很简单，在/etc/X11/Xsession.d/里新建一个名叫95xinput的文件，命令为：
+$sudo gedit /etc/X11/Xsession.d/95xinput
+    在其中添加如下内容：
+    /usr/bin/scim -d # ??
+    export XMODIFIERS=@im=SCIM # 设置应用于所有的X应用程序
+    export GTK_IM_MODULE=scim # 设置GTK的默认输入
+    export QT_IM_MODULE=scim # 设置QT的默认输入
+    注：建议按以上所示加上最后两行，即使必须的支持可能在你现有的系统中不存在，因为对你的系统并不没有什么影响。确认内容无误后，保存文件。
+3)重启X
+输入[Ctrl][Alt][BackSpace]
+参考：http://www.scim-im.org/wiki/documentation/installation_and_configuration/all/system_configuration
+
+4),firefox不支持flash插件，将
+libflashplayer.so下载并拷贝到/usr/lib/firefox-3.0.3/plugins/
+然后重启libflashplayer.so
+
+总结，以上，我实际只做了2.2)步，注意文件名字是95xinput.
+
+今天，又有问题了，参考：
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc79081c1a3afeeb797f451988832b381cf94a56befb3575370871b29dcb8348d9b9c37c2edf2664710b8636489546f1df037881769f1bb8f446f0bb8025e2aac5a3d94325ca44717c97f1fb4d7014dd1f80033093b1e93b022e11adec4072895860589e&p=882a9643ba9c1fb705be9b7f4952&user=baidu
+Scim拼音输入法丢失的解决方法
+其中在一次掉电重启后Scim的拼音输入法就不见了，估计是因为掉电的时候拼音输入法的自定义字库损坏了的缘故，所有解决的方法很简单，删除自定义字库就可以了：
+rm -r ~/.scim/pinyin
+重启scim，拼音输入法就回来了，相应的如果是五笔或其他输入法丢失，同样的只需要删除~/.scim目录下相应目录的自定义字库就可以了。
+
+8)我在ntfs文件系统中用svn，出现如下错误：
+svn: Can't set permissions on 'directory_name/.svn/entries.2.tmp': Operation not permitted
+上网找到如下的第二个方案解决：
+actually I thought it was a bug in subversion but only now I realized it's the permissions problem, since I don't own the file, I can't change its permissions and that's the problem with svn, when I used uid=1000 in fstab it worked properly.
+so I have two solution for this problem:
+1. Use the user option for this partition in fstab, so it can be mounted by any user and tell KDE to mount it automatically as a user on startup
+For the reference, note that this solution doesn't work with NTFS because of the way NTFS-3g works, or in other words it works but it's cumbersome and unsecure, see http://ntfs-3g.org/support.html#useroption
+2. use sudo when doing svn co, this is a workaround but it works flawlessly, svn is smart enough to set proper permissions on the file so it doesn't need anything special(I thought you'll have to chmod the files after the svn co so you can read/write them)
+实际就是sudo svn checkout ***
+
+9)屏幕很删，这样改就好了
+改文件：/etc/X11/xorg.conf如下相应内容：
+Section "Monitor"
+Identifier      "Configured Monitor"
+HorizSync 30.0 - 85.0
+VertRefresh 50.0 - 90.0
+EndSection
+
+10)当用ssh登录机器，之后突然断开了，那么如何恢复刚才的连接呢？
+应该使用screen的功能。
+例如今天（20100705）：
+我用ssh登录一个机器，然后用screen来进行打开，之后编译程序。
+忽然，网线断了，我换了个网址。然后重新ssh那个机器，用screen -ls查看刚在的screen还在运行，后面标记
+attached状态。后来过了一会，变成detached了，可能是那个程序编译完了，于是我运行screen -r，
+竟然奇迹般地回到了断开ssh之前的状态，并且刚才的那个程序竟然编译结束了。
+
+如果screen -ls中有一个attached的session，可以用
+screen -d <session>
+将它弄成detached的，然后用
+screen -r这样就启动screen，并且恢复了刚才detached的screen会话。
+
+11)远程登录机器
+ssh **@**
+之后操作过程中不小心按下了[Ctrl]s,导致机器没有反应了，这时候可以用[Ctrl]q来恢复。原因是：
+CTRL-S and CTRL-Q are called flow-control characters. They represent an antiquated way of stopping and restarting the flow of output from one device to another (e.g., from the computer to your terminal) that was useful when the speed of such output was low. They are rather obsolete in these days of high-speed networks. In fact, under the latter conditions, CTRL-S and CTRL-Q are basically a nuisance. The only thing you really need to know about them is that if your screen output becomes "stuck," then you may have hit CTRL-S by accident. Type CTRL-Q to restart the output; any keys you may have hit in between will then take effect.
+
+12)在terminal 中使用输入法打字，有时候如果terminal是由[Alt][Tab]切换过来的那么会出现能够打入中文但是无法显示候选选择字的界面。这种情况我在ubuntu系统下scim输入法中遇到过。解决方法有两个：
+a）用鼠标点击两下任务兰上当前的terminal窗口，这样会将当前窗口最小化然后又恢复过来，这样之后就能看到候选字了。
+b）用[Alt][Tab]切换到别的窗口（应该是gui窗口如firefox），然后使用两下[Ctrl][Space]相当于将输入法切换去再切换来，然后再[Alt][Tab]切换回原来的terminal窗口，这样就能够看到候选字界面了。
+两种方法，一种需要鼠标，一种不需要。
+
+13)linux给用户添加sudo权限：
+有时候，linux下面运行sudo命令，会提示类似：
+quietheart is not in the sudoers file.  This incident will be reported.
+这里，quietheart是用户名称，然后导致无法执行sudo命令，这时候，如下解决：
+a）进入超级用户模式。也就是输入"su -",系统会让你输入超级用户密码，输入密码后就进入了超级用户模式。（当然，你也可以直接用root用）
+b）添加文件的写权限。也就是输入命令"chmod u+w /etc/sudoers"。
+c）编辑/etc/sudoers文件。也就是输入命令"vim /etc/sudoers",输入"i"进入编辑模式，找到这一 行："root ALL=(ALL) ALL"在起下面添加"xxx ALL=(ALL) ALL"(这里的xxx是你的用户名)，然后保存（就是先按一下Esc键，然后输入":wq"）退出。
+d）撤销文件的写权限。也就是输入命令"chmod u-w /etc/sudoers"。 
+然后就行了。
+
+14)使用 screen工具的时候，[Ctrl]w显示的窗口标题没有在底部出现而是在顶部标题栏出现了，很别扭。
+编辑/etc/screenrc,把如下的163行注释就好了。
+    162 # special xterm hardstatus: use the window title.
+    163 #termcapinfo xterm 'hs:ts=\E]2;:fs=\007:ds=\E]2;screen\007'
+当然，如下：
+#cp /etc/screenrc ~/.screenrc
+这样修改.screenrc就行了。
+
+15)使用vim添加cscope的时候，出现如下错误：
+"E568: duplicate cscope database not added"
+这时候，上网查找，参考如下网址的内容：
+http://blog.163.com/kasicass/blog/static/3956192008926111849252/
+用 vim + cscope_maps.vim 有时会跑出讨厌的“E568: duplicate cscope database not added"错误，一直没有认真思考问题的原有。
+按下面这篇文章里说的，是因为 cscope_maps.vim 只适合 vim 5/6，而 vim 7 中自带了 cscope 的功能，如果再加载 cscope_maps.vim 就有问题了。
+http://www.yolinux.com/TUTORIALS/LinuxTutorialAdvanced_vi.html
+
+我的实践步骤是:
+删除cscope_maps.vim中的cs add之处的内容。
+
+16)sudo无法执行：
+linux给用户添加sudo权限：
+有时候，linux下面运行sudo命令，会提示类似：
+quietheart is not in the sudoers file.  This incident will be reported.
+这里，quietheart是用户名称，然后导致无法执行sudo命令，这时候，如下解决：
+(1）进入超级用户模式。也就是输入"su -",系统会让你输入超级用户密码，输入密码后就进入了超级用户模式。（当然，你也可以直接用root用）
+(2）添加文件的写权限。也就是输入命令"chmod u+w /etc/sudoers"。
+(3）编辑/etc/sudoers文件。也就是输入命令"vim /etc/sudoers",输入"i"进入编辑模式，找到这一 行："root ALL=(ALL) ALL"在起下面添加"xxx ALL=(ALL) ALL"(这里的xxx是你的用户名)，然后保存（就是先按一下Esc键，然后输入":wq"）退出。
+(4）撤销文件的写权限。也就是输入命令"chmod u-w /etc/sudoers"。 
+然后就行了。
+
+17)evolution无法收发邮件：
+菜单“文件”——>联机工作，搞定！
+原来是电脑网络断了之后Evolution变成脱机工作了（类似火狐）
+
+我的本来就是联机状态，于是先脱机再联机，然后收取，就好了。
+
+18)安装了centeros之后，硬盘读写速度变慢了，不知为何。
+后来，发现同事原来的硬盘是/dev/sda*现在成了/dev/hda*,有发现没有开启dma功能，所以慢了。具体过程待整理。
+实践：
+DMA
+kernel 启动命令行上增加: ide0=noprobe
+gedit /boot/grub/menu.lst
+kernel .... .... ide0=noprobe
+
+修改/boot/grub/device.map 文件，把文件中对hd0的标记hda 改为sda.
+# this device map was generated by anaconda
+(hd0)     /dev/sda
+
+然后把fstab中的相应hda修改成sda.
+测试速度如下：
+修改之前：
+#dd if=/dev/zero of=/dev/null bs=16k count=1024
+1024+0 records in
+1024+0 records out
+16777216 bytes (17 MB) copied, 0.00450119 seconds, 3.7 GB/s
+
+/sbin/hdparm -t /dev/hda
+/dev/hda:
+ Timing buffered disk reads:   12 MB in  3.40 seconds =   3.53 MB/sec
+
+修改之后：
+#dd if=/dev/zero of=/dev/null bs=16k count=1024
+1024+0 records in
+1024+0 records out
+16777216 bytes (17 MB) copied, 0.00543471 seconds, 3.1 GB/s
+
+# /sbin/hdparm -t /dev/sda
+
+/dev/sda:
+ Timing buffered disk reads:  198 MB in  3.02 seconds =  65.54 MB/sec
+
+
+19)当终端显示错乱的时候:
+有时候，终端显示乱码，无法正确显示我们输入的内容。
+比如cat某些二进制文件的时候，例如"cat /etc/localtime"这时候，我们可以运行：
+$reset
+这样就行了。（尽管reset字符也没有正确地显示出来）
+
+20)一个shell的技巧：
+拷贝多个文件：
+cp ./{file1,file2,file3} dir
+这里，可以用'{}'来表示多个文件的集合。
+
+21)gdb调试的同时显示代码：
+gdb -tui a.out
+这个是gdb一个有意思的选项,这样，运行程序的时候会在上面显示程序的代码，加入断点也会标记出来。
+
+22)今天同事的网上不去了，弄了半天，使用setup命令也不好用，最后弄好了，原因竟然是：
+交换机上面，有两个口接到了一根网线上，竟然有人这样接！所以导致无法上网。
+
+23)有时，windows上面发送的mail是dat格式的，例如winmail.dat，这文件包含了附件信息，可惜不能直接打开，打开的方法有两种，如下：
+*从"http://sourceforge.net/projects/tnef/files/tnef/"下载tnef程序，
+a)编译:
+$./configure && make
+这样会生成一个可执行文件tnef
+b)运行：
+$./tnef windat.mail
+这样即可在当前目录生成解压好的附件内容。
+这个tnef更详细的信息，参见"./tnef --help"的输出。
+以上方法在linux上面可用。
+
+*登陆"http://tud.at/php/tnef/index.php"，然后选择浏览你的winmail.dat文件，再sendfile，然后就会返回解压之后的文件两个方法原理一样，都是使用tnef程序。
+以上方法，只要能够用浏览器联网就可用。
+
+24)word中回退到上次编辑位置：
+word不能导航，但是可以记住四个上次编辑的位置，使用"[ctrl][alt][z]"或者"[shift][f5]"就可以在期间跳转。
+
+25)修改linux上面的主机名称：
+当前使用的系统是
+CentOS release 5.5 (Final)，修改主机名称过程如下：
+修改文件：/etc/sysconfig/network
+HOSTNAME=lv-k.domain.com
+修改成：
+HOSTNAME=<新名字>.domain.com
+如果不重新启动，使用/etc/init.d/network restart也可以。
+另外，使用hostname <主机名称>修改之后，重新启动就又恢复了。
+
+26)远程挂载共享目录
+Windwos机器开放一个共享目录，例如名字为share。
+linux使用mount命令远程挂载，命令如下:
+#mount  //192.168.1.2/share   /mnt/win  -o   user=abc,rw
+
+27)yum中代理问题：
+下来一个东西，本来不需要设置/etc/yum.conf中的代理变量(proxy)的，也将它去掉了，但是现象还是和有代理的现象一样。后来经过寻找发现原来除了/etc/yum.conf之外，还有一个/etc/yum/yum.conf文件，它里面也设置了代理。修改之后就好用了。
+
+28)制作rpm包的时候，如果有一个文件第一行包含
+#!/bin/busybox
+那么能够制作成功但是却在安装的时候说依赖/bin/busybox.
+如何解决？
+rpm -ivh --nodeps ***
+这样就行了。
+
+29)插入内存之后，总是"嘀、嘀、嘀……的长响"
+使用橡皮将金手指两面都擦一下，然后再将内存底部放在一个地方蹭蹭，这样去掉氧化的地方。然后尝试一下，应该就好了。
+
+30)图形比较工具
+linux下面的meld和windows下面的code compare用于代码比较。
+
+31)图形svn
+ubuntu 的esvn,rapidsvn
+
+32)路由器有几个mac地址?
+路由器有几个mac地址? 这里只给出了一半的答案——
+(1)问题的背景
+    通过pc连接无线路由组成lan网，无线路由连接外网(wan)，无线工作站连接无线路由组成wlan网。
+    在这种情况下，已经确定了路由有两个ip，一个用于wan一个用于lan和wlan。但是路由器到底有几个mac地址呢？
+
+(2)困惑
+    上网查询之后，各种说法，有的说整个路由器就一个mac，有的说路由上面的每个端口代表一个mac，还有的说有两个，一个用于wan一个用于lan。
+    工作的时候也听说过，无线网络中的bssid用来表示一个无线访问点的地址，和物理mac地址形式一样(48位)，并且一般只和物理mac地址相差很少(甚至两者是连续的)，并且使用wireshark和airpcap配合抓包之后，显示的bssid确实和物理mac地址相差一位，所以便以为bssid是一个虚拟的mac地址；也遇到过路由器（motorola docsis3.0）上面标注了有两个mac地址的但是两个mac地址相差很多（至今对此存有疑惑）。
+
+(3)实践的结果
+    所以只有将自己实践的结果给出来：
+    （a）路由连接外网（wan），PC连接路由组成lan，在无线工作站连接无线路由组成wlan。
+    （b）wan（外网）:通过pc打开路由配置网页，看见上面标注"internet mac is 'A'"。
+    （c）wlan（无线局域网）:然后通过无线站点连接无线路由，在无线站点上得知连接的路由的mac为'B'。
+    （d）lan（有线局域网）:然后打开pc使用arp命令查看和pc连接的路由的mac地址为'B'。
+    （e）以上，'A'和'B'地址几乎一样，只有1-2位是不同的。
+
+    综上，得到了一个不知道是正确还是错误的但是基于实践的结论：
+    （a）路由器有两个mac地址，一个用于外网（wan），一个用于内网(wlan和lan)；
+    （b）一般路由器上面或者配置路由器的网页上面只标注外网的mac地址；
+    （c）内网的mac地址和外网mac地址一般只有几位不同（甚至连续，也有些相差很多的例外）。
+    真正的结果，究竟是怎么的呢？
+
+33)如何让ubuntu 11.10的任务栏到底部？
+# add-apt-repository ppa:paullo612/unityshell-rotated
+http://mtoou.info/ubuntu11-unity-dibu/
+不行……
+
+34)ubuntu 用ssh登录别的机器显示中文时候乱码：
+在terminal窗口选择：
+Terminal->Set character encoding->UTF-8
+实在不行就：
+sudo apt-get install language-pack-zh-*
+再：
+wifi@aplab:/etc$ cat /etc/default/locale 
+LANG="en_US"
+LANGUAGE="en_US:"
+
+LANG="zh_CN.GB18030"
+LANGUAGE="zh_CN.GB18030:zh_CN.GB2312:zh_CN"
+SUPPORTED="zh_CN.GB18030:zh_CN:zh:en_US.UTF-8:en_US:en"
+
+35)eclipse与scim输入法冲突解决办法(转)
+Firefox,GEdit都默认使用了scim作为首选输入法，但是在eclise中则不是，在默认情况下，在eclipse编辑器里面不能输入任何字符（包括中文或英文）。只要输入文字的时候弹出补全对话框则会导致焦点失去，必须用alt+tab切换才能继续输入。只有鼠标右键选择Input Methods -> SCIM input Method之后，才可以正常输入，虽然这样也能解决问题，但是太多人性了，Google一把，找到解决办法。
+Ubuntu 8.04下的eclipse与scim输入法冲突解决办法(转)
+http://www.blogjava.net/sealyu/archive/2009/04/20/266500.html
+安装scim智能拼音输入法
+sudo apt-get install scim-pinyin im-switch
+
+sudo vim /etc/X11/xinit/xinput.d/scim
+将GTK_IM_MODULE=scim中的xim修改为scim，保存并退出。
+sudo update-alternatives --install /etc/X11/xinit/xinput.d/all_ALL xinput-all_ALL /etc/X11/xinit/xinput.d/scim 30 
+
+im-switch -s scim
+
+36) Ubuntu密码忘记了怎么办？
+版本：Ubuntu 11.10
+思路是进入root中，然后使用passwd修改自己的密码。
+假设用户名：quietheart
+经过网上查询，如果安装系统之后没有设root密码，那么，Ubuntu 11.10的root密码是每次启动的时候随机，所以首先最好要将root用户的密码设置一下。
+
+修改root密码方法：进入quietheart之后
+$sudo su
+<输入quietheart密码>
+#passwd
+<输入新root密码>
+这里，默认ubuntu的第一个你的用户有管理员权限，所以使用sudo命令可以进入root用户，然后通过passwd就能修改root密码了。
+
+但是，假设我们忘记了quietheart的密码，那么可以通过如下方式进入root用户：
+启动机器的时候，POST自检之后，按左[Shift]键，这样便能进入Ubuntu的grub启动菜单（否则只能进入图形界面强制你输入用户名和密码登陆）。
+进入grub菜单之后，选择recover模式，然后再选择其中含有root的部分，这样便能进入root用户。
+然后如下：
+#passwd
+<输入新的root密码>
+#passwd quietheart
+<输入新的quietheart密码>
+#reboot
+这样，重新启动之后，就能使用刚刚设置的密码进行登陆了。
+
+37)nfs无法挂载的问题：
+参考：http://blog.chinaunix.net/uid-9525959-id-2001818.html
+
+mount.nfs: access denied by server while mounting 一个解决办法 
+http://blog.chinaunix.net/uid-20554957-id-3444786.html
+cat /var/log/messages | grep mount
+从出错日志可以看出，mount.nfs: access denied by server while mounting 192.168.3.12:/home/lzgonline/rootfs 被拒绝的原因是因为使用了非法端口，功夫总没白费
+//如果端口号大于1024，则需要将 insecure 选项加入到配置文件（/etc/exports）相关选项中mount客户端才能正常工作:
+
+查看 exports 手册中关于 secure 选项说明也发现确实如此
+
+[root@lzgonline init.d]# man exports
+
+secure,This  option requires that requests originate on an Internet port less than IPPORT_RESERVED (1024). This option is on by default. To turn it off, specify insecure.
+修改配置文件/etc/exports，加入 insecure 选项
+
+/home/lzgonline/rootfs  *(insecure,rw,async,no_root_squash)
+
+保存退出
+
+然后重启nfs服务：service nfs restart
+
+然后问题就解决了
+
+============================
+3）解决亲身实践的问题：}
+
+------------
+一些有用的好工具：
+1,zhcon可以在命令行下面显示中文
+2，wine可以在linux下面运行windows的程序
+3，screen可以在命令行下面切换多个窗口。
+详见：
+http://www.ibm.com/developerworks/cn/linux/l-cn-screen/
+http://www.linuxidc.com/Linux/2009-04/19716.htm
+并且可以恢复断开的连接。4，w3m可以在命令行下面上网。 
+5,CHM Reader 0.2.3是一个在firefox下面的查看chm格式文件的插件。可以到：
+https://addons.mozilla.org/en-US/firefox/addon/3235
+下载
+
+----------
+杂乱命令积累(学习中的)：
+1,finger
+该命令用于提取/etc/passwd中的comment字段的内容并且显示出来，描述用户信息.
+(APUE)
+2,vipw
+该命令是root用户用来直接编辑/etc/passwd的命令。
+(APUE)
+3.系统中利用两个二进制文件：
+utmp，一般在/var/run/utmp,存放当前登录的所有用户相关信息结构。
+wtmp, 一般在/var/log/wtmp,保存所有登录和登出的相关信息结构。
+利用who命令可以读取utmp文件，显示出相关的信息。
+利用last命令可以读取wtmp文件，显示相关的信息。
+(APUE)
+4.size命令可以查看一个可执行文件的各个段的大小
+（初始化数据段，文本段，未初始化数据段）
+(APUE)
+5.共享库的使用减少了可执行程序大小但在无论第一次运行程序还是共享库都增大了运行开销，把一个简单的hello.c源文件不用共享库的方法编译，其命令是：
+cc -static hello.c
+(APUE)
+
+6.把一个bmp格式的图像转换为xpm格式：
+首先安装imagemagick软件包，其中的convert命令十分强大，可以把任意格式的图片文件转换为xpm文件格式。
+convert test.bmp test.xpm
+(http://www.linuxsir.org/bbs/showthread.php?t=274181)
+
+7,把文件的x位置为s,执行文件的时候会设置set-user-ID位,导致执行该文件时，有效用户的权限就成了拥有该文件的用户。例如su,sudo就是，执行他们的时候，权限就成了root了,例如：
+chown root file
+chmod u+s file
+这样执行file的时候拥有root权限。
+
+8,hwclock也显示时间。
+具体为：hwclock --show
+（rcS脚本S08hwclock）
+
+9,一般后台作业进程的输出也会打印出来的，如果禁止后台作业输出的设置,如下：
+$stty tostop
+(APUE)
+
+10,下面这段话语说明了回车和换行的关系：
+	In ASCII, to move to
+	* a new line you need two characters, a carriage return and a
+	* line feed.  On Unix, the ASCII line feed is used for both 
+	* purposes - so we can't just use \n, because it wouldn't have
+	* a carriage return and the next line will start at the
+	* column right after the line feed.
+(	http://blog.csdn.net/dzassn/archive/2007/09/15/1786116.aspx
+	linux kernel module programming)
+11,关于声音文件的转换：
+sox可以实现声音转换。
+举个例子, sox soundfile.wav soundfile.au将会把一个WAV文件转换成(Sun音频格式)AU声音文件. 
+
+12,ubuntu 11.10上面重新启动mysql服务：
+# service mysql restart
+如果/var/run/mysqld的mysql.sock文件丢失导致无法使用mysql，那么就这样做一下。如果还是不行，那么就对/var/run/mysqld文件进行chown 为mysql用户名和组，同时保证/etc/mysql/mysql.conf中的客户端服务器端的指定套接字一致。
+
+
+
+
+
+
+===========杂乱
+开机进入单用户模式
+chkconfig   sendmail  off
+关闭它即可

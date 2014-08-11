@@ -1,0 +1,16 @@
+findfs LABEL=label
+findfs UUID=uuid
+
+[功能]
+通过标签或者UUID来寻找文件系统。
+
+[描述]
+findfs通过在系统中搜索磁盘来寻找具有指定UUID或者LABEL的磁盘。如果找到了，那么这个文件系统的磁盘设备名就会被打印到标准输出上面。
+具体的UUID和LABEL就是类似在/etc/fstab列出的。
+
+[举例]
+*寻找一个文件系统的磁盘：
+$findfs UUID=53ff2e61-8ac9-4124-aa27-19c45ae949a5
+输入之后，输出如下：
+/dev/sda9
+这里，指定了UUID，然后返回对应文件系统所在的磁盘为/dev/sda9.

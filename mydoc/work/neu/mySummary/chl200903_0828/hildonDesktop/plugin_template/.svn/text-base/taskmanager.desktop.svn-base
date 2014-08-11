@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=taskmanager 
+Category=permanent
+X-status-bar-plugin=libtaskmanager.so

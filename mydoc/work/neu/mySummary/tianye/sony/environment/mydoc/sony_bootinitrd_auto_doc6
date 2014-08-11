@@ -1,0 +1,63 @@
+本文讲述用prof设置启动开发板，以及自动启动开发板的方法。
+
+一、关于module和profile:
+profile：
+NBL管理一些和启动相关的参数，叫做Profile.
+内核能够通过使用"aboot"命令，和boot selection功能注册boot profile来自动事先启动。
+boot profile可以通过特定格式的文本配置文件来进行设置，也可以通过"bootprof param"命令来设置。
+
+mode：
+启动模式有normal和recover模式，一般从normal模式启动，如果上次出现问题那么从recovery模式启动。
+s1902组的1号跳线设置为on,也就是设置成boot selection(烧写模式)。
+
+二、设置boot profile
+设置profile需要使用bootprof命令，或者上传profile文件到特定的区域。
+1,bootprof相关：
+运行bootprof会提示相应的帮助信息。
+
+1)初始化：
+NBL> bootprof init
+NBL> bootprof list
+输出：
+[global]
+  normal    : Linux
+  recovery  : Linux0
+这里，可以用“bootprof bootname [-r] [<name>]”设置normal和recovery名字。
+
+2)根据输出，设置 Linux和 Linux0:
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux0
+这里，实际normal是用Linux启动的。
+
+3)查看当前的prof设置：
+NBL> bootprof list
+设置完成后，输出应该如下：
+[global]
+  normal    : Linux
+  recovery  : Linux0
+
+[Linux]
+  kernel    : sdmd:raw:vmlinux.bin
+  cmdline   : console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0
+  initrd    : sdme1:uvfat:/boot/ramdisk.img
+  preboot   : 
+  timeout   : 3
+  retry     : 3
+
+[Linux0]
+  kernel    : sdmd:raw:vmlinux.bin
+  cmdline   : console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0
+  initrd    : sdme1:uvfat:/boot/ramdisk.img
+  preboot   : 
+  timeout   : 3
+  retry     : 3
+
+
+4)利用bootprof的normal启动：
+NBL> aboot -n
+这样就以bootprof中[Linux]中的参数进行启动了。如果修改模式需要用nblconfig命令。
+关于aboot，作用大概就是用指定的模式从prof启动系统。其参数可以查阅帮助。
+另外注意，这里文件名的后缀很重要，根据boot命令的文档，如果没有制动启动选项，NBL根据内核文件名后缀来识别各种文件类型。例如".bin",".gz",".elf"等等。
+
+5）设置上电自动启动：
+如果想要不敲命令，上电自动启动，那么采用以上参数并且把avp13板上的s1902组的1号跳线设置为on。也就是设置成boot selection(烧写模式)。

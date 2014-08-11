@@ -1,0 +1,307 @@
+***关于http
+***python相关
+***使用tate板子
+***关于设置无线路由
+***关于使用iperf进行tate测试
+***关于git使用
+***adb
+
+
+***关于http
+假设一个登陆页面(www.examplelogin.com)：
+1，先用发送的时候使用get方法获取一个网页:
+http://www.examplelogin.com
+2，通过查看这个网页源代码得知一个form，
+里面的action:指定提交时候执行的网页(test.asp)。
+name和password就是提交的数据。
+3,提交的时候请求为：
+http://www.examplelogin.com/test.asp?name=xxx&password=xxx
+post请求无法看到这个url但是就是这个url，
+我们可以将代码中的post修改成get这样就能看到提交的是什么请求，这是一个小技巧，因为get方法可以让我们在地址栏看到请求的url。
+
+url就是整个，uri就是/test.asp
+
+
+***python相关
+**一个好用的python插件
+http://seleniumhq.org/download/
+这个seleniumhq是一个python的库，可以用它来操作网页相关的内容，还可以安装一个环境，让它来录制我们在网页上面的动作，然后将动作导出为相应的python或者ruby等脚本。
+
+**python的zope,re(正则表达式)
+参见：http://www.iis.sinica.edu.tw/~marr/PCmgz/
+object基类
+python的new模块可以不用添加路径引用上面目录
+
+**python的log,configure,mysql,twisted
+官方文档
+
+**使用python访问mysql数据库
+安装mysql环境：
+ubuntu 11.10
+1）apt-get install mysql-server
+这里，提示设置访问mysql的root密码，设置之后按tab键，跳到ok上面即可。
+2）apt-get install python-mysqldb
+http://sourceforge.net/projects/mysql-python/
+http://www.iteye.com/topic/573092
+然后
+import MySQLdb
+即可。
+
+**python的httplib可以用来发送http请求
+
+***使用tate板子
+0）开关：
+常按8秒硬关机。
+开机的时候不要插线，否则会进入fastboot模式（用于烧写）。
+当进入fastboot模式之后，将线拔下，硬关机，然后再开机（短按就行了）。
+
+1）插入usb
+2）使用adb登录：
+adb shell
+这样，会进入tate板子的shell界面。
+退出用：
+exit
+
+3）在pc上面传输文件用：
+$adb push <pc文件> <tate>路径
+
+4）在tate上面：
+断开：
+ifconfig wlan0 down
+打开：
+ifconfig wlan0 up
+
+
+***关于设置无线路由：
+一本书：802.11.Wireless.Networks.The.Definitive.Guide.chm
+3,4,8章的内容。
+这里以cisco e3000的linksys为例子。
+设置路由无线方式，点wireless标签。
+1，2.4G和5G
+    路由可以支持5G和2.4G两个频率范围段的信号。如果两者同时可以设置而不是互斥那么应该这个路由器还能够同时支持两种频段。两个频段都支持的话那么相当于这个路由器有两个网络，如果设备支持两种频段，那么设备扫描的时候会看到两个网络（ssid）后面会讲述。下面都以5G为例子进行讲述。
+
+2，network mode
+    5G的网络模式有：Mixed/Wireless A-Only/Wireless N-Only/Disabled。这些模式相当于选择一个某种协议，802.11a，802.11b等等，后面的处理都是基于这些协议。disabled表示不用协议，也就是将无线路由的功能关掉。关于网络模式的更多信息，可以参见： http://en.wikipedia.org/wiki/Wireless_N(实际在wikipedia下面搜索"wireless n"就可以看到)。如果选择mix表示支持所有模式，但是这样如果同时多人使用ap那么只能采用其中性能最差的了，如果选择mix并且只有一个支持n的设备在用，那么mix的性能就几乎和n模式一样好了。mix就是为了兼容尽可能多的协议的意思，一般默认出场使用这个模式。
+
+3，Channel Width 和Channel
+    这里的Channel Width是频率带宽，有20M HZ/ 40M HZ等，它可能依赖于一些其它的选项，例如一般2.4g的就不会有40M，例如选择了"20M HZ"这个Channel Width之后，后面再选择一个channel例如5.18GHZ，等等，则表示以5.18GHZ为中心的前"10M HZ"以及其后面的"10M HZ"频带范围被占用。
+    所以，如果屋子里面有很多的ap(也就是无线路由接入点的话，要设置它们的channel Width和channel保证不会相互干扰（类似收音机里面的串台），当然，如果相互干扰了，那么net mode所指定的协议也会让他们之间进行协调，但是性能就不如不干扰的时候了。
+
+4，ssid
+    表示一个子网的名字，无线路由通过这个名字可以为其它设备标识这个无线路由的子网。设备进行扫描的时候，就会将相应ssid扫描到，然后就能够选择相应的ssid进行连接了（当然不扫描，理论上也可以直接指定自己事先已经知道的ssid进行连接）。ssid可以和其它的重复，这样扫描的时候会看到两个同样名字的ssid。
+可参考：http://baike.baidu.com/view/632746.htm
+
+5，加密方式
+    设置无线路由器的加密方式，例如WPA/WPA2/WEP等等，表示某种加密的方式。
+    例如WPA方式，我们输入一个密码之后，保存，之后就想要访问这个ap，那么需要这个我们设置的密码来访问。
+    而设置WEP的方式比较复杂，设置WEP方式之后，当输入pass pase(我们输入的类似密码的字符串)之后，还要根据我们生成的字符串生成4个key(需要点一个generate按钮)，这4个key任意一个都可以做为认证的密码。
+
+
+6，高级设置选项    
+*AP Isolation:表示是否使用ap隔离功能。如果使用，那么表示连接到ap上面的station虽然可通过ap上网，但是不能做station之间的连通（两个station无法ping通）。
+*Frame Burst:表示是否使用burst功能。不用burst表示做tcp传输的时候，发送一个则确认（ack）一个，而使用burst表示可以发送多个，然后批量的确认(ack)。
+*Transmission Rate:设置传输速度限制。
+*CTS Protection Mode:clear-to-send，一般ap发送这类数据，表示ap告诉其它station，它可以接收。因为这个是一个想让尽可能多的人收到的数据包（便于station之间通过ap的cts能够知道他们发送的状况），所以速率不会太高。
+*Beacon Interval: 表示无线路由定期广播其ssid的时间间隔。这个一般不会设置，如果不广播了，那么station端可能会发现ap不定期广播了，所以可能会断开连接。
+*DTIM Interval:DTIM/TIM表示告诉station，ap在为station做package buffer（例如station睡眠的时候）的缓存时间。
+*Fragmentation Threshold: 表示一个package的分片大小，越小越容易成功。
+*RTS Threshold: Require-to-send，表示“我要传输”。如station传输给ap的之前。
+
+另外，
+"ap"表示无线路由，"station"表示连接无线路由的设备，两者之间的连接使用"assosiate"；
+广播用"broad cast"表示，一般ap广播，无线网络广播不用确认（ack）；
+与广播相对的是"uni cast"表示单播，一般设备向ap请求用，它需要确认（ack），没有收到ack则重传。
+ssid是给人看的，bssid是给机器看的网络标识。
+以上的这些在网络嗅探器(例如wire shark)抓取分析网络数据的时候经常会出现。
+
+
+
+
+***关于使用iperf进行tate测试
+测试tate和无线路由之间的通信连接。
+1，测试准备
+（1）三个机器可以互相连结：
+PC机器(test controller)<-->ap(无线路由ciscoe3000)
+ap(ciscoe3000)<-->tate(板子)
+tate<-->PC机器（两者在同一个局域网）
+
+（2）设置好tate板子
+ap的无线访问密码去掉。
+通过tate的界面设置连接上无线网络的ap。
+退出设置连接ap的scan界面。
+关掉tate上面的sleep功能。（因为poweroff会影响scan）
+关掉tate上面的blue tooth功能。
+
+
+（3）杂乱命令：
+#wl join <ssid>
+连接网络
+
+#wl status
+输出的mcs:如果0-15表示两根天线，如果0-7表示一根天线。
+
+#wl disassoc
+断开连接。
+
+2，测试内容
+TX:表示测试tate板子的发送功能。向ap发送发给PC的信息。
+RX:表示测试tate班子的接收功能。从ap接收PC发给tate的信息。
+
+测试的收发信息包括：
+UDP方式收发数据
+TCP方式收发数据
+
+3，测试的命令：
+RX:
+iperf -s -u -i 1
+这里，表示接收udp数据的时候运行的侦听命令。-s表示server，-u表示使用udp方式发送，-i 1表示每间隔1秒发送一次。
+
+iperf -s -i 1
+这里，表示接受tcp数据的时候运行的侦听命令。-s表示server，-i 1表示每间隔1秒发送一次。
+
+TX:
+iperf -c <dest ip> -b <bytes> -t <totaltime> -i <interval>
+这里，表示发送udp数据的时候运行的侦听命令。-c <dest ip>表示向<dest ip>发送数据，-b表示发送数据的速率是130bit/s（可以用m后缀），-t表示发送测试的总时间为<totaltime>秒，-i <interval>表示每间隔<interval>秒发送一次。
+
+iperf -c <dest ip> -t <totaltime> -i <interval>
+这里，表示发送tcp数据的时候运行的侦听命令。-c <dest ip>表示向<dest ip>发送数据，-t表示发送测试的总时间为<totaltime>秒，-i <interval>表示每间隔<interval>秒发送一次。
+
+4，测试分析：
+a.测试UDP的TX(tate->pc)：
+pc上运行：#iperf -s -u -i 1
+tate上运行：#iperf -c <pc的ip> -b 130m -t 60 -i 1
+表示tate向pc上面以130m/s的bandwidth发送数据。发送之后，我们可以输出分别如下。
+tate上面：
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0- 1.0 sec  8.01 GBytes  68.8 Gbits/sec
+[  3]  1.0- 2.0 sec  4.02 GBytes  34.5 Gbits/sec
+[  3]  2.0- 3.0 sec  4.02 GBytes  34.5 Gbits/sec
+......
+[  3] 58.0-59.0 sec  15.6 MBytes    131 Mbits/sec
+[  3] 59.0-60.0 sec  15.6 MBytes    131 Mbits/sec
+[  3]  0.0-60.0 sec    929 MBytes    130 Mbits/sec
+[  3] Sent 662735 datagrams
+[  3] Server Report:
+[  3]  0.0-60.2 sec    129 MBytes  17.9 Mbits/sec  5.881 ms 570850/662734 (86%)
+
+
+pc上面：
+[ ID] Interval       Transfer     Bandwidth        Jitter   Lost/Total Datagrams
+[  3]  0.0- 1.0 sec  2.15 MBytes  18.1 Mbits/sec   0.949 ms 157727/159263 (99%)
+[  3]  1.0- 2.0 sec  2.15 MBytes  18.1 Mbits/sec   0.947 ms 9446/10983 (86%)
+[  3]  2.0- 3.0 sec  2.15 MBytes  18.1 Mbits/sec   0.978 ms 9324/10859 (86%)
+......
+[  3] 58.0-59.0 sec  2.14 MBytes  18.0 Mbits/sec   5.424 ms 11403/12932 (88%)
+[  3] 59.0-60.0 sec  2.15 MBytes  18.1 Mbits/sec   1.089 ms 7755/ 9291 (83%)
+[  3]  0.0-60.2 sec   129 MBytes  17.9 Mbits/sec   5.881 ms 570850/662734 (86%)
+这里，因为是udp，所以应该以接收方的输出为准，发送方的发送数据是不可靠的。其中我们应该关心的是Bandwidth列，并且接收方最后一行会有对所有数据的统计，可见接收的数据570850比总共的数据662734要小，实际丢失了数据，并且一般来说最开始的几个包丢失的概率很大。
+另外，
+本测试应当在隔离间进行测试，这样其他的路由pc之间的数据对测试的结果影响的小。
+当附近有物体晃动，速度会有波动，因为无线信号不是直线而是通过接收方调整一个反射系数来确定收发的最优速率，有物体晃动则需要重新调整这个系数，从而暂时使得速度不是最优的系数的速度了。
+可能接收方防火墙设置，会影响数据的接收。
+可能发送方的发送相关驱动，以及接收方（ap）的相关接收驱动的性能也会影响速度。
+本件在公共环境下进行测试，设置的是5Ghz网络的channel width 为20M，通过网上资料可知这个时候，理论峰值速度应该是130m，隔离间测试为90-100m很接近了。如果设置其channel width为40M那么理论速度应该加倍。
+另外，如果设置网络模式为mixed表示既支持802.11b也支持802.11n等，这样在公共环境就mixed的时候，各种连接都有所以不会达到最好的效果（如n的最好效果），放到隔离间则mixed和某一个模式(如n模式)就没有太大区别了。
+具体设置网络模式，网络channel width等参见cisco e3000无线路由的设置界面。
+
+b.测试TCP的TX(tate->pc)：
+pc上运行：#iperf -s -i 1
+tate上运行：#iperf -c <pc的ip> -t 60 -i 1
+这里，输出信息
+tate上面：
+------------------------------------------------------------
+Client connecting to 192.168.1.132, TCP port 5001
+TCP window size:   512 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.131 port 46949 connected with 192.168.1.132 port 5001
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0- 1.0 sec  2.48 MBytes  20.8 Mbits/sec
+[  3]  1.0- 2.0 sec  2.25 MBytes  18.9 Mbits/sec
+[  3]  2.0- 3.0 sec  2.20 MBytes  18.5 Mbits/sec
+[  3]  3.0- 4.0 sec  2.07 MBytes  17.4 Mbits/sec
+......
+[  3] 58.0-59.0 sec  2.07 MBytes  17.4 Mbits/sec
+[  3] 59.0-60.0 sec  2.12 MBytes  17.8 Mbits/sec
+[  3]  0.0-60.0 sec    127 MBytes  17.8 Mbits/sec
+
+pc上面：
+------------------------------------------------------------
+Server listening on TCP port 5001
+TCP window size: 85.3 KByte (default)
+------------------------------------------------------------
+[  4] local 192.168.1.132 port 5001 connected with 192.168.1.131 port 46949
+[ ID] Interval       Transfer     Bandwidth
+[  4]  0.0- 1.0 sec  2.11 MBytes  17.7 Mbits/sec
+[  4]  1.0- 2.0 sec  2.12 MBytes  17.8 Mbits/sec
+[  4]  2.0- 3.0 sec  2.12 MBytes  17.8 Mbits/sec
+......
+[  4] 58.0-59.0 sec  2.12 MBytes  17.8 Mbits/sec
+[  4] 59.0-60.0 sec  2.12 MBytes  17.8 Mbits/sec
+[  4]  0.0-60.2 sec   127 MBytes  17.7 Mbits/sec
+信息含义类似前面，这里不多介绍。主要就是：
+TCP的速度应该比udp的低。
+TCP的速度变化应该没有udp稳定，因为影响tcp速度波动的因素多，例如缓存窗口是否满等等。
+tcp的数据是可靠的传输，所以在接受和发送方看到的数据情况应该一样。
+
+c.测试UDP的RX(pc->tate)：
+tate上运行：#iperf -s -u -i 1
+pc上运行：#iperf -c <tate的ip> -b 130m -t 60 -i 1
+
+d.测试TCP的RX(pc->tate)：
+tate上运行：#iperf -s -i 1
+pc上运行：#iperf -c <tate的ip> -t 60 -i 1
+
+如果出现问题，可以使用网络嗅探器例如(wire shark)抓包分析。
+
+
+
+　　802.11 : 速率最高2Mbps。（802.11是一个无线的标准）
+　　802.11b : 速率最高11Mbps，向下兼容802.11。
+　　802.11b+: 速率最高22Mbps，向下兼容802.11/b。
+　　802.11g : 速率最高54Mbps，向下兼容802.11/b。
+　　802.11g+: 速率108Mbps及更高，向下兼容802.11/b/g。
+　　802.11a : 速率最高54Mbps，不兼容，必需和支持802.11a的产品才能联网。
+　　802.11n：可以将WLAN的传输速率由目前802.11a及802.11g提供的54Mbps提高到108Mbps，甚至高达500Mbps。（目前理想状态是108Mps）
+
+***关于git使用
+工作时候使用git：
+(1)获取原代码：
+通过网页得到类似：
+git://10.1.10.100/amazon/lab126/tools/diag.git
+然后用
+#git clone git://10.1.10.100/amazon/lab126/tools/diag.git
+就获得了原始代码。
+
+***adb
+android系统通过usb进行板子和pc之间通信的串口工具。
+
+pc上面运行：
+adb shell
+这样可以直接登录到插在pc上面的板子。
+
+root权限:
+adb root
+
+
+adb reboot
+
+向板子传输文件：
+adb push
+adb poll
+
+adb catlog
+
+查看所有连接的设备：
+adb devices
+会打印设备号码(series number)
+
+*连接指定设备号码的设备：
+adb -s xxx
+adb -s shell
+这里，我们可以通过设置export ANDROID_SERIAL= <put the number here>来省去-s选项。
+
+
+***ti
+进入adb shell之后：
+#wl dtim
+可以查看dtim值

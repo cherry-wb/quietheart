@@ -1,0 +1,58 @@
+<!-- ##### SECTION Title ##### -->
+colorrenderer
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO GTK_TYPE_CELL_RENDERER_COLOR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO CELL_RENDERER_COLOR ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### MACRO CELL_RENDERER_COLOR_CLASS ##### -->
+<para>
+
+</para>
+
+@klass: 
+
+
+<!-- ##### MACRO CELL_RENDERER_COLOR_GET_CLASS ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### FUNCTION cell_renderer_color_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

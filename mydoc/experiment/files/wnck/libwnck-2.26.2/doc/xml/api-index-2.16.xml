@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>T</title>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-loop-time"><link linkend="WnckTasklist--s-fade-loop-time">WnckTasklist:fade-loop-time</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-opacity"><link linkend="WnckTasklist--s-fade-opacity">WnckTasklist:fade-opacity</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-overlay-rect"><link linkend="WnckTasklist--s-fade-overlay-rect">WnckTasklist:fade-overlay-rect</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="WnckWindowGravity"><link linkend="WnckWindowGravity">WnckWindowGravity</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowMoveResizeMask"><link linkend="WnckWindowMoveResizeMask">WnckWindowMoveResizeMask</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-has-icon-name"><link linkend="wnck-window-has-icon-name">wnck_window_has_icon_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-has-name"><link linkend="wnck-window-has-name">wnck_window_has_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-geometry"><link linkend="wnck-window-set-geometry">wnck_window_set_geometry</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

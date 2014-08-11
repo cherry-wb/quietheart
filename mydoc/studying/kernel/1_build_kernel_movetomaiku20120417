@@ -1,0 +1,191 @@
+这里描述内核编译相关的知识。
+主要内容：
+
+1,常用的配置方法：
+#make config
+#make menuconfig
+#make xconfig
+#make gconfig
+#make oldconfig
+#make allyesconfig
+#make defconfig
+这里，以上任何一条命令都可以对内核进行配置。
+"make config":基于文本的命令行配置命令，但是这样会遍历所有的配置选项，比较费时间。
+"make menuconfig":基于文本的图形界面配置命令。
+"make xconfig":基于x11的图形配置工具。
+"make gconfig":基于gtk的图形配置工具。
+"make oldconfig":在之前早期配置好的文件的基础上进行配置。
+"make allyesconfig":所有配置选项设置为yes.
+"make defconfig":自动生成一个默认的配置，可以作为配置内核的良好的开端。
+配置好之后，会在编译目录中生成一个.config隐藏文件(如果已经存在这个文件，那么就先读取这个已有的配置文件，并且直接对已有的.config进行修改)，里面就包含了刚才我们配置的信息。另外，我们可以使用已经有的定制好配置文件做为编译使用的.config文件的内容，它一般存放在"arch/arm/configs目录中"，例如有一个my_defconfig文件，那么编译的时候我们执行"make my_defconfig"之后，就会将"arch/arm/configs/my_defconfig"文件拷贝到当前目录的.config中了。有些pc机器的linux例如centeros 会将其运行的内核配置文件放在/boot中当做备份。
+
+2,清除中间文件:
+#make clean
+#make mrproper
+#make distclean
+这里，
+"make clean":删除大多数生成的文件，同时留下的文件足以编译外部模块。
+"make mrproper":除了"make clean"之外，删除所有生成的文件，包括".config"配置文件等。
+"make distclean":除了"make mrproper"之外，还删除所有编辑器备份文件，补丁残余文件等。
+
+3,在独立的路径进行编译：
+命令形式为：
+make O=<output_dir> [<option>]
+这里，如果不指定"O=<output_dir>"部分，那么会直接在当前目录编译，并且在当前文件中生成中间文件。
+例如(假设在内核源代码目录中)：
+*在外部目录生成配置文件：
+$make O=/home/quietheart/kernelSrc/build/ menuconfig
+这样生成的东西都在指定的目录/home/quietheart/kernelSrc/build中。
+
+*在外部目录编译内核：
+$make O=/home/quietheart/kernelSrc/build/
+当然，可以直接cd到"/home/quietheart/kernelSrc/build/"然后直接运行make(我没有实践)。
+
+*编译目录在另外的地方时，安装模块方法：
+#make O=/home/quietheart/kernelSrc/build/ modules_install install
+这一步，会将模块安装在"/lib/modules/"目录下。注意不要将原来的文件覆盖，实际配置内核的时候可以配置这个安装路径的名称。后面也会介绍使用make安装的时候在命令行中指定安装模块的路径。
+
+4，关于内核模块(一般是某个设备的驱动程序)的编译：
+假设模块的源代码目录：
+#ls 00_dev_simplest
+simpledrv_std.c Makefile
+4.1，如果将模块作为内核源代码树的一个部分编译的话，过程如下：
+1）下载内核源代码
+假设下载解压之后，内核的目录为linux_src
+2）将模块拷贝到源代码中的drivers目录中。
+#cp -a 00_dev_simplest linux_src/drivers
+3）修改drivers中的Makefile:
+#cd linux_src/drivers
+#vim Makefile
+在其中添加一句obj-m += 00_dev_simplest/
+4)修改00_dev_simplest中的Makefile：
+#cd 00_dev_simplest
+#vim Makefile
+#########Makefile内容
+obj-m := simple.o
+simple-objs :=simpledrv_std.o
+#########
+这里模块名称为simple不要和某个源文件例如simpledrv_std.o重复了。
+5)配置内核并编译模块：
+#cd ../
+#make O=$(PWD)/build_kernel defconfig
+#make O=$(PWD)/build_kernel modules
+这样，会在build_kernel/drivers中看到我们的模块。
+注意，虽然编译通过了，但是当前运行的内核也要是那个内核才能运行那个模块。
+如果在两个Makefile中使用"obj-y+="替换"obj-m+="那么会将这个模块编译成了内核的一个部分（理论上应该是只替换00_dev_simplest下面的"obj-m"为"obj-y"即可）。注意这里当前路径用$(PWD)或者`pwd`不能用$(pwd)。
+
+4.2，如果将模块作为内核源代码树外的部分编译，那么过程如下：
+1）下载内核源代码
+假设下载解压之后，内核的目录为linux_src
+2)配置内核：
+#cd ../linux_src
+#make O=$(PWD)/build_kernel defconfig
+3)修改00_dev_simplest中的Makefile：
+#cd ../00_dev_simplest
+#vim Makefile
+#########Makefile内容
+obj-m := simple.o
+simple-objs :=simpledrv_std.o
+#########
+4)编译模块：
+# make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) modules
+5)清除中间文件：
+# make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) clean
+这里，这个命令将当前目录通过-C选项切换到你的内核目录，然后找到内核中的顶级makefile。"M="选项导致makefile在编译模块目标的时候又返回到你的模块源代码目录，这个目标再引用obj-m变量列表中发现的模块，在我们的例子中，这个模块名称设置为了module.o。
+还有一个其它方法： 我们可以在第3步骤改Makefile时候，将
+# make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) modules
+# make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) clean
+这两句话加入到00_dev_simplest的Makefile中，这样在4）5）中分别运行"make"和"make clean"就行了。
+如果这样，那么修改Makefile如下：
+#########Makefile内容
+obj-m := simple.o
+simple-objs :=simpledrv_std.o
+all:
+	make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) modules
+clean:
+	make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) clean
+#########
+但是这样编译出来的模块可能不能运行在你当前运行的系统下，因为运行的内核版本可能和编译模块使用的内核版本不同，如果想要想要模块可以运行在你的linux下，那么需要使用你的机器上面运行的kernel编译，相应使用如下命令:
+make -C /lib/modules/$(KVERSION)/build M=$(PWD) -Wall modules
+make -C /lib/modules/$(KVERSION)/build M=$(PWD) -Wall clean
+其中,/lib/modules/$(KVERSION)/build实际就是指向/usr/src/kernels类似的链接。
+注意!!：确切地说，采用这个方法，Makefile应该如下这样才是严格正确得：
+(参考：http://www.makelinux.net/ldd3/的2.4.1)
+#########Makefile内容
+ifneq ($(KERNELRELEASE),)
+obj-m := simple.o
+simple-objs :=simpledrv_std.o
+else
+all:
+	make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) modules
+clean:
+	make -C $(PWD)/../linux_src/ O=$(PWD)/../build_kernel/ M=$(PWD) clean
+endif
+#########
+采用这个方式，我们还是利用了GNU make扩展语法的动作，当前的这个makefile在编译的时候会被读取两次。当最开始makefile从命令行make中被发起的时候，它会注意到KERNELRELEASE变量没有设置，于是进入到else分支，到内核源代码目录编译树中，然后找到其中的顶级makefile，执行它的默认:target。执行默认target的时候(这个时候内核的Makefile已经设置了KERNELRELEASE变量)，这将又执行一次make命令，像前面的方式那样发起内核编译系统。在第二次读取之时，makefile进入if分支，设置obj-m，然后内核的makefile会进行实际模块的编译。这个就是实际的过程。
+注意，经过实践，在我的机器上面，无法编译，将if分支变成一句，也就是"obj-m := simpledrv_std.o"就能编译。我的内核版本是2.6.18，可能是版本旧的问题。
+(如果驱动涉及多个.c文件，那么在simple-objs中指定多个对应的.o文件，而obj-m中还是一个.o，表示整个驱动)
+
+5,其他(待整理)
+make prepare
+
+make modules_install
+把已经编译的模块安装到正确的目录下面，一般为/lib下面。
+
+
+内核模块被安装到目标机器的/lib/modules/x.y.z目录，这个在主机系统中却一般是不同的目录。这个目录依赖于你的设置，但是我们称它为$TARGETDIR.
+运行如下的命令把模块安装到$TARGETDIR:
+bash$ make modules_install INSTALL_MOD_PATH=$TARGETDIR
+
+$make
+这里，根据内核Makefile中的解释，all目标是默认的目标，所以运行"make"和运行"make all"是一样的,所以用户可以通过运行"make"来编译生成包含了许多模块的内核。默认来说all就是vmlinux(在内核主Makefile中可以找到相应的规则)，但是它会被arch中的Makefile给覆盖掉。
+编译会生成一个System.map文件，是一个符号对照表，用来将内核函数和其地址对应起来，这样在调试的时候可以将地址翻译成容易理解的变量和函数名。
+
+
+**关于内核的Makefile
+linux-2.6.32中的Makefile
+（待整理）
+V=<number>
+命令行中传递V变量可以表示make打印的信息的多少。例如:
+'make V=1'，默认为0。
+
+C=<number>
+命令行传入C变量，用来调用代码检查工具（默认为sparse工具）进行检查。例如:
+使用'make C=1' 表示只检查重新编译的文件。
+使用 'make C=2' 表示检查所有源代码文件，无论是否重新编译。
+
+M=<dir>
+命令行传入M变量，用来指定编译的外部模块的目录。旧的方法使用SUBDIRS例如"SUBDIRS=$PWD"，也是可用的，如果M和SUBDIRS同时存在，那么M会被优先采用。
+
+kbuild支持将输出文件输出到一个独立的目录中，有两种方法（这两种方法的当前工作目录必须是内核的代码根目录）:
+1)O=<dir>
+例如:
+"make O=dir/to/store/output/files/"
+这将把所有的输出文件输出到"dir/to/store/output/files"目录中。
+2)设置KBUILD_OUTPUT环境变量：
+"export KBUILD_OUTPUT=dir/to/store/output/files/"
+"make"
+这样，首先设置环境变量KBUILD_OUTPUT为输出文件输出的目录，然后运行make进行编译。
+以上两种方法，如果两个都使用，那么O=<dir>的方法优先于KBUILD_OUTPUT被采用。注意目录<dir>必须事先存在。
+
+ARCH=XXX
+当为其他体系机器交叉编译的时候，设置目标机器的体系结构，如果不指定这个选项，会设置默认的ARCH为本地机器的(通过uname获取)，如果设置了ARCH那么就使用设置的，例如"make ARCH=arm"。另外，还可以通过设置ARCH环境变量来进行设置ARCH。
+
+CROSS_COMPILE=XXX
+指定（交叉）编译时候编译工具的前缀，只有gcc和相关的bin-utils工具才使用$(CROSS_COMPILE)前缀，例如"make CROSS_COMPILE=arm-linux-"，这样编译工具的名字就是arm-linux-gcc等。。这个也可以通过环境变量CROSS_COMPILE来进行设置。默认CROSS_COMPILE是空，也就是编译工具前面没有任何前缀，另外需要注意有一些体系结构会在它们的arch/*/Makefile中设置这个CROSS_COMPILE变量。
+
+KCONFIG_CONFIG=<file>
+这个通过阅读Makefile发现，似乎一般不在命令行指定，如果不指定，那么file使用Makefile设置的.config（即"KCONFIG_CONFIG ?= .config"）。
+
+(这里，有一处比较关键的地方就是303行附近导入了"include $(srctree)/scripts/Kbuild.include"，这个文件定义了内核编译的时候需要的一些函数等的定义)
+~~~~~~~至400行
+
+
+补充：
+如果使用"make modules"不会编译build-in目标，但是如果使用modversions的时候会考虑build-in.
+如果使用"make <whatever> modules"会编译除了<whatever>之外再编译modules，如果只是使用"make"或者"make all"那么连modules也会编译。
+
+
+
+内核中的Documentation/Changes文件列出了编译所需的编译工具的版本号。
+

@@ -1,0 +1,177 @@
+#这里是原始的powermanager源代码阅读总结
+启动程序后，
+1,拖动close screen横条，调用了gpm-prefs-core.c中的sleep_slider_changed_cb函数,之后又 conf_key_changed_cb。
+
+2,拖动Standby time横条，调用了gpm-prefs-core.c中的sleep_slider_changed_cb之后又调用了conf_key_changed_cb
+
+综上，Standby time和Close screen的横条都使用sleep_slider_changed_cb,在这个函数内部处理区分这两个功能的逻辑，并且需要注意的是Standby time的值如果小于Close screen的值，那么就把Close screen的值设置为Standby time的值。
+
+3,拖动CPU frequency方形滑块，调用gpm-prefs-core.c中的conf_key_changed_cb.
+
+4,拖动再下面的方形滑块，调用gpm-prefs-core.c中的processor_cpufreq_changed_cb和conf_key_changed_cb
+
+
+#20090731
+代码里面的内容：
+*可能1：判断ac_adapter_is_present功能可能不好用。
+根据2.22.1/src/gpm-ac-adapter.c中的gpm_ac_adapter_is_present中的如下调用：
+hal_gdevice_get_bool (ac_adapter->priv->hal_device,
+		             "ac_adapter.present", &is_on_ac, &error);
+而lshal中没有相应的hal属性，判定，这个判断交流电的功能不能实现。
+
+------
+"./2.22.1/src/gpm-dpms.c"中的gpm_dpms_mode_to_string 设置了四种显示的电源模式。四种模式在VESA（ Video Electronics Standards Association）中有所规定 
+
+------
+gpm-cell.c 里面的内容是和电池相关的。
+
+------
+*可能2：判断获得can_suspend功能可能好用：
+根据：2.22.1/src/gpm-control.c中的gpm_control_allowed_suspend 函数
+有hal_gpower_can_suspend调用,又
+/2.22.1/libhal-glib/libhal-gpower.c中的hal_gpower_can_suspend函数中有
+exists = hal_gdevice_get_bool (power->priv->computer,
+		                  "power_management.can_suspend",
+						                    &can_suspend, NULL);
+根据lshal列出的接口信息中没有power_management.can_suspend属性,找到了这个属性，所以这个功能可能管用，但是需要进一步确定跟踪是在哪个hal对象中的接口。
+
+------
+文件:
+2.22.1/libhal-glib/libhal-gdevice.c里面的内容可能是和hal接口相关的。
+
+今天就看到gpm-control.c后面的以后再看。
+
+######20090803
+gpm-engine.c和电池相关
+
+---
+文件gpm-idle.c中可能有相关代码，处理gscreen-saver时间到了，如何把消息传递到电源管理上面，然后作相应的处理的部分,初步估计，相应的函数是：
+1）session_idle_changed_cb
+这个函数可能是屏保时间到了的时候调用，它将发送一个消息idle-changed，这个消息将导致调用：
+powersave_idle_changed_cb
+和session_idle_changed_cb
+2)powersave_idle_changed_cb
+
+######20090804
+目标：找到计时的位置,到达关闭时间时候的采取设定动作（standby等）的位置。
+
+1,将等待时间设置成为用户拖动滑块的值的过程：
+====================
+在"2.22.1/src/gpm-prefs-core.c"中，利用gconf存储设置的值,主要两个函数：
+
+1)gpm_prefs_sleep_slider_changed_cb,滑块拖动的回调函数,确定设置的时间间隔。
+这里根据滑块的拖动，确定将要设置的gconf值，如sleeptime等.
+关键语句：
+prefs->priv->set_gconf_sleep_display = value;//确定显示器睡眠的设置时间(并没有立即设置）。
+prefs->priv->set_gconf_sleep_computer = value;//确定设置计算机睡眠的时间。
+gpm_prefs_add_timer_set_gconf(prefs);//这个函数导致300毫秒之后设置刚才确定的gconf值
+这里确定要设置的值存放在GpmPrefs类私有成员里(priv->set_gconf_sleep_computer等)。
+
+2)gpm_prefs_timer_cb (GpmPrefs *prefs),根据确定的时间间隔，进行具体的设置。
+这个函数就是前面的gpm_prefs_add_timer_set_gconf(prefs)函数导致300毫秒之后调用的真正设置gconf值的函数。
+其中关键的就是：
+	gpm_conf_set_int (prefs->priv->conf, GPM_CONF_TIMEOUT_SLEEP_DISPLAY_AC, prefs->priv->set_gconf_sleep_display);//lvkaicomment这里是滑块中的closescreen设置值
+	gpm_conf_set_int (prefs->priv->conf, GPM_CONF_TIMEOUT_SLEEP_DISPLAY_BATT, prefs->priv->set_gconf_sleep_display);//lvkaicomment这里是滑块中的closescreen设置值
+	gpm_conf_set_int (prefs->priv->conf, GPM_CONF_TIMEOUT_SLEEP_COMPUTER_AC, prefs->priv->set_gconf_sleep_computer);//lvkaicomment这里是滑块中的standby设置值
+	gpm_conf_set_int (prefs->priv->conf, GPM_CONF_TIMEOUT_SLEEP_COMPUTER_BATT, prefs->priv->set_gconf_sleep_computer);//lvkaicomment这里是滑块中的standby设置值
+可知，设置好的值都以gconf键值的方式存起来了。
+
+2,根据设置的时间进行操作的过程：
+====================
+
+1)文件"2.22.1/src/gpm-manager.c"中获取了前面设置的值（具体如何获取的，需要研究？？）
+其中，
+gpm_manager_sync_policy_sleep (GpmManager *manager)函数:
+根据有无电池，分别获取设置的时间，然后把这个时间处理之后的时间作为真正的时间间隔,
+例如对于交流电有：
+gpm_conf_get_uint (manager->priv->conf, GPM_CONF_TIMEOUT_SLEEP_COMPUTER_AC, &sleep_computer);//lvkaicomment这里获得滑块设置的睡眠时间
+gpm_conf_get_uint (manager->priv->conf, GPM_CONF_TIMEOUT_SLEEP_DISPLAY_AC, &sleep_display);
+对于电池有：
+gpm_conf_get_uint (manager->priv->conf, GPM_CONF_TIMEOUT_SLEEP_COMPUTER_BATT, &sleep_computer);
+gpm_conf_get_uint (manager->priv->conf, GPM_CONF_TIMEOUT_SLEEP_DISPLAY_BATT, &sleep_display);
+
+获取这些gconf键值之后，处理，最后调用如下：
+gpm_idle_set_system_timeout (manager->priv->idle, sleep_computer);/*把设置好的sleep时间传到这个函数里面，然后进一步处理*/
+
+注意，这之前也有一个调用(不太清楚其作用，在这里仅提醒一下)：
+hal_gpower_enable_power_save (manager->priv->hal_power, power_save);//省电模式？
+
+2)"2.22.1/src/gpm-idle.c"中，
+gpm_idle_set_system_timeout函数:
+这个函数就是在gpm-manager.c中调用的。
+它通过下面这句话把获取的时间间隔存放到idle对象中，
+idle->priv->system_timeout = timeout;
+然后调用了：
+gpm_idle_reset (idle);
+
+------
+gpm_idle_reset函数:
+它仅在idle->priv->mode == GPM_IDLE_MODE_SESSION这个模式的时候调用了
+		add_system_timer (idle);
+其他时候都什么都不做。
+
+------
+add_system_timer函数：
+调用了如下：
+idle->priv->system_timer_id = g_timeout_add (msecs,
+					     (GSourceFunc)system_timer, idle);
+其中msecs就是存放到idle对象中的时间间隔的1000倍,至此，才第一次调用了定时器函数。
+
+------
+system_timer函数：
+这个定时调用的函数，仅仅调用了一次(在到了指定的时间的时候调用的).
+进入这个函数，立即就把刚刚建立的定时器资源删除了。然后调用：
+gpm_idle_add_gpm_idle_poll_system_timer (idle, POLL_FREQUENCY * 1000);
+其中POLL_FREQUENCY是5
+
+------
+gpm_idle_add_gpm_idle_poll_system_timer (GpmIdle *idle,  glong	timeout)函数：
+这个函数重新又启动了另外一个定时器函数：
+idle->priv->system_idle_timer_id = g_timeout_add (timeout, (GSourceFunc)gpm_idle_poll_system_timer, idle);
+
+------
+gpm_idle_poll_system_timer函数： 
+这个定时调用好像是不断检测（每5秒）cpu是否是空闲了足够的时间的。
+(也就是根据cpu的负载来判断是否空闲)
+空闲了足够的时间就停止计时器，进行如下：
+gpm_idle_set_mode (idle, GPM_IDLE_MODE_SYSTEM);
+idle->priv->system_idle_timer_id = 0;
+
+------
+gpm_idle_set_mode函数：
+这个函数设置新的模式，再次调用了gpm_idle_reset函数：
+gpm_idle_reset (idle);/*不同的模式，reset的动作不同。*/
+调用之后，发送一个信号：
+g_signal_emit (idle, signals [IDLE_CHANGED], 0, mode);
+这里，信号signals[IDLE_CHANGED]在gpm_idle_class_init中用如下的方式建立：
+	signals [IDLE_CHANGED] =
+		g_signal_new ("idle-changed",
+			      G_TYPE_FROM_CLASS (object_class),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (GpmIdleClass, idle_changed),
+			      NULL,
+			      NULL,
+			      g_cclosure_marshal_VOID__INT,
+			      G_TYPE_NONE,
+			      1, G_TYPE_INT);
+这里的idle实际就是manager->priv->idle
+在gpm-manager.c的init里面有关于这个信号的处理函数？
+g_signal_connect (manager->priv->idle, "idle-changed",
+		          G_CALLBACK (idle_changed_cb), manager);
+
+------
+gpm-manager.c idle_changed_cb函数：
+这个函数执行了一些决策，然后调用了：
+idle_do_sleep (manager);
+
+------
+idle_do_sleep函数：
+这个函数首先根据交流电或者电池的状态，分别调用了如下：
+gpm_conf_get_string (manager->priv->conf, GPM_CONF_ACTIONS_SLEEP_TYPE_AC, &action);
+
+gpm_conf_get_string (manager->priv->conf, GPM_CONF_ACTIONS_SLEEP_TYPE_BATT, &action);
+
+然后根据获得的动作action调用如下函数：
+gpm_info_explain_reason 
+
+ret = gpm_control_suspend (manager->priv->control, &error);

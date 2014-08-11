@@ -1,0 +1,71 @@
+
+http://blog.csdn.net/flagonxia/archive/2009/07/23/4374118.aspx
+1. 概述
+
+udev 是 Linux kernel 2.6 系统的内核设备管理器。它提供以下几项功能。
+
+1）可以为每个外部设备提供一个专属的设备文件。
+
+2）在用户空间（user space）中执行，这意味着可以让用户指派哪个硬件设备使用哪一个设备文件。
+
+3）允许动态地建立/删除设备文件。
+
+2. udev的组件
+
+udev有三项组件构成。
+
+* namedev
+
+   用来为外部设备产生设备的名称与该外部设备使用的设备文件的权限。
+
+* libsysfs
+
+  
+
+   Red Hat系统内核中提供一个名为sysfs的虚拟文件系统，用来提供内核记录的周边设备下列信息。
+
+    *    外部设备的位置
+    *    外部设备的属性（如名称、序号等）
+    *    外部设备的主要号码和次要号码
+
+      系统会把sysfs文件系统挂载到/sys/中。udev则通过libsysfs链接库读取/sys/中的信息。通过libsysfs让udev不用先知道该尾部设备是什么就能取得外部设备的信息。 
+
+* udevd
+
+   这是一个守护进程，处于用户空间，用来产生/dev/中的设备文件。
+
+3. udev的工作原理
+
+      当Red Hat系统内核发现安装或者卸载了某一个硬件设备时，内核会执行hotplug，以便让hotplug去安装或卸载该硬件的驱动程序；hotplug在处理完硬件的驱动程序后，就会去呼叫执行udevd，以便让udevd可以产生或者删除硬件的设备文件。
+
+      接着udevd会通过libsysfs读取sys文件系统，以便取得该硬件设备的信息；然后再向namedev查询该外部设备的设备文件信息，例如文件的名称、权限等。最后，udevd就依据上述的结果，在/dev/目录中自动建立该外部设备的设备文件，同时在/etc/udev/rules.d下检查有无针对该设备的使用权限。
+
+4. 配置udev
+
+4.1 udev的配置文件
+
+      该文件是/etc/udev/udev.conf。一般其中的参数udev_log用来定义当udev产生事件后以那个等级将事件记录至系统日志服务。
+
+4.2 udev的规则配置文件
+
+      udev通过规则配置文件来配置某一个硬件设备的设备文件的规则。它们存储在/etc/udev/rules.d/中。
+
+      这类文件比较长，但其中的内容格式比较类似。我们举几个例子来说明。
+
+      例1：
+
+      KERNEL="mouse*", NAME="input/%k"
+
+      KERNEL字段为内核定义的模块名称，这条信息表示当linux内核加载一个以mouse开头的设备时，便会在/dev/input/目录中产生相同名称的设备文件。
+
+      例2：
+
+      KERNEL="hd[a-z]",BUS="ide",SYSFS[removable]="1",PROGRAM="/etc/udev/scripts/check-cdrom.sh %k CD-R",SYMLINK="cdwriter%e"
+
+      在内核加载一个硬盘设备（hd[a-z]）时，符合下列条件时，udev便会产生/dev/cdwriter1或者/dev/cdwriter2等设备文件。
+
+      * 为IDE接口的设备
+
+      * 必须是移动式磁盘
+
+      * 执行="/etc/udev/scripts/check-cdrom.sh %k CD-R时，返回值为0

@@ -1,0 +1,26 @@
+－－－－连接\删除多个回调函数20090427
+函数g_signal_connect在控件和消息处理函数间建立关联，该函数的原型是：
+gulong g_signal_connect(GtkObject *object,gchar *name Gcallback callback_func,gpointer func_data)；
+返回值用于区分一个控件的一个事件对应的多个处理函数。因为可能对同样一个事件多次调用这个函数以连接不同的回调函数。
+
+如果要删除控件和消息处理函数的关联，可以调用g_signal_disconnect()，该函数的原型是：
+void g_signal__handler _disconnect(GtkObject *object ,gulong id)；
+object：要删除消息处理函数的控件。
+id：g_signal_connect()或g_signal_connect_swapped()函数的返回值。
+下面这个函数可以删除某控件的所有消息处理函数：
+void g_signal_handlers_destroy(GtkObject *object)；
+---------GtkSocket20090429
+1,GtkSocket是一个container，这个container是为了其他进程的Widget来创建的。
+和GtkPlug一起，GtkSocket提供了从一个进程把widget嵌入到另一个进程的能力。进程1创建GtkSocket widget如后把这个widget的window ID传递给进程2，之后进程2利用这个ID创建一个GtkPlug。这些之后，任何在GtkPlug中的widget都会出现在进程1的窗口中。
+
+2,让一个构建在鼠标指针离开它本身的时候也能够捕捉鼠标的事件？
+1)gdk_pointer_grab
+之后再
+2)gtk_grab_add
+这样就行了，千万注意不要只grad,不grab_add.
+
+gtk_grab_remove和grab_add必须成对调用吗？文档这么说的，也说如果没add就remove那么remove不会做任何事情。
+------------回调函数的返回值20090430
+1,检测回调函数的返回值的作用。
+发现:如果给一个事件连接多个回调函数，那么会依次调用这些回调函数.如果一个回调函数有布尔返回值且返回TRUE那么之后的回调函数不再被调用如果返回FALSE那么就会继续调用后面的回调函数。
+

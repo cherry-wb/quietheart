@@ -1,0 +1,100 @@
+http://cache.baidu.com/c?m=9d78d513d98411e804abd3690c66c0161b43f0632ba1d5020fd68449e3380f005321a3e52878564291d27d141cb21307fdf04122645876f08cc8ff1b80e48f7c6fdf70622d439146668058f49a5b759f7dc547b2e94eb8a7f565c7ad8585d900589b560629d7f189095745cb3ca01161f4a6ee1253004e&p=8b2a940186cc42a907b88c344748&user=baidu
+ubuntu 8.04 安装nfs tftp minicom
+2008-08-17 15:43
+应该说下面的步骤按照网上来做的，在此一并谢过那些走在前面的高人。
+
+一,NFS服务
+1. 新立得里搜nfs-kernel-server，会关联7，8个包，一起装上就是了。
+其间确认里面有nfs-common和portmap
+或者在终端里输入：
+sudo apt-get install nfs-kernel-server
+
+2. 配置portmap:
+2.1. (在U8.04里此步可省,还是写在这里了)编辑/etc/default/portmap, 将 -i 127.0.0.1 去掉.
+2.2. 配置/etc/hosts.deny，禁止任何host能和你的NFS服务器进行NFS连接，加入：
+--------------------------------------------------
+### NFS DAEMONS
+portmap:ALL
+lockd:ALL
+mountd:ALL
+rquotad:ALL
+statd:ALL
+--------------------------------------------------
+2.3. 配置/etc/hosts.allow,允许那些你想要的主机和你的NFS服务器建立连接。
+下列步骤将允许任何IP地址以192.168.0开头的主机（连接到NFS服务器上），也可以指定特定的IP地址。加入：
+--------------------------------------------------
+### NFS DAEMONS
+portmap: 192.168.0.
+lockd: 192.168.0.
+rquotad: 192.168.0.
+mountd: 192.168.0.
+statd: 192.168.0.
+--------------------------------------------------
+
+3. 配置/etc/exports
+要将/home目录让192.168.0.*的IP共享, 则在该文件末尾添加下列语句：
+/home *(rw,sync,no_root_squash,no_subtree_check) 最后一个参数是8.04新增的一定要加
+运行 $ sudo exportfs -r 更新。
+--------------------------------------------------
+这里如果指定ip范围，mount测试的时候得到"权限不够"的错误
+/home 192.168.0.*(rw,sync,no_root_squash,no_subtree_check)
+--------------------------------------------------
+
+4. 运行 $ showmount -e 查看NFS server的export list.
+
+5. 运行 $ sudo /etc/init.d/nfs-kernel-server restart 重启nfs服务
+
+6. 测试NFS
+可以尝试一下挂载本地磁盘(假设本地主机IP地址为：192.128.0.56，将/home挂载到/mnt)
+$ sudo mount 192.168.0.111:/home /mnt
+运行 $ df 看看结果
+$ sudo umount /mnt
+
+注意被拷贝文件的读／写权限！
+另外, 可以使用一定的参数:
+使用加参数的办法：mount -o nolock,rsize=1024,wsize=1024,timeo=15 192.168.2.130:/tmp/ /tmp/
+－－－－－－－－－－－－－－－－－－－－－
+二.Minicom 工具
+安装：
+sudo apt－get install minicom
+
+配置：
+1 . 在终端中输入minicom以启动minicom；
+
+2. 先按下Ctrl + a, 放开, 再按o, 出现配置菜单.
+
+3. 选择 Serial port setup, 此时所示图标在“Change which setting”中，键入“A”，此时光标移到第A项对应处：串口COM1对应ttyS0, COM2对应ttyS1. （注意选择）
+
+对波特率，数据位和停止位进行配置，键入“E”，波特率选为115200 8N1 (奇偶校验无, 停止位1)，硬/软件流控制分别键入“F”“G”并且都选NO。在确认配置正确之后，可键入回车返回上级配置界面，并将其保存为默认配置。（即save setup as dfl），之后重启minicom是刚才配置生效，在连上开发板的串口线后，就可在minicom中打印正确的串口信息了。
+
+这时候可以打印串口的信息了，但是在通过串口用xmodem协议烧写内核时会提示没有xmodem协议。
+
+所以还必须安装软件包：lrzsz
+sudo apt-get install lrzsz
+
+这时候就可以正常地用minicom通过串口烧写内核了。
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+三.TFTP服务
+
+步骤如下：
+
+1，安装TFTP和TFTPD。
+sudo apt-get install tftp tftpd
+在安装tftpd时会把另一个重要工具openbsd-inetd 0.20050402-6也装上。8.04的关系树做得真的是没的说！
+
+2，安装INETD，而TFTP是需要通过INETD来控制的，要安装
+sudo apt-get install inetd
+
+3，在/目录下建立tftpboot
+cd /
+sudo mkdir tftpboot
+sudo chmod 777 tftpboot
+
+4，修改配置文件/etc/inetd.conf
+tftp dgram udp wait nobody /usr/sbin/tcpd /usr/sbin/in.tftpd /tftpboot
+
+5，重新加载inetd进程
+sudo /etc/init.d/inetd reload
+在8.04中用了上句绝对是不起作用，必须重启。
+
+如果要下载文件 一定使用 sudo tftp XXX.XXX.XXX.XXX !

@@ -1,0 +1,37 @@
+建立一个qtextended虚拟环境，
+源代码是
+qt-extended-opensource-src-4.4.3.tar.gz
+重要的是里面的qtopia/qt/目录下面的东西。应该就是qt库解压到这里了，现看看有没有再确定是否解压qt。
+解压的qt-extended...之后，建立一个build目录，之后：
+1)编译：
+cd build
+../qt=extend.../configure
+./bin/qbuild
+./bin/qbuild image
+
+注意:
+(1)编译可能会有一个错误：
+尝试需要这样修改：
+src/plugins/qtuitest/widgets_qt/testabstractitemview.cpp
+QRect TestAbstractItemView::visualRect(QString const &item) const中的：
+q->model()->setProperty("_q_qtuitest_itemview", q);
+改成q->model()->setProperty("_q_qtuitest_itemview", (int)q);
+(2)编译，又有错了，
+gstreamer编译不过去，
+src/plugins/mediaengines/gstreamer/gstreamerqtopiavideosink.h中的
+#include <gst/video/gstvideosink.h>找不到。
+所以尝试了这样：
+把devices/greenphone/configure-common中的：
+media相关
+注释掉。
+#-add-module media
+#-add-mediaengine cruxus
+#-add-mediaengine helix
+#-allow-fail mediaengines,helix
+(3)再编译
+
+
+
+2)运行：
+./bin/run-qtopia...(启动桌面了)
+

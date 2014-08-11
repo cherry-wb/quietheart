@@ -1,0 +1,99 @@
+这里是阅读kernel代码时候遇到的一些常见的api函数总结。
+
+container_of(ptr,type,member)
+======
+此宏意思是根据一个指向结构变量的成员的指针，返回这个结构变量的地址。
+这里，这个结构类型是type,指向这个结构变量的成员的指针是ptr,这个结构成员的成员名称是member.
+这个宏的定义参见内核源代码"include/linux/kernel.h"
+举例：
+#define list_entry(ptr, type, member)                         \
+    container_of(ptr, type, member)
+
+list_entry(ptr, type, member)
+======
+此宏的意思是获取链表节点对应的数据节点(链表节点所在结构变量)的地址.
+ptr指向数据节点对应的链表节点
+type对应数据节点相应的结构类型名称
+member对应你的type类型结构变量中相应的链表成员(list_head类型)名称(就是链表节点对应的结构成员名称).
+实际它由container_of宏实现，参考内核源代码"include/linux/list.h"
+
+在linux中，链表含义和数据结构教程链表含义不同。linux中链表定义只有一个，
+struct list_head {
+	struct list_head *next, *prev;
+};
+它没有数据域只有prev和next指针。而在每个具体的链表的数据节点中都包含一个这样的链表结构变量成员。这样，不必由于不同类型，还要定义不同的链表。
+实际遍历访问数据的时候，是先遍历list_head节点，再通过对遍历的list_head节点调用container_of获取相应的数据的结构变量位置。
+所以linux想要组织成链表的数据，都在其数据元素的结构中包含一个linux链表结构。
+一般都要先定义list_head头节点，这样可以使用next=prev来判断是否为空。
+举例：
+假设test_list结构组织成链表：
+struct test_list
+{
+	void *testdata;
+	struct list_head list;
+};
+struct list_head *pos;//某个节点中的list成员，通过它获取到相应节点；其下一个元素指向第一个数据.
+则list_entry(pos,struct test_list, list) 就可以根据pos的值，获取test_list的地址，也就是指向test_list的指针，这样，我们就可以存取test_list->testdata字段了。
+访问下一个数据元素则：
+struct test_list *element = ...;
+struct test_list *element_next;
+element_next = list_entry(element->list.next, typeof(*element), list);//??????
+这样可以通过返回的element结构访问相应的成员了。
+
+list_for_each_entry(pos, head, member)
+======
+此宏的意思是遍历链表中的数据元素。
+这里，假设自定义的结构被组织成为链表，那么这个自定义的结构的每一个变量都将成为链表的数据元素。
+pos是一个指向自定义的结构类型的指针
+head是我们链表的头节点（所有链表类型都是list_head所以这个头节点类型必然是list_head类型）
+list是相应数据元素的结构变量中的链表节点成员名称（参见list_entry）
+这个宏实际是一个循环头部，被定义成"#define list_for_each_entry for(...)",具体参见："include/linux/list.h"
+举例： 
+(暂时省略)
+
+list_for_each(pos, head)
+======
+/**
+ * list_for_each    -   iterate over a list
+ * @pos:    the &struct list_head to use as a loop cursor.
+ * @head:   the head for your list.
+ */
+这个宏实际是一个循环头部，被定义成"#define list_for_each(pos, head)",具体参见："include/linux/list.h"
+
+
+static inline void list_del(struct list_head *entry)
+======
+功能：将元素从链表中删除。
+entry是将要被删除的链表节点。
+这个函数定义参见："include/linux/list.h"
+注意，链表节点并不是链表中一个元素，而是元素的一个成员，用来将元素链接起来，而链表元素构成整个链表。
+
+static inline void list_add(struct list_head *new, struct list_head *head)
+======
+功能：向链表中添加一个元素。
+new是要添加的元素中的list_head成员
+head是元素要加入的链表。
+这个函数定义参见："include/linux/list.h"
+把一个元素添加到链表中实际上是把这个元素中的链表节点成员添加到链表节点列中。
+新加入一个链表元素之后，这个新元素的链表节点成为整个链表头节点的下一个节点。
+
+static inline void INIT_LIST_HEAD(struct list_head *list)
+======
+功能：初始化链表。
+list就是被初始化的链表。
+这个函数定义参见："include/linux/list.h"
+函数实现很简单,就是：
+list->next = list;
+list->prev = list;
+
+
+
+
+lockdep_set_class
+===============
+
+rb_entry
+
+
+linux/kfifo.h
+环形缓冲(ok)

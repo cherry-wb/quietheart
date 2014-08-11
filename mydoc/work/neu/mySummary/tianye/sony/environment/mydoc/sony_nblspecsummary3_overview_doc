@@ -1,0 +1,112 @@
+参考资料：
+avp13_nbl_spec.txt
+
+关于内存的映射：
+Avp-13有512M的物理内存，但是NBL只使用了其中开始的64M。其它的内存被用于其他的MPU.
+在物理地址上：
+0x40000000是RAM_BASE(1G)
+0x40008000是CONFIG_LINUX_BASE
+0x40a00000是CONFIG_INITRD_BASE
+0x43d00000-0x43f00000是CONFIG_NBL_BASE相关的NBL System Area.有2M.
+其它暂时忽略。
+
+NBL运行在SDRAM地址空间(512M)，虚拟地址为: 0xc0000000 - 0xdfffffff.注意这里的0xc0000000和Linux内核的PAGE_OFFSET是一样的(3g)，所以NBL上面系统内存的虚拟地址和内核的是匹配的。
+
+AVP-13主板上面的S1902用来控制启动的模式。
+S1902上SW1号跳线和启动模式对应如下：
+
+SW1 | Bootmode
+----+------------
+On  | bootselect mode
+Off | shell mode
+
+在bootselect模式，NBL根据bootprofile指定的参数自动启动linux内核。
+在shell模式，NBL打印shell提示符号，然后通过用户输入来启动内核,这个模式有许多命令可以进行各种设置。
+
+
+NBL支持如下三种NOR Flash设备。
+  Numonyx M25P128
+  Numonyx M25PX64
+  Winbond W25X64
+
+NBL将向NOR Flash设备存储如下信息：
+-.NBL本身
+-.Profile信息（bootprof用来启动linux内核)
+-.用于选择启动的启动状态以及内核状态(nblconfig)
+-.非可变的环境变量(sdmreg)
+-.非可变的日志(sdmlog)
+-.任何的二进制镜像（linux内核，initrd镜像等等）
+
+NBL支持擦除块的命令，各种NOR Flash擦除块的大小如下:
+  Numonyx M25P128 : 256KB
+  Numonyx M25PX64 :   4KB
+  Winbond W25X64  :   4KB
+
+NBL manages NOR Flash with SDM.
+NBL使用SDM(一个用来管理存储设备的框架)来管理NOR Flash.
+NBL使用SDM获取如下特性：
+-把NBL分为各种分区，用于不同目的。
+-自动更新bootprof,nblconfig,sdmreg,以及sdmlog数据。
+
+NOR Flash分区的布局：
+1)对于M25PX64, W25X64:
+分区名	大小	是否自动更新	描述
+-		512KB	否				NBL
+-		32KB	是				SDM信息(bootprof),参考*1
+sdma	128KB	是				nblconfig,参考*1,*2
+sdmb	128KB	是				sdmreg,参考*1,*3
+sdmc	128KB	是				sdmlog,参考*1,*4
+sdmd~sdmp	*5	否				任何二进制文件
+
+注意参考：
+*1 这些分区必须是NOR的擦除块的大小(4KB)的2倍以上。
+*2 每个nblconfig的记录的大小是1KB,记录在每次启动的时候都会被写.这样，在每经过128次启动的时候就会进行一次块擦除。Numonyx, M25PX64, 和Winbond W25X64可以经受100,000次块擦除操作，所以NBL可以更新nblconfig超过10的7次方次。
+*3 环境变量的总大小是32KB.
+*4 log的每个记录大小是1KB,所以将会保存最后的128条记录。
+*5 每个区域的大小以4KB单位来进行对齐。
+
+2)对于M25P128:
+分区名	大小	是否自动更新	描述
+-		512KB	否				NBL
+-		512KB	是				SDM信息(bootprof),参考*1
+sdma	512KB	是				nblconfig,参考*1,*2
+sdmb	512KB	是				sdmreg,参考*1,*3
+sdmc	512KB	是				sdmlog,参考*1,*4
+sdmd~sdmp	*5	否				任何二进制文件
+
+注意参考：
+*1 这些分区必须是NOR的擦除块的大小(256KB)的2倍以上。
+*2 每个nblconfig的记录的大小是1KB,记录在每次启动的时候都会被写.这样，在每经过512次启动的时候就会进行一次块擦除。Numonyx, M25PX64, 和Winbond W25X64可以经受10,000次块擦除操作，所以NBL可以更新nblconfig超过5*10的6次方次。
+*3 环境变量的总大小是32KB.
+*4 log的每个记录大小是1KB,所以将会保存最后的512条记录。
+*5 每个区域的大小以256KB单位来进行对齐。
+
+分区大小的总结：
+从代码上看，我们现在用的nbl擦除块大小是4KB,好象是winbond的但是这里没有列出来的型号,计算一下，出了自定义分区之外，系统本身所占的大小空间为：512KB+32KB+3*128KB=928KB,大约1兆。
+整个flash空间大小是16M，所以我们可以利用的15M左右.
+
+
+=======================
+一次统计大小的邮件：
+我目前的了解，如果把镜像什么的都烧写进去的话，好象不行。
+
+具体如下：
+这个需要看烧写的镜像大小的情况。
+目前diablo上面的flash情况是：
+flash总共空间大小是16兆，
+占空间的有四个部分：
+a）nbl本身以及配置信息
+b）待烧写的内核
+c）待烧写的镜像
+d）nvm部分。
+其中，
+a)NBL本身信息，原有所占的空间是512K+32K，保险起见预留成1M。
+b）刚才从C16上编译好了一个待烧写到avp17上的内核，空间为7.5M(精确为7702332字节/本次编译)。
+c）刚编译的不包含应用程序的基本文件系统镜像：913K（精确为934416字节/本次编译），保险起见为1M。
+d）nvm部分：必须的信息（512字节）+log信息（不确定，如果不足会导致程序内部指针非法），保险起见目前大约2.5M。
+
+另外，编译好的应用程序要拷贝到基本文件系统里面，这样才是可以运行的完整文件系统，所以这部分空间也要算。这部分空间具体大小我不知道，需要Feature或者相关人员确认。
+
+综上，算起来是1M+7.5M+1M+2.5M+(编译好的应用程序)= 12M+“编译好的应用程序”。
+从上面结果看，如果保证“编译好的应用程序 ”大小在3M以内，就能保证能够预留出1M空间。
+以上，2011年11月24日。

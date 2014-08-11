@@ -1,0 +1,142 @@
+参考：http://blog.csdn.net/futurepeter/archive/2010/02/22/5316334.aspx
+1.下载最新版本busybox(busybox-1.14.3.tar.bz2)
+2.交叉编译busybox
+解压进入其目录，执行：
+#make ARCH=arm-linux CROSS_COMPLIE=arm-linux-  menuconfig
+选择编译成动态库加载模式(Build shared libbusybox)
+CROSS_COMPLIER prefix(arm-linux)
+ADDitional CFLAGS再填入-march=armv6
+指定安装目录(./install)BusyBox installation  prefix
+后面用到
+PS1='[\u@\h\W]\$'
+分别表示的是当前用户、主机名和当前目录
+busybox settings->busybox library tuning->username completion、fancy shell prompts选上
+
+#make
+#make install
+
+3.创建文件系统目录
+#mkdir rootfs
+#cd rootfs
+#mkdir  dev etc lib proc sys usr mnt tmp var
+#cp (**/busybox/)install ./
+#cp -rf (**/busybox/)examples/bootfloppy/etc/ ./
+#sudo mknod -m 666 dev/console c 5 1
+#sudo mknod -m 666 dev/ttyS0 c 4 64
+#sudo mknod -m 666 dev/ttyS1 c 4 65
+#sudo mknod -m 666 dev/null c 1 3
+#cp /usr/local/arm/4.2.2-eabi/lib/ld* lib/
+#cp /usr/local/arm/4.2.2-eabi/lib/libc-2.6.1.* lib/
+#cp /usr/local/arm/4.2.2-eabi/lib/libc.so* lib/
+#cp /usr/local/arm/4.2.2-eabi/lib/libm.so.6 lib/
+#cp /usr/local/arm/4.2.2-eabi/lib/libm-2.6.1.so lib/
+#cp /usr/local/arm/4.2.2-eabi/lib/libcrypt* lib/
+#cp /usr/local/arm/4.2.2-eabi/usr/lib/libdl.so  lib/
+#cp /usr/local/arm/4.2.2-eabi/usr/lib/libpthread.so  lib/
+#cp /usr/local/arm/4.2.2-eabi/usr/lib/libz.so* lib/
+#cp /usr/local/arm/4.2.2-eabi/usr/lib/libbz2.so  lib/
+#cp /usr/local/arm/4.2.2-eabi/usr/arm-unknown-linux-gnueabi/lib/libstdc++.so* lib/
+#cd lib
+#然后把同样大小的文件删除一个，另一个用ln -s链接出来
+类似这样
+rm libstdc++.so libstdc++.so.6
+ln -s libstdc++.so.6.0.9 libstdc++.so
+ln -s libstdc++.so.6.0.9 libstdc++.so.6
+
+strip一下文件系统：
+#arm-linux-strip  bin/busybox
+#arm-linux-strip  lib/*
+
+udev配置
+1、wget http://www.us.kernel.org/pub/linux/utils/kernel/hotplug/udev-100.tar.bz2
+2、tar xjf udev-100.tar.bz2
+3、cd udev-100 编辑Makefile，查找CROSS_COMPILE，修改CROSS_COMPILE ?= arm-linux-
+4、make
+在嵌入式系统里，我们只需要udevd和udevadm就能使udev工作得很好
+把生成的udevadm,udevd复制到sbin目录下，然后做下链接
+ln -s udevadm udevcontrol
+ln -s udevadm udevsettle
+ln -s udevadm udevtrigger
+
+修改etc下配置文件
+etc/udev/udev.conf
+内容可以为空
+etc/udev/rules.d目录添加具体规则
+-------------------------------------
+更改为使用busybox自带的mdev,上面的蓝色部分udev可以不用了
+etc/mdev.conf
+填入自己的mdev rules
+etc/fstab
+proc    /proc   proc defaults 0 0
+none    /tmp    ramfs   defaults 0 0
+none    /var    ramfs   defaults 0 0
+mdev    /dev    ramfs   defaults 0 0
+sysfs   /sys    sysfs   defaults 0 0
+--------------------------------------------
+etc/inittab
+::sysinit:/etc/init.d/rcS
+::respawn:-/bin/sh
+::ctrlaltdel:/bin/umount -a -r
+::shutdown:/bin umount -a -r
+::shutdown:/sbin/swapoff -a
+--------------------------------------------
+etc/profile
+# /etc/profile: system-wide .profile file for the Bourne shells
+
+echo
+echo -n "Processing /etc/profile... "
+# Set search library path
+export LD_LIBRARY_PATH=/lib:/usr/lib
+
+# set user path
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+#Set PS1
+PS1='[\u@\h\W]\$'
+#export PS1="\\e[05;32m[$USER@\\w\\a]\\$\\e[00;34m"
+PATH=$PATH
+echo "Set local script:/usr/etc/rc.local...."
+source /usr/etc/rc.local
+echo "Done"
+echo
+--------------------------------------------
+etc/hostname
+arm-linux
+--------------------------------------------
+etc/init.d/rcS
+#! /bin/sh
+
+/bin/mount -a
+
+# devpts doesn't mount since mounting /dev wipes /dev/pts
+mkdir /dev/pts
+date
+echo "S: devpts"
+mount -t devpts none /dev/pts
+
+# Udev seems to throw a warning if /dev/null is not found
+mknod /dev/null c 1 3
+
+# Set hostname if the corresponding file is found
+if test -e /etc/hostname; then
+    hostname -F /etc/hostname
+fi
+
+date
+
+echo "S: udev"
+if test -x /sbin/udevd ;
+then
+  echo "Starting udev..." >> /boot.log
+  /sbin/udevd --daemon
+  echo "Trigger initial udev events..." >> /boot.log
+  /sbin/udevtrigger
+
+  echo "Waiting for the udevd to settle..." >> /boot.log
+  /sbin/udevsettle
+fi
+--------------------------------------
+更改为使用mdev,上面蓝色部分可以不要了(和udev相关的)
+
+/bin/echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="libwnck-Miscellaneous-Functions">
+<refmeta>
+<refentrytitle role="top_of_page" id="libwnck-Miscellaneous-Functions.top_of_page">Miscellaneous Functions</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBWNCK Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Miscellaneous Functions</refname>
+<refpurpose>other additional features.</refpurpose>
+</refnamediv>
+<refsect1 id="libwnck-Miscellaneous-Functions.stability-level">
+<title>Stability Level</title>
+Unstable, unless otherwise indicated
+</refsect1>
+
+<refsynopsisdiv id="libwnck-Miscellaneous-Functions.synopsis" role="synopsis">
+<title role="synopsis.title">Synopsis</title>
+
+<synopsis>
+#include &lt;libwnck/libwnck.h&gt;
+
+<link linkend="void">void</link>                <link linkend="wnck-gtk-window-set-dock-type">wnck_gtk_window_set_dock_type</link>       (<link linkend="GtkWindow">GtkWindow</link> *window);
+enum                <link linkend="WnckClientType">WnckClientType</link>;
+<link linkend="void">void</link>                <link linkend="wnck-set-client-type">wnck_set_client_type</link>                (<link linkend="WnckClientType">WnckClientType</link> ewmh_sourceindication_client_type);
+</synopsis>
+</refsynopsisdiv>
+
+<refsect1 id="libwnck-Miscellaneous-Functions.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+These functions are utility functions providing some additional features to
+libwcnk users.</para>
+<para>
+</para>
+</refsect1>
+<refsect1 id="libwnck-Miscellaneous-Functions.details" role="details">
+<title role="details.title">Details</title>
+<refsect2 id="wnck-gtk-window-set-dock-type" role="function" condition="deprecated:2.20: Use gdk_window_set_type_hint() instead.">
+<title>wnck_gtk_window_set_dock_type ()</title>
+<indexterm zone="wnck-gtk-window-set-dock-type" role="deprecated"><primary>wnck_gtk_window_set_dock_type</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_gtk_window_set_dock_type       (<link linkend="GtkWindow">GtkWindow</link> *window);</programlisting>
+<warning><para><literal>wnck_gtk_window_set_dock_type</literal> has been deprecated since version 2.20 and should not be used in newly-written code. Use <link linkend="gdk-window-set-type-hint"><function>gdk_window_set_type_hint()</function></link> instead.</para></warning>
+<para>
+Sets the semantic type of <parameter>window</parameter> to <link linkend="WNCK-WINDOW-DOCK:CAPS"><literal>WNCK_WINDOW_DOCK</literal></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <classname>GtkWindow</classname>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="WnckClientType" role="enum" condition="since:2.14">
+<title>enum WnckClientType</title>
+<indexterm zone="WnckClientType" role="2.14"><primary>WnckClientType</primary></indexterm>
+<programlisting>typedef enum {
+  WNCK_CLIENT_TYPE_APPLICATION = 1,
+  WNCK_CLIENT_TYPE_PAGER = 2
+} WnckClientType;
+</programlisting>
+<para>
+Type describing the role of the libwnck user.</para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-CLIENT-TYPE-APPLICATION:CAPS" role="constant">
+<term><literal>WNCK_CLIENT_TYPE_APPLICATION</literal></term>
+<listitem><simpara> the libwnck user is a normal application.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-CLIENT-TYPE-PAGER:CAPS" role="constant">
+<term><literal>WNCK_CLIENT_TYPE_PAGER</literal></term>
+<listitem><simpara> the libwnck user is an utility application dealing
+with window management, like pagers and taskbars.
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-set-client-type" role="function" condition="since:2.14">
+<title>wnck_set_client_type ()</title>
+<indexterm zone="wnck-set-client-type" role="2.14"><primary>wnck_set_client_type</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_set_client_type                (<link linkend="WnckClientType">WnckClientType</link> ewmh_sourceindication_client_type);</programlisting>
+<para>
+Sets the role of the libwnck user.
+</para>
+<para>
+The default role is <link linkend="WNCK-CLIENT-TYPE-APPLICATION:CAPS"><literal>WNCK_CLIENT_TYPE_APPLICATION</literal></link>. Therefore, for
+applications providing some window management features, like pagers or
+tasklists, it is important to set the role to <link linkend="WNCK-CLIENT-TYPE-PAGER:CAPS"><literal>WNCK_CLIENT_TYPE_PAGER</literal></link> for
+libwnck to properly work.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ewmh_sourceindication_client_type</parameter>&#160;:</term>
+<listitem><simpara> a role for the client.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+
+</refsect1>
+
+</refentry>

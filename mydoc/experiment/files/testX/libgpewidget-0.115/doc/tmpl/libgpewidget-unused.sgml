@@ -1,0 +1,328 @@
+<!-- ##### SECTION ./tmpl/gpe-iconlist.sgml:Long_Description ##### -->
+<para>
+This widget is used to arrange icons in columns and rows. It provides functions 
+for user interactive actions clicking on a particular icon and methods to
+manage icons in the list. This one is deprecated, use GpeIconListView in
+new code.
+</para>
+
+
+<!-- ##### SECTION ./tmpl/gpe-iconlist.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/gpe-iconlist.sgml:Short_Description ##### -->
+Widget to arrange icons in columns and rows. (deprecated, will be removed soon)
+
+
+<!-- ##### SECTION ./tmpl/gpe-iconlist.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/gpe-iconlist.sgml:Title ##### -->
+GpeIconList
+
+
+<!-- ##### STRUCT GPEIconListPrivate ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO GPE_ICONLIST_CONST ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+<!-- ##### STRUCT box_desc ##### -->
+<para>
+
+</para>
+
+@label: 
+@value: 
+
+<!-- ##### STRUCT box_desc2 ##### -->
+<para>
+
+</para>
+
+@label: 
+@value: 
+@suggestions: 
+
+<!-- ##### STRUCT gpe_icon ##### -->
+<para>
+
+</para>
+
+@shortname: 
+@filename: 
+@pixbuf: 
+
+<!-- ##### FUNCTION gpe_iconlist_add_item ##### -->
+<para>
+Add a new icon item to a GpeIconList widget.
+</para>
+
+@self: Widget
+@title: Short text to label the icon.
+@icon: Icon bitmap file.
+@udata: Pointer to user data passed to signal handlers.
+@Returns: New item widget
+
+<!-- ##### FUNCTION gpe_iconlist_add_item_pixbuf ##### -->
+<para>
+Add a new icon item to a GpeIconList widget using a GdkPixbuf for icon
+data instead of a file.
+</para>
+
+@self: Widget
+@title: Short text to label the icon.
+@icon: Icon pixbuf.
+@udata: Pointer to user data passed to signal handlers.
+@Returns: New item widget
+
+<!-- ##### FUNCTION gpe_iconlist_clear ##### -->
+<para>
+Removes all items from an icon list.
+</para>
+
+@self: Widget to clear
+
+<!-- ##### FUNCTION gpe_iconlist_clicked ##### -->
+<para>
+Emits the clicked signal for a GpeIconList widget.
+</para>
+
+@self: Iconlist widget
+@udata: User data to pass to the signal handler.
+
+<!-- ##### MACRO gpe_iconlist_connect__clicked ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+
+<!-- ##### MACRO gpe_iconlist_connect__show_popup ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+
+<!-- ##### MACRO gpe_iconlist_connect_after__clicked ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+
+<!-- ##### MACRO gpe_iconlist_connect_after__show_popup ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+
+<!-- ##### MACRO gpe_iconlist_connect_data__clicked ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+@destroy_data: 
+@flags: 
+
+<!-- ##### MACRO gpe_iconlist_connect_data__show_popup ##### -->
+<para>
+
+</para>
+
+@object: 
+@func: 
+@data: 
+@destroy_data: 
+@flags: 
+
+<!-- ##### FUNCTION gpe_iconlist_new ##### -->
+<para>
+This function creates a new GpeIconList widget.
+</para>
+
+@Returns: New widget
+
+<!-- ##### FUNCTION gpe_iconlist_popup_removed ##### -->
+<para>
+
+</para>
+
+@self: 
+
+<!-- ##### FUNCTION gpe_iconlist_remove_item ##### -->
+<para>
+Remove an item from a GpeIconList.
+</para>
+
+@self: Widget
+@item: Item widget
+
+<!-- ##### FUNCTION gpe_iconlist_set_bg ##### -->
+<para>
+Change widget background to a pixmap from a file.
+</para>
+
+@self: Widget
+@bg: Bitmap file to display in background.
+
+<!-- ##### FUNCTION gpe_iconlist_set_bg_color ##### -->
+<para>
+Change background color of icon list.
+</para>
+
+@self: Widget
+@color: 32 bit integer defining the color.
+
+<!-- ##### FUNCTION gpe_iconlist_set_bg_pixmap ##### -->
+<para>
+Set the widget background from a GdkPixbuf.
+</para>
+
+@self: Widget
+@bg: Pixbuf to use for background.
+
+<!-- ##### FUNCTION gpe_iconlist_set_embolden ##### -->
+<para>
+Turn bold text for selected items on/off.
+</para>
+
+@self: Widget
+@yes: Set TRUE to enable bold text, FALSE to disable.
+
+<!-- ##### FUNCTION gpe_iconlist_set_icon_size ##### -->
+<para>
+Changes the size of the icons displayed in the icon list.
+</para>
+
+@self: Widget
+@size: Size in pixels
+
+<!-- ##### FUNCTION gpe_iconlist_set_icon_xmargin ##### -->
+<para>
+Change margin in X dimension for icons inside a GpeIconList.
+</para>
+
+@self: Widget
+@margin: Margin in pixels
+
+<!-- ##### FUNCTION gpe_iconlist_set_show_title ##### -->
+<para>
+Turn titles on/off.
+</para>
+
+@self: Widget
+@yes: Set TRUE to enable, FALSE to disable.
+
+<!-- ##### FUNCTION gpe_iconlist_show_popup ##### -->
+<para>
+Emits the show-popup signal for a GpeIconList widget.
+</para>
+
+@self: Iconlist widget
+@udata: User data to pass to the signal handler.
+
+<!-- ##### FUNCTION gpe_render_icon ##### -->
+<para>
+[obsolete, use gtk_image_new_from_pixbuf()]
+</para>
+
+@style: 
+@pixbuf: 
+@Returns: 
+
+
+=======
+>>>>>>> 1.4
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_get ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@val: 
+@mask: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_new ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@mask: 
+@Returns: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_set ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@val: 
+@mask: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_set_active ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@val: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_set_build_insensitive ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@build: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_set_prelight ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@val: 
+
+<!-- ##### FUNCTION gtk_gpe_pixmap_set_selected ##### -->
+<para>
+
+</para>
+
+@pixmap: 
+@val: 
+
+<!-- ##### FUNCTION gtk_simple_menu_get_result ##### -->
+<para>
+
+</para>
+
+@sel: 
+@Returns: 
+

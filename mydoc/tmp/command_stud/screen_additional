@@ -1,0 +1,13 @@
+<C-a> H开始/结束捕捉screen当前窗口的log到当前文件夹的一个文件中，screen.0.log等
+捕捉的内容可使用cat |less查看，不能用vi直接查看。可以捕捉多个窗口。
+
+如果screen -ls中有一个attached的session，可以用
+screen -d <session>
+将它弄成detached的，然后用
+screen -r这样就启动screen，并且恢复了刚才detached的screen会话。
+这在ssh中启动screen时候意外断线的时候很有用，当断线的时候，再次登录ssh使用screen -ls查看刚才的会话，并且恢复。
+
+
+会话共享：
+screen -x
+这样多个人可以共享一个会话，如果在同一个窗口，会会话同步显示。

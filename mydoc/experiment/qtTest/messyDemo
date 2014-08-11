@@ -1,0 +1,86 @@
+这里存放了阅读源代码时候遇到的感觉有用的片段，暂时记录在这里防止忘记。
+
+*设置windowflag,和滚动条显示
+http://qtextended.org/doc/qtextended4.4/content-filtering.html
+setWindowFlags( flags );
+setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+
+在label中设置图标自动缩进:
+Label->setScaledContents(true);
+
+*桌面的大小如果发生改变，会发送一个信号，如下：
+QDesktopWidget *desktop = QApplication::desktop();
+connect(desktop, SIGNAL(workAreaResized(int)), this, 
+		SLOT(workAreaAvailableChanged(int)));
+信号是workAreaResized,自己可以定义一个槽workAreaAvailableChanged来处理它。
+
+*想让某个构件不刷新，例如去掉压下按钮的效果，可以调用这句话：
+setUpdatesEnabled(false);
+
+QListWidgetItem的高度用setSizeHint设置之后，如果过大可能会覆盖下面的item，解决这种现象的方法是在设置最后给QListWidget调用一个reset。例如：
+optionList->reset();
+
+*手动创建pixmap:
+    /* XPM */
+    static const char * const pix_xpm[] = {
+	"16 13 2 1",
+	" 	c None",
+	"#	c #000000000000",
+	"    #   #     # ",
+	"    #    #   #  ",
+	"    #           ",
+	"  ##### ####### ",
+	"    #    #   #  ",
+	"    #    #   #  ",
+	"    ###  #   #  ",
+	"  ###  ######## ",
+	"    #    #   #  ",
+	"    #    #   #  ",
+	"    #   #    #  ",
+	"    #  #     #  ",
+	"  ### #      #  "};
+icn = QIcon(QPixmap((const char **)pix_xpm));//将QPixmap作为图标
+QLabel *Lbl = new QLabel();
+Lbl->setPixmap(QPixmap((const char **)pix_xpm));//将QPixmap添加到QLabel上
+
+*设置QLabel边框和图标延伸
+Lbl->setFrameShape(QFrame::StyledPanel);//设置Label边框
+Lbl->setStyleSheet("* {color: #000000;background-color:#FFFFFF}");//设置背景前景颜色
+Lbl->setScaledContents(true);//设置lbl的内容（图片）自动缩放拉伸。
+
+hideEvent是hide之后才发生的。
+
+
+*VBoxLayout添加空白项目：
+vb->addSpacerItem(new QSpacerItem(width(), height() / 9));
+
+*发送键盘事件：
+QKeyEvent k(QEvent::KeyPress, Qt::Key_1, Qt::NoModifier, "1",false);
+QApplication::postEvent(this,&k);
+
+*查看一个对象是否属于一个类或者其子类：
+参考:
+file:///usr/local/Trolltech/Qt-4.5.0/doc/html/qobject.html#inherits
+http://doc.qt.nokia.com/4.5/qobject.html#inherits
+
+QTimer *timer = new QTimer;         // QTimer inherits QObject
+timer->inherits("QTimer");          // returns true
+timer->inherits("QObject");         // returns true
+
+
+*把当前窗口的内容抓到一个文件里面用如下的方法：
+QPixmap pixmap(widget->size());
+widget->render(&pixmap);
+pixmap.save("testGrab.png", "PNG");
+
+*获得发送信号的对象指针：
+QCheckBox *check = qobject_cast<QCheckBox *>(sender());
+这里发送的对象是checkbox.
+
+*设置快捷键：
+exitAct = new QAction(tr("E&xit"), this);
+exitAct->setShortcut(tr("Ctrl+Q"));
+
+*设置QLabel的背景图片：
+	QLabel *lbl = new QLabel("");
+	lbl->setStyleSheet("* { background-image: url(./load.png);background-position: top left;background-origin: content;}");

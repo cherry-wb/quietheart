@@ -1,0 +1,94 @@
+
+-----------背景
+hi guys，
+
+ please forward this mail to your own external mailbox,
+ and then you could check it in your bed.
+ 
+ 把下面这个task在过年时候完成：
+
+ 写一个char device driver， 可以用作IPC间通信。
+(ok) 1，此driver最多支持32个device node。
+    在user space可以mknod创建，也可以手动创建。
+    driver major： 自选。
+    driver可以通过minor判断是哪一个device。
+(ok) 2，此driver的每个device可以维护一个block buffer table/list.
+    每个block size的大小固定，但是允许用户在创建时候通过传入arg设定。
+    总block个数也可以允许用户创建device node时候设定。
+    创建时候要分配所需的所有memory，
+    也就是说：thread通过这个device收发data时候，不要动态分配和释放memory。
+(ok) 3，thread（user或kthread）都可以通过此device收发msg，
+    msg的data放在block memory中，一个msg需要占据整个block slot的空间。
+    每个msg的size不能超过一个block的size，否则return error。
+    msg size可以小于block size。
+(ok) 4，open时候，只设定一个device私有的flag，close时候清除。
+    其他functino operations需要在入口处判断：这个flag是否初始化了。
+    open可以多次，需要计数，但是create只能一次。
+    close时候，如果open的refcount减少为0，则释放create时候的资源。
+(ok) 5，ioctl支持多个cmd，至少包括：
+    create_cmd:
+    send_cmd:
+    recv_cmd:
+(ok) 6, send可以多个thread调用，所以要注意device级别的保护，
+    recv目前设计只允许一个thread调用。
+    send和recv每次只允许收发一个msg，
+    如果device的block pool中没有space了，
+    则send thread需要通过参数判断是否blocking或者timeout。
+    同时如果device的block pool中没有msg了，
+    则recv thread需要通过参数判断是否blocking。
+ 7，send可以是一个thread，也可以是irq handler，
+    thread可以为user space，也可以是kthread。
+    所以要注意保护方法要通用。
+ 8，msg收发的时候：可以使用copy_to／from_user，
+    也可以使用mmap memory到user space。
+    如果mmap，则需要注意cacheable属性的设定。
+ 9，create_cmd，通过传入arg，创建block pool空间。
+ 10，最后，写出一个测试程序。
+     open两个device，注意：不同的minor。
+     如果ceate_cmd:每个device设定不同的msg个数和最大size。
+     在user space，创建3个pthread，
+     第一个用于： 不断从console收user输入的string，
+     然后分别发送给两个device fd，一个正序，一个反序。
+     第二个用于接收： device fd－1 的string，然后输出。
+     第三个用于接收： deivce fd－2 的string，然后输出。
+     同时在kernel中创建一个ktread，每次发送任意string到device－1。
+     通过driver的与file operations函数相似的接口发送msg给device fd1，
+     注意：想一下，怎样在kernel中操作这个dirver的某一个device。
+          其实只要标识出：minor，就有办法识别了，
+          也可以通过vfs，因为kernel中可以直接操作vfs的接口。
+          但是
+     要求：所有的thread都要是preemption的属性，
+          优先级第一个send的ptread最高，kthread发送的次高，其他的依次。
+ 11，注意：程序要写的规范，
+     命名： naming rule，变量和函数的。
+     缩进： indent，
+     各种出错判断处理要做的完备。
+     注意结构体定义的对齐。
+     注意保护方式。
+     debug接口，可以模仿下面这个：
+/* trace-debug switch for kmsg-queue related.  */
+//#define CONFIG_KMSGQ_DEBUG 
+
+
+/* trace function of kmsg-queue module. */
+#ifdef CONFIG_KMSGQ_DEBUG
+    #define kmsg_debug(fmt, args...)      \
+          printk(KERN_DEBUG "%s: " fmt, __func__, ## args)
+         
+    #define kmsg_warning(fmt, args...)      \
+          printk(KERN_ERR "%s: " fmt, __func__, ## args)
+
+#else
+
+  #define kmsg_debug(fmt, args...)       
+  #define kmsg_warning(fmt, args...)      
+      
+#endif
+
+  #define kmsg_error(fmt, args...)      \
+          printk(KERN_ERR "%s: " fmt, __func__, ## args)
+
+
+追加一个思考问题：
+ 下面的这种通信方式和直接使用netlink的优劣比较。
+ linux自带的IPC：msgQ 是否可以完成我们的下述的需求。 

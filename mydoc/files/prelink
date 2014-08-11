@@ -1,0 +1,25 @@
+
+prelink
+下载地址：
+http://packages.debian.org/sid/armel/prelink/download
+http://packages.debian.org/sid/armel/libselinux1/download
+
+
+1,prelink.conf和相应二进制文件拷贝到板子上面。
+2,
+export LD_LIBRARY_PATH=/usr/local/qtex/lib:/lib:/usr/lib
+prelink -amR
+似乎不好用。
+
+prelink资料：
+http://hi.baidu.com/kikicat0_0/blog/item/cc3ad4fb9498089d58ee90ec.html
+
+
+sudo apt-get install libelfg0-dev
+这样可以configure
+
+sudo apt-get install libelf-dev
+
+export LD_LIBRARY_PATH=/usr/local/qtex/lib:/lib:/usr/lib
+prelink -avmR --dynamic-linker=/lib/ld-linux.so.3
+

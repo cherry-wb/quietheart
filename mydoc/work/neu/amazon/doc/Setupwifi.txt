@@ -1,0 +1,78 @@
+= Wifi Interop Test Environment Setup Specification =
+
+== Common Setup ==
+# Install Python
+$ sudo apt-get install python
+$ sudo apt-get install python-mysqldb
+
+# Install Mysql
+$ sudo apt-get install mysql-server
+Input password: '12345678' for user: 'root'
+
+== How to Setup Test Server ==
+# Install iperf
+$ sudo apt-get install iperf
+
+# Setup Jenkins Monitor Deamon
+## Install ssh
+$ sudo apt-get install ssh
+## Edit /etc/rc.local and Add following content
+------
+cd /home/username/wifi_interop        <-- Your wifiinterop app dir
+su wifi -c "python /home/username/wifi_interop/wifiinterop_deamonprocess.py"   <-- Your wifiinterop app dir
+------
+
+# Install Python Plugs
+$ sudo apt-get install python-zope.component python-zope.event python-zope.hookable
+$ sudo apt-get install python-twisted-bin python-twisted-core python-twisted-names python-twisted-web
+$ sudo apt-get install python-pip
+$ sudo apt-get install python-BeautifulSoup
+
+# Install Selenium for Python Plug
+$ sudo pip install -U selenium
+
+# Install Selenium IDE for Firefox
+Open following url using Firefox, and select allow for alert
+------
+http://release.seleniumhq.org/selenium-ide/1.8.0/selenium-ide-1.8.0.xpi
+------
+# Set Firefox do not remember passwords for sites
+Firefox Preferences -> Security -> Remember passwords for sites
+
+# Install Adb
+## Install Adb
+## Edit /etc/profile and Add following content for setting adb path
+------
+export PATH=$PATH:/home/username/adbpath/     <-- Your Adb dir
+------
+
+== How to Setup Web Server ==
+# Install Apache and Necessary Plug
+$ sudo apt-get install apache2
+$ sudo apt-get install libapache2-mod-wsgi
+
+## Restart Apache2
+$ sudo apachectl restart
+
+# Setup Apache Server
+## Enable Modules
+$ sudo a2enmod proxy
+$ sudo a2enmod proxy_http
+## Edit /etc/apache2/conf.d/httpd.conf and Add following content for using wsgi module
+------
+WSGIScriptAlias /interop /home/username/wifi_interop_web/app.py/    <-- Your webapp dir
+LoadModule wsgi_module modules/mod_wsgi.so
+Alias /interop/static /home/username/wifi_interop_web/static/    <-- Your webapp dir
+AddType text/html .py
+<Directory /home/username/wifi_interop_web/>    <-- Your webapp dir
+    Order deny,allow
+    Allow from all
+</Directory>
+------
+## Restart Apache2
+$ sudo apachectl restart
+
+# Install Python Plugs
+$ sudo apt-get install python-webpy
+
+

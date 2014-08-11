@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/amazon/!svn/ver/667/Management/wifi/test_suite
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/.project
+END
+main.py
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/amazon/!svn/ver/602/Management/wifi/test_suite/main.py
+END
+.pydevproject
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/.pydevproject
+END

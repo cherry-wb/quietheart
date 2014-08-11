@@ -1,0 +1,8 @@
+{
+	"name":"set_security_mode",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_set_security_mode.py"},
+	"reporter":["success","fail"],
+	"description":"set security mode of cisco ap"
+}
+

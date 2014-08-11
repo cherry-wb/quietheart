@@ -1,0 +1,6 @@
+Sub sheet_cell()
+'test
+'
+    Sheets("¼¯Ó‹").Cells(1,1)="good"
+    msgbox "good"
+End Sub

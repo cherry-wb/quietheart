@@ -1,0 +1,55 @@
+相关资源：
+======
+http://midori.sourceforge.net/ 这里有个简短的小介绍.
+http://sourceforge.net/projects/midori/develop
+
+装midori-0.0.17
+==============
+用如下的命令编译midori-0.0.17
+./configure --prefix=/usr/local/midori --enable-static
+这样就可以运行了。启动hildondesktop之后也可以运行。
+问题，
+
+在板子上也可以单独运行，但是启动hildondesktop桌面之后就无法运行了，目前还没有找到原因。
+调查查看单独启动所占的内存大概是15-20兆。（用top查看占了15%）
+
+分析：
+1)可能是内存不足？
+2)可能是不支持hidlon的原因？根据网上介绍，在1.3才支持maemo？
+
+
+装midori-0.1.9
+==============
+./waf --enable-hildon --prefix=/usr/local/midori-0.1.9 configure
+报错，考一个文件到/usr/lib/pkg-config webkit-1.0.pc
+又报错，：apt-get install libsoup2.4-dev
+
+安装webkit源代码(webkit1.0-1.1.10-1-src.tar.bz2)：
+应该是webkit最重要，./configure没有过去，根据提示尝试安装如下软件包：
+1)apt-get install bison
+2)apt-get install flex
+3)apt-get install gperf
+4)apt-get install libicu-dev
+5)apt-get install libenchant-dev
+6)apt-get install libxt-dev
+7)提示libsoup2.4-dev版本太低，于是下载了源代码（libsoup-2.26.1.tar.gz）
+如下安装：
+7.1)直接configure不行，于是根据提示这样：
+$./configure --without-gnome
+7.2)编译，这个时间非常长，至少一下午!:
+$make
+编译之后，发现源代码中生成的文件还是2.4?但是不管了，就直接安装。
+7.3)安装(一会就好)：
+$make install
+8)继续对webkits进行configure,竟然没有libsoup版本低的问题了,安装：
+#apt-get install libsqlite3-dev
+9)apt-get install libxslt1-dev
+10)apt-get install gstreamer0.10-plugins-base
+安装之后，还是那个错误, 不过确实也有点不同了。
+11)apt-get install libgstreamer-plugins-base0.10-dev
+至此，通过了configure。但是指明了没有使用hildon ui
+使用:
+./configure --with-hildon
+通过configure。
+12)make
+产生错误，没有通过。

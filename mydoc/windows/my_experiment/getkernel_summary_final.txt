@@ -1,0 +1,269 @@
+Function getKernelSummary()
+'
+' 自动填写并统计“集計”上面kernel部分的统计信息
+'
+    '读取结果
+    Dim i, start, after_end As Integer
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+
+    Dim resultfile as String
+    resultfile = "D:\Program Files\diffcount\every_kernel_file_result.txt"
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+
+    Sheets("Kernel").Select
+    ''''''统计各个文件数据情况用
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+    Dim retstring, token, addNum, modNum, delNum, totalNum As String
+    Dim tokenIndex,tmpPos,addColumn,modColumn,delColumn,totalColumn As Integer
+    addColumn=8
+    modColumn=9
+    delColumn=10
+    totalColumn=11
+    ''''''统计总体数据情况用
+    Dim CSI_Index,STCC_Index,Timer_Index,GPIO_Index,IRQ_Index,PCI_Index,PCIE_Index,UART_Index,INT_Index,EXPCD_Index,TORINO_Index,AVSEL_Index,BSIF_Index,HFDMA_Index,MEMORY_Index,VREF_Index,TK1_Index,OTHER_Index As Integer
+    'XXX How many??
+    Dim ii,addRow,modRow,totalRow As Integer
+    addRow=3
+    modRow=4
+    totalRow=5
+    ii = 0
+    'While Cells(2,i+2)<>集計
+    While ii < 18
+      If Sheets("集計").Cells(2,ii+2)="CSI" Then
+        CSI_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="STCC" Then
+        STCC_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="Timer" Then
+        Timer_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="GPIO" Then
+        GPIO_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="IRQ" Then
+        IRQ_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="PCI" Then
+        PCI_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="PCIE" Then
+        PCIE_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="UART" Then
+        UART_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="INT" Then
+        INT_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="EXPCD" Then
+        EXPCD_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="TORINO" Then
+        TORINO_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="AVSEL" Then
+        AVSEL_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="BSIF" Then
+        BSIF_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="HFDMA" Then
+        HFDMA_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="MEMORY" Then
+        MEMORY_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="VREF" Then
+        VREF_Index=ii
+      ElseIf Sheets("集計").Cells(2,ii+2)="TK1" Then
+        TK1_Index=ii
+      Else
+        OTHER_Index=ii
+      EndIf
+      Sheets("集計").Cells(addRow,ii+2)=0
+      Sheets("集計").Cells(modRow,ii+2)=0
+      Sheets("集計").Cells(totalRow,ii+2)=0
+      ii = ii + 1
+    Wend
+
+    ''''''开始统计
+    i = start
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计非空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn).Value = 0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      ElseIf Cells(i,4) = "新规" Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn)=0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      Else
+        Cells(i, addColumn)=0
+        Cells(i, modColumn)=0
+        Cells(i, delColumn)=0
+        Cells(i, totalColumn)=0
+      End If 'if not IsEmpty(Cells(i,4))
+
+      If Cells(i,2)="CSI" Then
+        Sheets("集計").Cells(addRow,CSI_Index+2)=Sheets("集計").Cells(addRow,CSI_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,CSI_Index+2)=Sheets("集計").Cells(modRow,CSI_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,CSI_Index+2)=Sheets("集計").Cells(totalRow,CSI_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="STCC" Then
+        Sheets("集計").Cells(addRow,STCC_Index+2)=Sheets("集計").Cells(addRow,STCC_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,STCC_Index+2)=Sheets("集計").Cells(modRow,STCC_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,STCC_Index+2)=Sheets("集計").Cells(totalRow,STCC_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="Timer" Then
+        Sheets("集計").Cells(addRow,Timer_Index+2)=Sheets("集計").Cells(addRow,Timer_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,Timer_Index+2)=Sheets("集計").Cells(modRow,Timer_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,Timer_Index+2)=Sheets("集計").Cells(totalRow,Timer_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="GPIO" Then
+        Sheets("集計").Cells(addRow,GPIO_Index+2)=Sheets("集計").Cells(addRow,GPIO_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,GPIO_Index+2)=Sheets("集計").Cells(modRow,GPIO_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,GPIO_Index+2)=Sheets("集計").Cells(totalRow,GPIO_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="IRQ" Then
+        Sheets("集計").Cells(addRow,IRQ_Index+2)=Sheets("集計").Cells(addRow,IRQ_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,IRQ_Index+2)=Sheets("集計").Cells(modRow,IRQ_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,IRQ_Index+2)=Sheets("集計").Cells(totalRow,IRQ_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="PCI" Then
+        Sheets("集計").Cells(addRow,PCI_Index+2)=Sheets("集計").Cells(addRow,PCI_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,PCI_Index+2)=Sheets("集計").Cells(modRow,PCI_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,PCI_Index+2)=Sheets("集計").Cells(totalRow,PCI_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="PCIE" Then
+        Sheets("集計").Cells(addRow,PCIE_Index+2)=Sheets("集計").Cells(addRow,PCIE_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,PCIE_Index+2)=Sheets("集計").Cells(modRow,PCIE_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,PCIE_Index+2)=Sheets("集計").Cells(totalRow,PCIE_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="UART" Then
+        Sheets("集計").Cells(addRow,UART_Index+2)=Sheets("集計").Cells(addRow,UART_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,UART_Index+2)=Sheets("集計").Cells(modRow,UART_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,UART_Index+2)=Sheets("集計").Cells(totalRow,UART_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="INT" Then
+        Sheets("集計").Cells(addRow,INT_Index+2)=Sheets("集計").Cells(addRow,INT_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,INT_Index+2)=Sheets("集計").Cells(modRow,INT_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,INT_Index+2)=Sheets("集計").Cells(totalRow,INT_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="EXPCD" Then
+        Sheets("集計").Cells(addRow,EXPCD_Index+2)=Sheets("集計").Cells(addRow,EXPCD_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,EXPCD_Index+2)=Sheets("集計").Cells(modRow,EXPCD_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,EXPCD_Index+2)=Sheets("集計").Cells(totalRow,EXPCD_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="TORINO" Then
+        Sheets("集計").Cells(addRow,TORINO_Index+2)=Sheets("集計").Cells(addRow,TORINO_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,TORINO_Index+2)=Sheets("集計").Cells(modRow,TORINO_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,TORINO_Index+2)=Sheets("集計").Cells(totalRow,TORINO_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="AVSEL" Then
+        Sheets("集計").Cells(addRow,AVSEL_Index+2)=Sheets("集計").Cells(addRow,AVSEL_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,AVSEL_Index+2)=Sheets("集計").Cells(modRow,AVSEL_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,AVSEL_Index+2)=Sheets("集計").Cells(totalRow,AVSEL_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="BSIF" Then
+        Sheets("集計").Cells(addRow,BSIF_Index+2)=Sheets("集計").Cells(addRow,BSIF_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,BSIF_Index+2)=Sheets("集計").Cells(modRow,BSIF_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,BSIF_Index+2)=Sheets("集計").Cells(totalRow,BSIF_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="HFDMA" Then
+        Sheets("集計").Cells(addRow,HFDMA_Index+2)=Sheets("集計").Cells(addRow,HFDMA_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,HFDMA_Index+2)=Sheets("集計").Cells(modRow,HFDMA_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,HFDMA_Index+2)=Sheets("集計").Cells(totalRow,HFDMA_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="MEMORY" Then
+        Sheets("集計").Cells(addRow,MEMORY_Index+2)=Sheets("集計").Cells(addRow,MEMORY_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,MEMORY_Index+2)=Sheets("集計").Cells(modRow,MEMORY_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,MEMORY_Index+2)=Sheets("集計").Cells(totalRow,MEMORY_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="VREF" Then
+        Sheets("集計").Cells(addRow,VREF_Index+2)=Sheets("集計").Cells(addRow,VREF_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,VREF_Index+2)=Sheets("集計").Cells(modRow,VREF_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,VREF_Index+2)=Sheets("集計").Cells(totalRow,VREF_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="TK1" Then
+        Sheets("集計").Cells(addRow,TK1_Index+2)=Sheets("集計").Cells(addRow,TK1_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,TK1_Index+2)=Sheets("集計").Cells(modRow,TK1_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,TK1_Index+2)=Sheets("集計").Cells(totalRow,TK1_Index+2) + Cells(i,totalColumn)
+      Else
+        Sheets("集計").Cells(addRow,OTHER_Index+2)=Sheets("集計").Cells(addRow,OTHER_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,OTHER_Index+2)=Sheets("集計").Cells(modRow,OTHER_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,OTHER_Index+2)=Sheets("集計").Cells(totalRow,OTHER_Index+2) + Cells(i,totalColumn)
+      EndIf
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:L").AutoFit
+    Sheets("集計").Columns("B:T").AutoFit
+End Function

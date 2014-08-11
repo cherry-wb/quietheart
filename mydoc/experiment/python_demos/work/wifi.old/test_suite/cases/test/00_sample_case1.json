@@ -1,0 +1,25 @@
+{
+	"name":"00_sample_case1",
+	"type":{"name":"seq"},
+    "ap":[
+    {"model":"ap:cisco:e3000","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"},
+    {"model":"all","mac":"all"},
+    {"model":"ap:cisco:e3200","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"}
+    ],
+	"description":"an example.",
+	"scenarios":[
+    {
+        "scenarios1":{
+            "fname":"sample_scenario1.json", 
+            "catagory":"ap",
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}

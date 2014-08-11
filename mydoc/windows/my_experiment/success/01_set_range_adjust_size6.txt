@@ -1,0 +1,48 @@
+这里自己就是在excel中执行一个宏，这个宏的功能就是相当于：
+打开一个新建excel工作表的窗口，然后在单元格15行,1列的位置写入了"MyAddData",
+然后为指定的范围设置背景颜色，
+然后给指定的列根据其单元格内容自动调整大小
+
+实践过程：
+1)首先给excel录制一个宏：
+*依次点击："视图->宏->录制宏"
+这样开始录制一个宏。
+*随便做一些操作之后，点击"视图->宏->停止录制"
+
+2)编辑自己的宏:
+*点击"视图->宏->察看宏"
+从列表中选择自己刚才录制的宏，然后点击"编辑"。
+
+*填入自己的宏代码
+在打开的窗口中，依次存放着当前文件所有的宏.在最后面行追加一个宏代码如下：
+Sub MyAdjustWidth()
+'
+' mytest Macro
+'
+	Dim objExcel as Application
+	Set objExcel = CreateObject("Excel.Application")
+	objExcel.Visible = True
+	objExcel.Workbooks.Add
+	'设置单元格(15,1)的值
+	objExcel.Cells(15, 1).Value = "My Workbook"
+	
+	'定义一个范围，并设置其背景颜色
+	Dim objRange As Range
+	Set objRange = objExcel.Range("A3","A25")
+	objRange.Interior.ColorIndex = 36
+
+	'为活动单元格的列自动调整大小
+	Set objRange = objExcel.ActiveCell.EntireColumn
+	objRange.AutoFit
+End Sub
+
+之后保存,这时候"察看宏"列表中会多一个"MyAdjustWidth"宏。
+
+3)执行自己编辑的宏：
+点击"视图->宏->察看宏"
+选择刚才写入的"MyAdjustWidth"宏，点击"执行".
+
+
+注意：
+*目前我还不知道如何直接独立编写excel宏的vba脚本，所以先录制了一个宏，然后才开始编辑。
+*我使用的是excel 2007

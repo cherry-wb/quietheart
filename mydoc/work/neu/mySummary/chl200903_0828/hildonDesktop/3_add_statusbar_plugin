@@ -1,0 +1,32 @@
+把今天我和大家讨论的成果总结一下：
+把插件添加到statusbar里需要做的就是三个：
+1，把源代码编译成为**.so文件格式
+2，把相应的配置文件（**.conf,*.desktop）做相应的修改
+3，把**.so文件拷贝到/usr/lib/hildon-desktop里面.
+举例如下：
+假设我想要把一个编写好的helloworld插件加入到statusbar中，那么我可以作如下的步骤：
+1，下载源代码（参见参考资料）：
+https://garage.maemo.org/svn/maemoexamples/tags/maemo_4.1/hello-world-app/
+把hello-world-statusbar.c,libhelloworld.c,hello-world-statusbar.h,libhelloworld.h拷贝到本机目录中（hello/）。
+2，编译：
+$cd .../hello/
+$gcc -shared ‘pkg-config gtk+-2.0 libosso hildon-1 libhildondesktop --libs --cflags‘ hello-world-statusbar.c libhelloworld.c -o libhelloworld_sb.so
+3,添加插件并改写配置文件：
+1)把生成的*.so拷到/usr/lib/hildon-desktop/中：
+$cp libhelloworld_sb.so /usr/lib/hildon-desktop/
+然后，
+2）/usr/share/applications/hildon-status-bar/中添加文件hildon-statusbar-hello_world,内容如下：
+[Desktop Entry]
+Name= helloworld_sb
+Icon=hello-world
+Category = temporal
+Type= default
+X-Path= libhelloworld_sb.so
+3）~/.osso/hildon-desktop/statusbar.conf
+添加下面一句：
+[/usr/share/applications/hildon-status-bar/hildon-status-bar-hello_world.desktop]
+
+4，重新启动运行：
+$af-sb-init restart
+以上只是大致的过程，还有细节有待深究。
+

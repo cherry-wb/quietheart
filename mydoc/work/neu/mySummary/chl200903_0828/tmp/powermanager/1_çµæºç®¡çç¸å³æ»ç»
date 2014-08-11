@@ -1,0 +1,13 @@
+MPM:Marvell Power Management
+MPM的框架：
+MPM框架下面主要的部件是：MCU driver,APM,HAL,DBUS,和用户application.
+
+APM:高级电源管理。它使用分层的方法来管理设备。APM-aware applications和 OS-specific 的APM driver通信，然后这个driver能够直接控制硬件设备。
+APM定义了两种接口：一种接口是 /dev目录下面的bios接口，如果用户应用程序有权限，它就能够通过这个接口控制设备。另一种是/proc目录下的接口，用户应用程序可以通过这个接口，获得APM的状态和电池的信息。
+尽管上面APM已经提供了一些信息，但是还不足以支持HAL,所以还需要在APM的proc接口中另外一些信息。
+
+HAL：硬件抽象层。HAL的守护进程是系统范围的服务，它负责维护一个设备的对象的数据库。这个守护进程不仅从APM收集电源状态信息，也会从设备信息文件merging信息以及管理设备的对象的生存期。这个服务以一个守护进程的形式执行，任何用户可以请求获取特定的设备信息。
+电源管理的接口在HAL中进行注册，这个接口在org.freedesktop.Hal.
+当HAL提供系统内的service的时候，一个hald 进程就会启动。
+
+D-BUS:他可以实现程序之间的通信。D－bus是HAL和power policy application的桥梁。D－bus也提供了一些方便的工具，使得用户能够方便的与它进行通信。

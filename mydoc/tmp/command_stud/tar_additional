@@ -1,0 +1,70 @@
+ (cd /source/directory && tar cf - . ) | \
+ (cd /dest/directory && tar xpvf -)
+ # 重复Alan Cox的目录数拷贝命令,
+ # 但是分成两行是为了增加可读性.
+ 
+ # 也可以使用如下方式:
+ tar cf - -C /source/directory . |
+ tar xpvf - -C /dest/directory
+
+
+tar解压tar包中指定文件
+查看包内的内容如下：
+$tar -tzf xx1.tar.gz 
+xx1/
+xx1/date/
+xx1/date/date1
+xx1/date/date2
+xx1/good1
+xx1/good2
+
+*仅解压出date1文件，其他文件不需要：
+$tar -xzvf xx1.tar.gz xx1/date/date1
+ 这时候在当前目录下面产生一个文件夹/xxl/date，里面就会有我想要的文件date1了(不是仅解压出date1而是将其顶层目录也解压出来,不过顶层目录没有其他文件)，这样我就不需要对整个tar包来解包了.
+
+*解压指定的文件date1到指定的文件夹./test2:
+$tar -xzvf xx1.tar.gz -C ./test2 xx1/date/date1
+这样我们要的文件date1就会在./test2/xx1文件夹下面,此方法适合对包比较大，又只想要里面一两个文件的时候使用.
+
+*仅解压tar包中的指定目录date:
+$tar -xzvf xx1.tar.gz xx1/date
+这样当前目录下面生成一个xx1目录，其中只包含date目录的内容。
+
+*解压tar包test.tgz中所有的文件到指定路径：
+$tar -xzvf test.tgz -C destination
+或:$cd destination;tar -xzvf ...../test.tgz
+这样把test.tgz的内容解压到destination目录中去了。方法就是要么用-C指定，要么先进入到目标路径然后解压。
+
+*解压文件，同时解压时取路径中前两个部分去掉之后的结果：
+tar --strip-components 2 -xzvf test.tgz
+这里，假设用-t显示解压的是：
+testTar/6Dir/
+testTar/6Dir/8
+testTar/6Dir/7
+testTar/6Dir/dir2/
+testTar/6Dir/dir2/11
+testTar/6Dir/dir2/12
+testTar/6Dir/9dir/
+testTar/6Dir/9dir/10
+testTar/2
+testTar/1
+testTar/5
+testTar/3
+testTar/4
+那么，解压出来的结果应该是：
+7  8  9dir  dir2
+也就是说把所有路径中，头两个部分去掉了（即testTar/*/）。注意这里只是解压。
+
+*打包的时候，排除指定的目录：
+tar -cf test.tar -C dir --exclude ./excludedir
+
+*将一个文档追加到tar包中：
+tar -rvf test.tar ../dir/of/addfile
+这样会将addfile加入test.tar中并且保留"dir/of"目录。
+
+
+[其他]
+tar -czvf 生成tgz,可以用tar xvf解压不必用tar -xzvf，现在tar可以自动识别了。
+
+#tar -czvf testTar.tgz -C testTar .
+这样打包的只是testTar，没有包含testTar的最外层。也就是说，解压的时候会直接将testTar的内容解压到当前目录，而不是一个独立的testTar目录。

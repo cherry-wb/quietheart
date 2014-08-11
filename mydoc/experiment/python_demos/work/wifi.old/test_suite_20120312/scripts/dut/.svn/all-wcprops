@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/amazon/!svn/ver/642/Management/wifi/test_suite/scripts/dut
+END
+base.py
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/scripts/dut/base.py
+END
+connect_ap.sh
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/scripts/dut/connect_ap.sh
+END
+tate.py
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/amazon/!svn/ver/642/Management/wifi/test_suite/scripts/dut/tate.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/amazon/!svn/ver/399/Management/wifi/test_suite/scripts/dut/__init__.py
+END

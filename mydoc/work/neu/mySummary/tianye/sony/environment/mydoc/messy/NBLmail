@@ -1,0 +1,102 @@
+TO ALL
+FROM 吕凯
+
+各位，
+制作文件系统镜像，烧写内核，烧写文件系统方法已经确定。
+可以不用tftp和nfs启动板子。
+
+内容如下(可参考附件)：
+=====================
+1,编译内核
+2,制作文件系统镜像
+3,设置烧写分区
+4,设置uboot环境
+5,烧写内核和文件系统,启动系统
+
+=====================
+1,编译内核
+=====================
+$svn checkout http://10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+注意，
+*编译内核之前，环境变量设置为"export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH"
+*生成的内核avp13Build/vmlinux.bin
+
+=====================
+2,制作文件系统镜像
+=====================
+$svn checkout http://10.1.29.125/svn/sony/trunk/Source/Rootfs
+$cd For_Release
+$./build.sh all
+注意，
+*运行之前，环境变量设置为"export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH"
+*生成的镜像名称为target/*.img
+*最好参考下For_Release/readme
+
+=====================
+3,设置烧写分区
+=====================
+启动板子后，依次运行：
+NBL> sdm init
+NBL> diag ethaddr 00:11:12:33:44:55
+NBL> sdm create -n -l 0x400000 kernel
+NBL> sdm create -n -l 0x800000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+注意，
+*ethaddr设置的MAC地址尽量不要和其他人重复
+*这个过程只需执行一次，不用每次启动板子都执行
+*如果以前设置过烧写分区，则有如下命令和对应的输出：
+NBL> sdm list
+sdma: nblconfig
+    device      : 0
+    start sect  : 0x88
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmb: sdmreg
+    device      : 0
+    start sect  : 0xa8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmc: sdmlog
+    device      : 0
+    start sect  : 0xc8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmd: kernel
+    device      : 0
+    start sect  : 0xe8
+    image size  : 0x400000 bytes(0x400 sectors)
+    protect     : No
+sdme: initrd_fat
+    device      : 0
+    start sect  : 0x4e8
+    image size  : 0x800000 bytes(0x800 sectors)
+    protect     : No
+*创建的分区号不要超过sdmp.总大小不要超过64M.从文档"avp13_nbl_spec.txt"的第三节"3. Memory map of NBL"看，总物理内存512M，但是NBL只用其中64M，其他被别的微处理器使用了。
+
+=====================
+4,设置uboot环境
+=====================
+NBL> set boot_option "console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.xx1::10.1.29.1:255.255.255.0"
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img"
+NBL> set console on
+NBL> set myip 10.1.29.xx1
+NBL> set gateip 10.1.29.1
+NBL> set servip 10.1.29.xx2
+注意，
+*10.1.29.xx1改成你的板子ip
+*10.1.29.xx2该成你的tftp服务器
+**这个过程只需执行一次，不用每次启动板子都执行.
+
+=====================
+5,烧写内核和文件系统,启动系统
+=====================
+将文件系统镜像和内核拷贝到tftp导出目录之后，如下执行：
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+NBL> boot -r sdmd:raw:vmlinux.bin
+至此，内核与文件系统从板子里面正常启动了。

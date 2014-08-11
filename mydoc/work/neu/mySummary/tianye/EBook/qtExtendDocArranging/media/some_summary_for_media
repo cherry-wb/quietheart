@@ -1,0 +1,81 @@
+下面是在qt extended中做解码器过程中的一些收获总结。
+
+一、从上层的观点来解释：
+播放器播放音频，整个程序流程大体具有如下层次：
+1）上层播放器UI界面
+就是用户看到的播放器的界面。
+2）音频／视频引擎（或者叫壳）
+用户操作上面的UI界面的时候，会调用到这里的一些东西。这个部分主要管音频视频的相关控制，例如start，stop，seek等等。而它在播放的时候，则会调用解码器相关的过程进行实质上的解码。一般来说，这个部分和UI界面都是做在一起的，可以将UI分离出来。目前遇到的引擎，有cruxus（这个是音频的，好像是qt自带的；gstreamer，这个有音频和视频，实际mplayer就是使用的这个引擎；还有helix，这个也是一种媒体播放引擎）
+3）解码器
+解码器，提供真正的解码操作。一般来说，需要使用解码器提供的库，编写一个对应的媒体播放引擎的插件，这个插件的接口例如：start，readData，seek，stop等等都是由引擎规定的，用来被媒体引擎调用；而这些接口的实现由解码器来做。一个著名的开源解码器是ffmpeg.(mplayer底下就是用的这个解码器).
+4）alsa
+解码器将解出来的pcm数据写到alsa的缓存中（可能是dma的）。然后在通过数模转换变成声音。操作alsa的接口在内核里面有，另外也有一个供用户使用的alsa库。alsa抽象的文件例如/dev/msp之类的东西。
+5）硬件
+省略了。
+
+
+二，关于解码器的解码
+1,parse部分
+对wma,mp3文件进行parse,生成一个parse好的结构体。
+这个结构体中包含：声道，各种视频参数等，每个视频数据package的位置和大小。
+同时包含seek，等结构便于播放的时候进行前进后退。
+
+2，初始化部分
+从结构体中提取文件头所需信息，来填充inData(注意，不是像sample那样来对文件顺序读取获得的)然后利用文件头初始化解码器，并且获取各种信息，例如channel等。
+
+3，解码部分：
+从结构体获取每个package数据,并且解码。
+
+
+
+三、其他参考资料
+> hi all，
+>  
+>  在ffmpeg中， 
+> 1， asfdec.c 中 包含了 对 asf file format 的 parser 或者叫做demux解复
+> 用，他可以从 原始的 media data 中解析出来 asf 的 header 以及 audio 和
+> video的信息， 这些信息就是 包含 codec 需要的参数 以及 我们需要的 文件描
+> 述信息，比如 album， artist 。。。。。。对应的函数就是 asf_read_header
+> asf_read_packet等，
+> 而 read_packet 得到的 data buffer其实就是要 送给 相对应的 codec－－
+> decoder 的 media data 媒体数据，比如audio video， subtitle字幕等。。。。
+> 
+> 2， wmadec.c 文件中就 包含了一个 audio decoder的实现，
+>    主要提供 wma_decode_init，  wma_decode_superframe等函数，
+>    其中init需要从 上面的 demuxer的 xx_read_header 函数 得到的 数据中 得
+> 到 参数，
+>    而 wma_decode_superframe 就是 输入 从 xxx_read_packet得到的 data， 并
+> 把解出来的 data 返回，
+>   
+> 3， Allcodecs.c 中 包含 提前 注册的 各种 demuxer， muxer（录制文件时候需
+> 要的）， file－protocol 等 类型。
+> 
+> 4， allformats.c 中 包含提前注册的 decoder， encoder等。。。
+> 
+> 5， 最后 ffplay.c 中， 需要作的是：  把 media file的 url 路径（可以是
+> file:, http: tcp: udp: 等。。）传递给 file protocol 模块， 他根据解析url
+> 的name得到对应的读data的object， 在从读取到的data中 －－解析是 什么类型
+> 的 demuxer(使用 read_probe)， 再用找到的这个matched的demuxer  使用他的
+> read-header（）得到 audio 和 video等信息，再为这些 audio 和 video的 raw
+> data 找 匹配的 codec 也就是 decoder 实例， 然后使用之前得到的audio／
+> video的arg调用 decoder－init 进行初始化，然后再 调用 demuxer 的
+> read_packet，并且把得到的buffer传递给 decoder的 xxx_decode()函数，然后就
+> 可以得到 output的data，放进一个 buffer pool， 这些data已经被添加了pts，
+> 即presention timestamp 显示时间戳， 然后 output／dispaly／render thread
+> 或者 timer的 handler就会 定时的 从 buffer pool中 取 buffer，比较 pts 是
+> 否 超时， 然后决定是否 把这个buffer 送给 指定的输出设备，对于audio来说
+> 就是 pcm的输出设备，
+> 
+> 6，一个player通常有三个 thread 或者 执行context， 一个作 media data的读
+> 取，并作audio／video等data的parsing 也就是 demuxing 解复用， 把得到的
+> buffer 放进 一个buffer pool， 另一个 decoding／encoding 线程 从这个 pool
+> 中取得 buffer， 进行解码，然后把得到的output dada，比如pcm data 放到另外
+> 一个 pool， 然后output／display 线程 就 定时的 从 这个 pool 取 buf，然后
+> output 到 device。。。。 
+> 这三个 thread 或者 timer， 是按照 前后次序建立的，如果前面的建立失败，或
+> 者找不到matched的obj，那么就提示error，然后 退出。
+> 
+> 以上是media player的基本结构， 对于 forward seek pause stop rewind等操
+> 作，都是同时操作这3个thread的。。。。。。。。
+> 
+> 等我明天copy一个独立的wma的 parser来， 不一定能找到。。。。 呵呵

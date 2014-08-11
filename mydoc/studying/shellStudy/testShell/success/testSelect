@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "which is you current operation system?"
+select var in "WindowsXP" "WindowsME" "Fedora" "Ubuntu";do
+break; #test comment,comment here is good but you'd better type a space before '#'
+done
+echo "you have selected $var"

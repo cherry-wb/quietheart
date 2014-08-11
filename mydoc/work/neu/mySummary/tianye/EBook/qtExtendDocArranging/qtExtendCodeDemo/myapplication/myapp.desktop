@@ -1,0 +1,11 @@
+[Translation]
+File=myapp-nct
+Context=MyApp
+
+[Desktop Entry]
+Comment[]=My Application
+Exec=myapp
+#Icon=example/Example
+Type=Application
+#Builtin=Yes
+Name[]=MyApp

@@ -1,0 +1,31 @@
+http://blog.csdn.net/moreevan/article/details/6347497
+列出现在下在运行的模拟器与真机
+    adb devices
+    对于每个实例（真机或模拟器）的输出格式如下
+    [serialNumber] [state]
+ 
+    $ adb devices
+ 
+    List of devices attached 
+    emulator-5554  device
+    emulator-5556  device
+    emulator-5558  device
+
+安装软件
+    adb install <apk-file-path>
+
+adb -s <serialNumber> <command>
+ 
+    指定结某个实例进行某项操作
+    例如：
+        adb -s emulator-5544 install a.apk 
+ 
+ 
+复制某文件到模拟器
+    adb push <local path> <remote path>
+ 
+从模拟器中复制某文件到本地
+    adb pull <remote path> <local path>
+ 
+列出所有支持的命令
+    adb help

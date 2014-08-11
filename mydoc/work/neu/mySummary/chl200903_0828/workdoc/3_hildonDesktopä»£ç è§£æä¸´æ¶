@@ -1,0 +1,295 @@
+entry进入插件的方法在item wrapper里面有所关联
+在hd-desktop.c中的
+*load_containers函数的接近结尾处：
+
+hd_plugin_manager_load (HD_PLUGIN_MANAGER (priv->pm), 
+                        plugin_list, 
+                        HILDON_DESKTOP_WINDOW (info->container)->container,
+						info->policy);/*这个函数真正加载plugin的各个desktop*/
+/*通过对hd_plugin_manager_load分析之后发现:
+  是把插件加载到这个info-container->container上面!!!
+  这里的info->container如果对于statusbar则是HD_TYPE_PANEL_WINDOW_DIALOG的,
+ 因为前面建立info-container的时候，根据不同的类型进行建立从那里看出来的*/
+下面对插件究竟添加到哪个窗口上，进行跟踪
+----------
+HD_TYPE_PANEL_WINDOW_DIALOG 类定义在hd-panel-window-dialog.h中,
+struct _HDPanelWindowDialog 
+{
+  HildonDesktopPanelWindowDialog parent;
+
+  HDPanelWindowDialogPrivate *priv;
+};
+/*下面是priv成员的类型定义*/
+struct _HDPanelWindowDialogPrivate
+{
+  DBusGConnection *connection;
+
+  GHashTable *plugins;
+};
+----------
+父类HildonDesktopPanelWindowDialog的定义在...desktop-panel-window-dialog.h中，
+/*这里setacceptfocus(GTK_WINDOW)*/
+struct _HildonDesktopPanelWindowDialog
+{
+  HildonDesktopPanelWindowComposite parent;
+
+  HildonDesktopPanelWindowDialogPrivate  *priv;
+};
+/*下面是私有成员的定义*/
+struct _HildonDesktopPanelWindowDialogPrivate
+{
+  gboolean show_in_fullscreen;
+  gboolean old_titlebar;
+  HDWM 	   *hdwm;
+};
+---------
+父类HildonDesktopPanelWindowComposite的定义在...panel-window-composite.h中,
+struct _HildonDesktopPanelWindowComposite {
+  HildonDesktopPanelWindow                      parent;
+
+  HildonDesktopPanelWindowCompositePrivate     *priv;
+};
+/*下面是私有成员的定义*/
+struct _HildonDesktopPanelWindowCompositePrivate
+{
+  guint         background_width, background_height;
+  GdkPixmap    *pixmap;
+
+  Picture       pattern_picture;
+  Picture       pattern_mask;
+  guint         pattern_width, pattern_height;
+
+  gint          x, y, width, height;
+
+  XTransform    transform;
+  gboolean      scale;
+};
+------------
+父类HildonDesktopPanelWindow的定义在...desktop-panel-window.h中,
+	/*focus-in*/
+struct _HildonDesktopPanelWindow
+{
+  HildonDesktopWindow	            parent;
+
+  GtkWidget                        *panel;
+
+  HildonDesktopPanelWindowPrivate  *priv;
+};
+/*下面是私有成员的定义*/
+struct _HildonDesktopPanelWindowPrivate
+{
+  HildonDesktopMultiscreen            *ms;
+  HildonDesktopPanelWindowOrientation  orientation;
+  HildonDesktopPanelWindowState        state;
+  GdkRectangle                         geometry;
+  GdkRectangle		               horiz_geometry;
+  GdkRectangle		               vert_geometry;
+  GdkRectangle	 	               magic_geometry;
+  gboolean		               stretch;
+  gboolean 		               grab_keyboard;
+  gint			               drag_offset_x; /* For sure, this will be deleted */ 
+  gint			               drag_offset_y; /* For sure, this will be deleted */
+  gboolean		               move;
+};
+----------
+父类类型的定义在hildon-desktop-window.h
+struct _HildonDesktopWindow
+{
+  GtkWindow                  parent;
+
+  HildonDesktopWindowPrivate *priv;
+
+  GtkContainer               *container;//应该是这个container加载插件,终于找到!!
+};
+###############---------
+通过以上不断向上跟踪最终发现，
+原来插件最终添加在了HildonDesktopWindow类型的container成员上面,然后看看建立相应
+对象的时候发生了什么，有可能会找到些有用的资料。
+另外发现：
+HildonDesktopWindow类型有如下的公共函数：
+GType hildon_desktop_window_get_type(void);
+void hildon_desktop_window_set_sensitive(HildonDesktopWindow *window, 
+                                         gboolean             sensitive);
+void hildon_desktop_window_set_focus(HildonDesktopWindow *window, 
+                                     gboolean             focus);
+其中，后两个函数还没有任何实现代码。
+看看这个hildonDesktopWindow的初始化对象代码：
+hildon_desktop_window_init (HildonDesktopWindow *desktop_window)
+{
+  desktop_window->priv = HILDON_DESKTOP_WINDOW_GET_PRIVATE (desktop_window);
+
+  desktop_window->container = NULL;/*这里把container设置为空值了*/
+
+  desktop_window->priv->padding_left = 0;
+  desktop_window->priv->padding_right = 0;
+  desktop_window->priv->padding_top = 0;
+  desktop_window->priv->padding_bottom = 0;
+}
+这里发现，HildonDesktopWindow类型没有做什么工作，于是再看看它子类
+--------------
+HildonDesktopPanelWindow类型：
+大致浏览了一下发现，这里也有许多涉及到焦点如focus-in的内容。
+/*初始化对象函数*/
+static void 
+hildon_desktop_panel_window_init (HildonDesktopPanelWindow *window)
+{
+  g_return_if_fail (window);
+
+  window->priv = HILDON_DESKTOP_PANEL_WINDOW_GET_PRIVATE (window);
+
+  HILDON_DESKTOP_WINDOW (window)->container = NULL;/*这里仍旧设置为空值*/
+
+  /*这里设置了window（实际就是父类）的一些属性*/
+  window->priv->ms		      = NULL;
+  window->priv->orientation           = HILDON_DESKTOP_PANEL_WINDOW_ORIENTATION_TOP;
+  window->priv->state                 = HILDON_DESKTOP_PANEL_WINDOW_GRAB_NONE;
+  window->priv->stretch		      = FALSE;
+  window->priv->geometry.x            = -1;
+  window->priv->geometry.y            = -1;
+  window->priv->geometry.width        = -1;
+  window->priv->geometry.height       = -1;
+  window->priv->horiz_geometry.x      = -1;
+  window->priv->horiz_geometry.y      =  0; /* this won't change */ 
+  window->priv->horiz_geometry.width  = -1;
+  window->priv->horiz_geometry.height = -1;
+  window->priv->vert_geometry.x       =  0; /* this won't change */
+  window->priv->vert_geometry.y       = -1;
+  window->priv->vert_geometry.width   = -1;
+  window->priv->vert_geometry.height  = -1;
+  window->priv->magic_geometry.x      =  0; /* this won't change */
+  window->priv->magic_geometry.y      = -1;
+  window->priv->magic_geometry.width  = -1;
+  window->priv->magic_geometry.height = -1;
+  window->priv->drag_offset_x = window->priv->drag_offset_y = 0; /* For sure, this will be deleted */
+  window->priv->move		      = TRUE;
+  
+  gtk_widget_add_events (GTK_WIDGET (window),
+                         GDK_BUTTON_PRESS_MASK |
+                         GDK_BUTTON_RELEASE_MASK |
+                         GDK_POINTER_MOTION_MASK
+	  |GDK_FOCUS_CHANGE_MASK);/*lkadd,for focus in no response?*/
+ 
+  /* FIXME: what do we do with focus??? */
+}
+另外还需要注意的是还有一个constructor函数,这个函数在class_init设置了，比init早。
+这个constructor函数的代码比较多，所以只挑认为重要的地方说说:
+static GObject *  
+hildon_desktop_panel_window_constructor (GType gtype,
+			                 guint n_params,
+			                 GObjectConstructParam *params)
+{
+	......
+  GObject *object;
+  HildonDesktopPanelWindow *window;
+  GtkWidget *widget, *alignment;
+  ......
+  object = G_OBJECT_CLASS (hildon_desktop_panel_window_parent_class)->constructor (gtype,
+		  				                                   n_params,
+						                                   params);
+  widget = GTK_WIDGET (object);/*这里就是祖先类GtkWindow转为GtkWidget了,
+				参见定义在hildon-desktop-window.h的父类HildonDesktopWindow*/
+  window = HILDON_DESKTOP_PANEL_WINDOW (object);/*本类的对象window*/
+
+  g_signal_connect (object, "focus-in-event", G_CALLBACK (hildon_desktop_panel_window_in_focus), NULL); 	  
+  GTK_WINDOW (window)->type = GTK_WINDOW_TOPLEVEL;/*这里把父类成员GtkWindow设置,不是container*/
+......
+  HILDON_DESKTOP_WINDOW (window)->container = g_object_new (HILDON_DESKTOP_TYPE_PANEL, NULL);/*在这里创建添加插件的container，终于找到了!!但是好像不是statusbar上面的横条对应的container，因为在init里面把它又设置为空了，所以只能再看子类...*/
+......
+  gtk_container_add (GTK_CONTAINER (window), alignment);/*把container成员添加到alignment上面，再把alignment添加到父成员window上面*/
+/*init把container设置为空了，但是在此之前container已经通过上面的句子添加了*/
+......
+}
+--------------
+类HildonDesktopPanelWindowComposite里面就没有什么代码了，好像和背景等等有关的东西
+--------------
+类HildonDesktopPanelWindowDialog
+
+static GObject *  
+hildon_desktop_panel_window_dialog_constructor (GType gtype,
+			                 guint n_params,
+			                 GObjectConstructParam *params)
+{
+  GObject *object;
+  HildonDesktopPanelWindowDialog *window;
+  GtkWidget *widget;
+  GtkContainer *parent = NULL;
+  gint orientation;
+  gchar *wm_name;
+  ......
+  object = G_OBJECT_CLASS (hildon_desktop_panel_window_dialog_parent_class)->constructor (gtype,
+		  				                                   	  n_params,
+						                                   	  params);
+  widget = GTK_WIDGET (object);
+  window = HILDON_DESKTOP_PANEL_WINDOW_DIALOG (object);
+
+  GTK_WINDOW (window)->type = GTK_WINDOW_TOPLEVEL;/*这里把类型设置为TOPLEVEL*/
+  if (HILDON_DESKTOP_WINDOW (window)->container != NULL) 
+  {/*将要建立container了，这里，现检测之前container是否为空*/
+    parent = GTK_CONTAINER (GTK_WIDGET (HILDON_DESKTOP_WINDOW (window)->container)->parent);
+
+    gtk_container_remove (parent, 
+                          GTK_WIDGET (HILDON_DESKTOP_WINDOW (window)->container));	  
+  }
+  ......
+  HILDON_DESKTOP_WINDOW (window)->container = 
+    g_object_new (HILDON_DESKTOP_TYPE_PANEL_EXPANDABLE, "items_row", 7,NULL);/*这里终于建立成员container了!!!statusbar插件就要加在这个container成员的上面*/
+  if (parent != NULL)
+    gtk_container_add (parent,
+       GTK_WIDGET (HILDON_DESKTOP_WINDOW (window)->container));/*为空呢?*/
+  ......
+  if (wm_name && g_str_equal (wm_name, "matchbox"))
+  {
+    if (window->priv->old_titlebar)
+    {
+       gint width, height;
+
+      gtk_window_set_accept_focus (GTK_WINDOW (window), FALSE);//给父成员设置焦点
+       gtk_container_set_border_width (GTK_CONTAINER (window), 0);
+       
+       gtk_window_set_type_hint( GTK_WINDOW (window), GDK_WINDOW_TYPE_HINT_DOCK);
+
+       gtk_widget_realize (GTK_WIDGET (window));
+       
+       /* custom WM hints are set in realize */
+
+       gdk_window_get_geometry (GTK_WIDGET (window)->window,
+		       		NULL,NULL,&width, &height, NULL);
+
+       g_object_set (G_OBJECT (window),
+		     "width", width, 
+		     "height", height,
+		     NULL);
+
+       gtk_widget_set_size_request (GTK_BIN (window)->child, width, height);/*设置大小*/
+    }
+    else
+    {    
+      gtk_window_set_type_hint (GTK_WINDOW (window), GDK_WINDOW_TYPE_HINT_DIALOG);
+      gtk_window_set_decorated (GTK_WINDOW (window), FALSE);
+
+      gtk_widget_realize (GTK_WIDGET (window));
+
+      gdk_window_set_transient_for (GTK_WIDGET (window)->window, gdk_get_default_root_window ());
+      gtk_window_set_accept_focus (GTK_WINDOW (window), FALSE);
+   }
+  }
+  else
+  {
+    gtk_window_set_type_hint (GTK_WINDOW (window), GDK_WINDOW_TYPE_HINT_DOCK);
+
+    gtk_widget_realize (GTK_WIDGET (window));
+  }
+
+  g_free (wm_name);
+ 
+  g_signal_connect (window->priv->hdwm,
+		    "fullscreen",
+		    G_CALLBACK (hildon_desktop_window_dialog_fullscreen_cb),
+		    (gpointer)window);
+  ......
+}
+----------
+HDPanelWindowDialog类
+这里也没有作什么和窗口相关的工作，做了一些dbus初始化相关的工作
+----------
+

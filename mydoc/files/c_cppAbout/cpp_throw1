@@ -1,0 +1,95 @@
+参考资料：http://developer.51cto.com/art/201002/182283.htm
+运用编程语言进行程序开发时，都需要进行异常的处理，才能使我们的程序完善。在C++语言中，同样也有关于异常处理的操作。在这里我们将会介绍几种C++异常的常用操作方法，希望能给大家带来一些帮助。
+
+C++函数后面后加到关键字throw(something)限制，是对这个函数的异常安全性作出限制。
+void f() throw() 表示f不允许抛出任何异常，即f是异常安全的。
+void f() throw(...) 表示f可以抛出任何形式的异常。
+void f() throw(exceptionType); 表示f只能抛出exceptionType类型的C++异常。
+
+引别人的一个笑话：
+throw() 大概会说：“噢，不管你抛什么，就是不准抛。。”
+throw(...) 呵呵一笑，满脸慈祥：“抛吧抛吧，尽情地抛吧。。。”
+throw(type) 一听急了：“那可不行，要抛也只能抛我的香烟头，否则要是不小心把俺祖传的金戒指抛掉就太亏了。。。”
+
+关于C++异常传递有三种方法：
+1.传值(by value)
+传值的过程中会产生临时对象的拷贝，不能解决多态的问题，如下：myexception继承exception，但是但确无法被正确的调用myexception的方法，造成对异常对象的切割。
+   1. class myexception:public exception{  
+   2. public:  
+   3. virtual const char* what() throw();  
+   4. };  
+   5. const char* myexception::what(){  
+   6. return "myException";  
+   7. }  
+   8. class A{  
+   9. public:  
+  10. A(){}  
+  11. void f() throw(){  
+  12. throw myexception();//这里抛出了异常???前面不说不能吗???
+  13. }  
+  14. };  
+  15. int main(){  
+  16. A a;  
+  17. try{  
+  18. a.f();  
+  19. }catch(exception exc){  
+  20. cout<<exc.what();  
+  21. }  
+  22. } 
+运行结果：UnKnown exceptions
+程序执行是会调用exception的what方法，而不是myexception的what方法。
+
+2.传指针(by pointer)
+指针可以实现多态，但往往会将临时对象的地址作为指针传出去，出现悬挂指针错误。如果在堆上分配内存空间，又往往不知道何时删除对象，出现to be or not to be的错误。
+
+结果显示：myException
+   1. class myexception:public exception{  
+   2. public:  
+   3. virtual const char * what() const;  
+   4. };  
+   5. const char* myexception::what() const{  
+   6. return "myException";  
+   7. }  
+   8. class A{  
+   9. public:  
+  10. A(){}  
+  11. void f() throw(){  
+  12. throw new myexception();  
+  13. }  
+  14. };  
+  15. int main(){  
+  16. A a;  
+  17. try{  
+  18. a.f();  
+  19. }catch(exception* pexc){  
+  20. cout<<pexc->what();  
+  21. delete pexc;  
+  22. }  
+  23. } 
+
+3.传引用(by reference)
+传引用是最好的方法，可以克服前面的两个问题。
+程序结果显示:myException
+   1. class myexception:public exception{  
+   2. public:  
+   3. virtual const char * what() const;  
+   4. };  
+   5. const char* myexception::what() const{  
+   6. return "myException";  
+   7. }  
+   8. class A{  
+   9. public:  
+  10. A(){}  
+  11. void f() throw(){  
+  12. throw myexception();  
+  13. }  
+  14. };  
+  15. int main(){  
+  16. A a;  
+  17. try{  
+  18. a.f();  
+  19. }catch(exception& exc){  
+  20. cout<<exc.what();  
+  21. }  
+  22. } 
+C++异常的基本概念就为大家介绍到这里。

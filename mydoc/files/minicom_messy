@@ -1,0 +1,123 @@
+实际还有一个cutecom是图形界面的。
+
+参考网址：
+http://hi.baidu.com/path_of_growth/blog/item/23ecd1fd6a80bbf4fd037f33.html
+Linux下的Minicom的功能与Windows下的超级终端功能相似，适于在linux通过超级终端对嵌入式设备的管理以及对嵌入操作系统的升级，现写出Minicom的使用手册
+
+配置minicom和使用minicom
+
+1． 启动minicom
+
+以root权限登录系统
+
+使用命令
+
+root –s 则minicom启动，屏幕出现如下的界面|：
+
+………………………………[configuration]……………………………………
+
+……………………   Filename and paths         …………………………
+
+……………………   File transfer and protocols       …………………………
+
+……………………   Serial port setup                  …………………………
+
+……………………   Modem and dialing        …………………………
+
+……………………   Screen and keyboard                 …………………………
+
+……………………   Save setup as df1               …………………………
+
+……………………   Save setup as……         …………………………
+
+……………………   Exit                     …………………………
+
+……………………   Exit from minicom       …………………………
+
+……………………………………………………………………………………
+
+2． 设置serial port setup
+
+使用down箭头选择serial port setup,出现具体各选项的配置：
+
+   A — Serial Device :    /dev/ttyS0
+
+   B — lockfile Location : /var/lock
+
+   C — Calling Program :
+
+   D — Callout Program:
+
+   E —   Bps/par/Bits   : 115200 8N1
+
+   F —   Hardware Flow Control : YES
+
+   G —   Software Flow Control : NO
+
+   Change with setting?
+
+将选项A的值设置为/dev/ttyS0 表示是串口1。
+
+将选项E的值设置为115200。
+
+设置过程中命令的使用，例如需要修改选项A的值，在Change with setting？选项后输入A则光标转移到A选项后，可以对A选项的值进行修改。
+
+3． 设置Modem and dialing
+
+使用方向箭头选中modem and dialing 项，则修改modem and dialing 选项中的配置项。
+
+需要修改的是去掉A — initing string ……：，B — Reset string ……：
+
+K — Hang-up string ……三个配置项。
+
+4． 选择Save as df1。
+
+选择Save as df1选项将修改后的配置信息进行保存为默认的配置选项。
+
+5． Exit from minicom 。
+
+选择Exit from minicom 选项从配置菜单返回到命令行。
+
+6． 重新启动Minicom。
+
+使用minicom 启动minicom 在linux下通过串口连接路由器，实现超级终端的功能。
+
+minicom用的最多，不少Linux发行版已经自带，登陆命令终端，输入minicom，如果系统已经自带，则会启动。但也有很多发行版没有捆绑minicom。需要自己安装。目前最新版minicom－2.3，下载后先解压，进入目录，./configure，make ，make install。安装成功。命令端输入 minicom -s启动配置。
+
+ckermit使用手册
+
+不少人反映minicom有时会有问题，连u-boot开发者都推荐使用ckermit，最新版是8.0.212，下载后先解压，然后执行make Linux，就可以实现安装，注意在安装后文件目录下看到的是wermit，所以需要执行 wermit 去启动，如果习惯输入kermit启动的话，可以 mv wermit /usr/local/bin/kermit，以后执行kermit就启动ckermit。
+
+ckermit启动后需要配置，但会先在/root目录下面寻找.kermrc配置文件，所以事先编辑一个.kermrc配置文件如my.kermrc文件，里面内容为：
+
+set line /dev/ttyS0 //COM1
+set speed 115200
+set carrier-watch off
+set handshake none
+set flow-control none
+robust
+set file type bin
+set file name lit
+set rec pack 1000
+set send pack 100000 //这里可以改大一点，方便下载内核
+set window 5
+set protocol xmodem //vivi use xmodem
+set protocol zmodem //board Linux usually use rz/sz
+
+保存这个配置文件之后，就可以输入 kermit -c 来连接串口。
+
+发送文件使用 send 文件路径
+
+Ctrl \ c进入ckermit命令模式，可以随时更改传输协议。
+
+需要注意的是，mincom和ckermit均不带xmodem和zmodem之类的协议，所以需要安装lrzsz这个软件，否则就会遇到传输不了文件或者timeout之类的错误。
+
+下载和解压lrzsz后，进入目录执行 ./configure --prefix=/usr/local/lrzsz ，然后make，make install 最后建立软链接
+
+#cd /usr/bin
+#ln -s /usr/local/lrzsz/bin/lrz rz
+#ln -s /usr/local/lrzsz/bin/lsz sz
+
+以ckermit为例，选择xmodem执行send 时，就会调用sx。
+
+VIVI用xmodem超时，有网友贴出了解决方法：修改param参数中的XMODEM两个时间值，尽量设大。

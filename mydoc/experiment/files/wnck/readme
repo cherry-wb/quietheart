@@ -1,0 +1,7 @@
+wnck是一个窗口管理的库，gnome官方网站下面的。
+安装命令：
+sudo apt-get install libwnck-dev
+这个test可以实现所有的任务管理的功能。
+编译的命令是：
+gcc -o test-wnck test-wnck.c `pkg-config --libs --cflags libwnck-1.0` -DWNCK_I_KNOW_THIS_IS_UNSTABLE
+

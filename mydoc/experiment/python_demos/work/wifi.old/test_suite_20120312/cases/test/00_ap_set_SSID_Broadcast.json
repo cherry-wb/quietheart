@@ -1,0 +1,25 @@
+{
+	"name":"ap_set_SSID_Broadcast",
+	"type":{"name":"seq"},
+	"description":"set cisco ap wireless SSID Broadcast.",
+	"scenarios":[{
+		"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ip":"10.1.10.32:8080"
+			}
+		}},
+		{"ap_set_SSID_Broadcast":{
+			"fname":"ap/cisco/scenario_set_wireless_SSID_Broadcast.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ssidBroadcast":{"2G":"enable","5G":"disable"}
+			}
+		}},
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout.json", 
+			"type":{"name":"seq"} 
+		}
+	}]
+}

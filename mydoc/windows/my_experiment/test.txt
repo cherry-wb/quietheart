@@ -1,0 +1,93 @@
+Sub MyScript()
+'
+' mytest Macro
+'
+    Sheets("App").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    start = 1520
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+    Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount.bat"
+    dir1 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    dir2 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    resultfile = "D:\Program Files\diffcount\myresult.txt"
+
+    '输入自行选择输入参数，例如：D:\...\diablo
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+    'dir2 = InputBox("修改后代码中diablo目录的路径:" & dir2)
+
+    'XXX 配置忽略的前几个字符...\diablo
+    Dim ignore_stri As Integer
+    ignore_stri = 10
+
+    '命令
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+    param1 = Cells(i, 2)
+        param2 = Cells(i, 5)
+
+        If Not IsEmpty(param2) Then
+            param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+            param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+            shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+
+            '开始执行
+            'ProcessId = Shell(shell_cmd, 1) '此处利用了 Shell当函数使用时返回的任务标识
+            ShellWait(shell_cmd) '此处利用了 Shell当函数使用时返回的任务标识
+
+        'XXX 如何同步获知进程执行完毕？
+        '睡眠
+        'Sleep (400)
+            'hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, False, ProcessId)
+            'Do
+            'exitcode = GetExitCodeProcess(hProcess, exitcode)
+            'DoEvents
+            'Loop While exitcode = STATUS_PENDING
+            'CloseHandle (hProcess)
+        End If
+        i = i + 1
+    Wend
+    dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+
+    '读取本次执行结果
+    i = start
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring As String
+    Dim tmpPos As Integer
+    While i < after_end
+        If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+        Do
+                retstring = f.ReadLine    '读取一行
+            tmpPos = InStr(retstring, "otal:")
+        Loop While f.AtEndOfStream <> True And Not tmpPos > 0  '是否在 TextStream 文件末尾用这个判断
+        If tmpPos > 0 Then
+        retstring = Mid(retstring, tmpPos + 5, Len(retstring))
+        Cells(i, 8).Value = retstring
+        End If
+        End If
+    End If
+        i = i + 1
+    Wend
+    f.Close
+    Columns("B:H").AutoFit
+    'Dim kk As String
+    'kk = Application.GetOpenFilename("EXCEL (*.XLS), *.XLS", Title:="提示：请打开一个EXCEL文件：")
+    'msgbox kk
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)

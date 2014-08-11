@@ -1,0 +1,81 @@
+/*20090422
+程序的功能：在hildon-desktop环境下打开一个程序，然后通过单击一个按钮来关闭当前运行的程序。
+*/
+关闭一个程序，这需要一个插件来实现，我通过修改helloworldstatusbar的程序来实现程序的关闭，修改的过程如下所示：
+1.在statusbar插件的头文件(hello-world-statusbar2.h)中:
+1)包含头文件（在宏定义G_BEGIN_DECLS之前添加）：
+#include <libhildonwm/hd-wm.h>
+2)修改HildonStatusBarHelloWorld2Private结构
+typedef struct
+{
+    osso_context_t       *osso;		/* osso */
+    GtkWidget            *icon;		/* icon in button */
+    GtkWidget		 *button;	/* button in StatusBar */
+    HDWM *hdwm;/*在这里添加一个成员*/
+} HildonStatusBarHelloWorld2Private;
+
+2.在statusbar插件的源代码(hello-world-statusbar2.c)中:
+1)添加插件按钮的回调函数(在init之前)：
+void my_button_pressed(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+  g_print("press my button!\n");
+  gchar service_field[] = "maemoHello";
+  /*lkcomment 获取X-Osso-Service字段*/
+  /* Launch the app or if it's already running move it to the top */
+  hd_wm_top_service (service_field);
+}
+2)添加插件按钮的回调函数(在init之前)：
+void my_button_pressed(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+   HDWMWindow *wnd = hd_wm_get_active_window();
+
+   if (wnd != NULL) {
+      hd_wm_window_close (wnd);
+   }
+  g_print("press my button!\n");
+}
+3)修改init如下：
+static void hildon_status_bar_helloworld_init(HildonStatusBarHelloWorld2 *helloworld)
+{
+    HildonStatusBarHelloWorld2Private *info = 
+        HILDON_STATUS_BAR_HELLOWORLD_GET_PRIVATE(helloworld);
+
+    ULOG_OPEN("hildon-sb-helloworld");
+
+    g_return_if_fail(info);
+
+    info->icon = gtk_image_new_from_pixbuf(NULL);
+    
+    info->button = gtk_button_new();
+
+    set_helloworld_icon("hello-world", info);
+
+    gtk_container_add(GTK_CONTAINER(info->button),
+                      GTK_WIDGET(info->icon));
+	/*在这里，以下是和关闭相关的代码*/
+    info->hdwm = hd_wm_get_singleton ();
+    g_object_ref (info->hdwm);
+	/*至此，以上是和关闭相关的代码*/
+
+    gtk_container_add(GTK_CONTAINER(helloworld), info->button);
+
+    g_signal_connect(G_OBJECT(info->button), "button-press-event",
+                     G_CALLBACK(my_button_pressed), helloworld);/*为按钮连接回调函数*/
+
+    /* Initialize osso */
+    info->osso = osso_initialize("hildon_sb_helloworld", "1.0", FALSE, NULL);
+    if (!info->osso)
+        ULOG_WARN("%s: error while initializing osso\n", __FUNCTION__);
+
+    gtk_widget_show_all(GTK_WIDGET(helloworld));
+}
+3.编译
+> gcc -shared `pkg-config gtk+-2.0 libosso hildon-1 libhildondesktop libhildonwm --libs --cflags` hello-world-statusbar2.c -o libhelloworld_sb2.so
+4.运行的方法：
+1).把libhelloworld_sb2.so插件加入到hildon-desktop中（添加的方法可以参见前面的相关总结）。
+2).启动af-sb-init restart
+3).随便打开一些程序，然后：点击statusbar左上角的按钮就可以关闭当前活动的程序了。
+
+
+源代码在：smb://10.1.14.90/public/Marvell-MID/Study_doc/lvkai总结
+的参考资料里。hello-world-statusbar2_20090422.tar.gz给出了。

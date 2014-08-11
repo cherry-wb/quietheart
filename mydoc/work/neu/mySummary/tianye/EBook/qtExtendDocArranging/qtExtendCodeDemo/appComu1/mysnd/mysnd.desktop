@@ -1,0 +1,11 @@
+[Translation]
+File=mysnd-nct
+Context=MySnd
+
+[Desktop Entry]
+Comment[]=My Send
+Exec=mysnd
+#Icon=example/Example
+Type=Application
+#Builtin=Yes
+Name[]=MySnd

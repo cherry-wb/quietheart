@@ -1,0 +1,51 @@
+%%%%%文档类(documentclass)有三种:article、report、book%%%%%
+%\documentclass[options]{class} %文档类声明
+
+%\usepackage[options]{package}  %引入宏包
+
+%%%%%文档正文部分的开头通常有标题、作者、摘要等信息,之后是章%%%%
+%%%%%节等层次结构,内容则散布于层次结构之间%%%%
+%\begin{document}               %正文
+%\title{标题}
+%\author{作者}
+%\today
+%\maketitle
+
+%\begin{abstract}
+%...摘要部分...
+%\end{abstract}
+
+%%%%%常用的层次结构%%%%%
+%\chapter{...}
+%\section{...}
+%\subsection*{...}%不让此章节显示在目录中加*
+%\subsubsection{...}
+
+%%article 中没有 chapter,而report 和 book 则支持上面所有层次。
+
+
+%\end{document}
+
+
+\documentclass[10pt,titlepage]{report} %文档类声明
+\begin{document}               %正文
+%一些特殊字符需要转义，其中\textbackslash是反斜线'\',\\是换行或断行。
+\# \$ \% \^{} \& \_ \{ \} \~{} \textbackslash \\
+		hello!
+		hello!%直接回车这样不会换行
+		hello!\newline
+		hello2!%用\newline,这样就断行了,这是硬断行
+
+		hello22!%用两个空行，也断行了，但这实际是另起一段了，所以有缩进。
+		hello22!\newpage
+		hello,newpage!for word cut%用\newpage,这样开始了一个新页
+
+		%用来设置断词BASIC 这个词不能断开,而 blar-blar-blar 可以在-处断开
+		\hyphenation{BASIC blar-blar-blar}
+		BASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASICBASIC%这样效果就是显示不了BASIC截断了。
+		ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt%这个t也不显示
+
+
+		ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt%两个空行另起一段，这个t会显示但是由于长度不够，也被截断了。
+
+\end{document}

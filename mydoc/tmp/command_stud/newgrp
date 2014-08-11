@@ -1,0 +1,33 @@
+NAME
+       newgrp - 登录到新的用户组中
+
+总览 (SYNOPSIS)
+       newgrp [ group ]
+
+描述 (DESCRIPTION)
+       Newgrp  改变 调用者 的 用户组标识, 类似于 login(1).  调用者 仍旧 登录 在 系统 中, 当前目录 也不变, 但是 文件的访问权
+       限 将 根据新的 用户组 ID 计算.
+
+       如果 没有 指定 用户组, GID 将 变成 登录 的 GID.
+
+文件 (FILES)
+       /etc/group
+       /etc/passwd
+
+另见 (SEE ALSO)
+       login(1), group(5)
+
+作者 (AUTHOR)
+       Originally by Michael Haardt. Currently maintained by Peter Orbaek (poe@daimi.aau.dk).
+
+[中文版维护人]
+       徐明 <xuming@users.sourceforge.net>
+
+[中文版最新更新]
+       2003/05/13
+
+《中国Linux论坛man手册页翻译计划》
+       http://cmpp.linuxforum.net
+
+
+如果想要恢复原来的组，那么使用没有参数的newgrp命令即可。

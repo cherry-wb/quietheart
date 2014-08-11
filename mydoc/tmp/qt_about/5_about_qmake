@@ -1,0 +1,24 @@
+关于qmake的完整文档，参见：http://doc.qt.nokia.com/4.5/qmake-manual.html
+
+或者通过qt文档主页:http://doc.qt.nokia.com/4.5/index.html
+中的"All Tools->qmake"链接进入。
+
+编写一个qt程序的全过程是：
+1)写代码
+2）qmake -project
+这一步生成一个.pro文件，描述了配置信息以及你的程序所包含的文件。
+3)qmake
+这一步根据.pro文件生成Makefile
+4)make
+这一步开始编译。
+
+这里，如果想要添加程序安装路径的话，可以在.pro文件中添加如下语句：
+target.path = /usr/local/myprogram
+target.files = *.cpp qtDemo
+unix:target.extra = ls && echo 1
+INSTALLS += target
+这样，执行make install之后，会把应该安装的文件(*.cpp和qtDemo文件)安装在target.path所指定的路径中。如果不指定target.files也会自动确定安装一些文件,默认是qtDemo;
+另外，target.extra是自己定义的一些东西，这一行也可以省略，这一行的意思是说，在unix域中（防止到其他的平台上面不能用），执行install之前限制性extra所指定的命令ls && echo 1。
+除了安装路径的对象target之外，还有文档路径的对象：documentation
+参考文档：
+http://doc.qt.nokia.com/4.5/qmake-environment-reference.html

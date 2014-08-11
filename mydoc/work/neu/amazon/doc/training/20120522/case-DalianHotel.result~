@@ -1,0 +1,92 @@
+File: case-DalianHotel.pcap
+Observation
+At 7AM, there are no data traffic.
+Questions
+On which channel was this captured?
+How many APs are there?
+Which are not protected?
+
+Answer:
+1)
+from [radio tap header] :channel 2G, 
+from [management frame] :channel 1
+
+2)two ssid many ap, which are:
+from [management frame] :
+SSID=InterContinental
+SSID=manager[Malformed Packet]
+
+???how to filter by mac and broad case and count them?
+
+3)
+from [beacon frame]
+SSID=InterContinental and SSID=manager data is not protected.
+
+???how to filter by specific tag or field in frame and count them?
+
+
+
+
+
+File: case-BeijingAirport.pcap
+Observation
+There are quite a few APs.
+Questions
+On which channel was this captured?
+How many APs are there?
+Which are not protected? 
+Are there APs with the same SSID?
+
+Answer:
+(1)-(3)same as before.
+
+(4)filter by ssid and see the mac.
+
+
+
+
+
+File: case-ARP.pcap
+Observation
+Packets #1 and #3 are both broadcast packets.
+Questions
+Why is #1 acknowledged? 
+Why is #3 not acknowledged?
+
+#1 is Qos and get normal acknowledged.
+???arp reply only once.
+
+
+
+
+File: case-Deauth.pcap
+Observation
+DUT failed to connect.
+Questions
+Was association successful at some point?
+When was DUT rejected?
+Why was it rejected?
+
+Answer:
+(1)
+(2)4-way hand shake time out.
+???ack contains status??? or others?
+
+
+File: case-Ping.pcap
+Observation
+192.168.2.104 pings 192.168.2.111.
+Questions
+Which one is a wireless station?
+How many ping requests were not answered? 
+How many packets will be reported as “loss” by the PING app on 192.168.2.104?
+Why were they lost?
+
+Answer:
+(1)192.168.1.104 
+from IEEE 802.11 and it's icmp request.
+(2)one.
+4 icmp  , 2 for request ,2 for the same reply.
+(3)two, one icmp request ,and one reply.
+(4)request because no reply, reply because two same reply for ping.
+

@@ -1,0 +1,51 @@
+主要内容：
+minicomcom设置
+其他
+
+
+minicomcom设置
+==============
+*设置串口：
+$minicom -s
+再将/dev/ttyS0改成/dev/ttyUSB0
+注意：
+1)这里首先要插入USB线，否则你的机器上面没有/dev/ttyUSB0
+2)这里USB转串口
+
+*设置从sdcard启动的环境变量:
+setenv bootargs mem=64M console=ttySAC0,115200 root=/dev/mmcblk0 bootdelay=2 rw ip=off
+这里，文件系统上面是ttySAC0所以console是ttySAC0
+
+
+
+
+
+
+
+
+其他
+=============
+各位：
+K1开发板相关的软件更改已经上传到SVN
+
+大家在使用K1开发板时有以下注意事项
+1) 屏幕与主板的连接容易断裂，小心使用
+2) console口使用USB线连接
+linux 下设备名是/dev/ttyUSB0
+3) 从SD卡启动的bootargs设置
+mem=64M console=ttySAC0,115200 root=/dev/mmcblk0 bootdelay=2 rw ip=off
+（以上设置可根据实际情况修改， 例如： root=/dev/mmcblk0p1 或 ip=on）
+4) 启动后的主要操作：
+# /etc/init.d/epd_device start     // 挂载屏幕驱动
+# /etc/init.d/desktop start          // 启动桌面
+5) 因目前pegatron提供的屏幕驱动存在BUG，所以
+在重启或关机之前，需要执行
+#/etc/init.d/epd_device stop      //  卸载屏幕驱动
+这一点请大家一定要注意！
+否则在多次非正常关机后，可能会造成硬件损坏！
+
+另外：
+sipix屏幕刷新率非常低，频繁的UI变化会导致设备响应明显变慢。（例如：输入框获取焦点时，闪烁的光标）
+大家在开发和使用时要注意这一点。
+
+张峰

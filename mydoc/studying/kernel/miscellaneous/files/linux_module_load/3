@@ -1,0 +1,16 @@
+http://tech.ddvip.com/2008-08/121822124652210_3.html
+init_module 函数通过系统调用层，进入内核到达内核函数 sys_init_module（参见图 3）。这是加载模块的主要函数，它利用许多其他函数完成困难的工作。类似地，rmmod 命令会使 delete_module 执行 system call 调用，而 delete_module 最终会进入内核，并调用 sys_delete_module 将模块从内核删除。
+
+　　图 3. 加载和卸载模块时用到的主要命令和函数
+　　fig3.jpg
+　　
+　　在模块的加载和卸载期间，模块子系统维护了一组简单的状态变量，用于表示模块的操作。加载模块时，状态为 MODULE_STATE_COMING。如果模块已经加载并且可用，状态为 MODULE_STATE_LIVE。此外，卸载模块时，状态为 MODULE_STATE_GOING。
+
+　　模块加载细节
+
+　　现在，我们看看加载模块时的内部函数（参见图 4）。当调用内核函数 sys_init_module 时，会开始一个许可检查，查明调用者是否有权执行这个操作（通过 capable 函数完成）。然后，调用 load_module 函数，这个函数负责将模块加载到内核并执行必要的调试（后面还会讨论这点）。load_module 函数返回一个指向最新加载模块的模块引用。这个模块加载到系统内具有双重链接的所有模块的列表上，并且通过 notifier 列表通知正在等待模块状态改变的线程。最后，调用模块的 init() 函数，更新模块状态，表明模块已经加载并且可用。
+
+　　图 4. 内部（简化的）模块加载过程
+　　fig4.jpg
+　　
+　　加载模块的内部细节是 ELF 模块解析和操作。load_module 函数（位于 ./linux/kernel/module.c）首先分配一块用于容纳整个 ELF 模块的临时内存。然后，通过 copy_from_user 函数将 ELF 模块从用户空间读入到临时内存。作为一个 ELF 对象，这个文件的结构非常独特，易于解析和验证。

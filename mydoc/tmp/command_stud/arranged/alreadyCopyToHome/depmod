@@ -1,0 +1,50 @@
+depmod [-b basedir] [-e] [-F System.map] [-n] [-v] [version] [-A]
+depmod [-e] [-F System.map] [-n] [-v] [version] [filename...]
+
+[功能]
+功能：分析可加载模块的依赖性，生成modules.dep文件和映射文件。
+
+[描述]
+补充说明：depmod可检测模块的相依性，供modprobe在安装模块时使用。 
+    Linux内核模块可以为其它模块提供提供服务(在代码中使用EXPORT_SYMBOL)，这种服务被称作"symbols"。若第二个模块使用了这个symbol，则该模块很明显依赖于第一个模块。这些依赖关系是非常繁杂的。
+   
+    depmod读取在/lib/modules/version 目录下的所有模块，并检查每个模块导出的symbol和需要的symbol，然后创建一个依赖关系列表。默认地，该列表写入到/lib/moudules /version目录下的modules.dep文件中。若命令中的filename有指定的话，则仅检查这些指定的模块(不是很有用)。
+
+    若命令中提供了version参数，则会使用version所指定的目录生成依赖，而不是当前内核的版本(uname -r 返回的)。
+                                
+选项：
+	-a 检查所有模块，如果命令中没有文件名称，这个选项默认是开启的。
+    -b basedir  --basedir basedir  若你的模块并没有正确的在/lib/mdules/version下，可以指定目录生成依赖。
+    -e  --errsyms  和-F选项一起使用，当一个模块需要的symbol在其它模块里面没有提供时，做出报告。正常情况下，模块没有提供的symbol都在内核中有提供。
+    -F  --filesyms System.map 提供一个System.map文件(在内核编译时生成的)许-e选项报告出unresolved symbol。
+    -n  --dry_run  将结果modules.dep和各种映射文件输出到标准输出(stdout)，而不是写到模块目录下。
+    -A --quick  检查是否有模块比modues.dep中的模块新，若没有，则退出不重新生成文件。
+
+
+[举例]
+由于会修改文件，为了防止这个现象，例子使用了-n，不修改文件却写出结果。
+*查看usbserial.ko的依赖：
+#depmod -n usbserial.ko 
+输入之后，输出如下：
+usbserial.ko:
+# pci module         vendor     device     subvendor  subdevice  class      class_mask driver_data
+# usb module         match_flags idVendor idProduct bcdDevice_lo bcdDevice_hi bDeviceClass bDeviceSubClass bDeviceProtocol bInterfaceClass bInterfaceSubClass bInterfaceProtocol driver_info
+# ccw module         match_flags cu_type cu_model dev_type dev_model
+# ieee1394 module    match_flags vendor_id model_id specifier_id version
+# isapnp module      cardvendor carddevice driver_data vendor     function   ...
+# module         matchBits bustype vendor product version evBits keyBits relBits absBits mscBits ledBits sndBits ffBits [swBits] driver_info
+# of module          name                 type                 compatible
+# serio module       type extra id   proto
+# Aliases extracted from modules themselves.
+# Aliases for symbols, used by symbol_request().
+alias symbol:usb_serial_generic_write_bulk_callback usbserial
+alias symbol:ezusb_set_reset usbserial
+alias symbol:usb_serial_register usbserial
+alias symbol:usb_serial_deregister usbserial
+alias symbol:usb_serial_generic_read_bulk_callback usbserial
+alias symbol:ezusb_writememory usbserial
+alias symbol:usb_serial_probe usbserial
+alias symbol:usb_serial_port_softint usbserial
+alias symbol:usb_serial_generic_open usbserial
+alias symbol:usb_serial_disconnect usbserial
+

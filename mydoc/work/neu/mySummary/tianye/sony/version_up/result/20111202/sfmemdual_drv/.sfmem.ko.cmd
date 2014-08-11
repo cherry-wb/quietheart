@@ -1,0 +1,1 @@
+cmd_/root/buildTmp/versionupgrade/sfmemdual_drv/sfmem.ko := arm-sony-linux-gnueabi-dev-ld -EL -r   --build-id -o /root/buildTmp/versionupgrade/sfmemdual_drv/sfmem.ko /root/buildTmp/versionupgrade/sfmemdual_drv/sfmem.o /root/buildTmp/versionupgrade/sfmemdual_drv/sfmem.mod.o

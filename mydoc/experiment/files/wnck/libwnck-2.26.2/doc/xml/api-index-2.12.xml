@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="wnck-screen-calc-workspace-layout"><link linkend="wnck-screen-calc-workspace-layout">wnck_screen_calc_workspace_layout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-free-workspace-layout"><link linkend="wnck-screen-free-workspace-layout">wnck_screen_free_workspace_layout</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>T</title>
+<indexentry><primaryie linkends="wnck-tasklist-set-button-relief"><link linkend="wnck-tasklist-set-button-relief">wnck_tasklist_set_button_relief</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-get-transient"><link linkend="wnck-window-get-transient">wnck_window_get_transient</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-needs-attention"><link linkend="wnck-window-needs-attention">wnck_window_needs_attention</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-or-transient-needs-attention"><link linkend="wnck-window-or-transient-needs-attention">wnck_window_or_transient_needs_attention</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-window-type"><link linkend="wnck-window-set-window-type">wnck_window_set_window_type</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-transient-is-most-recently-activated"><link linkend="wnck-window-transient-is-most-recently-activated">wnck_window_transient_is_most_recently_activated</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWorkspaceLayout"><link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

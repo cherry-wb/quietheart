@@ -1,0 +1,41 @@
+关于src文件关键代码解析：
+1，main.c
+main函数关键点：
+0)/* Read the maemo-af-desktop gtkrc file */
+  gtkrc = g_build_filename (g_get_home_dir (),
+                            OSSO_USER_DIR,
+                            HILDON_DESKTOP_GTKRC,
+                            NULL);
+
+OSSO_USER_DIR定义为".osso"这里HILDON_DESKTOP_GTKRC定义为“current-gtk-theme.maemo_af_desktop”
+也就是说，目录$HOME/.osso/current-gtk-theme.maemo_af_desktop是启动桌面时候加载的文件。
+1）gtk_rc_add_default_file (gtkrc);
+该函数：层次结构：
+GObject
+   +----GtkRcStyle
+文档源：
+http://library.gnome.org/devel/gtk/stable/gtk-Resource-Files.html#gtk-rc-add-default-file
+设置资源配置文件，供以后加载用.
+这里资源配置文件在$HOME/.ossso/current-gtk-theme.maemo_af_desktop里面会指定。实际current-gtk-theme.maemo_af_desktop只是一个“
+
+链接”文件，它的内容指明了真正的配置文件位置。
+2）desktop = hd_desktop_new ()
+建立名为desktop的自定义构件，这里会调用hd_desktop_class_init和hd_desktop_init（二者都在hd-desktop.c里后面细说），
+
+hd_desktop_init里就加载了1）中设置的资源配置文件。
+3）hd_desktop_run (HD_DESKTOP (desktop));
+这个函数负责运行消息循环之前程序的启动（在hd-desktop.c里,后面细说）
+
+2.hd-desktop.c：
+2.1，hd_desktop_run函数。
+这个函数才负责主程序的运行，这里面有几个关键：
+1）hd_desktop_load_containers (desktop);
+它负责读取配置文件并根据配置文件设置程序的图形界面（这个函数很重要，应该细看）
+2）两个hd_desktop_watch_dir调用；
+它们和配置文件的路径有关，可能是指定配置文件应该从哪里读取。
+2.2，hd_desktop_class_init函数
+类初试化函数，这个函数只是用来说明我已经定义了一个新类，这个新类在利用之前现在这个函数内初试化一下。
+2.3，hd_desktop_init函数
+这个函数负责初试化自定义构件的具体操作。比如：
+定位所需的一些配置文件，为新构件进行简单的布置以及信号的连接等。
+ 

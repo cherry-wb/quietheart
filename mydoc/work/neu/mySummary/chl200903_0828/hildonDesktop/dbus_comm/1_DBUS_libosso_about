@@ -1,0 +1,133 @@
+///20090409
+一、“配置”文件
+需要一个D-BUS服务文件，这样才能够运行一个maemo应用程序，并且把这个应用程序链接到一个D-BUS服务上面。如果一个程序没有运行，那么如果D-BUS发送消息给它的话，D-BUS将会自动地启动这个应用程序。只能有一个D-BUS服务实例在一个时间运行，这样可以保证每个程序只能运行一次。服务文件在"/usr/share/dbus-1/services/"里。在D-BUS可以识别它之前，maemo GUI需要用"af-sb-init.sh restart"重新启动。文件内容如下:
+[D-BUS Service ]
+Name=org.maemo.example_libosso
+Exec =/usr/bin/example_libosso
+文件的内容的意思很明显，不多说了。
+LibOSSO是一个基本的库，这个库包含对应用程序来说需要的有用的函数。
+
+二、关于实现
+所有的应用程序都需要被进行正确的初始化，初始化应用程序是用osso_initialize函数来做的，应用程序利用这个函数来联接到D-BUS session bus和system bus.osso_initialize函数只能够被应用程序调用一次，并且它返回一个osso_context_t的结构类型以供以后调用，初始化失败了就返回NULL。函数原型：
+osso_context_t * osso_initialize(const gchar *application, const gchar* version, gboolean activation, GMainContext *context)
+第一个参数是应用程序的D-BUS名字，它也在应用程序的 D-BUS service文件里面用到了。
+第二个参数是应用程序的版本，只是一个字符串。
+第三个参数是激活的类型，如果是TRUE表示应用程序的二进制被D-BUS 守护进程发起，因此联接到D-BUS的激活bus上。
+第四个参数是将要联接的GLib main-loop context，默认就用NULL。
+
+当一个应用程序关闭的时候，osso_deinitialize函数应该被调用，来关闭消息总线的连接和释放相应的内存。
+
+下面是一个例子：
+
+1、接收消息的程序：
+################################################
+# define OSSO_EXAMPLE_NAME      " example_libosso "
+# define OSSO_EXAMPLE_SERVICE "org.maemo ." OSSO_EXAMPLE_NAME
+/* ... */
+     osso_context_t * osso_context ;
+     /* ... */
+     /* 初始化maemo应用程序 */
+     osso_context = osso_initialize ( OSSO_EXAMPLE_SERVICE , "0.0.1 ", TRUE ,
+           NULL);
+     /* 检测初始化是否成功 */
+     if ( osso_context == NULL) {
+          return OSSO_ERROR ;
+     }
+     /* ... */
+     /* 结束使用，释放资源 */
+     osso_deinitialize ( osso_context );
+################################################
+利用D-BUS,应用程序可以相互之间发送消息。下面是接受消息的回调函数的例子：
+################################################
+# include <hildon /hildon - program .h>
+# include <hildon /hildon - banner .h>
+# include <gtk/gtk.h>
+# include <libosso .h>
+# define OSSO_EXAMPLE_NAME       " example_libosso "
+# define OSSO_EXAMPLE_SERVICE    "org.maemo ." OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_OBJECT     "/org/maemo /" OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_IFACE      "org.maemo ." OSSO_EXAMPLE_NAME
+/* ... */
+/* 应用程序用户界面数据结构 */
+typedef struct _AppData AppData ;
+struct _AppData {
+    HildonProgram * program ;
+    HildonWindow * window ;
+    osso_context_t * osso_context ;
+};
+/* ... */
+/* 一般D-BUS消息的回调函数 */
+gint dbus_req_handler (const gchar * interface , const gchar * method ,
+                        GArray * arguments , gpointer data ,
+                        osso_rpc_t * retval )
+{
+    AppData * appdata ;
+    appdata = ( AppData *) data;
+     /*关键,这里面method就是从其它程序传来的字符串*/
+    osso_system_note_infoprint (appdata -> osso_context , method , retval );
+    osso_rpc_free_val ( retval );
+    return OSSO_OK ;
+}
+################################################
+为了使得上面的回调函数接收到达应用程序的所有D-BUS消息，需要使用osso_rpc_set_default_cb_f函数来连接如下：
+################################################
+int main(int argc , char *argv [])
+{
+    osso_return_t result ;/*一个枚举，详细见http://maemo.org/api_refs/4.0/libosso/libosso_8h.html*/
+    /* ... */
+    /* *****关键*****为D-BUS的会话bus添加回调函数 */
+    result = osso_rpc_set_cb_f (appdata -> osso_context ,
+                                 OSSO_EXAMPLE_SERVICE ,
+                                 OSSO_EXAMPLE_OBJECT ,
+                                 OSSO_EXAMPLE_IFACE ,
+                                 dbus_req_handler , appdata );
+    if ( result != OSSO_OK ) {
+         g_print ("Error setting D-BUS callback (%d)\n", result );
+         return OSSO_ERROR ;
+    }
+    /* ... */
+    /* 结束使用，释放相应的资源*/
+    osso_deinitialize ( osso_context );
+}
+################################################
+现在应用程序就开始准备接收D-BUS消息了，每当接收到一个消息的时候，dbus_req_handler函数就会被调用来处理这个消息。
+另外一个进程可能会发送消息（“HelloWorld”）供这个程序使用
+
+
+2、发送消息的程序如下：
+################################################
+/* ... */
+# define OSSO_EXAMPLE_NAME    " example_libosso "
+# define OSSO_EXAMPLE_SERVICE "org.maemo ." OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_OBJECT  "/org/maemo /" OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_IFACE   "org.maemo ." OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_MESSAGE " HelloWorld "
+/* ... */
+ret = osso_rpc_run ( osso_context ,
+                     OSSO_EXAMPLE_SERVICE ,
+                     OSSO_EXAMPLE_OBJECT ,
+                     OSSO_EXAMPLE_IFACE ,
+                     OSSO_EXAMPLE_MESSAGE , &retval , DBUS_TYPE_INVALID );
+/* ... */
+################################################
+当example_libosso_test启动的时候，它发送一个"example_message"D-BUS消息给org.maemo.example_libosso服务，绑定在example_libosso应用程序上面。这样，example_libosso接收消息并处理它了。
+D-BUS一个较好的特性就是，接收进程甚至不需要被启动，D-BUS能够自动地根据它的service文件来启动接收进程，然后给它发送消息。
+
+
+3、其他
+关于硬件状态消息：
+####################p157#######################
+关于退出的消息：
+##########################p158#################
+关于程序状态保存和自动保存：
+############################p158###############
+
+
+三、参考资料：
+程序源代码：
+1)发送消息的：
+https://garage.maemo.org/svn/maemoexamples/tags/maemo_4.1/maemo-examples/example_libosso.c
+2)接受消息的：
+https://garage.maemo.org/svn/maemoexamples/tags/maemo_4.1/maemo-examples/example_message.c
+本文参考：
+Maemo Diablo Reference Manual for maemo 4.1  （页码：p150-p158）

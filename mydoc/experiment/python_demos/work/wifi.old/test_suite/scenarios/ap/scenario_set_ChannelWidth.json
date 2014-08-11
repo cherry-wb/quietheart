@@ -1,0 +1,7 @@
+{
+	"name":"set_wireless_ChannelWidth",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_set_ChannelWidth.py"},
+	"reporter":["success","fail"],
+	"description":"set wireless channel width of cisco ap"
+}

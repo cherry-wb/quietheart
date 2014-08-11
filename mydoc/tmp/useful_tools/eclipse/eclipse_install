@@ -1,0 +1,69 @@
+1)下载并安装eclipse：
+http://www.eclipse.org/downloads/
+下载其中的Eclipse IDE for C/C++ Developers.
+这里，不知为什么，有一个Eclipse IDE for C/C++ Linux Developers (includes Incubating components),比那个要大，反而不能用，不能补全，安装svn之后也无法使用，所以就下载小的了。
+
+# wget http://ftp.neu.edu.cn/mirrors/eclipse/technology/epp/downloads/release/helios/SR2/eclipse-cpp-helios-SR2-linux-gtk.tar.gz
+#tar -xzvf eclipse-cpp-helios-SR2-linux-gtk.tar.gz -C /home/quietheart/opt
+
+2)eclipse的svn插件安装：
+help->install***->archive->site***.zip->select all并且去调graph**.
+
+
+
+
+
+
+
+
+svn插件：
+http://www.eclipse.org/subversive/documentation/gettingStarted.php
+1)安装需求：
+Subversion versions 1.1-1.6
+JDK 1.5 or higher
+Eclipse 3.4 or higher
+2)官方安装步骤：
+http://www.eclipse.org/subversive/documentation/gettingStarted/aboutSubversive/install.php
+2.1)'Help > Instal New Software...' 
+2.2)点击"add"添加svn更新站点。
+2.3)在弹出的对话框中，填入svn插件更新网址。
+可以到http://www.eclipse.org/subversive/downloads.php来找找合适的网址。
+下载其中的:
+http://ftp.neu.edu.cn/mirrors/eclipse/technology/subversive/0.7/builds/Subversive-incubation-0.7.9.I20100512-1900.zip
+文档中说明安装svn需要安装SVN插件和SVN Connectors插件。并且给出connector的更新网址：
+http://community.polarion.com/projects/subversive/download/eclipse/2.0/helios-site/
+
+
+#mkdir eclipse/links
+#mkdir eclipse/myplugins
+#mkdir -p eclipse/myplugins/svn/eclipse
+#unzip Subversive-incubation-0.7.9.I20100512-1900.zip ;rm $_
+#vim links/svn.link
+path=myplugins/svn
+
+其它参考资料
+=======
+1. 从subclipse官方网站http://subclipse.tigris.org/servlets/ProjectProcess?pageID=p4wYuA，下载和eclipse匹配的版本
+
+
+
+2. 安装eclipse插件有3种方式
+2.1.eclipse更新方式（subclipse官方网站有详细说明）
+2.2 直接拷贝方式（直接把下载的插件文件拷贝到eclipse目录，覆盖相应文件夹）
+3.3 link方式
+
+
+3. link方式的好处是方便装卸插件， 我喜欢采用这种方式，呵呵，我用的eclipse3.3，所以下载的是1.6.5版本的插件，安装插件的方法也以此环境为例。
+
+
+
+4.link方式安装步骤
+4.1 在eclipse目录下建立文件夹links和myPlugins
+4.2 在myPlugins目录下建立\site-1.6.5\eclipse\此结构目录
+4.3 把下载的site-1.6.5.zip解压缩，将解压缩出来的文件拷贝到\eclipse3.3\myPlugins\site-1.6.5\eclipse\目录下
+4.4 在links文件夹下建立一个文件svn.link(这个可以随意命名只要是个普通文本就可以了)，文件内容为：
+   1. path=myPlugins/site-1.6.5   
+
+4.5 重新启动eclipse
+
+参考：http://cqjava.iteye.com/blog/487838

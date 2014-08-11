@@ -1,0 +1,64 @@
+
+1.pyflakes-vim:
+======================================================================
+https://github.com/kevinw/pyflakes-vim
+a python syntax checker.
+Quick Installation
+Make sure your .vimrc has:
+
+filetype on            " enables filetype detection
+filetype plugin on     " enables filetype specific plugins
+Download the latest release.
+
+If you're using pathogen, unzip the contents of pyflakes-vim.zip into its own bundle directory, i.e. into ~/.vim/bundle/pyflakes-vim/.
+
+Otherwise unzip pyflakes.vim and the pyflakes directory into ~/.vim/ftplugin/python (or somewhere similar on your runtime path that will be sourced for Python files).
+
+
+
+
+
+others:
+http://blog.csdn.net/diao82008/article/details/6752657
+
+
+
+2.lookup:
+======================================================================
+1.下载looupfile，在$HOME/.vim/中解压安装。
+2.下载genutils，在$HOME/.vim/中解压安装。
+
+3.在vim中执行”:helptags ~/.vim/doc“命令，生成help文件索引，然后就可以使用”:help lookupfile“命令查看lookupfile插件的帮助文件了。
+
+"-----------------------------------------------------------------------------
+" lookupfile.vim 插件设置
+"-----------------------------------------------------------------------------
+""""""""loopup
+let g:LookupFile_MinPatLength = 2               "最少输入2个字符才开始查找
+"""let g:LookupFile_PreserveLastPattern = 0        "不保存上次查找的字符串
+let g:LookupFile_PreservePatternHistory = 1     "保存查找历史
+let g:LookupFile_AlwaysAcceptFirst = 1          "回车打开第一个匹配项目
+let g:LookupFile_AllowNewFiles = 0              "不允许创建不存在的文件
+let g:LookupFile_SortMethod = ""                "关闭对搜索结果的字母排序
+"if filereadable("/home/ganquan/linux-2.6.34-rc4/filenametags")                "设置tag文件的名字
+"let g:LookupFile_TagExpr ='./filenametags'
+"""endif
+let g:myLookupFileTagExpr = './lookuptags'
+"let g:LookupFile_UsingSpecializedTags = 'g:myLookupFileTagExpr'
+let g:LookupFile_TagExpr ='g:myLookupFileTagExpr'
+
+确保LookupFile_TagExpr变量设置正确，否则还是默认使用ctags的tag来查找，速度非常慢。更多信息查看文档。
+可以用如下脚本生成filetags：
+#########################################
+#!/bin/bash
+(echo "!_TAG_FILE_SORTED	2	/2=foldcase/";
+(find . \( -name .svn -o -wholename ./classes \) -prune -o -not -iregex '.*\.\(jar\|gif\|jpg\|class\|exe\|dll\|pdd\|sw[op]\|xls\|doc\|pdf\|zip\|tar\|ico\|ear\|war\|dat\).*' -type f -printf "%f\t%p\t1\n")) > ./lookuptags
+#########################################
+       
+
+参考：
+http://ganquan.org/blog/2010/05/lookupfile-vim/
+http://easwy.com/blog/archives/advanced-vim-skills-lookupfile-plugin/
+
+https://github.com/vim-scripts/Lookup
+https://github.com/clones/vim-genutils

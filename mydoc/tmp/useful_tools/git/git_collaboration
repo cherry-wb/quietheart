@@ -1,0 +1,158 @@
+======整理======
+*让git的status以及add等忽略myhello文件：
+$echo myhello >.gitignore
+这里，在你的工作目录中添加一个叫".gitignore"的文件，来告诉Git系统要忽略掉哪些文件。
+文件内容大致如下：
+################################
+# 以'#' 开始的行，被视为注释.
+# 忽略掉所有文件名是 foo.txt 的文件.
+foo.txt
+# 忽略所有生成的 html 文件,
+*.html
+# foo.html是手工维护的，所以例外.
+!foo.html
+#  忽略所有.o 和 .a文件.
+*.[oa]
+################################
+当然，.gitignore文件同样可以像其它文件一样加到项目仓库里( 直接用 git add .gitignore 和 git commit等命令), 这样项目里的其它开发者也能共享同一套忽略 文件规则。
+
+*获取pull时候的默认地址：
+git config --get remote.origin.url
+
+*显示没提交但是被修改了的add的文件：
+git diff --cached
+这里--cached会显示缓存中没有被提交的文件，如果没有用add命令添加到索引中，那么不会显示，这个使用不含--cached选项的"git diff"来显示没有添加到索引中得修改文件，因为没有--cached只显示没有添加到索引中的修改。
+
+*对于没有untrack的修改内容，丢弃其修改：
+git checkout -- <filename>
+用这样的方法，可以恢复不小心被改坏了的文件。 
+
+==========
+我们可以通过-b <name>来指定要克隆的分支名，比如
+$ git clone -b master2 ../server .
+表示克隆名为master2的这个分支，如果省略-b <name>表示克隆master分支。
+
+
+
+
+http://f2e.us/wiki/git-remote.html#!/
+显示所有的远程仓库
+
+$: git remote -v
+origin  git@search.ued.taobao.net:projects/search.git (fetch)
+origin  git@search.ued.taobao.net:projects/search.git (push)
+github  git@github.com:yyfrankyy/search.git (fetch)
+github  git@github.com:yyfrankyy/search.git (push)
+
+
+=======
+问题：
+合并多个commit?
+$git rebase??
+
+有可能push的时候不让push多次的commit，所以可以用如下方法合并多个commit。
+git reset --soft <commitnumber or HEAD>
+git add .
+git commit -m 'merged commit'
+这里，将会将多次提交的内容（没有push）回退到指定的commitnumber位置或者HEADER~n位置，注意使用HEAD~n位置的时候通过git log --graph才能知道~n是到那个commit上面而不是想当然的commit number上面。
+
+
+
+实践：
+#git clone git_test git_clone
+#cd git_test
+#ls
+hello example
+#cat hello
+hello
+hello
+hello
+#cat example
+example
+#vim hello
+hello
+hello2
+hello
+#git commit -a -m 'modify hello'
+
+
+#cd git_clone
+#git checkout -b testbranch
+#git branch
+*testbranch
+quietheart
+#vim hello
+hello
+hello3
+hello
+#vim example
+example
+example
+example
+#git commit -a -m 'hello conflict and modify example'
+
+#git checkout quietheart
+#git pull
+#cat hello
+hello
+hello2
+hello
+#cat example
+example
+
+#git checkout testbranch
+#git remote
+origin
+#git rebase
+...conflict....
+#git rebase --skip
+#git rebase --continue
+#cat hello
+hello
+hello2
+hello
+#cat example
+example
+从这里可知，使用git rebase --skip之后，自己所有得修改都没有。如果git rebase --continue之前编辑hello去掉冲突标记之后再continue就没有问题了。通过查看man git-rebase可知，--skip是忽略当前的patch，--abort是取消rebase的整体操作。
+
+
+*添加文件和添加内容：
+如果添加了新文件，那么使用"git commit -a -m 'aaa'"是不能提交的，需要先用"git add ."，再用'git commit'。如果只是修改了文件，那么可以用上述方法来提交也可以用"git commit -a -m 'aaa'"方式来提交。也就是说，"git commit -a"不会添加新创建的文件。
+
+
+**修改前一次提交的方法
+Gerrit中的一个Change就是一个Review任务，它对应一个commit。每个commit，应该是为了一个目的的完整修改。如果某一次修改不完全，就需要修正该commit。每一次修正之前的commit，重新提交时，都应该保持Change-Id不变，这样就不会产生新的Change，而是在原有的Change下产生一个新的Patch Set。所有的Patch Set中，只有最新的一个是真正有用的，能够合并的。
+过程如下：
+#修改需要修改的地方。
+git add .
+git commit –amend
+**
+
+
+$ git remote
+origin也可以加上 -v 选项(译注:此为 –verbose 的简写,取首字母),显示对应的克隆地址:
+$ git remote -v
+origin git://github.com/schacon/ticgit.git
+
+
+
+
+
+
+
+*情况：
+本地服务器git从远端定时获取最新代码，本地机器每次从本地服务器获取代码，而push却提交到远程服务器。
+出现了如下冲突：
+当本地机器运行git pull 之后，从本地服务器获取了最新代码，然后在此基础上进行修改，再gitpush到远程服务器上面，这个时候，review者都通过，但是git自动合并的时候出现了冲突，这个时候，如何提交，又不改变change id呢？
+
+（1）重新git clone
+（2）获取你的修改
+git fetch ssh://lv-k@gerrit2.labcollab.net:9418/lab126/tools/diag refs/changes/38/21738/3 && git cherry-pick FETCH_HEAD
+这个在gerrit2上面你提交的changeid上的最后一个patchset上面有那个cherry-pick地址。
+（3）git push
+这样就在原来的changeid基础上重新生成一个patch。
+
+gitk是一个图形工具，图形表示每个版本的由来，图形中的一条直线上的点是父子关系的，如果有一个点是两条直线汇聚的，那么表示这个点有两个parent。
+
+使用git --graph可以显示出和gitk类似的输出，这里，每个'*'表示一次提交，每个'*'沿线向回追溯，可以看到它的parent，如果有多个线可以追溯，那么表示该'*'有多个parent.
+

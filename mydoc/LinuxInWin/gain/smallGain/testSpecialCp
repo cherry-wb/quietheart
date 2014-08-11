@@ -1,0 +1,5 @@
+1,when I use the command:
+cp /dev/tty1 file1
+after the [ctrl]+D,the content of file1 is the letters I typed in the tty1 term.2,when I use the command:
+cp dir_name file_name
+can't cp the things.not as said in the book.

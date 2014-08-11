@@ -1,0 +1,252 @@
+try1,
+http://cache.baidu.com/c?m=9d78d513d9d431ad4f9d94697b13c0161b4381137b87974939938448e2250c051026f4ba57356106c4b2087070ae5e2beee73702207327a0eace9f4badfac1777fdb33733042891b54955bb8ca3538dc7acb4de9d849b4e1a67584aea582820b4edd53020c86e78b5d7065dd6ff76233f4a69e3e624810bd9b3372ff5e062cc47f15ab17a7bd67735cc7a182411ac47eda654295fb61e46e13b514f5491e7715f01bb20e533130971561a01a&p=86759a4f8d8101c30be2973c5a&user=baidu
+Ubuntu下安装Samba
+2009-02-21 17:20
+1.安装samba服务器:
+命令: sudo apt-get install samba
+    sudo apt-get install smbfs
+启动sudo /etc/init.d/samba start
+到这里，你已经可以去访问别人共享的目录了
+如smb://192.168.2.187/
+2.安装samba图形管理界面
+命令: sudo apt-get install system-config-samba
+
+3.启动samba:
+命令: sudo /etc/init.d/samba start
+
+4.启动管理界面:
+命令: sudo system-config-samba （你也可以在点击菜单项进去： 系统－系统管理－Samba）
+可添加共享目录,选中可访问用户. 设置用户smb密码命令为: sudo smbpasswd -a 用户名
+在配置时，要选上“可见”，否则就是隐藏的了，别人就看不到你的共享了
+这样重启之后别人就可以访问你共享的目录了
+5.设置完毕之后要重启:sudo /etc/init.d/samba restart  
+
+
+######################################################################
+try2,
+http://cache.baidu.com/c?m=9d78d513d9d431ad4f9d94697b13c0161b4381137b87974939938448e2250c051026f4ba57356106c4b2087070ae5e2beee73702207327a0eace9f4badfac1777fdb33733042891b54955bb8ca3538dc7acb4de9d849b4e1a67584aea582820b4edd22736df4f79c2b0303bc1ce76446f4d69b5545014deff06b23a8066a28982644b116fae1336c5183f5dd0a4b972ed2601ac0fb64a73e65ef55fb41&p=882a9643839215e80be295235244&user=baidu
+ubuntu安装配置samba
+2008-05-22 10:28
+
+代码:
+sudo apt-get install samba
+sudo apt-get install smbfs
+
+
+下面我们来共享群组可读写文件夹，假设你要共享的文件夹为： /home/ray/share
+
+首先创建这个文件夹
+代码:
+mkdir /home/ray/share
+chmod 777 /home/ray/share
+
+
+备份并编辑smb.conf允许网络用户访问
+代码:
+sudo cp /etc/samba/smb.conf /etc/samba/smb.conf_backup
+sudo gedit /etc/samba/smb.conf
+
+
+搜寻这一行文字
+代码:
+; security = user
+
+
+用下面这几行取代
+代码:
+security = user
+username map = /etc/samba/smbusers
+
+
+将下列几行新增到文件的最后面，假设允许访问的用户为：newsfan。而文件夹的共享名为 Share
+
+代码:
+[Share]
+comment = Shared Folder with username and password
+path = /home/ray/share
+public = yes
+writable = yes
+valid users = newsfan
+create mask = 0700
+directory mask = 0700
+force user = nobody
+force group = nogroup
+available = yes
+browseable = yes
+
+
+然后顺便把这里改一下，找到［global］把 workgroup = MSHOME 改成
+代码:
+workgroup = WORKGROUP
+display charset = UTF-8
+unix charset = UTF-8
+dos charset = cp936
+
+后面的三行是为了防止出现中文目录乱码的情况。其中根据你的local，UTF-8 有可能需要改成 cp936。自己看着办吧。
+
+现在要添加newsfan这个网络访问帐户。如果系统中当前没有这个帐户，那么
+代码:
+sudo useradd newsfan
+
+要注意，上面只是增加了newsfan这个用户，却没有给用户赋予本机登录密码。所以这个用户将只能从远程访问，不能从本机登录。而且samba的登录密码可以和本机登录密码不一样。
+
+现在要新增网络使用者的帐号：
+代码:
+sudo smbpasswd -a newsfan
+sudo gedit /etc/samba/smbusers
+
+@@@@@
+    在这一部分会出现问题：
+    提示信息：
+    Failed to initialise SAM_ACCOUNT for user newsfan. Does this user exist in the UNIX            password     database ?
+    Failed to modify password entry for user newsfan
+
+    原因：
+    添加的用户newsfan必须是系统用户（系统->系统管理->用户和组->添加）
+
+在新建立的文件内加入下面这一行并保存
+代码:
+newsfan = "network username"
+
+
+如果将来需要更改newsfan的网络访问密码，也用这个命令更改
+代码:
+sudo smbpasswd -a newsfan
+
+
+删除网络使用者的帐号的命令把上面的 -a 改成 -x
+代码:
+sudo testparm
+sudo /etc/init.d/samba restart
+
+最后退出重新登录或者重新启动一下机器。
+
+下面是对配置文件的说明：
+
+######################### 文件开始 #####################################
+
+#*******************************************************************************#
+#** 用命令#smbpasswd -a username,则此用户必须是系统已经存在的用户，否则会报错***#
+#** 当然可以用全局参数 username map 来进行用户映射，见此参数设置说明 ***#
+#*******************************************************************************#
+
+## /etc/samba/smb.conf配置文件有三个重要的节：[global],[homes],[public]
+
+#Global (全局)参数,该部分设置整个系统的规则，定义了一些公共变量。
+
+[global]
+
+netbios name = jorlon
+#定义Windows系统“网上邻居”中所见的机器名。
+
+workgroup = workgroup
+#定义主机所在网络上所属的NT域名或者工作组名称
+
+server string = FunField
+#对主机的说明信息,缺省是：Samba Server
+
+hosts allow = 192.168.1. 192.168.3.
+#它允许设置哪些机器可以访问samba服务器
+
+guest account = nobody
+invalid users = root
+#定义smb用户名称。
+
+security = user
+#定义访问权限。访问权限由低到高有三种：share、user和server。其中share安全级别最低，user模式要求连接时输入用户名和口令
+
+encrypt passwords = true
+#设置是否需要加密口令。因为Windows系列默认采用加密口令传输，而Linux默认采用非加密口令传输，为保证smb网络用户的正常登录，在user安全级下设置为加密，在share 安全级下可不设。
+
+smb passwd file = /etc/samba/smbpasswd
+#由命令cat /etc/passwd | mksmbpasswd.sh > /etc/samba/smbpasswd产生。
+
+interfaces = 192.168.1.50/24
+#配置smb服务所使用的网卡IP以及子网掩码,如果有两个以上网卡，要全部列出。
+
+name resolve order = host dns bcast
+#设定smb服务时，从机器netbios名称到IP地址的解析方式，默认顺序为host lmhosts wins bcast。如果局域网内有DNS，可设置为host dns bcast。
+
+wins support = no
+#设置是否有wins支持。
+
+public = yes
+#为yes时，“网上邻居”中可见该资源，否则不可见。
+
+browseable = yes
+#为yes时，“网上邻居”中可见该资源，否则不可见。
+
+#printing = bsd
+# 指定Linux使用哪个打印机守护进程（bsd、sysv、hpux、aix、qnx、plp），同时向samba说明命令lpr和lpq的缺省值。
+
+#printcap name = /etc/printcap
+# 定义了打印配置文件所处的位置。
+
+load printers = no
+# 表明是否加载printcap 定义的所有打印机以供浏览。
+
+log file = /var/log/samba/log.%m
+# 定义日志文件
+
+max log size = 1000
+#日志文件最大1000k （单位是KB）
+
+username map = /etc/samba/smbuser
+#允许管理员指定一个映射文件，该文件包含了在客户机和服务器之间进行用户映射的信息。 用户映射经常在windows 和linux 主机间进行。 两个系统拥有不同的用户账号，用户映射的目的是将不同的用户映射成为一个用户，便于共享文件。
+
+#*********************************************************************#
+
+[homes]
+
+#该部分通常定义了Linux机器上共享的目录资源，其名字可以由用户确定。段中的设置控制了每一个用户目录的共享权限。
+
+comment = Home Directories
+#设定在浏览本机资源时，出现在指定资源旁边的字符串。
+
+browseable = yes
+#控制一项服务是否能够出现在网上邻居中，no意味着这个目录将在浏览时显示为要验证的用户名称，yes则显示 homes 和要验证的用户名称的共享目录。
+
+writable = yes
+#控制是否允许通过验证的用户对主目录有写入的权限，但最终取决于该目录的 Unix 权限。无论 Unix 的权限怎样, 设置 writable = no 后, 主目录只能是只读的。
+
+create mask = 0700
+directory mask = 0700
+#若上面是可写的，则设置写文件和目录时的属性
+
+
+#******************************************************************#
+
+[public]
+
+#用来指定某一特定用户组或者用户拥有访问权限的目录配置分，配置共享目录部分
+
+comment = Public Stuff
+# 说明部分
+
+path = /home/samba
+#共享的Linux目录
+
+writable = no
+#写权限
+
+printable = no
+#打印权限
+
+########################文件结尾####################
+
+用于用户映射的文件/etc/samba/smbuser
+
+################文件开始###########################
+# smb.conf中全局参数 “username map” 指定的映射文件
+
+root = admin administrator
+#Map Windows admin to root
+
+hawk = girl
+#Map the member of girl to hawk
+
+snake = boy
+# 等号左边是单独的Linux账号，等号右边是要映射的账号列表。服务器逐行分析映射文件，如果提供的账号和某行有右侧列表中的账号匹配，就把它替换为等号左边的账号。
+
+####################文件结束#################################
+

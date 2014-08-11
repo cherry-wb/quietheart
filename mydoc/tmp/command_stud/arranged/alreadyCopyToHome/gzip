@@ -1,0 +1,62 @@
+gzip
+标准的GNU/UNIX压缩工具, 取代了比较差的compress命令. 相应的解压命令是gunzip, 与gzip -d是等价的.
+
+语法：gzip ［选项］ 压缩（解压缩）的文档名
+　　各选项的含义：
+　　-c 将输出写到标准输出上，并保留原有文档。
+　　-d 将压缩文档解压。
+　　-l 对每个压缩文档，显示下列字段：
+　　压缩文档的大小
+　　未压缩文档的大小
+　　压缩比
+　　未压缩文档的名字
+　　-r 递归式地查找指定目录并压缩其中的任何文档或是解压缩。
+　　-t 测试，检查压缩文档是否完整。
+　　-v 对每一个压缩和解压的文档，显示文档名和压缩比。
+　　-num 用指定的数字num调整压缩的速度，-1或--fast表示最快压缩方法（低压缩比），-9或--best表示最慢压缩方法（高压缩比）。系统缺省值为6。
+
+举例：
+*递归地压缩目录test：
+$gzip -r test
+这样，所有test下面的文件都变成了*.gz，目录依然存在只是目录里面的文件相应变成了*.gz.这就是压缩，和打包不同。因为是对目录操作，所以需要加上-r选项，这样也可以对子目录进行递归了。
+
+*递归地解压目录test:
+$gzip -d -r test
+或$gunzip -r test
+这样，test里面的所有*.gz文件还原成原来的文件。
+
+*将当前目录下的所有文件压缩：
+$gzip *
+这样所有非目录的文件都会被压缩,注意这里原来的文件都被替换成为压缩之后的文件了。
+
+*将当前目录下的所有压缩文件解压：
+$gzip -d *
+或$gunzip *
+这样会将目录下面所有压缩的文件解压。
+
+*解压当前目录下的所有压缩文件，并显示详细的解压信息：
+$gzip -d -v *
+或$gzip -dv *
+或$gunzip -v *
+这样-v选项显示了更多的信息。同理gzip的-v选项会显示压缩的时候的更为详细的信息。
+
+*详细显示当前目录下面的压缩文件的信息：
+$gzip -l *
+输入之后，输出如下：
+gzip: dirnew is a directory -- ignored
+gzip: dirold is a directory -- ignored
+compressed        uncompressed  ratio uncompressed_name
+178                 215			 31.6% testRename.c
+2699                6521		 59.1% testRename
+2877                6736		 57.7% (totals)
+这里只是显示压缩文档的信息，并不显示。 
+
+*详细显示某个压缩文件的信息：
+$gzip -l testRename.c.gz
+输入之后，输出如下：
+compressed        uncompressed  ratio uncompressed_name
+       178                 215  31.6% testRename.c
+
+*压缩一个tar备份文档：
+$gzip dirnew.tar
+执行之后，会将dirnew.tar变成dirnew.tar.gz，压缩了。

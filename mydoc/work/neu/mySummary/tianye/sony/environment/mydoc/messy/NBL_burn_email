@@ -1,0 +1,81 @@
+TO ALL
+FROM 吕凯
+CC 刘兴宝
+
+各位，
+在烧写内核的时候，经常会遇见有时候好用，有时候不好用的情况。
+原因是：
+我们编译出来的内核有三个，对应三种不同格式; 
+bootloader在aboot启动的时候，有的类型需要用根据文件的后缀来判断其类型，以便正确加载（有的类型不需要后缀）。
+
+这样组合起来，好用和不好用的情况比较多，很容易出错。
+这里我将这些好用的情况和不好用的情况总结一下，希望对大家烧写出现问题的时候有所帮助：
+
+==================================
+１，内核编译的时候，产生的三个文件分别是：
+==================================
+Kernel/avp13Build/vmlinux
+Kernel/avp13Build/arch/arm/boot/Image
+Kernel/avp13Build/arch/arm/boot/zImage
+
+三者的区别是：
+vmlinux是elf格式的内核，启动速度最快，体积最大。（目前内核烧写分区有６Ｍ即6291456字节，而vmlinux大小是6265885字节只比整个分区少了不到30K）
+Image是bin格式的内核，启动速度比较快，体积大约5M.
+zImage是压缩bin格式的内核，启动速度最慢(比elf格式慢了至少２s)，体积大约2.2M.
+
+==================================
+２，常见的错误烧写命令：
+==================================
+以下是常见的不正确的烧写命令，请大家注意。
+2.1)名为vmlinux的内核：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.bin
+
+2.2)名为Image的内核：
+NBL> cp net:tftp:Image sdmd:raw:Image
+或
+NBL> cp net:tftp:Image sdmd::
+或
+NBL> cp net:tftp:Image sdmd:raw:vmlinux
+
+2.3)名为zImage的内核：
+NBL> cp net:tftp:zImage sdmd:raw:zImage
+或
+NBL> cp net:tftp:zImage sdmd::
+或
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux
+或
+NBL> cp net:tftp:zImage sdmd:raw:zImage.gz
+
+==================================
+3，正确的烧写命令：
+==================================
+以下命令请大家烧写的时候使用。
+2.1)名为vmlinux的内核：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.elf
+或
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux
+或
+NBL> cp net:tftp:vmlinux sdmd::
+也就是说，vmlinux可以不要后缀，或者使用".elf"的后缀进行烧写。
+
+2.2)名为Image的内核：
+NBL> cp net:tftp:Image sdmd:raw:vmlinux.bin
+也就是说Image只能用".bin"格式的后缀进行烧写。
+
+2.3)名为zImage的内核：
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux.bin
+也就是说zImage只能用".bin"格式的后缀进行烧写。
+
+以上为好用的烧写命令，烧写完毕后应该用"bootprof "设置参数，然后用"aboot -n" 即可启动。
+
+==================================
+注：
+==================================
+实际这些原因我已经在文档中提到过了，只不过涉及的情况太多，我没有把所有类型的烧写方法列举出来。所以烧写时大家应仔细参照文档，选择正确类型的内核以及烧写的步骤。
+目前大多数人都用zImage格式，但是这只是在大家测试的时候，如果要实现高速启动，那么应该不能用zImage来进行烧写。
+附件里面给出了当前维护的，最新的，文本格式的，使用zImage和vmlinux两种内核的，完整的，烧写文档。和在服务器上的".doc"的内容几乎一样。
+:-)
+
+
+以上，
+2011年1月7日

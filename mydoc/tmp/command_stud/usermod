@@ -1,0 +1,9 @@
+usermod〔选项〕〔用户名〕
+
+[功能]
+修改用户信息.
+
+[举例]
+*修改用户testusr的主目录和登录的shell:
+#usermod -d/home/quietheart -s/bin/bash testusr
+这里，用户名testusr的主目录路径设置在/home/testusr,登陆的Shell设置为/usr/bin/gcc(-d更新使用者新的登陆目录,-s指定新用户Shell),空格有无均可.

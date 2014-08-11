@@ -1,0 +1,101 @@
+http://www.qteverywhere.com/archives/452
+http://www.insideqt.com/bbs/viewthread.php?tid=192
+前面我们介绍了Qte输入法的基本设计思路，以及一个最简单的例子，那么，Qte的输入法是如何工作的呢？本节我们就来看一下Qte的源代码，一起来解开这个谜团。
+
+在Qte的Client/Server体系结构中，QWSServer类负责管理Qte的Server，监听系统事件，尤其是键盘和鼠标事件。当这些监听的事件发生的时候，server会做出判断，这些事件应该发送给那一个客户端。
+
+如果当前系统安装了输入法，那么键盘和鼠标事件在派发之前，就会先送给输入法，让输入法来做一下判断，看输入法是否会处理这个键盘按键，如果输入法已经处理，就不在继续分发这个事件，否则就会按照原先的事件分发机制继续分发这个事件。也就是说，输入法会在应用程序之前接收到键盘事件。
+
+Qte已经定义了一个输入法基类QWSInputMethod，在这个类中封装了一些基本的输入法函数。我们一起来看看QWSInputMethod类的定义：
+   1. class QWSInputMethod : public QObject
+							    2. {
+									   3.     Q_OBJECT
+										      4. public:
+											     5.     QWSInputMethod();
+									      6.     virtual ~QWSInputMethod();
+										     7.
+
+												    8.     enum UpdateType {Update, FocusIn, FocusOut, Reset, Destroyed};
+											    9.
+
+													  10.     virtual bool filter(int unicode, int keycode, int modifiers,
+															    11.                         bool isPress, bool autoRepeat);
+												  12.
+
+													    13.     virtual bool filter(const QPoint &, int state, int wheel);
+												    14.
+
+														  15.     virtual void reset();
+													  16.     virtual void updateHandler(int type);
+													    17.     virtual void mouseHandler(int pos, int state);
+														  18.     virtual void queryResponse(int property, const QVariant&);
+														    19.
+
+																  20. protected:
+																    21.     uint setInputResolution(bool isHigh);
+															  22.     uint inputResolutionShift() const;
+															    23.     void sendMouseEvent(const QPoint &pos, int state, int wheel);
+																  24.
+
+																	    25.     void sendEvent(const QInputMethodEvent*);
+																    26.     void sendPreeditString(const QString &preeditString, int cursorPosition, int selectionLength = 0);
+																	  27.     void sendCommitString(const QString &commitString, int replaceFrom = 0, int replaceLength = 0);
+																	    28.     void sendQuery(int property);
+																		  29.
+
+																			    30. private:
+																				  31.     bool mIResolution;
+																		    32. };
+
+
+这个类从QObject类继承而来，定义了 Q_OBJECT 宏，说明这个类支持Qt对象模型的操作，signal/slot，property，都没有问题，这里最关键的几个函数有，两个重载的filter函数，一个用来过滤键盘事件，另一个用来过滤鼠标事件，sendEvent函数用来发送输入法事件，在这个事件中可以打包preedit string, commit string，它还有一个list，可以添加任意多的其它数据。sendPreeditString函数用来把正在输入过程中的字符串发送到当前编辑窗口，而sendCommitString则用来把最终的用户选择的字符串发送到当前编辑窗口。
+
+QWSServer类提供了一个函数来安装输入法，void setCurrentInputMethod ( QWSInputMethod * method)，这个函数的参数就是一个QWSInputMethod类的指针。QWSServer是如何管理QWSInputMethod的呢？在 Server端，定义了这么几个变量，
+   1. static QWSInputMethod *current_IM = 0;
+      2. static QWSWindow *current_IM_composing_win = 0;
+	     3. static int current_IM_winId = -1;
+		    4. static bool force_reject_strokeIM = false;
+
+			其中，最重要的就是current_IM了，这个指针指向当前安装的输入法对象，它就是在QWSServer::setCurrentInputMethod函数中赋值的。
+
+			这里是QWSServer::setCurrentInputMethod这个函数的源代码：
+
+   1. void QWSServer::setCurrentInputMethod(QWSInputMethod *im)
+	   2. {
+		      3.     if (current_IM)
+				     4.         current_IM->reset();
+			     5.     current_IM = im;
+				    6. }
+
+再看看这个键盘事件处理函数：
+1. void QWSServer::sendKeyEvent(int unicode, int keycode, Qt::KeyboardModifiers modifiers,
+2.                              bool isPress, bool autoRepeat)
+3. {
+4.     //.............................
+5. #ifndef QT_NO_QWS_INPUTMETHODS
+6.
+
+7.     if (!current_IM || !current_IM->filter(unicode, keycode, modifiers, isPress, autoRepeat))
+8.         QWSServerPrivate::sendKeyEventUnfiltered(unicode, keycode, modifiers, isPress, autoRepeat);
+9. #else
+10.     QWSServerPrivate::sendKeyEventUnfiltered(unicode, keycode, modifiers, isPress, autoRepeat);
+11. #endif
+12. }
+
+在QWSServer::sendKeyEvent函数中，会去检查当前是否安装了输入法，如果是，就会去调用这个输入法的filter函数来过滤键盘事件，如果这个函数返回值为true，就不在继续分发这个key事件。
+再看看这个鼠标事件处理函数:
+1. void QWSServer::sendMouseEvent(const QPoint& pos, int state, int wheel)
+2. {
+3. // --------------------------
+4.     const int btnMask = Qt::LeftButton | Qt::RightButton | Qt::MidButton;
+5.     int stroke_count; // number of strokes to keep shown.
+6.     if (force_reject_strokeIM || !current_IM)
+7.     {
+8.         stroke_count = 0;
+9.     } else {
+10.         stroke_count = current_IM->filter(tpos, state, wheel);
+11. }
+12. }
+
+在 QWSServer::sendMouseEvent 函数里面，同样会去检查当前是否安装了输入法，如果是，就会去调用输入法的filter函数来过滤鼠标事件，如果这个函数返回值为true，就不在继续分发这个key事件。
+看，Qt/Embedded 输入法的工作原理其实就是这么简单！

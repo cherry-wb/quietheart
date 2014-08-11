@@ -1,0 +1,33 @@
+*grep搜索并且禁止输出：
+grep -q 'test' testfile
+这样，不会输出任何内容，这个功能用户只需要获得grep状态的情况。
+
+*grep 匹配多个字符串：
+grep -E "string1|string2|string3" testfile
+这里，使用扩展正则表达，加-E选项。例如匹配good,bad就'grep -E "good|bad"'.
+
+*统计一个字符串在许多文件中出现的行数：
+$ grep -c mach *
+输入之后，输出如下：
+grep_match1:5
+grep_match2:3
+这里，将会统计当前所有文件中，每个文件匹配mach字符串的行数（即使在1行中出现多次也算1行），如统计总行数则使用如下命令："grep mach |wc -l"。当前目录下文件只有grep_match1,grep_match2，内容分别如下：
+$ cat grep_match1 
+mach
+mach
+mach
+mach
+machmach mach
+meach
+meach
+meach
+meach
+$ cat grep_match2 
+mach
+mach
+mach
+meach
+meach
+meach
+mmm
+

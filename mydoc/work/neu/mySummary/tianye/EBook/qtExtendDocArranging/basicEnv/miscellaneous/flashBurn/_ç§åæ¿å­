@@ -1,0 +1,63 @@
+
+*将文件系统烧到板子上
+*将内核烧到板子上
+
+
+*将文件系统烧到板子上
+过程：
+1，准备一个文件系统，不妨令其路径为/home/rootfs
+2，在PC上解压suu_host.tar.gz
+3，将mkfs.ubifs和ubinize两个应用程序拷贝至任何$PATH包含的路径下，例如/usr/bin/下（推荐）
+4，运行命令创建ubi镜像：
+# ./mkubifs.sh <镜像名> <待烧写文件系统名> [文件系统容量] [文件系统名字]
+这里，文件系统容量,不小于ubi镜像支持的最大容量。
+文件系统名字，很重要，作为内核的参数，例如rootfs
+
+这个脚本实际是生成一个配置文件，预先设置一些环境变量，然后运行:
+mkfs.ubifs和ubinize
+mkfs.ubifs工具，创建你的根文件系统的一个volume
+ubinize工具把所有你需要的volume合并到一个UBI镜像中
+
+
+举例：
+(未实践)使用marvell旧版的内核烧写文件系统的过程：
+0,安装好suu_host.tar.gz中的相应的工具：
+1)把mkfs.ubifs和ubinize拷贝到/usr/bin中
+2)mkubifs.sh脚本随意，它将调用前面的程序
+
+1,准备一个文件系统假设为./rootfs,将mkubifs.sh拷贝到当前目录下.
+
+2,运行$sudo ./mkubifs.sh rootfs_new.img rootfs/ 800MiB rootfs
+这将在当前目录下生成一个镜像文件。
+
+3,将镜像烧写到板子
+1)随便找一个可以启动板子的文件系统。
+这里假设用nfs启动板子，目录为：/home/quietheart/nfs。
+2)将刚才的镜像拷贝到/home/quietheart/nfs
+3)设置uboot以/home/quietheart/nfs启动
+(以下没有实践下去)
+4)启动板子后，在板子的系统中运行：
+ubiformat /dev/mtd0 -f system_ubi.img
+如果不是mtd0,可以通过/proc/mtd下面的查看分区，有rootfs的相应mtd就是
+直接这么做可能不行，因为没有mtd驱动??
+
+参考：
+进入suu/suu_device/spi_flash_driver_mvl_kw/路径下，运行"./driver.sh"，
+该脚本导入spi-flash的驱动，并将nor flash分区，可用cat命令查看分区结果：
+Marvell>> setenv serverip [pchost ip]
+Marvell>> setenv ipaddr [device ip] 
+Marvell>> saveenv
+Marvell>> sflash protect off 
+Marvell>> tftp 0x50000 kernel.img
+Marvell>> sflash erase 10-45
+Marvell>> sflash write 0x50000 0x000a0000 0x240000
+Marvell>> tftp 0x50000 ramfs.img
+Marvell>> sflash erase 46-63
+Marvell>> sflash write 0x50000 0x002e0000 0x120000
+Marvell>> sflash protect on
+Marvell>> setenv constargs console=ttyS0,115200n8 mem=512M ip=[device ip]:[pchostip]:[gateway]:[netmask]:[machine name]:eth0:off
+Marvell>> setenv mtdparts mtdparts=cafe_nand:1G(rootfs),-(data)
+Marvell>> setenv bootramfs setenv bootargs \$(constargs) \$(mtdparts)\;cp.b 0xf80a0000 0x20000 240000\;cp.b 0xf82e0000 0x1000000 0x120000\;bootm 0x20000 0x1000000
+Marvell>> saveenv
+Marvell>> run bootramfs
+

@@ -1,0 +1,22 @@
+1 chmod +x filename
+2 # 使得文件"filename"对所有用户都可执行.
+3 
+4 chmod u+s filename
+5 # 设置"filename"文件的"suid"位.
+6 # 这样一般用户就可以在执行"filename"的时候, 拥有和文件宿主相同的权限.
+7 # (这并不适用于shell脚本.)
+
+1 chmod 644 filename
+2 # 对文件"filename"的宿主设置r/w权限, 
+3 # 对一般用户设置读权限
+4 # (8进制模式). 
+
+1 chmod 1777 directory-name
+2 # 对这个目录设置r/w和可执行权限, 并开放给所有人.
+3 # 同时设置 "粘贴位".
+4 # 这意味着,　只有目录宿主,
+5 # 文件宿主, 当然, 
+6 # 还有root可以删除这个目录中的任何特定的文件.
+
+为所有的用户添加w权限：
+chmod a+w file

@@ -1,0 +1,90 @@
+1,files:
+=================
+./drv/
+Driver files.
+
+./lib/
+Libraries for user space.
+
+./app/
+Use demo of comm_drv device.
+
+./doc
+Backup files and miscellaneous files.
+
+2,compile:
+=================
+1)compile driver module:
+cd drv && make
+
+2)compile driver api:
+cd lib && make
+
+3) compile test app:
+cd app && make
+
+3,log switch:
+=================
+if not specified , the logs are on default.
+or please specified as following ways:
+./drv/
+(1)change code:
+log on:
+#define COMM_DRV_DBG 1
+log off:
+#define COMM_DRV_DBG 0
+
+(2)or spicify in command:
+log on:
+#cd drv && make COMM_DRV_DBG=1
+
+log off:
+#cd drv && make COMM_DRV_DBG=0
+
+
+./lib/comm_api.c:
+(1)code:
+log on:
+#define COMM_API_DBG 1
+log off:
+#define COMM_API_DBG 0
+
+(2)or:
+log on:
+#cd lib && make COMM_API_DBG=1
+log off:
+#cd lib && make COMM_API_DBG=0
+
+
+./app/main.c:
+(1)code:
+log on:
+#define DBG_LOG_ON 1
+log off:
+#define DBG_LOG_ON 0
+
+(2)or:
+log on:
+#cd app && make DBG_LOG_ON=1
+log off:
+#cd app && make DBG_LOG_ON=0
+
+
+4,usage example:
+=================
+#insmod drv/comm_drv.ko
+#_comm_drv_num=$(cat /proc/devices |grep -w comm |awk '{print $1}')
+#mknod /dev/comm0 c $_comm_drv_num 0
+#mknod /dev/comm1 c $_comm_drv_num 1
+#mknod /dev/comm2 c $_comm_drv_num 2
+#app/main
+
+5,others:
+=================
+tips for study:
+*driver ioctl
+*multi char device
+*kernel list
+*Makefile tips(if, for driver, etc.)
+*mutithread programming
+*read/write with block/nonblock flag

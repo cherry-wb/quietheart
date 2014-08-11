@@ -1,0 +1,35 @@
+[root@P-D4-lv-k temp]# ls |awk '{printf "mv %s %s\b\b\b\b.bak\n", $1,$1}'
+mv 1.cpp 1.bak
+mv 2.cpp 2.bak
+mv 3.cpp 3.bak
+mv 4.cpp 4.bak
+mv 5.cpp 5.bak
+
+*使用awk进行字符串替换：
+[root@P-D4-lv-k temp]# ls
+1.c  1.c.c  2.c  2.c.c  3.c  3.c.c  4.c  4.c.c  5.c  5.c.c  test.sh
+[root@P-D4-lv-k temp]# ls *.c |awk '{sub(/.c$/,".cpp")}{print $1}'
+1.cpp
+1.c.cpp
+2.cpp
+2.c.cpp
+3.cpp
+3.c.cpp
+4.cpp
+4.c.cpp
+5.cpp
+5.c.cpp
+
+
+
+
+批量修改文件名称：
+ls *.cpp |awk '{sub(/.cpp$/,"")}{print $1}'|awk '{printf "mv %s.cpp %s.c\n",$1,$1}'
+
+find ./ -type f | grep “txt” |sed -n ’s/.///p’| nawk ‘{oldname=$1;
+
+　　sub(/./,”_test.”);
+
+　　newname=$1;
+
+　　print “mv ” oldname ” ” newname }’ | /bin/sh

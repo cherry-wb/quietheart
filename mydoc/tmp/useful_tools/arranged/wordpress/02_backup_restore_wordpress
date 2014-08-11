@@ -1,0 +1,66 @@
+wordpress备份和恢复
+本文简单介绍备份和恢复wordpress站点的方法。需要注意的是本文内容适用于恢复站点和备份站点的uri地址相同的情况。如果你的站点url变化了，这应当属于站点迁移方面的内容了，以后会讲到。
+
+
+内容简介
+1，备份
+2，恢复
+3，测试
+
+1，备份
+=======================
+我们假设在wordpress服务器上面的安装路径是/var/www/html/wordpress，备份的目录为/home/quietheart/backup_wordpress。那么根据如下步骤进行备份：
+1)备份wordpress相关内容：
+备份网站服务器上wordpress安装目录的"wp-content"子目录内容，以及"wp-config.php"文件内容，和其它你所修改的内容（如果有的话）。其中"wp-content"子目录包含插件以及上传的附件等；wp-config.php中的内容是一些配置信息例如链接什么数据库等等。
+过程如下：
+#cd /var/www/html/wordpress
+#tar -czvf /home/quietheart/backup_wordpress/wp-content.tgz wp-content
+#cp wp-config.php /home/quietheart/backup_wordpress
+
+2）备份wordpress数据库内容：
+两种方法：（目前采用第一种方法）
+第一种使用插件："WordPress Database Backup"，直接生成备份好的数据库。
+第二种使用mysql命令(目前不好用，只提供一个思路)：
+实践的过程如下：
+# mysqldump -u quietheart -p123 --databases wordpress_db >mysql.wordpress
+经过实践，这个方法似乎不行。对比发现，两种方法生成的数据库文件内容是不同的。另外，还有一个比较常用的备份数据库的工具phpmyadmin。
+
+综上可知，备份的内容主要有：1）wp-content目录的压缩包。2）wordpress数据库。3）修改的文件如wp-config.php。
+
+2，恢复
+=======================
+假设在另外一台主机上面恢复之前备份的wordpress程序，安装路径为/var/www/html/wordpress，
+需要恢复的数据的备份路径为：/home/quietheart/backup_wordpress
+大致过程如下：
+1）下载你所备份的同样版本的wordpress程序。
+下载网址一般在www.wordpress.org能找到。
+2）解压下载的wordpress拷贝到网络目录中，将之前备份的wp-content拷贝进去
+3）创建一个空数据库(名称随便起，最好和备份数据库同样名称)。
+4）安装wordpress
+5）导入备份数据库
+
+下面给出具体的步骤：
+#cd /home/quietheart/tmpTrans
+#wget http://wordpress.org/latest.tar.gz
+#tar -xzvf latest.tar.gz
+#[ -d /var/www/html/wordpress2 ] && rm -rf /var/www/html/wordpress2
+#mv wordpress /var/www/html/wordpress2
+#firefox 10.1.2.213/wordpress2/wp-admin/install.php
+...在打开的浏览器网页中添加必要的信息...
+#mysql --default-character-set=utf8 -uquietheart -p quietheart<quietheart_wp_20110626_137.sql
+这里，对于已经安装过wordpress的我们来说，理解恢复时候每一条命令的含义，已经不是问题了。^_^
+注意：
+latest.tar.gz最好应当是和你要恢复的wordpress的版本一样。
+使用firefox安装之前要确保wp-config.php文件中的数据库名称和刚才导入使用的名称一致（quietheart）。
+另外使用mysql恢复的时候，如果不用"--default-character-set=utf8"选项会出现乱码。
+
+3，测试
+=======================
+通过打开网站，测试恢复的站点:
+#firefox 10.1.2.213/wordpress2
+至此，恢复工作完毕。
+需要注意的问题是：这样的恢复，需要保证你的站点url不变，因为恢复之后的wordpress之中的链接，都是链接跳转到原来的链接网址。如果你的url变化了，那么新恢复站点中链接的跳转就会有问题，这应当属于站点迁移方面的内容了，以后会讲到。
+
+作者：QuietHeart
+Email：quiet_heart000@126.com
+日期：2011年7月14日

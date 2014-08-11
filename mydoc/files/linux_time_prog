@@ -1,0 +1,233 @@
+http://www.cqzol.com/system/Linux/200803/98514.html 
+
+关于Linux下时间编程的问题：
+
+1. Linux下与时间有关的结构体
+
+struct timeval
+
+{
+
+int tv_sec;
+
+int tv_usec;
+
+};
+
+其中tv_sec是由凌晨开始算起的秒数，tv_usec则是微秒(10E-6 second)。
+
+struct timezone
+
+{
+
+int tv_minuteswest;
+
+int tv_dsttime;
+
+};
+
+tv_minuteswest是格林威治时间往西方的时差，tv_dsttime则是时间的修正方式。
+
+struct timespec
+
+{
+
+long int tv_sec;
+
+long int tv_nsec;
+
+};
+
+tv_nsec是nano second(10E-9 second)。
+
+struct tm
+
+{
+
+int tm_sec;
+
+int tm_min;
+
+int tm_hour;
+
+int tm_mday;
+
+int tm_mon;
+
+int tm_year;
+
+int tm_wday;
+
+int tm_yday;
+
+int tm_isdst;
+
+};
+
+tm_sec表「秒」数，在[0,61]之间，多出来的两秒是用来处理跳秒问题用的。
+
+tm_min表「分」数，在[0,59]之间。
+
+tm_hour表「时」数，在[0,23]之间。
+
+tm_mday表「本月第几日」，在[1,31]之间。
+
+tm_mon表「本年第几月」，在[0,11]之间。
+
+tm_year要加1900表示那一年。
+
+tm_wday表「本第几日」，在[0,6]之间。
+
+tm_yday表「本年第几日」，在[0,365]之间，闰年有366日。
+
+tm_isdst表是否为「日光节约时间」。
+
+struct itimerval
+
+{
+
+struct timeval it_interval;
+
+struct timeval it_value;
+
+};
+
+it_interval成员表示间隔计数器的初始值，而it_value成员表示间隔计数器的当前值。
+
+2.获得当前时间
+
+在所有的UNIX下，都有个time()的函数
+
+time_t time(time_t *t);
+
+这个函数会传回从epoch开始计算起的秒数，如果t是non-null，它将会把时间值填入t中。
+
+对某些需要较高精准度的需求，Linux提供了gettimeofday()。
+
+int gettimeofday(struct timeval * tv,struct timezone *tz);
+
+int settimeofday(const struct timeval * tv,const struct timezone *tz);
+
+struct tm格式时间函数
+
+struct tm * gmtime(const time_t * t);
+
+转换成格林威治时间。有时称为GMT或UTC。
+
+struct tm * localtime(const time_t *t);
+
+转换成本地时间。它可以透过修改TZ环境变数来在一台机器中，不同使用者表示不同时间。
+
+time_t mktime(struct tm *tp);
+
+转换tm成为time_t格式，使用本地时间。
+
+tme_t timegm(strut tm *tp);
+
+转换tm成为time_t格式，使用UTC时间。
+
+double difftime(time_t t2,time_t t1);
+
+计算秒差。
+
+3.文字时间格式函数
+
+char * asctime(struct tm *tp);
+
+char * ctime(struct tm *tp);
+
+这两个函数都转换时间格式为标准UNIX时间格式。
+
+Mon May 3 08:23:35 1999
+
+ctime一率使用当地时间，asctime则用tm结构内的timezone资讯来表示。
+
+size_t strftime(char *str,size_t max,char *fmt,struct tm *tp);
+
+strftime有点像sprintf，其格式由fmt来指定。
+
+%a : 本第几天名称，缩写。
+
+%A : 本第几天名称，全称。
+
+%b : 月份名称，缩写。
+
+%B : 月份名称，全称。
+
+%c : 与ctime/asctime格式相同。
+
+%d : 本月第几日名称，由零算起。
+
+%H : 当天第几个小时，24小时制，由零算起。
+
+%I : 当天第几个小时，12小时制，由零算起。
+
+%j : 当年第几天，由零算起。
+
+%m : 当年第几月，由零算起。
+
+%M : 该小时的第几分，由零算起。
+
+%p : AM或PM。
+
+%S : 该分钟的第几秒，由零算起。
+
+%U : 当年第几，由第一个日开始计算。
+
+%W : 当年第几，由第一个一开始计算。
+
+%w : 当第几日，由零算起。
+
+%x : 当地日期。
+
+%X : 当地时间。
+
+%y : 两位数的年份。
+
+%Y : 四位数的年份。
+
+%Z : 时区名称的缩写。
+
+%% : %符号。
+
+char * strptime(char *s,char *fmt,struct tm *tp);
+
+如同scanf一样，解译字串成为tm格式。
+
+%h : 与%b及%B同。
+
+%c : 读取%x及%X格式。
+
+%C : 读取%C格式。
+
+%e : 与%d同。
+
+%D : 读取%m/%d/%y格式。
+
+%k : 与%H同。
+
+%l : 与%I同。
+
+%r : 读取"%I:%M:%S %p"格式。
+
+%R : 读取"%H:%M"格式。
+
+%T : 读取"%H:%M:%S"格式。
+
+%y : 读取两位数年份。
+
+%Y : 读取四位数年份。
+
+下面举一个小例子，说明如何获得系统当前时间：
+
+time_t now;
+
+struct tm *timenow;
+
+char strtemp[255];
+
+time(&now);
+
+timenow = localtime(&now);
+
+printf("recent time is : %s \n", asctime(timenow))

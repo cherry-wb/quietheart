@@ -1,0 +1,14 @@
+程序功能：
+一个简易键盘输入法控件,只能输入A,B,C,D。
+
+文件及功能：
+1)运行程序的主函数:
+main.cpp
+
+2)处理用户输入的(输入法)部分：
+imframe.h
+imframe.cpp
+
+3)接收用户输入的输入控件:
+inputwidget.h
+inputwidget.cpp

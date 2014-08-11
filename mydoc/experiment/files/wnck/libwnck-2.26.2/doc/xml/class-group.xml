@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="WnckClassGroup">
+<refmeta>
+<refentrytitle role="top_of_page" id="WnckClassGroup.top_of_page">WnckClassGroup</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBWNCK Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>WnckClassGroup</refname>
+<refpurpose>an object representing a group of windows of the same
+class.</refpurpose>
+</refnamediv>
+<refsect1 id="WnckClassGroup.stability-level">
+<title>Stability Level</title>
+Unstable, unless otherwise indicated
+</refsect1>
+
+<refsynopsisdiv id="WnckClassGroup.synopsis" role="synopsis">
+<title role="synopsis.title">Synopsis</title>
+
+<synopsis>
+#include &lt;libwnck/libwnck.h&gt;
+
+                    <link linkend="WnckClassGroup-struct">WnckClassGroup</link>;
+<link linkend="WnckClassGroup">WnckClassGroup</link> *    <link linkend="wnck-class-group-get">wnck_class_group_get</link>                (const <link linkend="char">char</link> *res_class);
+const <link linkend="char">char</link> *        <link linkend="wnck-class-group-get-res-class">wnck_class_group_get_res_class</link>      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);
+const <link linkend="char">char</link> *        <link linkend="wnck-class-group-get-name">wnck_class_group_get_name</link>           (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);
+<link linkend="GdkPixbuf">GdkPixbuf</link> *         <link linkend="wnck-class-group-get-icon">wnck_class_group_get_icon</link>           (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);
+<link linkend="GdkPixbuf">GdkPixbuf</link> *         <link linkend="wnck-class-group-get-mini-icon">wnck_class_group_get_mini_icon</link>      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);
+<link linkend="GList">GList</link> *             <link linkend="wnck-class-group-get-windows">wnck_class_group_get_windows</link>        (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);
+</synopsis>
+</refsynopsisdiv>
+<refsect1 id="WnckClassGroup.object-hierarchy" role="object_hierarchy">
+<title role="object_hierarchy.title">Object Hierarchy</title>
+<synopsis>
+  <link linkend="GObject">GObject</link>
+   +----WnckClassGroup
+</synopsis>
+</refsect1>
+<refsect1 id="WnckClassGroup.signals" role="signal_proto">
+<title role="signal_proto.title">Signals</title>
+<synopsis>
+  &quot;<link linkend="WnckClassGroup-icon-changed">icon-changed</link>&quot;                                   : Run Last
+  &quot;<link linkend="WnckClassGroup-name-changed">name-changed</link>&quot;                                   : Run Last
+</synopsis>
+</refsect1>
+
+<refsect1 id="WnckClassGroup.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+The <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> is a group of <link linkend="WnckWindow"><type>WnckWindow</type></link> that are all in the same
+class. It can be used to represent windows by classes, group windows by
+classes or to manipulate all windows of a particular class.
+</para>
+<para>
+The class of a window is defined by the WM_CLASS property of this window.
+More information about the WM_CLASS property is available in the <ulink
+url="http://tronche.com/gui/x/icccm/sec-4.html&num;s-4.1.2.5">WM_CLASS Property</ulink>
+section (section 4.1.2.5) of the <ulink
+url="http://tronche.com/gui/x/icccm/">ICCCM</ulink>.
+</para>
+<para>
+The <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> objects are always owned by libwnck and must not be
+referenced or unreferenced.</para>
+<para>
+</para>
+</refsect1>
+<refsect1 id="WnckClassGroup.details" role="details">
+<title role="details.title">Details</title>
+<refsect2 id="WnckClassGroup-struct" role="struct">
+<title>WnckClassGroup</title>
+<indexterm zone="WnckClassGroup-struct"><primary>WnckClassGroup</primary></indexterm>
+<programlisting>typedef struct _WnckClassGroup WnckClassGroup;</programlisting>
+<para>
+The <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> struct contains only private fields and should not be
+directly accessed.</para>
+<para>
+</para></refsect2>
+<refsect2 id="wnck-class-group-get" role="function" condition="since:2.2">
+<title>wnck_class_group_get ()</title>
+<indexterm zone="wnck-class-group-get" role="2.2"><primary>wnck_class_group_get</primary></indexterm>
+<programlisting><link linkend="WnckClassGroup">WnckClassGroup</link> *    wnck_class_group_get                (const <link linkend="char">char</link> *res_class);</programlisting>
+<para>
+Gets the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> corresponding to <parameter>res_class</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>res_class</parameter>&#160;:</term>
+<listitem><simpara> name of the sought resource class.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> corresponding to <parameter>res_class</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if
+there is no <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> with the specified <parameter>res_class</parameter>. The returned
+<link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-class-group-get-res-class" role="function" condition="since:2.2">
+<title>wnck_class_group_get_res_class ()</title>
+<indexterm zone="wnck-class-group-get-res-class" role="2.2"><primary>wnck_class_group_get_res_class</primary></indexterm>
+<programlisting>const <link linkend="char">char</link> *        wnck_class_group_get_res_class      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);</programlisting>
+<para>
+Gets the resource class name for <parameter>class_group</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the resource class name of <parameter>class_group</parameter>, or an
+empty string if the group has no resource class name.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-class-group-get-name" role="function" condition="since:2.2">
+<title>wnck_class_group_get_name ()</title>
+<indexterm zone="wnck-class-group-get-name" role="2.2"><primary>wnck_class_group_get_name</primary></indexterm>
+<programlisting>const <link linkend="char">char</link> *        wnck_class_group_get_name           (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);</programlisting>
+<para>
+Gets an human-readable name for <parameter>class_group</parameter>. Since there is no way to
+properly find this name, a suboptimal heuristic is used to find it. The name
+is the name of all <link linkend="WnckApplication"><type>WnckApplication</type></link> for each <link linkend="WnckWindow"><type>WnckWindow</type></link> in <parameter>class_group</parameter> if
+they all have the same name. If all <link linkend="WnckApplication"><type>WnckApplication</type></link> don't have the same
+name, the name is the name of all <link linkend="WnckWindow"><type>WnckWindow</type></link> in <parameter>class_group</parameter> if they all
+have the same name. If all <link linkend="WnckWindow"><type>WnckWindow</type></link> don't have the same name, the
+resource class name is used.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> an human-readable name for <parameter>class_group</parameter>.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-class-group-get-icon" role="function" condition="since:2.2">
+<title>wnck_class_group_get_icon ()</title>
+<indexterm zone="wnck-class-group-get-icon" role="2.2"><primary>wnck_class_group_get_icon</primary></indexterm>
+<programlisting><link linkend="GdkPixbuf">GdkPixbuf</link> *         wnck_class_group_get_icon           (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);</programlisting>
+<para>
+Gets the icon to be used for <parameter>class_group</parameter>. Since there is no way to
+properly find the icon, a suboptimal heuristic is used to find it. The icon
+is the first icon found by looking at all the <link linkend="WnckApplication"><type>WnckApplication</type></link> for each
+<link linkend="WnckWindow"><type>WnckWindow</type></link> in <parameter>class_group</parameter>, then at all the <link linkend="WnckWindow"><type>WnckWindow</type></link> in <parameter>class_group</parameter>. If
+no icon was found, a fallback icon is used.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the icon for <parameter>class_group</parameter>. The caller should reference the
+returned <classname>GdkPixbuf</classname> if it needs to keep the icon
+around.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-class-group-get-mini-icon" role="function" condition="since:2.2">
+<title>wnck_class_group_get_mini_icon ()</title>
+<indexterm zone="wnck-class-group-get-mini-icon" role="2.2"><primary>wnck_class_group_get_mini_icon</primary></indexterm>
+<programlisting><link linkend="GdkPixbuf">GdkPixbuf</link> *         wnck_class_group_get_mini_icon      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);</programlisting>
+<para>
+Gets the mini-icon to be used for <parameter>class_group</parameter>. Since there is no way to
+properly find the mini-icon, the same suboptimal heuristic as the one for
+<link linkend="wnck-class-group-get-icon"><function>wnck_class_group_get_icon()</function></link> is used to find it.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the mini-icon for <parameter>class_group</parameter>. The caller should reference
+the returned <classname>GdkPixbuf</classname> if it needs to keep the
+mini-icon around.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-class-group-get-windows" role="function" condition="since:2.2">
+<title>wnck_class_group_get_windows ()</title>
+<indexterm zone="wnck-class-group-get-windows" role="2.2"><primary>wnck_class_group_get_windows</primary></indexterm>
+<programlisting><link linkend="GList">GList</link> *             wnck_class_group_get_windows        (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group);</programlisting>
+<para>
+Gets the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> that are grouped in <parameter>class_group</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> grouped in <parameter>class_group</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if
+the group contains no window. The list should not be modified nor freed, as
+it is owned by <parameter>class_group</parameter>.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+
+</refsect1>
+<refsect1 id="WnckClassGroup.signal-details" role="signals">
+<title role="signals.title">Signal Details</title>
+<refsect2 id="WnckClassGroup-icon-changed" role="signal"><title>The <literal>&quot;icon-changed&quot;</literal> signal</title>
+<indexterm zone="WnckClassGroup-icon-changed"><primary>WnckClassGroup::icon-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group,
+                                                        <link linkend="gpointer">gpointer</link>        user_data)        : Run Last</programlisting>
+<para>
+Emitted when the icon of <parameter>class_group</parameter> changes.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckClassGroup-name-changed" role="signal"><title>The <literal>&quot;name-changed&quot;</literal> signal</title>
+<indexterm zone="WnckClassGroup-name-changed"><primary>WnckClassGroup::name-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckClassGroup">WnckClassGroup</link> *class_group,
+                                                        <link linkend="gpointer">gpointer</link>        user_data)        : Run Last</programlisting>
+<para>
+Emitted when the name of <parameter>class_group</parameter> changes.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+</refsect1>
+<refsect1 id="WnckClassGroup.see-also">
+<title>See Also</title>
+<link linkend="wnck-window-get-class-group"><function>wnck_window_get_class_group()</function></link>
+</refsect1>
+
+</refentry>

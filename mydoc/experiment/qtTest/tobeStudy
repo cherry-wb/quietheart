@@ -1,0 +1,95 @@
+主要内容：
+*一些类
+*一些功能
+*一些函数
+*其他
+
+*一些类
+================
+QDialog(ok)
+QScrollArea(ok)
+grid(ok)
+QDir(ok)
+QSplitter(ok) 
+QWidgetAction(其中有一个setDefaultWidget)
+QMainWindow(其中有一个setCentralWidget)
+QByteArray
+
+align center
+groupbox
+TreeView
+toolButton(..
+Table(ok)
+viewport
+String的arg参数
+QSetting(..
+QVariant
+QSizePolicy
+QSharedDataPointer
+QDataStream
+QGraphicsView
+QGraphicsScene
+QSet
+QDebug(ok)
+*QRegion
+*QMutex(ok)
+QMutexLocker
+QWaitCondition(ok)
+QSemaphore
+QMap
+QScreen
+QPair
+QXmlStreamReader(ok)
+QCopChannel(ok)
+QSystemTrayIcon
+QImage(ok)
+QAbstractItemDelegate
+QFont
+
+*一些功能
+================
+旋转和缩放的绘制
+事件：
+鼠标经过
+鼠标进入
+鼠标位置
+
+窗口属性：
+边框
+透明度(ok)
+设置背景颜色(ok)
+设置资源文件之类的UI风格相关.qrc文件
+类的属性包括动态添加的部分
+.qrc文件
+doc.qt.nokia.com/4.5/resources.html#resource-system
+
+Q_ASSERT_X((okLeft && okTop), "Platform Desktop",
+ "Error in HomeDesktop.conf, check `left` and `top`!");
+{qWarning()<<"Platform Desktop :"<<gpname<<"entry is empty!";}
+
+*一些函数
+================
+setFocusProxy
+raise
+void installEventFilter ( QObject * filterObj )(ok)
+virtual bool eventFilter ( QObject * watched, QEvent * event )(ok)
+
+void clickedSlot()
+{
+	//在处理按钮压下的槽里面获得发送clicked信号的按钮对象。
+QPushButton *sendButton = qobject_cast<QPushButton *>(sender());
+setRotation(sendButton->objectName().remove("rot").toInt());
+
+}
+
+addStretch
+*其他
+================
+1这些是什么意思？
+QT_BEGIN_HEADER
+QT_BEGIN_NAMESPACE
+QT_MODULE(Gui)
+...
+QT_END_NAMESPACE
+QT_END_HEADER
+http://qt.nokia.com/doc/4.5/resources.html

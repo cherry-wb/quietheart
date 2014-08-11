@@ -1,0 +1,16 @@
+here are some features we should consider in the near future.
+*
+* need create a context object which will be shared between different scenarios.
+* let cisco AP scenarios be the common scenarios. 
+* refact Database table structures.
+* test results report.
+* add job machenism
+* add random test case.
+* DUT cases.
+* extend AP.
+* refact AP OO design by using zope interface machenism.
+* add package setup machenism.
+* add Makefile for this project.
+* test farm deploy.
+* 
+

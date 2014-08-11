@@ -1,0 +1,146 @@
+FROM 吕凯
+TO 周磊
+CC ALL
+周磊，
+下面是release的大致过程，
+每次release大致就是这个过程，
+今天我只进行到第四步，后面的你仔细看看。
+以后主要由你来进行release了。
+
+2010年10月28日
+
+Release过程大致如下：
+
+================================================
+一、发送封代码时间的通知
+================================================
+这里，发送通知大家何时封代码，时间可以更早一些。
+发送邮件，大致如下：
+
+<quote>
+收件人: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release通知
+
+To All：
+     
+       封代码的时间定为今天(10月28日)上午10:00，请大家务必在此时之前更
+       新好代码库（必须保证自我验证通过，实机验证通过）,10:00之后开始取
+代
+       码，期间不能不能再向svn上提交代码，请大家一定要把握好时间。
+        
+       希望大家积极配合，如有问题请及时与我或周磊联系。
+        
+       本次release担当: lv-k     
+       2010年10月28日
+</quote>
+
+
+================================================
+二、发送封代码的通知
+================================================
+这里，在全编译之前，先把svn代码封住，这样在release结束并通知解封代码之前，开发人员不能提交代码。如需提交，需和release及相关人员联系说明情况。
+发送邮件，大致如下：
+<quote>
+收件人: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release封代码的通知
+
+To All:
+各位担当请注意，pfx_sony_v0.0.1 封代码现在开始。
+现在代码冻结，权限已经冻结，如有问题请联系release担当.
+ 
+本次release担当:lv-k 
+2010年10月28日 
+</quote>
+
+
+================================================
+三、发送全编译的通知
+================================================
+这里，以便通知各位现在的release处于编译阶段。
+发送邮件，大致如下：
+<quote>
+收件人: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release代码全编译通知
+
+To All， 
+各位担当请注意，pfx_sony_v0.0.1现在开始编译。
+svn地址(URL)：
+http://10.1.29.125/svn/sony/trunk/Source/Rootfs/diablo/diabloMainCpu/
+svn修订版：95
+ 
+本次release担当: lv-k 
+2010年10月28日
+</quote>
+
+
+================================================
+四、发送编译结束的通知
+================================================
+这里，以便通知各位现在的release处于编译阶段。
+需要注意：
+1)测试人员可以对编译好的二进制文件进行测试。
+2)如果测试出现问题，会对当前版本进行修改，
+3)然后把修改好的二进制文件放到指定位置，再发送全员邮件通知，测试人员继续测试.
+1)-3)过程重复直到测试没有问题，本次release结束。
+
+发送邮件，大致如下：
+<quote>
+收件人: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release代码全编译结束通知
+
+To All，
+ 各位担当请注意，pfx_sony_v0.0.1全编译结束。
+svn地址(URL)：
+http://10.1.29.125/svn/sony/trunk/Source/Rootfs/diablo/diabloMainCpu/
+svn修订版：95
+编译好的二进制文件放在：
+smb://10.1.29.125/SonyFS/Development/Release/V0_0_1/rom1/pfx_sony_v0.0.1rom1.tar.gz
+ 
+本次release担当: lv-k 
+2010年10月28日
+</quote>
+
+
+================================================
+五、发送release结束的通知
+================================================
+release结束之后，release担当发送通知，同时在svn上面为本次最终release的svn代码版本打上tag，以便以后使用。
+注意，tags路径的代码只有release人员可写，开发人员只读。
+
+发送邮件，大致如下：
+<quote>
+收件人: 	tianye <tianye@neusoft.com>
+抄送: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release结束通知
+
+To PL，
+CC All
+ 各位担当请注意，pfx_sony_v0.0.1 release结束。
+svn地址(URL)：
+http://10.1.29.125/svn/sony/trunk/Source/Rootfs/diablo/diabloMainCpu/
+svn修订版：95
+release好的二进制文件放在：
+smb://10.1.29.125/SonyFS/Development/Release/V0_0_1/rom1/pfx_sony_v0.0.1rom1.tar.gz
+本次release好的svn tag路径是：
+http://10.1.29.125/svn/sony/tags/***
+ 
+本次release担当: lv-k
+ 2010年10月28日
+</quote>
+
+================================================
+六、发送解封代码的通知
+================================================
+这里，确认release结束之后，release担当解代码，开发人员可以正常开发提交代码了，同时release可以发送下次计划release得时间。
+发送邮件，大致如下：
+<quote>
+收件人: 	pfx_sony_es@neusoft.com
+主题: 	[Sony]pfx_sony_v0.0.1 release解封代码的通知
+
+To All:
+各位担当请注意，pfx_sony_v0.0.1 代码已经解封。
+下次release时间计划为2010年11月4日，如有问题请联系release担当.
+ 
+本次release担当:lv-k
+2010年10月28日
+</quote>

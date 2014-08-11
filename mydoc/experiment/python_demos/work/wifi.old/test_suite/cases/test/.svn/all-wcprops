@@ -1,0 +1,89 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/cases/test
+END
+00_ap_set_dhcp.json
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/cases/test/00_ap_set_dhcp.json
+END
+00_ap_set_wireless_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_wireless_mode.json
+END
+00_ap_set_SSID.json
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_SSID.json
+END
+00_ap_set_SSID_Broadcast.json
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_SSID_Broadcast.json
+END
+00_ap_set_DNS.json
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_DNS.json
+END
+00_ap_reset_Route.json
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/amazon/!svn/ver/1333/Management/wifi/test_suite/cases/test/00_ap_reset_Route.json
+END
+00_ap_set_transmissionRate.json
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_transmissionRate.json
+END
+00_ap_set_keyRenewal.json
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_keyRenewal.json
+END
+00_ap_set_ChannelWidth.json
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_ChannelWidth.json
+END
+00_ap_set_radio_off.json
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_radio_off.json
+END
+00_ap_set_channel.json
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_channel.json
+END
+00_ap_set_Algorithms.json
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_Algorithms.json
+END
+00_ap_set_passphrase.json
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_passphrase.json
+END
+00_ap_set_security_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/cases/test/00_ap_set_security_mode.json
+END

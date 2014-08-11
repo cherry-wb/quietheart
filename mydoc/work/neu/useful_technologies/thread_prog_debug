@@ -1,0 +1,42 @@
+作者：赵惠鹏
+
+本文通过例举作者曾经遭遇的Bug，向读者解释线程终止方面的一些知识。
+
+多线程编程是一项危险的工作。即使看上去非常简单的代码，如果不深究其中奥义，仍然可能错漏百出。
+本文通过例举作者曾经遭遇的Bug，向读者解释线程终止方面的一些知识。
+
+我曾经在多线程编程时遇到这样的Bug：
+程序在运行一段时间之后发生异常，而且是不稳定的异常。用了各种方法最后确定是分配新线程失败。而我恰好没有在开辟新线程的代码中使用断言。
+本以为创建线程只有几行代码，照书写，怎么可能出错。但结果还是出乎预料。仔细查看文档，才知道真实的代码并不像书上的例子写的那么简单。分配线程失败的原因，是因为我想当然地认为线程正常return之后便被释放。但实际情况是，一个默认属性的线程，即使终止之后，也会一直保持到对该线程调用 pthread_join()或pthread_detach()函数。因为默认属性的线程认为结束后的返回值是有价值的，因此等待着 pthread_join()来取得其返回值。结果我忽略了这一点，造成结束后的线程大量堆积，直至系统默认的每进程最大分配线程数，然后导致线程分配失败。
+
+解决办法至少有两个：
+一是显式调用pthread_join()或pthread_detach()函数；
+二是设置线程属性：
+
+pthread_t tid;
+pthread_attr_t attr;
+assert( 0==pthread_attr_init(&attr) );
+assert( 0==pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED ) );
+assert( 0==pthread_create( &tid, &attr, func, arg ) );
+
+PTHREAD_CREATE_DETACHED 意味着这个线程被创建时就是“分离”状态，一旦自然终止即被自动释放，不可通过pthread_join()函数得到返回值，通常被用于创建不关心返回值的线程。
+
+
+顺便再提另外一个跟多线程编程有关的话题，就是pthread的mutex。再查阅线程属性的同时，不小心发现mutex可以设置检查死锁的属性：
+
+pthread_mutexattr_t    mattr;
+pthread_mutex_t        mutex;
+assert( 0==pthread_mutexattr_init( &mattr ) );
+assert( 0==pthread_mutexattr_settype( &mattr, PTHREAD_MUTEX_ERRORCHECK) );
+assert( 0==pthread_mutex_init( &mutex, &mattr ) );
+
+不过这个errorcheck属性也只能检查自己的死锁，即自己被连续加锁两次的情况。多mutex复杂死锁还是得真人纠错~~。
+
+多线程程序的debug非常困难，仅仅依靠打印Log是不好用的，因为Log本身也不一定是线程安全的。
+我们可以借助valgrind这个运行时诊断工具，它的 --tool=helgrind 参数可以在程序运行时检查所有多线程竞合资源。
+参考helgrind检查结果修改多线程逻辑，可以使多线程更加安全稳定，也可以让锁加得更少更有针对性。
+但是valgrind将使被检查的程序执行得异常缓慢（甚至Freeze！毕竟它要记录大量运行时的状态数据），因此在运算能力较差的嵌入式平台要想使用valgrind工具，可能暂时还只是一种奢望。
+
+另外，良好的编程习惯有助于缩短debug的时间。在上述案例中，如果我能够在系统调用处追加断言，将大大缩短定位错误代码的时间。
+这个案例告诉我们，不管代码看上去多么的正确，只要涉及到系统调用，该断言的就得断言。
+系统调用通常不会打印任何Log，即使出现了异常情况也是如此。所以它的返回值几乎是唯一能够诊断运行时状态的参考依据，如果我们轻易将它放过，主观地认为 malloc、pthread_create、open...不会失败（虽然大部分时间它们可能都会成功），那么将来为此付出的代价可能是巨大的。

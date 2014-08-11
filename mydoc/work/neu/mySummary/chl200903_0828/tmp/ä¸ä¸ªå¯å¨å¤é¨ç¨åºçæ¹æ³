@@ -1,0 +1,39 @@
+//20090416
+通过阅读源代码，我发现，hildon-desktop中启动外部程序的地方在：
+.../src/hd-applications-menu.c文件中的hd_applications_menu_activate_app函数中。
+这个函数调用外部程序是用： 
+g_spawn_async调用的（可以通过搜索得到）。
+因此，想要自己的程序可以在hildon-desktop中调用其他的程序，可以安照如下方法编写代码：
+假设点击一个按钮，来运行外部的程序/usr/bin/my_maemo_hello
+只需添加如下的回调函数：
+
+
+ gboolean my_button_pressed(GtkWidget *widget, GdkEventButton event, gpointer data)                          
+ {                                                                                                         
+      g_print("my button pressed\n");                                                                        
+      GPid child_pid;                                                                                        
+      GError *error = NULL;                                                                                  
+      gchar *argv[1] = {"my_maemo_hello"};                                                                   
+                                                         
+      g_spawn_async (                                                                                        
+              /* Child's current working directory,                                                          
+                 or NULL to inherit parent's */                                                              
+              "/usr/bin",                                                                                    
+            /* Child's argument vector. [0] is the path of                                                 
+                the program to execute */                                                                   
+             argv,                                                                                          
+             /* Child's environment, or NULL to inherit                                                     
+                parent's */                                                                                 
+             NULL,                                                                                          
+             /* Flags from GSpawnFlags */                                                                   
+                        0,                                                                                            
+             /* Function to run in the child just before                                                    
+                exec() */                                                                                   
+             NULL,                                                                                          
+             /* User data for child_setup */                                                                
+             NULL,                                                                                          
+             /* Return location for child process ID or NULL */                                             
+             &child_pid,                                                                                    
+             /* Return location for error */                                                                
+             &error);/*lkcomment异步执行子程序*/                                                            
+ }    

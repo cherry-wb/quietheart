@@ -1,0 +1,40 @@
+http://www.linuxidc.com/Linux/2012-01/50826.htm
+Android 使用Wake Lock
+为了延长电池的使用寿命，Android设备会在一段时间后使屏幕变暗，然后关闭屏幕显示，最后停止CPU。WakeLock是一个电源管理系统服务功能，应用程序可以使用它来控制设备的电源状态。
+WakeLock可以用来保持CPU运行，避免屏幕变暗和关闭，以及避免键盘背光灯熄灭。
+
+注意：
+
+创建和使用Wake Lock会对应用程序造成的电池电量消耗产生显著的影响。因此，最好只在
+
+确实有必要时使用Wake Lock，并且使用它们的时间越少越好，只要有可 能就释放它们。
+
+屏幕Wake Lock通常用于在用户观看屏幕但是很少与屏幕进行交互期间（例如，播放视频）防止屏幕变暗。
+
+CPU Wake Lock用于防止设备进入休眠状态，直至执行了一个操作。当服务从意图接收器内启动时常常出现这种情况，因为意图接收器可能在设备休眠期间接收意图。值得注意的是，在这种情况下，系统将在广播接收器的整个onReceive处理程序中使用CPU Wake Lock。
+
+注意：
+
+如果在广播接收器的onReceive处理程序中启动一个服务或广播一个意图，那么有可能在服务
+
+启动以前，所使用的Wake Lock就会被释放。为了确保服务能够执行，需要放置一个独立的Wake Lock。
+
+        要创建一个Wake Lock，需要调用电源管理器的newWakeLock，并指定一下一种WakeLock类型:
+
+        *  FULL_WAKE_LOCK    保持屏幕全亮、键盘背光灯点亮和CPU运行。
+
+        *  SCREEN_BRIGHT_WAKE_LOCK   保持屏幕全亮和CPU运行。
+
+        *  SCREEN_DIM_WAKE_LOCK   保持屏幕开启（但是让它变暗）和CPU运行。
+
+        *  PARTIAL_WAKE_LOCK   保持CPU运行。
+
+PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);  
+WakeLock wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");  
+        创建Wake Lock后，可以通过调用acquire来获取它。可以有选择地指定一个超时值来确保将在尽可能长的时间内保持使用Wake Lock。当为某个动作使用Wake Lock，而该动作做完成时，需要调用release来让系统管理电源状态。 下面程序显示了创建、获取和释放Wake Lock的一个典型的使用模式。
+
+PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);  
+WakeLock wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");  
+wakeLock.acquire();  
+/** Do things requiring the CPU stay active */  
+wakeLock.release();  

@@ -1,0 +1,90 @@
+#include<gtk/gtk.h>
+static GtkWidget *build_wifi_list(gint c);
+
+static GtkWidget *build_wifi_list(gint c)
+{
+	GtkWidget *gtk_list;
+	GList *items;
+	GList *copy;
+	GtkWidget *listitem;
+	GSList *group;
+	GtkWidget *radio;
+
+	gint i;
+	
+	//must initialize here for first use!
+	items = NULL;
+	copy = NULL;
+	group = NULL;
+
+	/*gtklist*/
+	gtk_list = gtk_list_new();
+
+	for(i = 0; i < c; ++i)
+	{
+		if(i > 0)
+		{
+			group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
+		}
+		listitem = gtk_list_item_new();
+		items = g_list_append(items, listitem);
+		radio = gtk_radio_button_new_with_label(group, "second");
+		gtk_container_add(GTK_CONTAINER(listitem), radio);
+		gtk_widget_show_all(listitem);
+	}
+	copy = g_list_copy(items);
+	g_list_free(items);
+	items = NULL;
+	gtk_list_append_items(GTK_LIST(gtk_list), copy);
+	return gtk_list;
+}
+gint main(gint argc, gchar *argv[])
+{
+
+	GtkWidget *window;
+	GtkWidget *vbox;
+
+	GtkWidget *gtk_list;
+
+	GtkWidget *hbox;
+	GtkWidget *button;
+
+	gtk_init(&argc, &argv);
+
+	/*window*/
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	g_signal_connect(G_OBJECT(window), "destroy",
+			G_CALLBACK(gtk_main_quit), NULL);
+	gtk_window_set_title(GTK_WINDOW(window), "test radio");
+
+	/*vbox*/
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(window), vbox);
+
+	/*gtklist*/
+	gtk_list = build_wifi_list(3);
+
+	gtk_box_pack_start(GTK_BOX(vbox), gtk_list, FALSE, FALSE, 0);
+
+	/*hbox*/
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+	/*button*/
+	button = gtk_button_new_with_label("scan");
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_label("connect");
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_label("ok");
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_label("cancel");
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+	gtk_widget_show_all(window);
+	gtk_main();
+
+	return 0;
+}

@@ -1,0 +1,38 @@
+1,BUILD:
+$make
+Note: You can modify the "Makefile" to specify proper build tools.(e.g."gcc")
+
+2,FUNCTION:
+NAME
+flashup - test the read and write of the driver.
+
+SYNOPSIS
+flashup Option... FILE...
+
+DESCRIPTION
+This program used to test the read and write of our own device driver in linux environment. Or normal file.
+
+*Read: It can read from specified offset of one file, with specified length, and write the read data into another file.
+*Write: It can read from one file, and write specified length of read data to specified offset of another file.
+
+EXAMPLES:
+This list the use example of this program.
+(1) write the file:
+$flashup -w -s 100 -l 200 srcfile desfile
+This will write the file "srcfile" to the specified offset of file "desfile". i.e. write the content of "srcfile" to the 100th byte of "desfile", with the content length of 200 bytes.
+
+
+(2) read the file:
+$flashup -r -s 100 -l 200 srcfile desfile
+This will read from specified offset of the file "srcfile" to "desfile". i.e. read from the 100th byte of srcfile and write it to desfile, with the length of 200 bytes.
+
+TESTS:
+This shows the way of test some char device driver:
+(1) write to device:
+$flashup -w -s 100 -l 200 inputdatafile /dev/mydevice
+
+(2) read from device:
+$flashup -r -s 100 -l 200 /dev/mydevice outputdatafile
+
+BUGS
+If there is any bug , please report to: <quiet_heart000@126.com>

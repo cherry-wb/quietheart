@@ -1,0 +1,4 @@
+shutdown -t 54000
+15小时后自动关
+
+sudo shutdown -P 13:30 

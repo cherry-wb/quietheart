@@ -1,0 +1,94 @@
+主要参考：
+http://www.ibm.com/developerworks/cn/linux/l-cn-chroot/
+http://baike.baidu.com/view/2977396.htm?fr=ala0
+
+chroot [--help][--version][目的目录][执行指令...]
+[功能]
+把根目录换成指定的目的目录.
+
+[描述]
+‘chroot’使用一个指定的根目录运行命令，在大多数系统上，仅限于超级用户可以做这个动作。
+通常情况下，搜索文件名开始于根目录结构。比如‘/’。‘chroot’命令可以更改根路径到新的指定的路径。
+使用chroot，实现了如下等功能：
+1).增加了系统的安全性，限制了用户的权力；
+在经过 chroot 之后，在新根下将访问不到旧系统的根目录结构和文件，这样就增强了系统的安全性。这个一般是在登录 (login) 前使用 chroot，以此达到用户不能访问一些特定的文件。
+2).建立一个与原系统隔离的系统目录结构，方便用户的开发；
+使用 chroot 后，系统读取的是新根下的目录和文件，这是一个与原系统根下文件不相关的目录结构。在这个新的环境中，可以用来测试软件的静态编译以及一些与系统不相关的独立开发。
+3).切换系统的根目录位置，引导 Linux 系统启动以及急救系统等。
+chroot 的作用就是切换系统的根位置，而这个作用最为明显的是在系统初始引导磁盘的处理过程中使用，从初始 RAM 磁盘 (initrd) 切换系统的根位置并执行真正的 init。另外，当系统出现一些问题时，我们也可以使用 chroot 来切换到一个临时的系统。
+
+
+[举例]
+*将target作为根目录(运行其中的bin/sh):
+#chroot target /bin/sh
+这里,target是busybox安装好的路径，类似一个文件系统包含了许多工具。这样，将会进入一个shell界面，这个shell以target为根。运行"exit"退出该shell又返回原来的本机环境了,输入[Ctrl]d也行。
+注意，1)根用户才行2)如果直接chroot target默认寻找target的/bin/bash.这会以target作为根目录。
+
+*将target作为根目录(运行其中的bin/ls):
+#chroot target /bin/ls
+这里,target是busybox安装好的路径，类似一个文件系统包含了许多工具。这样运行的是target中的ls(不是本机的/bin/ls),然后返回立即本机的目录环境。
+注意，自己在本地编译一个程序生成a.out之后，拷进target/bin/中这样运行却不行,因为它包含了动态连接的库，需要用ldd查看a.out需要那些动态库，将这些库拷贝到新根的对应路径下才能执行。
+
+*用chroot运行自己编译的一个程序：
+步骤如下：
+1）准备chroot的根目录：
+$mkdir newRoot
+2) 编译自己的程序：
+$gcc main.c
+这里,main.c生成a.out，功能是输出hello.
+3)查看程序需要的库：
+$ldd a.out
+输入之后，输出如下：
+	linux-gate.so.1 =>  (0xb8034000)
+	libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0xb7eab000)
+	/lib/ld-linux.so.2 (0xb801a000)
+4)将程序需要的库和程序拷贝到新根目录下：
+$cp a.out newRoot
+$mkdir newRoot/lib
+$cp /lib/tls/i686/cmov/libc.so.6 newRoot/lib
+$cp /lib/ld-linux.so.2 newRoot/lib
+这里newRoot内容将如下：
+a.out lib/
+5)使用chroot运行自己的程序：
+$su
+#chroot newRoot /a.out
+这样,就能够正确运行a.out了,因为a.out使用到了其他的动态连接库，所以需要将库拷贝到newRoot中，如果没有其他库那么直接拷贝a.out就能运行.例如静态编译后的busybox,其安装目录中的/bin/busybox就没有依赖其他库。
+
+
+[其他]
+*尝试使用chroot运行安装好的busybox时遇到的问题与解决：
+步骤如下：
+1)首先编译安装好bushbox：
+$make O=/home/quietheart/lvkTmp/busyboxSrc/build/ defconfig
+$cd ../build
+$make
+$make CONFIG_PREFIX=../target install
+这样生成了target，里面有以下目录：
+bin  linuxrc  sbin  usr
+
+2)运行chroot
+$cd ../target
+$su
+#chroot .
+运行之后，提示：
+chroot: cannot run command `/bin/bash': No such file or directory
+显然chroot没有运行成功。
+
+3)再次尝试运行chroot
+#chroot . /bin/sh
+运行之后，提示：
+chroot: cannot run command `/bin/sh': No such file or directory
+但是busy的bin下面是有这个文件的。
+后来查找原因发现，应该在编译busybox的时候配置一下：
+$make menuconfig
+将里面的 CONFIG_BUSYBOX_EXEC_PATH
+配置成busybox的路径：/bin/bushbox
+配置位置在:
+-> Busybox Settings 
+   -> General Configuration
+    Path to BusyBox executable
+不这样配置就无法运行standalone的busybox,官方文档也这么说的.
+
+*如何将本地的一个程序添加到chroot的目录并正确运行：
+	避免在chroot中使用公用程序。最好让命令指向一个二进制静态链接。如果你执行一个动态链接执行档，那么你必须在你的新root目录下整理共享库到合适的目录。
+	如果你想使用程序是动态链接执行的，那么首先运行‘ldd bash’，看看需要哪一些共享对象。然后除了复制实际的二进制文件，也复制共享文件列表到你指定的新root目录的对应路径下。最后，如果执行档要求其他一些文档，也把这些文档复制到正确的地方。

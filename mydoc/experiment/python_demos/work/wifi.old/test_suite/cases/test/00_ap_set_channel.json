@@ -1,0 +1,40 @@
+{
+    "name":"ap_set_channel",
+    "type":{"name":"seq"},
+    "ap":[
+                {"model":    "ap:cisco:e3000",           "mac":    "68:7F:74:C5:CA:82" },
+                {"model":    "ap:cisco:wrt54gl",         "mac":    "58:6D:8F:CA:AE:37" },
+                {"model":    "ap:cisco:e3200",           "mac":    "58:6D:8F:5A:6F:F8" },
+                {"model":    "ap:dlink:dir655",          "mac":    "84:c9:b2:4c:3b:88" },
+                {"model":    "ap:cisco:wrt160n",         "mac":    "68:7F:74:19:DF:E7" },
+                {"model":    "ap:netgear:wndr3700v3",    "mac":    "74:44:01:51:E7:C7" }
+         ],
+    "description":"set ap channel.",
+    "scenarios":
+        [
+            {
+                "login":{
+                             "catagory":"ap",
+                             "fname":"scenario_login.json", 
+                             "type":{"name":"seq"}
+                        }
+            },
+            {
+                "set_channel":{
+                                   "catagory":"ap",
+                                   "fname":"scenario_set_channel.json", 
+                                   "type":{"name":"seq"}, 
+                                   "parameter":{
+                                                   "channel":{"5G":"48","2G":"3"}
+                                               }
+                              }
+            },
+            {
+                "logout":{
+                              "catagory":"ap",
+                              "fname":"scenario_logout.json", 
+                              "type":{"name":"seq"}
+                         }
+            }
+        ]
+}

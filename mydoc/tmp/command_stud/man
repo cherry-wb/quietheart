@@ -1,0 +1,6 @@
+
+*查看signal的相关手册：
+man -k signal
+man signal
+man 2 signal
+

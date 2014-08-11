@@ -1,0 +1,271 @@
+1. Git
+1.1 Some definition:
+	git repo:
+	working tree:
+	branch:
+	upstream:
+	tags:
+	repo url:
+	object:
+	commit:
+
+1.2 Normal process:
+	# git clone <url>
+	# git checkout -b <local_branch_name> <remote_branch_name>
+	# ( Modify )
+	# git add <modified_files>
+	# git commit 
+	# git push
+
+1.3 Git command:
+	git clone <repo_url> <local_path>: Clone a remote git repo to local.
+		--branch, -b: checkout the branch instead of the default branch ( the one in HEAD ).
+	git checkout <start_point>: Checkout a branch to working tree.
+		--branch, -b: the new branch name
+		<start_point>: the start point the new branch start.
+	git branch
+	git branch <branchname> <start-point>: Show branch information or create branch.
+		-l: list all branch, default only list local branch, to list all branch, add `-a` option.
+		-a: all branches include remote branch.
+		-d: Delete a merged branch.
+		-D: Delete a branch.
+		<branchname>: the name of the new branch.
+		<start-point>: start point of the new branch.
+	git config <key> <value> ...: Config the git repo settings.
+		--global: set the setting for all project.
+		Everyone should set your name and email to global setting before using git.
+		e.g. git config --global user.name "Your Name" user.email "Your Email"
+		Note: The global configuration is saved in ~/.gitconfig, the configuration file for each project is stored in .git/config
+	git add <files>: Add modified files to cache, these files will be check-in when commit.
+		Note: add do not only mean adding files, it is also needed when modifying files.
+	git rm <files>: Remove files from the repo.
+		Note: the file is note removed until commit the change.
+	git mv: Move or rename names.
+		Note: Do not use copy and delete when rename files.
+	git reset: Revert changed in current working tree
+		Normal usage: git reset --hard
+	git commit: Commit all changes that added to the cache or removed files.
+		-a: this option will pick all the modified files in to the commit.
+		-m: the message for the commit.
+		--amend: can be used to modify last commit's comment.
+		Note: Please provide message for commit.
+			The first line is the summary of the commit and one blank line followed.
+			The detail information for the commit.
+			If you are using vim as the default editor, you will see different color for the summary and detail.
+	git status: This command will show the changes in current working tree.
+	git log <rev>: show history
+		--oneline: print the log one line per commit
+		--graph: show a graph history.
+		<rev>: reversion have a lot of format
+	git diff: show changes that not cached in current working tree.
+		--cached: this will show cached diff instead of diff between working tree.
+	git push <remote> <local_branch>:<remote_branch> : push some commit to remote repo
+		Note: if <remote_branch> missing, commits will be pushed <local_branch> to its upstream branch
+		      If <local_branch> missing, commits in current branch will be pushed.
+	git pull: almost the same as `git push`, instead the direction is opposite.
+		Note: if there are new commit when pulling, it may be automatically merged. otherwise, conflict occurred.
+	git show: show the detail info of an object
+	git merge: merge between branches.
+	git init: init a git repo in current folder.
+	git rebase: It can be used to squash commits.
+
+	Detail usage can be found using `git <command> --help` or `man git-<command>`
+
+2.1 Gerrit
+	Gerrit is a code review tools highly integrated with git.
+	Internal: 	http://10.1.10.100/gerrit
+	Amazon: 	http://gerrit.labcollab.net	for otter
+			http://gerrit2.labcollab.net	for bowser
+	The version of our internal gerrit is 2.2.1, and Amazon use 2.1.6.1.
+2.2 Account
+	Our internal Gerrit use Neusoft LDAP server, so login using your Neusoft account.
+	Amazon's Gerrit use OpenID, I think we should register an OpenID using our neusoft email. (to be discussed with Amazon)
+
+2.3 SSH
+	Gerrit using ssh to clone git project. so ssh public key is needed.
+
+2.3.1 SSH port
+	The ssh port for our internal gerrit is 29418, and Amazon use 9418.
+	The port info can be found by visiting http://<server>/ssh_info
+
+2.3.2 Generate SSH key
+	# ssh-keygen -t rsa -C "boys@neusoft.com"
+	Default public key is in ~/.ssh/id_rsa.pub, and private key is ~/.ssh/id_rsa.
+	Note: backup your key pair to somewhere so that you don't need to change your public key every time when reinstall system.
+	Add your public key in gerrit (Gerrit -> Settings ->SSH Public Keys) with the content in ~/.ssh/id_rsa.pub.
+
+2.3.3 Testing SSH Key for gerrit
+	Run following to test the connect to the server and the key.
+	# ssh -p <ssh_port> <your_name>@<server>
+	E.g # ssh -p 29418 boys@10.1.10.100
+
+2.3.4 Clone projects
+	# git clone ssh://<your_name>@10.1.10.100:29418/<project_name>
+	<project_name> can be found in Gerrit -> Admin -> projects
+	E.g. # git clone ssh://boys@10.1.10.100:29418/test/manifest
+
+2.4 Project list
+	The projects you have access can be found in Gerrit -> Admin -> projects
+	Using following can view the source code in gitweb ( I call it gerrit gitweb, since it is different to 10.1.10.100/gitweb. See Section 5).
+		<project_name> -> Branches -> (gitweb)
+	On the gerrit gitweb, you can view the source code and you can also find the url for the project.
+
+2.5 Using git
+2.5.1 Submit review
+	If the commit is pushed to refs/for/<branch>, gerrit will create a review recode.
+	E.g. If you want to modify something in master and submit a review to master branch, you can do the followings:
+		# git clone <repo_url> 					# clone the remote git repo
+		# git checkout -b <local_branch> origin/master 		# create local branch start from remote master branch and checkout files.
+									# git will set <local_branch>'s upstream to origin/master
+		# ( modify )
+		# git add <your_modified_files>				# add your changed files, include removed, renamed, new, modified fiels.
+		# git commit						# commit your changes to local repo
+		# git push origin <local_branch>:refs/for/master	# push commits in <local_branch> that newer than its upstream to gerrit.
+									# the target branch is master
+		After the review is finished and submitted, the commits are merged to master branch by gerrit automatically.
+2.5.2 Submit new patch to exist review
+	There are many ways to submit review to exist review.
+	1. Rework from the base version:
+		# git checkout -b <work_branch> <base_commit>
+		# (modify)
+		# git add
+	Method 1 (Suggested):
+		# git commit 						# copy the Change-Id: in the review and add to your comment
+		# git push <remote> <work_branch>:refs/for/<target_branch>
+	Method 2:
+		# git commit
+		# git push <remote> <work_branch>:refs/changes/<id>	# <id> can be found in the url of a review. Normally is a number
+	2. Work base on the exist change.
+		# git fetch <remote> refs/changes/<id>/<id>/<patch_set> && git checkout FETCH_HEAD -b <work_branch>
+		# (modify)
+		# git add
+		# git commit						# commit with comment
+		# git rebase -i HEAD~2					# If you don't want to change the previous comment,
+									# just change the "pick" before the new commit to "f".
+									# If you want to change the previous comment,
+									# change the "pick" before the new commit to "s" and edit the new comment.
+									# leave the old Change-Id line so that gerrit can find the reivew.
+		# git push <remote> <work_branch>:refs/for/<target_branch>
+
+3.1 repo
+	repo is a tool for users working with multi git project (like android).
+	It needs a manifest project.
+3.2 Download
+	wget https://dl-ssl.google.com/dl/googlesource/git-repo/repo; chmod +x repo;
+	You can put the file in /usr/local/bin/ or somewhere in $PATH for easily use.
+	It is only a start script and all scripts will be downloaded when init
+3.3 repo command:
+	repo init: init a repo in current folder.
+		-u: the repo_url for the manifest project.
+		-b: the branch to checkout.
+		-m: if the branch have multi manifest xml file, use it to point out which one to use.
+		--repo-url: you can use a mirror repo for repo project.
+		--reference: location of mirror directory (for speed up)
+		Note: If you want to check out another branch, you can just use -b option without -u and sync again
+	repo list: list project in current repo
+	repo sync: download project and sync working tree.
+		-l: sync working tree only, do not download projects.
+		-n: only download projects. Do not sync working tree.
+		-j: jobs run at one time.
+	repo start: start a new branch for projects motioned.
+		--all: start a new branch for all projects.
+	repo abandon: delete a branch for projects
+	repo branche(s): show branches created using `repo start`
+	repo upload: upload code to gerrit for review.
+	repo status: show status for all projects.
+	repo forall: run command for all projects.
+
+3.4 manifest.xml
+	<remote>: define the remote server info
+		<name>: name of the remote
+		<fetch>: the url of remote server
+			Note: ".." means the parent folder of the manifest project.
+			E.g. the manifest's repo url is ssh://10.1.10.100:29418/test/manifest, ".." means ssh://10.1.10.100:29418/
+		<review>: gerrit server for this remote server.
+	<project>: define the project information
+		<name>: the path in the remote server.
+		<path>: the path when sync to local.
+		<remote>: the remote server used for fetching projects define in <remote> above.
+		<revision>: the revision to fetch (can be a tag, branch or a commit)
+		<copyfile>: to copy files file this project to other path.
+	<default>: define default setting for projects.
+
+3.5 working process:
+
+repo init -b lab_dev -u ssh://yujj@10.1.10.100:29418/amazon/bowser/labmanifest.git --repo-url=ssh://yujj@10.1.10.100:29418/omapzoom/tools/repo.git
+replace fetch variable with ".." in .repo/manifest.xml
+	# repo init -u <manifest_url> -b <branch>
+	# repo sync
+	# repo start <branch_name> ...
+	# (Modify files and commit using `git` )
+	# repo upload
+
+4 Tips
+4.1 Tips for SSH
+	We use a long url for gerrit do clone project like this:
+		git clone ssh://username@10.1.10.100:29418/xxxx.git
+	We can write following in ~/.ssh/config
+		Host internalgerrit
+    			Hostname    10.1.10.100
+    			Port        29418
+    			User        username
+	And then we can use following to access internal gerrit for short
+		git clone ssh://internalgerrit/xxx.git
+
+4.2 Tips for git
+4.2.1 Bash Completion for git
+	We all use Ubuntu for our PC, so we can use <Tab> to complete the command, branch name, tag name, etc for git.
+4.2.2 Repo url
+	When cloning project, the ".git" at the end of project url can be ommited.
+	E.g. Following two have the same result.
+		git clone ssh://username@10.1.10.100:29418/test/manifest.git
+		git clone ssh://username@10.1.10.100:29418/test/manifest
+4.2.2 Check-in multi files for the same change together with one commit.
+
+5 Internal Gerrit and Gitweb
+I have setup two sites on internal server:
+	http://10.1.10.100/gitweb
+	http://10.1.10.100/gerrit
+
+On the Gitweb site, you can see three url for a project, starting with git:// ssh:// and http://
+The first url (start with git:// ) is a readonly server, so you can just clone it and read source code.
+The second and third url (start with ssh:// and http:// ) is managed by gerrit, so if you have gerrit account, you can read and write the source code.
+
+But some projects have not imported to the gerrit yet, so the second and third url may not work.
+These projects start with "android" and "amazon/bowser".
+
+I will import amazon/bowser to gerrit after I have account to access Amazon's gerrit.
+
+5.1 Mirrors
+The projects on gerrit and gitweb are mirrored from opensource project and Amazon.
+android/* 		mirror of https://android.googlesource.com/
+			Manifest project: android/platform/manifest
+omapzoom/* 		mirror of git://git.omapzoom.org/
+			Manifest project: omapzoom/platform/omapmanifest
+amazon/otter/*		mirror of ssh://gerrit.labcollab.net/	(Not synced)
+			Manifest project: amazon/otter/labmanifest
+amazon/bowser/*		mirror of ssh://gerrit2.labcollab.net/	(Not synced)
+			Manifest project: amazon/bowser/labmanifest
+
+They are synced at midnight every day.
+
+5.2 Using mirrors
+Since the remote url in manifest may not fit our internal server,
+You need to modify the manifest.xml if you want to check out the source code from mirror using `repo`.
+Note: for "android" mirror, no changed needed.
+Steps:
+	# repo init -u <manifst_url> -b <branch>
+	# vim .repo/manifest.xml 	# change the "fetch" to ".."
+	# repo sync
+
+If you want to check out another branch, clean the changes, init again, modify manifest.xml and sync.
+	# cd .repo/manifests
+	# git reset --hard
+	# repo init -b <another_branch>
+	# vi ../manifest.xml		# change the "fetch" to ".."
+	# repo sync
+
+Reference:
+http://source.android.com/source/downloading.html
+http://gerrit.googlecode.com/svn/documentation/
+man page for git

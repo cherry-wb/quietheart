@@ -1,0 +1,3 @@
+这个命令和在一个文件系统中运行:
+find . |cpio --quiet -c -o |gzip -9 -n >../ramdisk.img
+有什么区别？

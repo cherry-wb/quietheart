@@ -1,0 +1,44 @@
+这里描述了一些使用websocket以及web开发相关的例子。
+
+web socket:
+http://baike.baidu.com/view/3623887.htm
+一个可以支持双向通信的web协议。
+
+ws4py: 
+http://www.defuze.org/oss/ws4py/docs/index.html
+一个web socket客户和服务端的python库实现。
+
+wsgi:
+是Python应用程序或框架和Web服务器之间的一种接口规范。
+http://ivory.idyll.org/articles/wsgi-intro/what-is-wsgi.html
+The PEP specifies three roles: the role of a server, the role of a framework/app, and the role of a middleware object.
+http://webpython.codepoint.net/wsgi_tutorial
+If an application (or framework or toolkit) is written to the WSGI spec then it will run on any server written to that spec.
+==========
+gevent:
+http://sdiehl.github.com/gevent-tutorial/
+
+gunicorn:
+一种webserver。
+
+django:
+一种web开发框架。
+
+
+运行方式：
+1,gunicorn
+服务：
+#gunicorn -b 0.0.0.0:7000 -k "geventwebsocket.gunicorn.workers.GeventWebSocketWorker" mygunicornserver:runserver
+运行时会有错误，把这两行的If语句注释掉
+/usr/local/lib/python2.7/dist-packages/gevent/pywsgi.py
+Line 394 
+
+客户：
+#python mygunicornclient
+
+2,ws4py
+服务：
+#python ws4pyserver
+
+客户：
+#python ws4pyclient

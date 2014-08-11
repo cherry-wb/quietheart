@@ -1,0 +1,414 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xml:lang="zh-cn" xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=GB2312">
+<link rel="icon" href="http://www.jb51.net/favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="http://www.jb51.net/favicon.ico" type="image/x-icon">
+<title>在CentOS上MySQL数据库服务器配置方法_Mysql_脚本之家</title>
+<meta http-equiv="Content-Language" content="zh-CN">
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7">
+<meta name="keywords" content="CentOS,MySQL">
+<meta name="description" content="最近工作中经常需要使用到MySQL，有时候在WINXP，有时候在Linux中，而这次，需要在CentOS中配置一下，还需要用到phpmyadmin，
+在网上搜了不少的资料。">
+<meta http-equiv="expires" content="0">
+<script type="text/javascript" src="mysql_setting_files/content.js"></script>
+<link rel="stylesheet" href="mysql_setting_files/main.css" type="text/css" media="all">
+<link rel="stylesheet" href="mysql_setting_files/content.css" type="text/css" media="all">
+</head><body>
+<div id="topnav">
+<div id="toptext">脚 本 之 家 www.jb51.net</div>
+<ul id="topnavlist">
+<script type="text/javascript" src="mysql_setting_files/top.js" charset="gb2312"></script><li><a href="http://sc.jb51.net/" target="_blank" style="color: red;">设计图片素材下载</a></li>
+<li><a href="http://bbs.admin5.com/" target="_blank" style="color: red;">a5站长论坛</a></li>
+<li><a href="http://www.jb51.net/codes/" target="_blank">源码下载</a></li>
+<li><a href="http://www.jb51.net/softs/" target="_blank">软件下载</a></li>
+<li><a href="http://s.jb51.net/" target="_blank">服务器常用软件</a></li>
+<li><a href="javascript:StranBody()" name="StranLink" id="StranLink">繁体中文</a></li>
+
+</ul>
+</div>
+<div id="dxy_logo">
+<div id="logo_l"><a href="http://www.jb51.net/" title="脚本之家" target="_blank"><img src="mysql_setting_files/logo.gif" alt="脚本之家"></a></div>
+<div id="logo_m"><script type="text/javascript" src="mysql_setting_files/logo_m.js"></script><a href="http://www.59.cn/" target="_blank"><img src="mysql_setting_files/59cn370.gif" height="60" width="370"></a></div>
+<div id="logo_r"><script type="text/javascript" src="mysql_setting_files/logo_r.js"></script><a href="http://www.tuidc.com/" target="_blank"><img src="mysql_setting_files/tengyou370.gif" height="60" width="370"></a></div>
+</div><!--导航开始-->
+<div id="nav_top">
+<ul>
+<li><a href="http://www.jb51.net/"><span>首页</span></a></li>
+<li><a href="http://www.jb51.net/web/" title="网页制作"><span>网页制作</span></a></li>
+<li><a href="http://www.jb51.net/list/index_96.htm" title="脚本专栏"><span>脚本专栏</span></a></li>
+<li><a href="http://www.jb51.net/list/index_1.htm" title="网络编程"><span>网络编程</span></a></li>
+<li><a href="http://www.jb51.net/list/index_104.htm" title="数据库"><span>数据库</span></a></li>
+<li><a href="http://www.jb51.net/jiaoben/" title="脚本下载"><span>脚本下载</span></a></li>
+<li><a href="http://www.jb51.net/cms/" title="cms使用教程"><span>程序教学</span></a></li>
+<li><a href="http://www.jb51.net/books/" title="电子书籍"><span>电子书籍</span></a></li>
+<li><a href="http://www.jb51.net/pingmian/" title="平面设计"><span>平面设计</span></a></li>
+<li><a href="http://www.jb51.net/media/" title="媒体动画"><span>媒体动画</span></a></li>
+<li><a href="http://www.jb51.net/moban/" title="模板下载"><span>模板下载</span></a></li>
+<li><a href="http://www.jb51.net/os/" title="操作系统"><span>操作系统</span></a></li>
+<li><a href="http://www.jb51.net/yunying/" title="网站运营"><span>网站运营</span></a></li>
+</ul>
+</div><!--导航结束-->
+<div class="blank3"></div>
+<div class="subnav">
+<ul><li><a href="http://www.jb51.net/list/list_113_1.htm" title="MsSql">MsSql</a></li>
+<li><a href="http://www.jb51.net/list/list_112_1.htm" title="Mysql">Mysql</a></li>
+<li><a href="http://www.jb51.net/list/list_105_1.htm" title="Access">Access</a></li>
+<li><a href="http://www.jb51.net/list/list_154_1.htm" title="oracle">oracle</a></li>
+<li><a href="http://www.jb51.net/list/list_155_1.htm" title="DB2">DB2</a></li>
+<li><a href="http://www.jb51.net/list/list_210_1.htm" title="mssql2005">mssql2005</a></li>
+<li><a href="http://www.jb51.net/list/list_215_1.htm" title="SQLite">SQLite</a></li>
+<li><a href="http://www.jb51.net/list/list_224_1.htm" title="PostgreSQL">PostgreSQL</a></li>
+<li><a href="http://www.jb51.net/list/list_132_1.htm" title="数据库文摘">数据库文摘</a></li>
+<li><a href="http://www.jb51.net/list/list_133_1.htm" title="数据库技巧">数据库技巧</a></li>
+</ul>
+</div>
+<div class="blank3"></div>
+<div class="dxy_main">
+<script type="text/javascript">/*首屏960*60通栏 主站*/ var cpro_id = 'u336546';</script><script src="mysql_setting_files/c.js" type="text/javascript"></script><script type="text/javascript" charset="utf-8" src="mysql_setting_files/ecom_002"></script><div style="display: none;">-</div><iframe id="cproIframe1" marginwidth="0" marginheight="0" allowtransparency="" src="mysql_setting_files/uijs.html" frameborder="0" height="90" scrolling="no" width="960" align="center,center"></iframe>
+</div>
+<div class="blank3"></div>
+<div id="tonglan1"><script type="text/javascript" src="mysql_setting_files/tonglan1.js"></script><div class="topimg"><ul><li><a href="http://www.zgsj.com/" target="_blank"><img alt="" src="mysql_setting_files/zgsj_237.gif"></a></li><li><a href="http://www.west263.com/index.asp?ads=jb51net2011" target="_blank"><img alt="" src="mysql_setting_files/west263_237.gif"></a></li><li><a href="http://www.sundns.com/amain_md_html_ac_join.html" target="_blank"><img alt="" src="mysql_setting_files/sundns_237.gif"></a></li><li><a href="http://www.huangjinlian.cn/" target="_blank"><img alt="" src="mysql_setting_files/hjl_237.gif"></a></li></ul></div><div class="blank2"></div><div class="topimg"><ul><li><a href="http://www.94699.com/" target="_blank"><img alt="" src="mysql_setting_files/xinxin_237.gif"></a></li><li><a href="http://www.sudu.cn/promotion/webhosting/?suduckey=154" target="_blank"><img alt="" src="mysql_setting_files/sudu_237.gif"></a></li><li><a href="http://s.jb51.net/" target="_blank"><img alt="" src="mysql_setting_files/safe_237.gif"></a></li><li><a href="http://www.33isp.com/" target="_blank"><img alt="33isp" src="mysql_setting_files/33idc_237.gif"></a></li></ul></div><div class="blank2"></div><div class="mainl"><a href="http://www.hongjunmedia.com/" target="_blank"><img src="mysql_setting_files/hongjunmedia.gif" height="60" width="468" border="0"></a></div><div class="mainr"><a href="http://www.v01.cn/" target="_blank"><img src="mysql_setting_files/zs.gif" height="60" width="468" border="0"></a></div><div class="blank2"></div><div class="mainlr"><a href="http://www.xunbiz.com/click/click.asp?str=44717c87b8d8fc3a3e18797345b90434" alt="注域名、买空间、建网站、租机器、购邮箱找中国商务网" target="_blank"><img src="mysql_setting_files/xunbiz960.gif" height="60" width="960" border="0"></a></div><div class="blank2"></div><div id="txtlink"><ul>
+<li><a href="http://www.dfym.cn/services/server/hk/" target="_blank"><span style="color: green;">东方域名_免费香港台湾美国服务器租用</span></a></li>
+<li><a title="服务器安全设置加QQ461478385" target="_blank"><span style="color: red;">服务器安全设置加QQ461478385</span></a></li>
+<li><a href="http://www.west263.com/index.asp?ads=jb51net2011" target="_blank"><span style="color: black;">西部数码分布式集群主机傲视群雄</span></a></li>
+<li><a href="http://www.onidc.com/" target="_blank"><span style="color: red;">盛联时代-空间特价促销.免备案.代理3折!</span></a></li>
+<li><a href="http://www.paixiami.com/" target="_blank"><span style="color: red;">2011年，我们只玩低价竞拍购物！！</span></a></li>
+<li><a href="http://s.jb51.net/" title="服务器软件下载" target="_blank"><span style="color: red;">服务器安全设置工具</span></a></li>
+<li><a href="http://sc.jb51.net/" title="脚本之家素材下载中心" target="_blank"><span style="color: red;">脚本之家素材下载中心</span></a></li>
+<li><a href="http://www.beijingdel.com/" target="_blank"><span style="color: red;">专业网络危机公关 发布软文 品牌维护</span></a></li>
+</ul></div><div class="blank2"></div>
+<div class="search"><ul>
+<li class="search-hot"><span>热门栏目：</span>
+<a href="http://www.jb51.net/list/list_114_1.htm" target="_blank">vbscript</a> 
+<a href="http://www.jb51.net/list/list_6_1.htm" target="_blank">正则表达式</a> 
+<a href="http://www.jb51.net/list/list_3_1.htm" target="_blank">javascript</a>
+<a href="http://www.jb51.net/list/list_106_1.htm" target="_blank">批处理</a>
+<a href="http://s.jb51.net/">服务器软件</a> 
+<a href="http://sc.jb51.net/?txt" target="_blank" style="color: red;">素材下载</a> 
+</li><li class="search-box">
+<form method="get" action="http://so.jb51.net/s.php" target="_blank" onsubmit="return check_search()">
+<input name="q" size="31" maxlength="255" id="sbi" class="sinput" value="请输入关键字" autocomplete="off" onmouseover="this.focus()" onfocus="this.select();" onblur="(this.value == '') ? this.value='请输入关键字' :''" onclick="(this.value == '请输入关键字') ? this.value='' :''" type="text"><input src="mysql_setting_files/search.gif" name="sa" type="image" align="absMiddle">
+</form></li></ul></div>
+</div>
+<div class="blank3"></div>
+<div class="dxy_main">
+<div class="dxy_main_l">
+<div id="art_con">
+<div id="daohang">页面导航：  <a href="http://www.jb51.net/index.htm">首页</a> → <a href="http://www.jb51.net/list/index_104.htm" title="数据库">数据库</a> → <a href="http://www.jb51.net/list/list_112_1.htm" title="Mysql">Mysql</a> → 正文内容 CentOS MySQL<div class="blank3"></div></div>
+<div class="blank3"></div>
+<h1>在CentOS上MySQL数据库服务器配置方法</h1>
+<div id="title_ad1"><script type="text/javascript" src="mysql_setting_files/bc_txt_1.js"></script><script type="text/javascript" src="mysql_setting_files/show_ads.js"></script><ins style="display: inline-table; border: medium none; height: 15px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 468px;"><ins id="aswift_2_anchor" style="display: block; border: medium none; height: 15px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 468px;"><iframe allowtransparency="true" hspace="0" marginwidth="0" marginheight="0" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){i+='.call';setTimeout(h,0)}else if(h.match){i+='.nav';w.location.replace(h)}s.log&amp;&amp;s.log.push(i)}" vspace="0" id="aswift_2" name="aswift_2" style="left: 0pt; position: absolute; top: 0pt;" frameborder="0" height="15" scrolling="no" width="468"></iframe></ins></ins></div>
+<div id="art_info">
+发布：dxy  字体：[<a href="javascript:turnbig()">增加</a> <a href="javascript:turnsmall()">减小</a>] 类型：转载 
+</div><!--end art_info-->
+<div class="blank3"></div>
+<div id="art_demo">最近工作中经常需要使用到MySQL，有时候在WINXP，有时候在Linux中，而这次，需要在CentOS中配置一下，还需要用到phpmyadmin，
+在网上搜了不少的资料。</div>
+<div class="blank3"></div>
+<div id="con_all">
+<div id="con_da1">
+<script type="text/javascript" src="mysql_setting_files/bc_l.js"></script><script type="text/javascript" src="mysql_setting_files/show_ads.js"></script><ins style="display: inline-table; border: medium none; height: 250px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 300px;"><ins id="aswift_0_anchor" style="display: block; border: medium none; height: 250px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 300px;"><iframe allowtransparency="true" hspace="0" marginwidth="0" marginheight="0" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){i+='.call';setTimeout(h,0)}else if(h.match){i+='.nav';w.location.replace(h)}s.log&amp;&amp;s.log.push(i)}" vspace="0" id="aswift_0" name="aswift_0" style="left: 0pt; position: absolute; top: 0pt;" frameborder="0" height="250" scrolling="no" width="300"></iframe></ins></ins>
+</div>
+<div id="con_da8">
+<script type="text/javascript" src="mysql_setting_files/bc_r.js"></script><script type="text/javascript" src="mysql_setting_files/show_ads.js"></script><ins style="display: inline-table; border: medium none; height: 250px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 300px;"><ins id="aswift_1_anchor" style="display: block; border: medium none; height: 250px; margin: 0pt; padding: 0pt; position: relative; visibility: visible; width: 300px;"><iframe allowtransparency="true" hspace="0" marginwidth="0" marginheight="0" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){i+='.call';setTimeout(h,0)}else if(h.match){i+='.nav';w.location.replace(h)}s.log&amp;&amp;s.log.push(i)}" vspace="0" id="aswift_1" name="aswift_1" style="left: 0pt; position: absolute; top: 0pt;" frameborder="0" height="250" scrolling="no" width="300"></iframe></ins></ins>
+</div>
+</div>
+<div id="art_content">
+<!--NEWSZW_HZH_BEGIN-->
+无意中还找到了CentOS的专业论坛，记住：<a href="http://www.centospub.com/">http://www.centospub.com</a> 
+<p>于是，开始的学习配置</p>
+<p>本次环境：</p>
+<p>CentOS系统，</p>
+<p>mysql-server（版本忘了，因为是使用yum安装的）</p>
+<p><strong>过程如下（转载，根据本人安装详细要求，略加修改）　：</strong></p>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;">　
+在提到网站构架的时候，我们经常能够看到“LAMP”的说法，它就是“Linux + Apache + MySQL + PHP”。 
+MySQL+PHP的协同成功案例已经很多了。比如国外的PHPBB，VBB，国内的Discuz!论坛等等程序，都是用PHP + 
+MySQL实现的。和那些商务专用数据库比起来，MySQL的功能和规模可能被好多人说的逊色一些，但对于我们个人来说，它的功能已经算是完备。而且，通
+ 过Discuz!官方论坛上同时在线人数的数目，也可以证明MySQL的稳定性。<br><br>　　这里，介绍一下CentOS下MySQL数据库服务器的构建方法。<span class="Apple"> </span><br><br></span></span></p>
+<table style="width: 100%;" border="0">
+<tbody>
+<tr>
+<td bgcolor="#4665a6">
+<table border="0">
+<tbody>
+<tr>
+<td class="table" style="font-weight: bold; color: rgb(255, 255, 255);" bgcolor="#333333">安装MySQL及相关组件</td></tr></tbody></table></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　首先，安装MySQL。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">yum -y install mysql-server</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 安装MySQL</span><br><br><span class="message" style="color: rgb(204, 204, 204);">Setting up Install Process<br>Setting up repositories<br>dag 100% |=========================| 1.1 kB 00:00<br>update 100% |=========================| 951 B 00:00<br>base 100% |=========================| 1.1 kB 00:00<br>addons 100% |=========================| 951 B 00:00<br>extras 100% |=========================| 1.1 kB 00:00<br>Reading repository metadata in from local files<br>primary.xml.gz 100% |=========================| 106 kB 00:00<br>update : ################################################## 261/261<br>Added 5 new packages, deleted 0 old in 2.02 seconds<br>Reducing Dag RPM Repository for Red Hat Enterprise Linux to included packages only<br>Finished<br>Parsing package install arguments<br>Resolving Dependencies<br>--&gt; Populating transaction set with selected packages. Please wait.<br>---&gt; Downloading header for mysql-server to pack into transaction set.<br>mysql-server-4.1.20-1.RHE 100% |=========================| 29 kB 00:00<br>---&gt; Package mysql-server.i386 0:4.1.20-1.RHEL4.1 set to be updated<br>--&gt; Running transaction check<br>--&gt; Processing Dependency: libmysqlclient.so.14(libmysqlclient_14) for package: mysql-server<br>--&gt; Processing Dependency: perl-DBD-MySQL for package: mysql-server<br>--&gt; Processing Dependency: perl-DBI for package: mysql-server<br>--&gt; Processing Dependency: perl(DBI) for package: mysql-server<br>--&gt; Processing Dependency: mysql = 4.1.20-1.RHEL4.1 for package: mysql-server<br>--&gt; Processing Dependency: libmysqlclient.so.14 for package: mysql-server<br>--&gt; Processing Dependency: libmysqlclient_r.so.14(libmysqlclient_14) for package: mysql-server<br>--&gt; Processing Dependency: libmysqlclient_r.so.14 for package: mysql-server<br>--&gt; Restarting Dependency Resolution with new changes.<br>--&gt; Populating transaction set with selected packages. Please wait.<br>---&gt; Downloading header for perl-DBD-MySQL to pack into transaction set.<br>perl-DBD-MySQL-2.9004-3.1 100% |=========================| 5.4 kB 00:00<br>---&gt; Package perl-DBD-MySQL.i386 0:2.9004-3.1 set to be updated<br>---&gt; Downloading header for mysql to pack into transaction set.<br>mysql-4.1.20-1.RHEL4.1.i3 100% |=========================| 35 kB 00:00<br>---&gt; Package mysql.i386 0:4.1.20-1.RHEL4.1 set to be updated<br>---&gt; Downloading header for perl-DBI to pack into transaction set.<br>perl-DBI-1.40-8.i386.rpm 100% |=========================| 11 kB 00:00<br>---&gt; Package perl-DBI.i386 0:1.40-8 set to be updated<br>--&gt; Running transaction check</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Dependencies Resolved</p>
+<p class="message" style="color: rgb(204, 204, 204);">=============================================================================<br>Package Arch Version Repository Size<br>=============================================================================<br>Installing:<br>mysql-server i386 4.1.20-1.RHEL4.1 update 9.8 M<br>Installing for dependencies:<br>mysql i386 4.1.20-1.RHEL4.1 update 2.9 M<br>perl-DBD-MySQL i386 2.9004-3.1 base 111 k<br>perl-DBI i386 1.40-8 base 466 k</p>
+<p class="message" style="color: rgb(204, 204, 204);">Transaction Summary<br>=============================================================================<br>Install 4 Package(s)<br>Update 0 Package(s)<br>Remove 0 Package(s)<br>Total download size: 13 M<br>Downloading Packages:<br>(1/4): perl-DBD-MySQL-2.9 100% |=========================| 111 kB 00:00<br>(2/4): mysql-server-4.1.2 100% |=========================| 9.8 MB 00:11<br>(3/4): mysql-4.1.20-1.RHE 100% |=========================| 2.9 MB 00:03<br>(4/4): perl-DBI-1.40-8.i3 100% |=========================| 466 kB 00:01<br>Running Transaction Test<br>Finished Transaction Test<br>Transaction Test Succeeded<br>Running Transaction<br>Installing: perl-DBI ######################### [1/4]<br>Installing: mysql ######################### [2/4]<br>Installing: perl-DBD-MySQL ######################### [3/4]<br>Installing: mysql-server ######################### [4/4]</p><span class="message" style="color: rgb(204, 204, 204);">Installed: mysql-server.i386 0:4.1.20-1.RHEL4.1<br>Dependency Installed: mysql.i386 0:4.1.20-1.RHEL4.1 perl-DBD-MySQL.i386 0:2.9004-3.1 perl-DBI.i386 0:1.40-8<br>Complete!</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　然后，安装PHP访问MySQL数据库的工具“php-mysql”。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">yum -y install php-mysql</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 安装php-mysql</span><br><br><span class="message" style="color: rgb(204, 204, 204);">Setting up Install Process<br>Setting up repositories<br>Reading repository metadata in from local files<br>Reducing Dag RPM Repository for Red Hat Enterprise Linux to included packages only<br>Finished<br>Parsing package install arguments<br>Resolving Dependencies<br>--&gt; Populating transaction set with selected packages. Please wait.<br>---&gt; Downloading header for php-mysql to pack into transaction set.<br>php-mysql-4.3.9-3.15.i386 100% |=========================| 18 kB 00:00<br>---&gt; Package php-mysql.i386 0:4.3.9-3.15 set to be updated<br>--&gt; Running transaction check</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Dependencies Resolved</p>
+<p class="message" style="color: rgb(204, 204, 204);">=============================================================================<br>Package Arch Version Repository Size<br>=============================================================================<br>Installing:<br>php-mysql i386 4.3.9-3.15 update 35 k</p>
+<p class="message" style="color: rgb(204, 204, 204);">Transaction Summary<br>=============================================================================<br>Install 1 Package(s)<br>Update 0 Package(s)<br>Remove 0 Package(s)<br>Total download size: 35 k<br>Downloading Packages:<br>(1/1): php-mysql-4.3.9-3. 100% |=========================| 35 kB 00:00<br>Running Transaction Test<br>Finished Transaction Test<br>Transaction Test Succeeded<br>Running Transaction<br>Installing: php-mysql ######################### [1/1]</p><span class="message" style="color: rgb(204, 204, 204);">Installed: php-mysql.i386 0:4.3.9-3.15<br>Complete!</span></td></tr></tbody></table>
+<table style="width: 100%;" border="0">
+<tbody>
+<tr>
+<td bgcolor="#4665a6">
+<table border="0">
+<tbody>
+<tr>
+<td class="table" style="font-weight: bold; color: rgb(255, 255, 255);" bgcolor="#333333">配置MySQL</td></tr></tbody></table></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　然后，配置MySQL。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">vi /etc/my.cnf</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 编辑MySQL的配置文件</span><br><br><span class="message" style="color: rgb(204, 204, 204);">[mysqld]<br>datadir=/var/lib/mysql<br>socket=/var/lib/mysql/mysql.sock<br># Default to using old password format for compatibility with mysql 3.x<br># clients (those using the mysqlclient10 compatibility package).<br>old_passwords=1</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 找到这一行，在这一行的下面添加新的规则，让MySQL的默认编码为UTF-8</span><br><span class="after" style="color: rgb(0, 255, 0);">default-character-set = utf8</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 添加这一行</span><br><br><span class="intro" style="color: rgb(0, 153, 255);">然后在配置文件的文尾填加如下语句：</span><br><br><span class="after" style="color: rgb(0, 255, 0);">[mysql]<br>default-character-set = utf8</span></td></tr></tbody></table>
+<table style="width: 100%;" border="0">
+<tbody>
+<tr>
+<td bgcolor="#4665a6">
+<table border="0">
+<tbody>
+<tr>
+<td class="table" style="font-weight: bold; color: rgb(255, 255, 255);" bgcolor="#333333">启动MySQL服务</td></tr></tbody></table></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　启动MySQL，并让MySQL在系统重新启动后随系统自动启动。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">chkconfig mysqld on</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 设置MySQL服务随系统启动自启动</span><br><br>[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">chkconfig --list mysqld</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认MySQL自启动</span><br>mysqld 0:off 1:off<span class="Apple"> </span><span class="att1" style="color: rgb(255, 0, 255);">2:on 3:on 4:on 5:on</span><span class="Apple"> </span>6:off　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 如果2--5为on的状态就OK</span><br><br>[root@sample ~]#</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">/etc/rc.d/init.d/mysqld start</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 启动MySQL服务</span><br><br><span class="message" style="color: rgb(204, 204, 204);">Initializing MySQL database:　　　　　　　　 [<span class="Apple"> </span></span><span class="after" style="color: rgb(0, 255, 0);">OK</span><span class="message" style="color: rgb(204, 204, 204);"><span class="Apple"> </span>]<br>Starting MySQL: 　　　　　　　　　　　　　[<span class="Apple"> </span></span><span class="after" style="color: rgb(0, 255, 0);">OK</span><span class="message" style="color: rgb(204, 204, 204);"><span class="Apple"> </span>]</span></td></tr></tbody></table>
+<table style="width: 100%;" border="0">
+<tbody>
+<tr>
+<td bgcolor="#4665a6">
+<table border="0">
+<tbody>
+<tr>
+<td class="table" style="font-weight: bold; color: rgb(255, 255, 255);" bgcolor="#333333">MySQL初始环境设定</td></tr></tbody></table></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>[1]为MySQL的root用户设置密码<br><br>　　MySQL在刚刚被安装的时候，它的root用户是没有被设置密码的。首先来设置MySQL的root密码。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 用root用户登录MySQL服务器</span><br><br><span class="message" style="color: rgb(204, 204, 204);">Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 2 to server version: 4.1.20</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user,host,password from mysql.user;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看用户信息</span><br><span class="message" style="color: rgb(204, 204, 204);">+------+------------------------------+---------------+<br>| user | host 　　　　　　　　　| password　|<br>+------+------------------------------+---------------+<br>| root | localhost　　　　 　　　| 　　　　　　|　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← root密码为空</span><span class="message" style="color: rgb(204, 204, 204);"><span class="Apple"> </span><br>| root | sample.centospub.com　 |　　　　　　 |　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← root密码为空</span><span class="message" style="color: rgb(204, 204, 204);"><br>|　　　| sample.centospub.com | 　　　　　　|<br>|　　　| localhost　　　　　　 | 　　　　　　|<br>+------+------------------------------+---------------+</span><br><span class="message" style="color: rgb(204, 204, 204);">4 rows in set (0.00 sec)</span></p>
+<p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">set password for root@localhost=password('</span><span class="att1" style="color: rgb(255, 0, 255);">在这里填入root密码</span><span class="command" style="color: rgb(255, 255, 0);">');</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 设置root密码</span><br><span class="message" style="color: rgb(204, 204, 204);">Query OK, 0 rows affected (0.01 sec)</span></p>
+<p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">set password for root@'sample.centospub.com'=password('在这里填入root密码');</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 设置root密码</span><br><span class="message" style="color: rgb(204, 204, 204);">Query OK, 0 rows affected (0.01 sec)</span></p>
+<p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user,host,password from mysql.user;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看用户信息</span><br><span class="message" style="color: rgb(204, 204, 204);">+------+--------------------------------+--------------------------+<br>| user | host　　　　　　　　　　| password　　 　　|<br>+------+--------------------------------+--------------------------+<br>| root | localhost　　　　　　　　|<span class="Apple"> </span></span><span class="att1" style="color: rgb(255, 0, 255);">19b68057189b027f</span><span class="message" style="color: rgb(204, 204, 204);"><span class="Apple"> </span>|　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← root密码被设置</span><span class="message" style="color: rgb(204, 204, 204);"><br>| root | sample.centospub.com　　 |<span class="Apple"> </span></span><span class="att1" style="color: rgb(255, 0, 255);">19b68057189b027f</span><span class="message" style="color: rgb(204, 204, 204);"><span class="Apple"> </span>|　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← root密码被设置</span><span class="message" style="color: rgb(204, 204, 204);"><br>| 　　 | sample.centospub.com　　 | 　　　　　　　　　|<br>| 　　 | localhost　　　　　　　　|　　　　　　　　　 |<br>+------+--------------------------------+--------------------------+<br>4 rows in set (0.01 sec)</span></p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 退出MySQL服务器</span><br><span class="message" style="color: rgb(204, 204, 204);">Bye</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　 　然后，测试一下root密码有没有生效。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 通过空密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 出现此错误信息说明密码设置成功</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>[root@localhost ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -h sample.centospub.com</span><span class="message" style="color: rgb(204, 204, 204);">　</span><span class="intro" style="color: rgb(0, 153, 255);"><span class="Apple"> </span>← 通过空密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 出现此错误信息说明密码设置成功</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>[root@sample ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -p</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br>Enter password:　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>Welcome to the MySQL monitor. Commands end with ; or \g.　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 确认用密码能够成功登录</span><span class="message" style="color: rgb(204, 204, 204);"><br>Your MySQL connection id is 5 to server version: 4.1.20</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span><br>Bye<br><br>[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -h sample.centospub.com -p</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><br>Enter password:　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><br><br>Welcome to the MySQL monitor. Commands end with ; or \g.　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认用密码能够成功登录</span><br>Your MySQL connection id is 6 to server version: 4.1.20</p>
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">exit</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 退出MySQL服务器</span><span class="message" style="color: rgb(204, 204, 204);"><br>Bye</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>[2] 删除匿名用户<br><br>　　在MySQL刚刚被安装后，存在用户名、密码为空的用户。这使得数据库服务器有无需密码被登录的可能性。为消除隐患，将匿名用户删除。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -p</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br>Enter password:　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 7 to server version: 4.1.20</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user,host from mysql.user;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看用户信息</span><br>+------+----------------------------+<br>| user | host　　　　　　　　 |<br>+------+----------------------------+<br>|　　　| localhost 　　　　　　|</p>
+<p class="message" style="color: rgb(204, 204, 204);">|　　　| 127.0.0.1 　　　　　　|<br>| root | localhost 　　　　　　|<br>|　　　| sample.centospub.com |<br>| root | sample.centospub.com　 |<br>+------+----------------------------+<br>4 rows in set (0.02 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">delete from mysql.user where user='';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除匿名用户</span><br>Query OK, 2 rows affected (0.17 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user,host from mysql.user;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看用户信息</span><br>+------+----------------------------+<br>| user | host　　　　　　　　 |<br>+------+----------------------------+<br>| root | localhost　　　　　　|<br>| root | sample.centospub.com |<br>+------+----------------------------+<br>2 rows in set (0.00 sec)</p><span class="message" style="color: rgb(204, 204, 204);">mysql</span>&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 退出MySQL服务器</span><br><span class="message" style="color: rgb(204, 204, 204);">Bye</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>[3] 删除测试用数据库<br><br>　　 在MySQL被安装后，存在名为test的空数据库，将它删除。这里要注意的是，系统默认的还有一个名为mysql的数据库，它用于系统管理，所以请不要删除。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td class="message" style="color: rgb(204, 204, 204);" bgcolor="#000000">[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -p</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><br>Enter password:　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><br>Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 8 to server version: 4.1.20 
+<p>Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p>mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show databases;</span>　<span class="intro" style="color: rgb(0, 153, 255);"><span class="Apple"> </span>← 查看系统已存在的数据库</span><br>+-------------+<br>| Database |<br>+-------------+<br>| mysql　　 |<br>| test　　　|<br>+------------+<br>2 rows in set (0.02 sec)</p>
+<p>mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">drop database test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除名为test的空数据库</span><br>Query OK, 0 rows affected (0.07 sec)</p>
+<p>mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show databases;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看系统已存在的数据库</span><br>+-------------+<br>| Database |<br>+-------------+<br>| mysql 　　|　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认名为test的数据库被删除，已不存在</span><br>+-------------+<br>1 row in set (0.00 sec)</p>mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span>　<span class="intro" style="color: rgb(0, 153, 255);"><span class="Apple"> </span>← 退出MySQL服务器</span><br>Bye</td></tr></tbody></table>
+<table style="width: 100%;" border="0">
+<tbody>
+<tr>
+<td bgcolor="#4665a6">
+<table border="0">
+<tbody>
+<tr>
+<td class="table" style="font-weight: bold; color: rgb(255, 255, 255);" bgcolor="#333333">测试MySQL</td></tr></tbody></table></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　下面对MySQL进行测试。包括建立新用户，以及用对关系性数据库进行数据库操作的指令来试着建立数据库及数据表。这里，新建用户以centospub为例。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -p</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br>Enter password:　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><span class="message" style="color: rgb(204, 204, 204);"><br><br>Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 9 to server version: 4.1.20</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">grant all privileges on test.* to centospub@localhost identified by '在这里定义密码';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 建立对test数据库有完全操作权限的名为centospub的用户</span><br>Query OK, 0 rows affected (0.03 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user from mysql.user where user='centospub';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认centospub用户的存在与否</span><br>+---------+<br>| user 　|<br>+---------+<br>|<span class="Apple"> </span><span class="att1" style="color: rgb(255, 0, 255);">centospub</span><span class="Apple"> </span>|　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认centospub已经被建立</span><br>+---------+<br>1 row in set (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 退出MySQL服务器</span><br>Bye<br><br>[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">mysql -u centospub -p</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 用新建立的centospub用户登录MySQL服务器</span><br>Enter password:　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码</span><br><br>Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 10 to server version: 4.1.20</p>
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">create database test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 建立名为test的数据库</span><br>Query OK, 1 row affected (0.00 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show databases;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看系统已存在的数据库</span><br>+-------------+<br>| Database |<br>+-------------+<br>| test 　　　|<br>+-------------+<br>1 row in set (0.00 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">use test</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 连接到数据库</span><br>Database changed<br><br>mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">create table test(num int, name varchar(50));</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 在数据库中建立表</span><br>Query OK, 0 rows affected (0.03 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show tables;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看数据库中已存在的表</span><br>+-------------------+<br>| Tables_in_test |<br>+-------------------+<br>| test　　　　　|<br>+-------------------+<br>1 row in set (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">insert into test values(1,'Hello World!');</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 插入一个值到表中</span><br>Query OK, 1 row affected (0.02 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select * from test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看数据库中的表的信息</span><br>+------+-------------------+<br>| num | name 　　　　　|<br>+------+-------------------+<br>| 1 　　|<span class="Apple"> </span><span class="att1" style="color: rgb(255, 0, 255);">Hello World!<span class="Apple"> </span></span>　|<br>+------+-------------------+<br>1 row in set (0.00 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">update test set name='Hello Everyone!';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 更新表的信息，赋予新的值</span><br>Query OK, 1 row affected (0.00 sec)<br>Rows matched: 1 Changed: 1 Warnings: 0</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select * from test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看数据库中的表的信息</span><br>+------+----------------------+<br>| num | name　　　　　 |<br>+------+----------------------+<br>| 1 　　|<span class="Apple"> </span><span class="att1" style="color: rgb(255, 0, 255);">Hello Everyone!</span><span class="Apple"> </span>|　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认被更新到新的值</span><br>+------+----------------------+<br>1 row in set (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">delete from test where num=1;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除表内的值</span><br>Query OK, 1 row affected (0.00 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select * from test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认删除结果</span><br>Empty set (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">drop table test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除表</span><br>Query OK, 0 rows affected (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show tables;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看表信息</span><br>Empty set (0.00 sec)　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认表已被删除</span></p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">drop database test;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除名为test的数据库</span><br>Query OK, 0 rows affected (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">show databases;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查看已存在的数据库</span><br>Empty set (0.01 sec)　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认test数据库已被删除（这里非root用户的关系，看不到名为mysql的数据库）</span></p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">exit</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 退出MySQL服务器</span><br><span class="message" style="color: rgb(204, 204, 204);">Bye</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　 然后，删除测试用过的遗留用户。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td bgcolor="#000000"><span class="message" style="color: rgb(204, 204, 204);">[root@sample ~]#<span class="Apple"> </span></span><span class="command" style="color: rgb(255, 255, 0);">mysql -u root -p</span><span class="message" style="color: rgb(204, 204, 204);">　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 通过密码用root登录</span><span class="message" style="color: rgb(204, 204, 204);"><br>Enter password:　<span class="Apple"> </span></span><span class="intro" style="color: rgb(0, 153, 255);">← 在这里输入密码<br></span><span class="message" style="color: rgb(204, 204, 204);"><br>Welcome to the MySQL monitor. Commands end with ; or \g.<br>Your MySQL connection id is 12 to server version: 4.1.20</span> 
+<p class="message" style="color: rgb(204, 204, 204);">Type 'help;' or '\h' for help. Type '\c' to clear the buffer.</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">revoke all privileges on *.* from centospub@localhost;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 取消centospub用户对数据库的操作权限</span><br>Query OK, 0 rows affected (0.00 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">delete from mysql.user where user='centospub' and host='localhost';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 删除centospub用户</span><br>Query OK, 1 row affected (0.01 sec)</p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">select user from mysql.user where user='centospub';</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 查找用户centospub，确认已删除与否</span><br>Empty set (0.01 sec)　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 确认centospub用户已不存在</span></p>
+<p class="message" style="color: rgb(204, 204, 204);">mysql&gt;<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">flush privileges;</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 刷新，使以上操作生效</span><br>Query OK, 0 rows affected (0.01 sec)</p><span class="message" style="color: rgb(204, 204, 204);">mysql&gt;</span><span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">exit</span><br><span class="message" style="color: rgb(204, 204, 204);">Bye</span></td></tr></tbody></table>
+<p><span class="Apple" style="word-spacing: 0px; font: medium Simsun; text-transform: none; color: rgb(0, 0, 0); text-indent: 0px; white-space: normal; letter-spacing: normal; border-collapse: separate; widows: 2; orphans: 2;"><span class="Apple" style="font-size: 14px; font-family: arial,sans-serif;"><br>　　最后，重新启动一次HTTP服务，让php-mysql反映到HTTP服务中。<br><br></span></span></p>
+<table style="width: 100%;" border="2">
+<tbody>
+<tr>
+<td class="message" style="color: rgb(204, 204, 204);" bgcolor="#000000">[root@sample ~]#<span class="Apple"> </span><span class="command" style="color: rgb(255, 255, 0);">/etc/rc.d/init.d/httpd restart</span>　<span class="Apple"> </span><span class="intro" style="color: rgb(0, 153, 255);">← 重新启动HTTP服务</span><br>Stopping httpd:　　　　　　　　　　　　 [<span class="Apple"> </span><span class="after" style="color: rgb(0, 255, 0);">OK</span><span class="Apple"> </span>]<br>Starting httpd:　　　　　　　　　　　　 [<span class="Apple"> </span><span class="after" style="color: rgb(0, 255, 0);">OK</span><span class="Apple"> </span>]</td></tr></tbody></table>
+<p> 终于搞掂！</p>
+<p>(*^__^*) 嘻嘻……，接下来配置phpmyadmin....</p>
+<!--NEWSZW_HZH_END-->
+<div id="art_xg">
+
+<div id="con_da2">
+<script type="text/javascript" src="mysql_setting_files/baidu580.js"></script><script src="mysql_setting_files/c.js" type="text/javascript"></script><script type="text/javascript" charset="utf-8" src="mysql_setting_files/ecom"></script><div style="display: none;">-</div><iframe id="cproIframe2" marginwidth="0" marginheight="0" allowtransparency="" src="mysql_setting_files/uijs_002.html" frameborder="0" height="280" scrolling="no" width="336" align="center,center"></iframe>
+</div>
+</div>
+<div id="numstyle"></div>
+<div id="con_bo"></div>
+</div>
+<div class="blank3"></div>
+<div class="tags">
+<strong>Tags：</strong><a href="http://img.jb51.net/tag/CentOS/1.htm" target="_blank" title="搜索关于CentOS的文章">CentOS</a> <a href="http://img.jb51.net/tag/MySQL/1.htm" target="_blank" title="搜索关于MySQL的文章">MySQL</a> 
+</div>
+<div class="blank3"></div>
+<div id="shoucang"><script type="text/javascript" src="mysql_setting_files/fav.js"></script><div class="feedicon">
+<img src="mysql_setting_files/wz.gif" alt="收藏到网摘">
+<a href="http://shuqian.qq.com/post?title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6&amp;uri=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;jumpback=2&amp;noui=1" target="_blank"><img src="mysql_setting_files/qq.gif" alt="QQ书签"></a>
+<a href="http://cang.baidu.com/do/add?iu=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;it=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6&amp;dc=%E6%9C%80%E8%BF%91%E5%B7%A5%E4%BD%9C%E4%B8%AD%E7%BB%8F%E5%B8%B8%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8%E5%88%B0MySQL%EF%BC%8C%E6%9C%89%E6%97%B6%E5%80%99%E5%9C%A8WINXP%EF%BC%8C%E6%9C%89%E6%97%B6%E5%80%99%E5%9C%A8Linux%E4%B8%AD%EF%BC%8C%E8%80%8C%E8%BF%99%E6%AC%A1%EF%BC%8C%E9%9C%80%E8%A6%81%E5%9C%A8CentOS%E4%B8%AD%E9%85%8D%E7%BD%AE%E4%B8%80%E4%B8%8B%EF%BC%8C%E8%BF%98%E9%9C%80%E8%A6%81%E7%94%A8%E5%88%B0phpmyadmin%EF%BC%8C%0D%0A%E5%9C%A8%E7%BD%91%E4%B8%8A%E6%90%9C%E4%BA%86%E4%B8%8D%E5%B0%91%E7%9A%84%E8%B5%84%E6%96%99%E3%80%82&amp;fr=js#nw=1" target="_blank"><img src="mysql_setting_files/baidu.gif" alt="Baidu搜藏"></a>
+<a href="http://apps.hi.baidu.com/share/?url=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm" target="_blank"><img src="mysql_setting_files/baiduhi.gif" alt="转帖到百度HI"></a>
+<a href="http://share.renren.com/share/buttonshare.do?link=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6" target="_blank"><img src="mysql_setting_files/renren.gif" alt="分享到人人网"></a>
+<a href="http://www.kaixin001.com/repaste/share.php?rurl=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;rcontent=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;rtitle=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6" target="_blank"><img src="mysql_setting_files/kaixin.gif" alt="分享到开心网"></a>
+<a href="http://v.t.sina.com.cn/share/share.php?url=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6" target="_blank"><img src="mysql_setting_files/sina.gif" alt="转帖到Sina微博"></a>
+<a href="http://www.google.com/bookmarks/mark?op=add&amp;bkmk=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6&amp;annotation=%E6%9C%80%E8%BF%91%E5%B7%A5%E4%BD%9C%E4%B8%AD%E7%BB%8F%E5%B8%B8%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8%E5%88%B0MySQL%EF%BC%8C%E6%9C%89%E6%97%B6%E5%80%99%E5%9C%A8WINXP%EF%BC%8C%E6%9C%89%E6%97%B6%E5%80%99%E5%9C%A8Linux%E4%B8%AD%EF%BC%8C%E8%80%8C%E8%BF%99%E6%AC%A1%EF%BC%8C%E9%9C%80%E8%A6%81%E5%9C%A8CentOS%E4%B8%AD%E9%85%8D%E7%BD%AE%E4%B8%80%E4%B8%8B%EF%BC%8C%E8%BF%98%E9%9C%80%E8%A6%81%E7%94%A8%E5%88%B0phpmyadmin%EF%BC%8C%0D%0A%E5%9C%A8%E7%BD%91%E4%B8%8A%E6%90%9C%E4%BA%86%E4%B8%8D%E5%B0%91%E7%9A%84%E8%B5%84%E6%96%99%E3%80%82" target="_blank"><img src="mysql_setting_files/google.gif" alt="Google"></a>
+<a href="http://myweb.cn.yahoo.com/popadd.html?src=iebookmark&amp;url=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6" target="_blank"><img src="mysql_setting_files/yahoo.gif" alt="Yahoo收藏"></a>
+<a href="http://koudai.qihoo.com/reg_create.html?title=%u5728CentOS%u4E0AMySQL%u6570%u636E%u5E93%u670D%u52A1%u5668%u914D%u7F6E%u65B9%u6CD5_Mysql_%u811A%u672C%u4E4B%u5BB6&amp;url=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm" target="_blank"><img src="mysql_setting_files/koudai.gif" alt="Koudai分享"></a>
+<a href="http://www.douban.com/recommend/?url=http%3A%2F%2Fwww.jb51.net%2Farticle%2F23255.htm&amp;title=%E5%9C%A8CentOS%E4%B8%8AMySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95_Mysql_%E8%84%9A%E6%9C%AC%E4%B9%8B%E5%AE%B6" target="_blank"><img src="mysql_setting_files/douban.gif" alt="分享到豆瓣"></a>
+</div>
+</div>
+<div class="con_ff">
+<a title="复制本文链接发给你QQ/MSN上的好友" href="javascript:%20copyUserHomeToClipBoard()" rel="nofollow" class="button_link">复制链接</a><a href="javascript:addBookmark(document.title,document.location.href)" class="button_link">收藏本文</a><a href="javascript:doPrint();" class="button_link">打印本文</a><a href="javascript:closeWindow()" class="button_link">关闭本文</a><a href="http://www.jb51.net/index.htm" class="button_link">返回首页</a>
+</div>
+<div id="prenext">
+<div id="prv">上一篇：<a href="http://www.jb51.net/article/23060.htm" title="mysql insert的几点操作(DELAYED,IGNORE,ON DUPLICATE KEY UPDATE )">mysql insert的几点操作(DELAYED,IGNORE,ON DUPLICATE KEY UPDATE )</a></div><div id="next">下一篇：<a href="http://www.jb51.net/article/27086.htm">Mysql limit 优化，百万至千万级快速分页 复合索引的引用并应用于轻量级框架</a></div>
+</div>
+<div class="bc_bot_ad">
+<script type="text/javascript" src="mysql_setting_files/bc_bot_ad.js"></script><a href="http://s.jb51.net/" alt="服务器安全设置" target="_blank"><img src="mysql_setting_files/s468.gif" height="60" width="468" border="0"></a>
+</div>
+<div class="blank3"></div>
+<div id="relatedarticle">
+<h2>相关文章</h2>
+<ul><li><a href="http://www.jb51.net/article/14322.htm" title="mysql 分页优化解析" target="_blank">mysql 分页优化解析</a></li><li><a href="http://www.jb51.net/article/22601.htm" title="MySQL 通过索引优化含ORDER BY的语句" target="_blank">MySQL 通过索引优化含ORDER BY的语句</a></li><li><a href="http://www.jb51.net/article/22727.htm" title="mysql 数据库备份和还原方法集锦 推荐" target="_blank">mysql 数据库备份和还原方法集锦 推荐</a></li><li><a href="http://www.jb51.net/article/26942.htm" title="mysql仿oracle的decode效果查询" target="_blank">mysql仿oracle的decode效果查询</a></li><li><a href="http://www.jb51.net/article/19045.htm" title="mysql 查询表中平均分最低的班级" target="_blank">mysql 查询表中平均分最低的班级</a></li><li><a href="http://www.jb51.net/article/24392.htm" title="MySQL 性能优化的最佳20多条经验分享" target="_blank">MySQL 性能优化的最佳20多条经验分享</a></li><li><a href="http://www.jb51.net/article/14068.htm" title="C#编写方法实例" target="_blank">C#编写方法实例</a></li><li><a href="http://www.jb51.net/article/24488.htm" title="mysql免安装版的实际配置方法" target="_blank">mysql免安装版的实际配置方法</a></li></ul>
+<div class="clear"></div></div>
+<div class="sm"><script type="text/javascript" src="mysql_setting_files/sm.js" charset="gb2312"></script><b>友情提醒</b>：本站文件的解压密码：www.jb51.net (请使用最新的winrar)
+<a href="http://www.tuidc.com/" target="_blank" title="腾佑科技"><img src="mysql_setting_files/tengyou468.gif" height="60" width="468"></a><div class="blank2"></div>
+<a href="http://www.now.cn/?now_1920_jb51" target="_blank"><img src="mysql_setting_files/now.gif" height="60" width="468"></a></div>
+<div id="comments">
+<h2>文章评论</h2>
+<p><span>共有 <strong id="thecount">2&nbsp;</strong> 位脚本之家网友发表了评论</span><a href="http://img.jb51.net/comment.asp?id=23255" target="_blank">我来说两句</a></p>
+<div id="commentList"></div>
+</div>
+<div class="blank3"></div>
+</div>
+</div><!--end dxy_mainl-->
+<div class="dxy_main_r">
+<div class="rbg"><script src="mysql_setting_files/r_1.js"></script><a href="http://idc567.com/" target="_blank"><img src="mysql_setting_files/lichen300.gif" height="80" width="300"></a></div>
+<div class="blank3"></div>
+<script src="mysql_setting_files/r_2.js"></script><a href="http://www.geisnic.com/" target="_blank"><img src="mysql_setting_files/gs.gif" height="60" width="300"></a>
+<div class="blank3"></div>
+<div class="r_title"><h6>最 近 更 新</h6></div>
+<div class="rightContent">
+<ul><li><a href="http://www.jb51.net/article/26934.htm" title="mysql insert if not exists防止插入重复记录的方法" target="_blank">mysql insert if not exists防止插入重复</a></li><li><a href="http://www.jb51.net/article/23355.htm" title="mysql命令行还原phpMyAdmin导出的含有中文的SQL文件" target="_blank">mysql命令行还原phpMyAdmin导出的含有中文</a></li><li><a href="http://www.jb51.net/article/18927.htm" title="MySQL一个索引最多有多少个列？真实的测试例子" target="_blank">MySQL一个索引最多有多少个列？真实的测试</a></li><li><a href="http://www.jb51.net/article/16916.htm" title="MYSQL 数据库命名与设计规范" target="_blank">MYSQL 数据库命名与设计规范</a></li><li><a href="http://www.jb51.net/article/20153.htm" title="mySQL 延迟 查询主表" target="_blank">mySQL 延迟 查询主表</a></li><li><a href="http://www.jb51.net/article/26684.htm" title="mysql多表join时候update更新数据的方法" target="_blank">mysql多表join时候update更新数据的方法</a></li><li><a href="http://www.jb51.net/article/25189.htm" title="linux下讲解MySQL安装与登录方法" target="_blank">linux下讲解MySQL安装与登录方法</a></li><li><a href="http://www.jb51.net/article/25663.htm" title="mysql下普通索引和唯一索引的效率对比" target="_blank">mysql下普通索引和唯一索引的效率对比</a></li><li><a href="http://www.jb51.net/article/18667.htm" title="mysql 常用命令集锦[绝对精华]" target="_blank">mysql 常用命令集锦[绝对精华]</a></li><li><a href="http://www.jb51.net/article/23575.htm" title="mysql中char与varchar的区别分析" target="_blank">mysql中char与varchar的区别分析</a></li></ul>
+</div>
+<div class="blank3"></div>
+<div class="r_title"><h6>热 点 排 行</h6></div>
+<div class="hotContent">
+<ul class="topnum"><li class="top1"><a href="http://www.jb51.net/article/15386.htm" title="超详细mysql left join,right join,inner join用法分析" target="_blank">超详细mysql left join,right jo</a></li><li class="top2"><a href="http://www.jb51.net/article/5189.htm" title="MySQL中文乱码问题的解决" target="_blank">MySQL中文乱码问题的解决</a></li><li class="top3"><a href="http://www.jb51.net/article/13312.htm" title="MySQL 1067错误解决方法集合" target="_blank">MySQL 1067错误解决方法集合</a></li><li class="top4"><a href="http://www.jb51.net/article/17605.htm" title="MySQL UPDATE更新语句精解" target="_blank">MySQL UPDATE更新语句精解</a></li><li class="top5"><a href="http://www.jb51.net/article/10483.htm" title="用mysqldump备份和恢复指定表的方法" target="_blank">用mysqldump备份和恢复指定表的方</a></li><li class="top6"><a href="http://www.jb51.net/article/13875.htm" title="mysql 远程连接数据库的方法集合" target="_blank">mysql 远程连接数据库的方法集合</a></li><li class="top7"><a href="http://www.jb51.net/article/10351.htm" title="经测试最好用的mysql密码忘记的解决方法" target="_blank">经测试最好用的mysql密码忘记的解</a></li><li class="top8"><a href="http://www.jb51.net/article/14062.htm" title="MySQL里面的子查询实例" target="_blank">MySQL里面的子查询实例</a></li><li class="top9"><a href="http://www.jb51.net/article/15292.htm" title="MySQL忘记密码恢复密码的实现方法" target="_blank">MySQL忘记密码恢复密码的实现方法</a></li><li class="top10"><a href="http://www.jb51.net/article/15882.htm" title="MySql增加用户、授权、修改密码等语句" target="_blank">MySql增加用户、授权、修改密码等</a></li></ul>
+</div>
+<div class="blank3"></div>
+<div><script src="mysql_setting_files/r_3.js"></script><div class="blank3"></div>
+<div class="r_title"><h6>Js与CSS工具</h6></div>
+<div class="rightContent"><ul>
+<li><a href="http://www.jb51.net/tools/cssyasuo.shtml" target="_blank"><font color="red">CSS在线压缩格式化(中文)</font></a></li>
+<li><a href="http://www.codebeautifier.com/" target="_blank"><font color="red">css 格式化整理工具(英文)</font></a></li>
+<li><a href="http://www.jb51.net/csstidy/css_optimiser.php?lang=zh" target="_blank">CSS整形格式化</a></li> 
+<li><a href="http://tools.jb51.net/tools/js_geshihua.asp" target="_blank"><font color="red">JavaScript 格式化整理工具</font></a></li>
+<li><a href="http://jsbeautifier.org/" target="_blank"><font color="red">jsbeautifier Js格式化整理工具(英文)</font></a></li>
+<li><a href="http://www.phpformatter.com/" target="_blank"><font color="red">php 格式化整理工具(英文)</font></a></li>
+<li><a href="http://www.jb51.net/tools/html-js.htm" target="_blank">HTML/JS互相转换工具</a></li>
+<li><a href="http://www.jb51.net/tools/packer.htm" target="_blank"><font color="red">javascript pack加密压缩工具</font></a></li>
+<li><a href="http://www.jb51.net/tools/jsmin/index.htm" target="_blank">JS Minifier压缩</a></li> 
+<li><a href="http://www.jb51.net/tools/JShunxiao.htm" target="_blank">JS混淆工具</a></li> 
+<li><a href="http://www.jb51.net/tools/js_Debug.htm" target="_blank">在线JS脚本校验器错误</a></li>
+<li><a href="http://tools.jb51.net/tools/regex.asp" target="_blank">JavaScript 正则表达式在线测试工具</a></li>
+</ul>
+</div>
+<div class="blank3"></div>
+<div class="r_title"><h6>代码转换工具</h6></div>
+<div class="rightContent"><ul>
+<li><a href="http://www.jb51.net/tools/base64.htm" target="_blank">Base64编码加密</a></li>
+<li><a href="http://tools.jb51.net//tools/Escape.asp" target="_blank">Escape加解密</a></li>
+<li><a href="http://tools.jb51.net/html_ubb.asp" target="_blank">HTML/UBB代码转换</a></li>
+<li><a href="http://www.jb51.net/tools/fanjianzhi.htm" target="_blank">GB2312/BIG5繁简字转换</a></li>
+<li><a href="http://www.jb51.net/tools/jingdian.shtml" target="_blank">经典小工具集 数字转换</a></li>
+<li><a href="http://www.jb51.net/tools/htmlto.htm" target="_blank">HTML多功能代码转换器</a></li>
+<li><a href="http://www.jb51.net/tools/xunleijm.htm" target="_blank">迅雷快车加/解密</a></li>
+<li><a href="http://tools.jb51.net/tools/pinyin.asp" target="_blank">汉字转换拼音</a></li>
+</ul>
+</div>
+<div class="blank3"></div>
+<a href="http://www.tuidc.com/" target="_blank"><img src="mysql_setting_files/tengyou300.gif" height="260" width="300"></a></div>
+<div class="blank3"></div>
+<div id="baidu300"><script type="text/javascript" src="mysql_setting_files/baidu300_2.js"></script></div>
+</div><!--end mainr-->
+<div class="clear"></div>
+</div><!--end main2-->
+<div class="blank3"></div>
+<div id="footer">
+  <div id="footerinfo">
+   <div id="footercontent"><a href="http://www.jb51.net/about.htm" target="_blank">关于本站</a> - <a href="http://www.jb51.net/support.htm" target="_blank">广告合作</a> - <a href="http://www.jb51.net/linkus.htm" target="_blank">联系我们</a> -  <a href="http://www.jb51.net/sm.htm" target="_blank">免责声明</a> -  <a href="http://www.jb51.net/sitemap.htm" target="_blank">网站地图</a> - <a href="http://www.jb51.net/do/plus/guestbook/index.php" target="_blank">意见反馈</a> - <a href="#top">返回顶部</a></div>
+    <div id="footercopyrights">严禁网站镜像，转载请注明出处。<a href="http://www.miibeian.gov.cn/">苏ICP备06043639号</a><br>
+      <span>Copyright &#169; 2006-2010 www.jb51.net online services. All rights reserved. . </span><br>
+	   QQ群1:14624678 QQ群2:36345889或业务QQ:461478385 <br><script language="javascript" src="mysql_setting_files/zanzhu.js"></script>本站部分带宽由<a href="http://www.tuidc.com/" target="_blank">腾佑科技</a>、<a href="http://www.hb666.net/" target="_blank">佰网数据</a>、<a href="http://www.59.cn/" target="_blank">59互联</a>、<a href="http://idc567.com/" target="_blank">利晨科技</a>、<a href="http://www.33isp.com/" target="_blank">盈汇动力</a>提供 <a href="javascript:noad2010()">关闭广告</a>―<a href="javascript:yesad2010()">恢复广告</a></div>
+  </div>
+</div>
+<script type="text/javascript">
+document.body.oncopy = function () { 
+	setTimeout( function () { 
+		var text = getClipboard();
+		if (text) { 
+			text = text + "\r\n详细出处参考："+document.location.href; 
+copy2Clipboard(text);
+
+		} 
+				}, 100 ) 
+}
+</script>
+<div id="logo_m_tp"></div>
+<div id="logo_r_tp"></div>
+<div id="title_ad1_tp"></div>
+<span id="baidu300_tp"></span>
+<div id="tonglan1_tp"></div>
+<script type="text/javascript" src="mysql_setting_files/con_ad.js"></script>
+<div class="tongji"><script type="text/javascript" src="mysql_setting_files/tongji.js"></script><script src="mysql_setting_files/stat.html" language="JavaScript"></script><a href="http://www.cnzz.com/stat/website.php?web_id=1585378" target="_blank" title="站长统计">站长统计</a><img src="mysql_setting_files/stat.gif" height="0" width="0" border="0"></div>
+<script type="text/javascript" src="mysql_setting_files/big5style.js"></script>
+<script src="mysql_setting_files/pl_counts.html"></script><script type="text/javascript" src="mysql_setting_files/pv.html"></script><script language="javascript" src="mysql_setting_files/pv2.html"></script><style id="100fenlmcss" type="text/css">.fixed {position:fixed;};* html div#lm100fen2343_ {position:absolute;right: auto; bottom: auto;left: expression( ( 0 - lm100fen2343_.offsetWidth + ( document.documentElement.clientWidth ? document.documentElement.clientWidth : document.body.clientWidth ) + ( ignoreMe2 = document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft ) ) + 'px' );top: expression( ( 0 - lm100fen2343_.offsetHeight + ( document.documentElement.clientHeight ? document.documentElement.clientHeight : document.body.clientHeight ) + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );}</style>
+<div id="lm100fen2343" style="display: block; left: 0px; top: 6503px;"><div wistate="max" id="lm100fen2343_" style="display: block; height: 233px; bottom: 0px; right: 0px; width: 270px; float: left; -moz-user-select: none; overflow: hidden; z-index: 10000; position: fixed;" class="fixed"><table><tbody><tr><td style=""></td><td align="right"><img src="mysql_setting_files/gb66_22.html" onclick='_message_tips_pop_lm100fen2343("down");return false;' height="22px" width="66px"></td></tr><tr><td colspan="2"><iframe id="lm100fen2343" name="lm100fen2343" src="mysql_setting_files/2343_33928.html" frameborder="0" height="200" scrolling="no" width="270"></iframe></td></tr></tbody></table></div></div>
+
+<!-- published at 2011-5-8 2:10:35By dxycms qq:461478385  -->
+</body></html>

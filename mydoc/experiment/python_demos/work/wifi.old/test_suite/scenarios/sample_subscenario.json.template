@@ -1,0 +1,23 @@
+{
+    "name":"sample_subscenario",
+    "type":{"name":"seq"},
+    "ap":[
+    {"model":"ap:cisco:e3000","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"}
+    ],
+    "description":"setting device wireless.",
+    "scenarios":[
+    {
+        "subscenarios1":{
+            "fname":"sample_scenario1.json", 
+            "catagory":"ap",
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}

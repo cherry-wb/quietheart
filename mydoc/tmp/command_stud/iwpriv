@@ -1,0 +1,5 @@
+
+*检查无线网口是否连接：
+iwpriv wlan0 connStatus
+
+如果wpa_supplicant连接成功，即使没有分配ip，这里也显示connected.

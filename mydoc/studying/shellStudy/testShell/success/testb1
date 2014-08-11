@@ -1,0 +1,3 @@
+#!/bin/bash
+echo this file use the '#!bash'
+echo good

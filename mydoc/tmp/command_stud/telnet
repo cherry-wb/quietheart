@@ -1,0 +1,63 @@
+
+*其它
+telnet不仅可以远程登录机器，还可以打开机器的特定端口。机器的一些端口有特殊的服务，例如：
+Service Port Description
+*Active Users 11 Returns the names of all users on the remote system
+*Character Generator 19 Returns all printable ASCII characters
+*Daytime 13 Returns the date and time, day of the week, and month of the year
+*Discard 9 Discards all received messages
+*Echo 7 Returns any messages
+*Quote of the Day 17 Returns a quotation
+*Time 37 Returns the time since January 1, 1900 (in seconds) 
+
+
+
+$ telnet merlin 7
+
+Trying...
+
+Connected to merlin.tpci.com
+
+Escape character is '^T'.
+
+This is a message
+
+This is a message
+
+Isn't this exciting?
+
+Isn't this exciting?
+
+<Ctrl+T>
+
+$ telnet merlin 13
+
+Trying...
+
+Connected to merlin.tpci.com
+
+Escape character is '^T'.
+
+Tues Jun 21 10:16:45 1994
+
+Connection closed.
+
+$ telnet merlin 19
+
+!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefg
+
+"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefgh
+
+#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefghi
+
+$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefghij
+
+%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefghijk
+
+&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefghijkl
+
+'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[[\]^_abcdefghijklm
+
+<Ctrl+T>
+
+$

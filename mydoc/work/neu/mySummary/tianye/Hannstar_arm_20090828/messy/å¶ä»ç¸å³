@@ -1,0 +1,11 @@
+PXA300 Processor Series PXA300处理器系列
+
+The PXA300 processor, with scalable performance to 624 MHz and video performance capabilities, enables the development of cost-efficient smartphones, industrial embedded solutions, and handheld devices such as portable navigation devices (PNDs).的PXA300处理器，可扩展的性能，以624 MHz和视频性能的能力，使发展具有成本效益的智能手机，工业嵌入式解决方案，和手持设备，如便携式导航设备（ PND ）的全包。 Built on a low-power 90nm process technology, and with the ability to dynamically scale voltage and frequency on demand, the PXA300 supports today’s stringent requirements for longer battery life.建立在低功耗的90nm制造工艺，并能够动态规模电压和频率的需求， PXA300支持今天的严格要求更长的电池寿命。
+
+Key Features and Platform Benefits主要功能和平台的优点
+The PXA300 processor and its derivatives, with options for stacked NAND ﬂash and mobile DDR memory, integrate the following features:该PXA300处理器及其衍生物，并选择堆叠NAND闪存和移动DDR内存，集成了以下功能：
+
+Scalable, general-purpose processing up to 624 MHz with a 16-bit DDR memory interface for a richer end-user experience, such as browsing Web content or streaming video.可扩展性，通用处理高达624 MHz的16位DDR内存接口，更丰富的终端用户体验，如浏览网页内容或视频流。
+Dynamic CPU frequency and voltage scaling technology for MIPs/mW power efficiency, delivering long battery life and enabling consumers to spend more time enjoying the rich features their offered by their devices and service providers.动态CPU频率和电压缩放技术，聚合物/兆瓦的功率效率，提供超长电池寿命，使消费者花更多的时间享受其丰富的功能所提供的设备和服务提供商。
+WMMX2 accelerating technology, a 2D graphics accelerator and a 256 KB frame buffer designed to support video codecs, enhances the user’s experience of popular usage models like video playback, video conferencing, video telephony, and digital TV. WMMX2加速技术， 2D图形加速器和一个提供256 KB帧缓冲设计支持视频编解码器，增强了用户体验的民众使用模式像视频播放，视频会议，视频电话和数字电视。
+An enhanced set of peripherals eases connectivity to technologies like Wi-Fi, WiBro, WiMAX, and Bluetooth v2.0, and support for camera sensors up to 2 MP.增强的外设集简化连接技术，如Wi - Fi网络，无线宽带， WiMAX和蓝牙v2.0 ，支持摄像传感器高达200万像素。

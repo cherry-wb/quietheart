@@ -1,0 +1,299 @@
+说明：
+这篇文档
+1）详细描述了hildon-desktop（桌面程序）从启动开始，到加载完所有的插件的详细过程。
+2）启动后hildon-desktop桌面程序如何控制各个模块程序的行为以及各插件的运行状况。
+
+一些基本概念：
+1）hildon-desktop桌面程序(后面会简称为桌面程序)，为所有程序提供了一个运行的环境，在这个环境下，我们可以通过hildon-desktop桌面程序提供的功能，来方便的对各种应用程序进行控制。
+2）插件，这里所说的插件，是桌面程序的插件，它不是一个独立的可执行程序，它属于桌面程序运行代码的一部分，可以通过添加插件的方法来扩展桌面程序的功能。例如，在桌面程序启动之后，我们可以利用其中的启动程序插件来启动一个应用程序；程序启动之后，我们可以利用一个显示标题的插件来显示当前运行程序的名称等等。
+3）应用程序，这里的应用程序，是一个可执行的程序，它独立于hildon-desktop桌面程序，通过应用程序，我们可以提供各种复杂的功能。例如，browser程序可以浏览网页；video程序可以看视频；word程序可以编辑文档，等等。
+
+一、hildon-desktop的运行流程：
+关于hildon-desktop各个插件的配置，有专门的介绍，这里通过分析hildon-desktop程序的源代码，描述了各个插件究竟是如何被加载上去的。
+
+首先，我们来看一下程序的整体运行流程：
+hildon-desktop桌面程序的启动主要分为三步：
+1）初始化部分。
+2）读取配置部分。
+3）加载并启动完毕。
+这里，用程序流程图方式，大致给出了hildon-desktop程序的运行框架：
+??????????????????????????????
+=====================================
+1，初始化：
+首先我们来看看初始化部分：
+启动hildon-desktop桌面程序之前,程序需要知道从哪里读取配置文件，根据这些配置文件，hildon-desktop桌面程序（以后就简称为桌面程序）可以确定界面的显示风格，插件的位置，以及插件的详细配置情况，等等。
+1）资源文件的加载：
+通过资源文件，我们可以定义桌面以及应用程序的显示风格，例如桌面的背景采用哪种图片，桌面中的程序按钮显示的风格怎样等等。
+在src/main.c中的main函数里面，
+gtkrc = g_build_filename (g_get_home_dir (),
+                            OSSO_USER_DIR,
+                            HILDON_DESKTOP_GTKRC,
+                            NULL);
+这句话确定了资源文件的位置,其中:
+OSSO_USER_DIR定义为".osso",
+HILDON_DESKTOP_GTKRC定义为“current-gtk-theme.maemo_af_desktop”
+因此，$HOME/.osso/current-gtk-theme.maemo_af_desktop是启动桌面时候加载的文件。
+资源配置文件在$HOME/.ossso/current-gtk-theme.maemo_af_desktop里面会指定。实际current-gtk-theme.maemo_af_desktop只是一个“链接”文件，它的内容指明了真正的资源文件位置(/usr/share/themes/default/gtk-2.0/gtkrc.maemo_af_desktop)。
+
+gtk_rc_add_default_file (gtkrc);
+这句话的调用，就加载了前面设置的资源配置文件。
+
+2）插件配置文件的加载：
+在src/main.c中的main函数里面，
+desktop = hd_desktop_new ();
+这句话建立名为desktop的自定义gtk构件，这里会调用hd_desktop_class_init和hd_desktop_init（二者都在hd-desktop.c里），需要注意的是，这里最重要的就是hd_desktop_init函数。因为在这个函数里加载了一些重要的配置文件，通过这些配置文件，桌面程序才能够知道从哪里读取插件的配置文件，以及如何加载等等。
+
+=====================================
+2，读取配置部分
+通过读取配置文件，桌面程序可以知道从哪里，以及怎样加载各种配置文件。我们需要先了解一下桌面程序和各种插件的关系，便于后面的说明。
+1)首先，hildon-desktop这个桌面程序，有几大模块，（配图???????????）
+通过对下载的源程序的分析，我们发现，hildon-desktop使用了三个大模块（其实还可能有其他类型的模块，不过hildon-desktop就使用了这三种）：
+a)statusbar模块：这个模块就是启动桌面后，最上面的一条类似任务栏的东西，可以在它上面添加各种插件以实现各种功能，如时间显示，音量控制，等等。
+b)home模块：这个模块是statusbar最左侧的类似开始菜单的按钮以及statusbar下面的整个屏幕区域。
+c)tasknavigator模块：这个模块是最左侧的竖直条，每运行一个程序，该竖直条上面会多一个图标代表该程序，这样可以实现任务的切换管理。
+
+在这三大模块中，根据式样，我们去掉了后两个模块，只保留了statusbar模块，这样显示简洁，并且后面的两个模块的功能，可以通过给statusbar模块添加插件扩展实现，所以后面的讲述将只针对statusbar模块相关的内容进行展开。
+桌面程序有它自己的配置文件，通过这个配置文件，可以知道如何加载这三大模块（例如在哪个位置以多大宽度加载等等）。
+这个桌面配置文件的位置是:~/.osso/hildon-desktop/desktop.conf
+
+每个模块也都有它们自己的配置文件，在桌面配置文件里面已经指定，模块的配置文件就包含了所有要添加到模块的插件的配置文件。
+其中statusbar插件的配置文件在~/.osso/hildon-desktop/statusbar.conf
+
+2)其次，每个模块中又可以添加多个插件:
+插件就是实现桌面程序各种功能的模块，例如任务切换，启动程序的菜单，显示时间，关闭程序的菜单，显示启动程序的标题，返回桌面功能等等。我们扩展桌面程序的功能就是通过编写插件来实现的。
+通过前面的三大模块，我们可以确定插件的配置文件的位置，通过插件的配置文件，我们才知道从哪里以及怎样加载插件模块。例如对于任务管理插件来说，它的配置文件在statusbar.conf文件里会指明，
+其位置是：[/usr/share/applications/hildon-status-bar/taskmanager.desktop]
+知道了插件的位置，我们才能够知道，从哪里执行插件，另外还可以指定加载插件的其他一些特殊选项，例如插件加载之后利用什么图标来显示出来，在statusbar的哪里显示等等。
+这里，statusbar图标文件默认位置：/usr/share/icons/hicolor/40x40/hildon
+这里指定任务管理插件位置为:/usr/lib/hildon-status-bar/libtaskmanager.so
+
+3)了解上面的内容之后，我们来看看程序是如何获取插件配置文件的信息的：
+src/main.c中的main函数里面：
+3.1)
+hd_desktop_run (HD_DESKTOP (desktop));
+这个函数，真正运行hildon-desktop程序，它不但读取了插件的配置文件，还加载了插件。这里我们先看看它是如何读取插件配置文件的。
+3.2)
+hd_desktop_run函数。
+这个函数才负责主程序的运行，它的实现在src/hd-desktop.c中，其中最关键的是这句话：
+hd_desktop_load_containers (desktop);
+它负责读取配置文件并根据配置文件加载插件。
+3.3)
+hd_desktop_load_containers函数。
+这个函数的实现在src/hd-desktop.c中,我们用伪代码的方式来展示它的主要功能：
+hd_desktop_load_containers(...)
+{
+   初始化变量；
+   加载配置文件到keyfile变量；
+   for（每个模块）
+   {
+      通过keyfile读取模块配置文件中的各种参数信息；
+      if(是home插件)
+      {
+         根据配置信息加载home模块；
+      }
+	  else if(是panel模块)
+      {
+         if(是panel配置文件的类型是非扩展模块)
+         {
+            根据配置信息创建非扩展panel（就是左侧的tasknavigator）；
+         }
+		 else if(是panel配置文件的类型是扩展模块)
+         {
+            根据配置信息创建扩展panel（就是顶部的"statusbar"）；
+         }
+      }
+	  else (既不是home也不是panel)
+      {
+         报警；
+      }
+      为插件链接信号和回调函数,以响应启动桌面之后的各种用户及系统事件；
+      加载和显示插件(这里会在后面加载插件部分详细介绍)；   
+   }
+   释放资源;
+}
+通过上述伪代码结合前面介绍的内容，我们应该就理解插件的配置文件是如何读取的了。
+
+======================================================
+3,加载插件并启动完毕。
+插件的加载过程非常复杂，其中涉及到如何”动态“加载的插件，以及如何加载事先再配置文件中配置好的插件等等。这里就几个最重要的地方进行介绍。
+
+1)在前面hd_desktop_load_containers(...)函数代码中的后面，加载和显示插件部分：
+hd_plugin_manager_load (HD_PLUGIN_MANAGER (priv->pm), 
+                        plugin_list, 
+                        HILDON_DESKTOP_WINDOW (info->container)->container,
+                        info->policy);
+这个函数在src/hd-plugin-manager.c实现。
+这个函数负责根据前面模块配置文件中的内容，真正加载各个模块的各个插件。
+其中，
+plugin_list参数就是该模块配置文件(以.conf作为后缀)中的所有插件配置文件（以.desktop作为后缀）的列表。
+HILDON_DESKTOP_WINDOW (info->container)->container参数是代表该模块的窗口，也就是说，插件最终会加载到这个模块的窗口上面。
+
+2)在hd_plugin_manager_load函数中，
+for(...)
+{
+	/*...前面省略...*/
+	if (!hd_plugin_manager_load_plugin (pm, 
+		(const gchar *) iter->data, 
+		container) && policy != NULL)
+	{
+		/*...省略...*/
+	}
+	/*...后面省略...*/
+}
+这句话就是插件的加载关键部分,它根据指定的插件配置文件列表，循环加载各个插件。
+这个函数(hd_plugin_manager_load_plugin)在src/hd-plugin-manager.c中实现。
+
+3)在hd_plugin_manager_load_plugin函数中，
+
+3.1) loader = hd_plugin_loader_factory_create (HD_PLUGIN_LOADER_FACTORY (pm->priv->factory), 
+                                            plugin_path);
+这里会把插件的配置文件读取,这里还会把插件模块new出来，如果还没有注册过相应的模块类型，就先注册一下。
+插件总共有四种插件类型：default,buildin等等，在插件的配置文件有相关的字段。注册的类放到一个registry表中，new出来的插件模块放到一个gmodules表中。这里，statusbar上面的插件，一般都是default类型的。
+函数hd_plugin_loader_factory_create的实现在文件src/hd-plugin-loader-factory.c中。
+
+3.2)plugins = hd_plugin_loader_load (loader, &error);
+这里，根据前面读取的插件配置文件信息，加载特定类型的特定插件(插件名称通常是这样的格式：lib.***so)。
+函数hd_plugin_loader_load在src/hd-plugin-loader.c里面实现。
+3.3)
+gtk_container_add (container, widget);
+通过这句话就把已经加载的插件添加到指定的模块窗口中去了。
+
+二、通过修改hildon-desktop代码实现一些特殊的功能举例：
+假设我们需要修改statusbar上面插件的布局情况，
+要求:
+如果是名字为homeback的插件就放到最左边，
+其他插件都从最右边向左依次排列.
+这里，homeback插件的配置文件是:homeback.desktop
+进行的步骤如下：
+0)打开libhildondesktop/hildon-desktop-panel.c文件，这个文件里面包含了statusbar如何添加插件的相关代码。
+1)首先定义一个宏，宏名就是homeback插件的配置文件位置：
+#define N_HOMEICON_ID "/usr/share/applications/hildon-status-bar/homeback.desktop"
+hildon-desktop是根据每个插件的配置文件位置来唯一标识每个插件的。
+2）修改一个hildon_desktop_panel_calc_positions函数,如下：
+static void
+hildon_desktop_panel_calc_positions (HildonDesktopPanel *panel,
+                                     HildonDesktopPanelItem *item)
+{
+  if(!g_strcasecmp(hildon_desktop_item_get_id((HildonDesktopItem*)item),N_HOMEICON_ID))
+  {/*这里表示homeback插件从最左侧添加*/
+    gtk_box_pack_start (GTK_BOX (panel), GTK_WIDGET (item), FALSE, FALSE,0);
+  }
+  else
+  {/*这里表示其他插件从最右侧开始添加*/
+    gtk_box_pack_end   (GTK_BOX (panel), GTK_WIDGET (item), FALSE, FALSE, 0);
+  }
+  gtk_widget_show    (GTK_WIDGET (item));
+}
+通过这个例子，我们就可以知道如何修改statusbar模块相关代码控制插件的布局情况。其他关于statusbar上面内容的修改情况（例如插件数目的限制等等），都可以通过修改libhildondesktop文件夹中的某些文件来实现。
+3)编译，更新：
+当我们修改完了hildon-desktop桌面程序或者statusbar的相关代码之后，回到源代码的根目录中，运行:
+$make
+这样就会重新编译，并生成相关的目标文件。
+其中hildon-desktop桌面程序的目标文件是：src/.libs/hildon-desktop
+statusbar的目标程序是：libhildondesktop/.libs/libhildondesktop
+编译生成之后，我们可以执行下面命令来更新目标文件：
+$cp src/.libs/hildon-desktop /usr/bin
+$cp libhildondestkop/.libs/libhildondestkop /usr/lib
+三、如何编写一个简单的statusbar插件：
+通过编写插件，我们可以扩展桌面的功能,编写插件可以利用gtk相关的函数，也可以利用hildon桌面环境已经提供的一些接口来进行，还可以利用任何系统上支持的库编写。
+目前已知有两个方法：
+1）从官方网站：www.maemo.org下载源代码，然后修改其中的initialize函数。这是最简单的方法，适合statusbar插件，以及其他模块的插件。
+源代码具体位置是：
+https://garage.maemo.org/svn/maemoexamples/tags/maemo_4.1/hello-world-app/
+
+2)编写专门用于statusbar模块的插件：
+参考网址：
+http://test.maemo.org/platform/docs/howtos/tutorial_desktop_plugins_bora.html#status-bar-plugins
+statusbar插件分为三种类型，permanent,conditional和temporal.Permanent插件一直会显示。Conditional和temporal插件只有在条件满足的时候才会显示。
+2.1)配置文件的内容：
+每一个插件都会有一个.desktop文件，内容大致如下：
+  [Desktop Entry]
+  Name=<logical name identifier>
+  Icon=<logical icon identifier>
+  Category=<permanent/conditional/temporal>, 
+  X-status-bar-plugin=lib<plugin name>.so
+  Mandatory=<true/false>,
+含义很明显。
+
+2.2)插件相关函数：
+2.2.1)entry函数：
+最重要的函数是entry函数，这个函数在插件被加载的时候被调用。它指明了插件的重要函数。entry函数的名字和你的插件库文件的名字相关联。它的名字是:[你的库名]_entry.例如，有一个插件的名字叫做hello,（库名应该是libhello.so）那么它的entry函数应该是:hello_entry。下面的例子展示了entry函数：
+/*******举例子:entry*********/
+/* Definition of HildonStatusBarPluginFn_st */
+#include <hildon-status-bar-lib/hildon-status-bar-item.h>
+#include <gtk/gtk.h>
+
+void hello_entry(HildonStatusBarPluginFn_st *fn)
+{
+  /* Sanity check */
+  if (fn == NULL) {
+    return;
+  }
+  fn->initialize = hello_initialize;/*确定初始化函数*/
+  fn->destroy = hello_destroy;/*确定‘析构’函数*/
+  fn->update = hello_update;
+  fn->get_priority = hello_get_priority;
+}
+
+2.2.2)initialize函数:
+initialize函数是插件加载后最先运行的几个重要函数之一，我们编写插件的主要工作也在这里进行，这个函数就像是一个可执行程序中的main函数一样重要。通过编写initialize函数的代码，我们可以实现插件的各种功能。
+下面的函数展示了initialize函数：
+
+/*******举例子:initialize*********/
+struct HelloPlugin {/*这里定义插件*/
+  HildonStatusBarItem *item;
+  GtkWidget *button;
+  /* Add here any data for your plugin. */
+};
+
+void *hello_initialize(HildonStatusBarItem *item, GtkWidget **button)
+{
+  GtkWidget *image = NULL;
+  struct HelloPlugin *hello = g_new0(struct HelloPlugin, 1);
+
+  hello->item = item;/*保存item*/
+  *button = hello->button = gtk_button_new();/*第二个参数对应的按钮*/
+
+  image = gtk_image_new_from_file("hello.png"); /* 图像的像素大小应该是40x40 */
+
+  gtk_container_add(
+    GTK_CONTAINER(*button),
+    GTK_WIDGET(image));
+
+  /* Here could add some gconf_notify's, g_timeouts or such. */
+
+  gtk_widget_show_all(*button);
+
+  return (void *)hello;
+}
+
+2.2.3)destroy函数
+当插件被析构的时候，destroy函数就被调用了,它应该释放所有的资源.
+下面的例子是destroy函数：
+
+void hello_destroy(void *data)
+{/*这里的data可能是initialize传递来的*/
+  if (!data) {
+    return;
+  }
+
+  /* You should do g_source_removes and gconf_client_notify_removes here. */
+
+  g_free(data);
+}
+
+3)编译生成插件：
+命令如下：
+[sbox-SDK_PC: ~] > gcc -shared `pkg-config gtk+-2.0 hildon-1 --libs --cflags` hello.c -o libhello.so
+编译好的文件默认放在目录:/usr/lib/hildon-status-bar下面。
+
+四、其他：
+1）作用：
+通过以上内容，我们可以知道如何修改桌面程序，如何编写一个简单的插件。
+通过修改桌面程序，我们可以将桌面环境做成适合我们需求的桌面环境,以及改善桌面环境的稳定性。
+通过编写插件，我们可以扩展我们的桌面功能,更好的控制在桌面环境下运行的程序。
+
+2)曾经遇到的问题的解决举例：
+2.1)在做任务管理插件的时候，需要实现在桌面上运行的所有程序之间的切换，但是利用hildon提供的一些相关接口之后，发现对于有些程序例如video,audio不起作用。经过调查，认为那些特殊程序的窗口比较特殊，无法获得相关的属性。最后通过参考wmctrl工具（一个利用xlib实现的控制窗口的工具）的源代码，利用xlib提供的接口，实现了对这些特殊程序的控制。
+
+2.2)有些时候，我们需要各个应用程序和桌面插件进行通信，通信需要用dbus来实现，这样可以实现异步功能以及单实例程序启动等等。后来发现libsso库实现了对dbus的封装，利用libosso提供的功能，实现了程序的通信。

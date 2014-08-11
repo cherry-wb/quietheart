@@ -1,0 +1,37 @@
+{
+    "name":"ap_set_keyRenewal",
+    "type":{"name":"seq"},
+    "ap":[
+            {"model":    "ap:cisco:wrt54gl",    "mac":    "58:6D:8F:CA:AE:37" },
+            {"model":    "ap:cisco:wrt160n",    "mac":    "68:7F:74:19:DF:E7" },
+            {"model":    "ap:dlink:dir655",     "mac":    "84:c9:b2:4c:3b:88" }
+         ],
+    "description":"set ap Group Key Renewal.",
+    "scenarios":
+        [
+            {
+                "login":{
+                            "catagory":"ap",
+                            "fname":"scenario_login.json", 
+                            "type":{"name":"seq"}
+                        }
+            },
+            {
+                "ap_set_keyRenewal":{
+                                        "catagory":"ap",
+                                        "fname":"scenario_set_wireless_keyRenewal.json", 
+                                        "type":{"name":"seq"}, 
+                                        "parameter":{
+                                                         "keyRenewal":{"2G":"1920"}
+                                                    } 
+                                    }
+            },
+            {
+                "logout":{
+                            "catagory":"ap",
+                            "fname":"scenario_logout.json", 
+                            "type":{"name":"seq"}
+                         }
+            }
+        ]
+}

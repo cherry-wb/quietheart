@@ -1,0 +1,311 @@
+说明：
+先大致浏览，以后看英文的。
+
+*进度
+*杂乱收获
+*有问题的地方标记了???
+
+*进度
+================
+
+一、Linux那些事儿 之 戏说USB 
+---------------
+参考：http://blog.csdn.net/fudan_abc/article/category/335670/2
+
+二、lkd3
+-------
+参考：http://my.safaribooksonline.com/book/programming/linux/9780768696974
+
+20120120
+Along Came Linus: Introduction to Linux之前的不看
+
+三、ldd3
+-------
+20120420
+5.4
+completion是否具有计数功能???
+这个锁机制不可中断，（可能有中断版本的补丁）
+用于在当前线程外完成一些工作，然后等待那些工作完成的情况。也就是说让一个线程通知另一个线程的轻量级机制。
+
+20120419
+10.3(已经无法看懂，需要复习)
+5.3.2
+semaphore:
+这个锁机制允许拥有信号量的进程睡眠，如果用不可中断的版本那么就可能导致进程无法杀死（即使用kill -9）。
+
+20120418
+10.3.0(已经无法看懂，需要复习)
+5.2
+
+20120417
+10.2
+
+20120416
+10.2.2.1
+
+20120412
+10.2.1
+中断请求放在open中不是init中。因为中断资源是有限的，缺点就是需要计数。
+
+/proc/interrupts
+展示当前中断信息。
+
+20120411
+10.1
+开始复习第5章
+5.0
+
+20120410
+9.5
+
+20120409
+9.4
+
+20120401
+9.4.3
+
+20120331
+9.4.0
+
+20120330
+9.3（复习完）
+一个port上面有几个pin(例如并口的8-bit，每个bit一个pin),pin是connector上面的物理针脚。
+从输入口（只应当从port流向程序）读取，需要在其上接如一个硬件以产生输入信号否则只能读取无意义的连续比特。若输出口读，应该是上次你写到输出的信息。
+i/o操作可能要有内存屏障保证安全不被打乱次序。
+
+20120329
+9.3(待复习)
+9.3.1(复习)
+
+20120328
+9.2.6
+9.3.1
+
+20120327
+9.2.5
+
+20120326
+9.1
+i/o 操作不象内存操作，内存操作可以缓冲和调整编译指令次序，i/o就不能随意这样，但是调整是不可见的，所以有了内存屏障。
+
+20120323
+8.5
+8.6
+8.7
+large memory region often allocation at boottime ,with specific interface, so the driver build in kernel.
+
+20120322
+8.4
+
+20120321
+8.2
+kmem_cache_create
+mempool_create:
+首先分配一些空间备用，后面调用mempool的alloc会在备用空间之外分配，当分配失败才会从刚刚分配的备用空间分配。
+8.3
+__get_free_pages
+order no more than 10 or 11.
+
+20120320
+8.1
+kmalloc:contiguous,page align, it's best no more than 128k.
+
+three mem zones:
+(1)dma
+(2)high mem
+(3)normal mem
+
+20120319
+7.7
+
+20120307
+7.6
+
+20120307
+7.5复习完。
+tasklet always run at the same cpu.
+
+20120302
+7.5(待复习)
+
+20120229
+7.4.1
+
+20120228
+7.3
+
+20120224
+7.3.1.1
+
+20120223
+7.2
+
+20120221
+7.1.2
+
+20120220
+7.1.1
+
+20120216
+7.0
+6.7
+
+20120215
+6.6.3
+
+
+20120214
+6.3.1.2
+read rules...
+write rules...
+the program using the device wants to ensure that the data is actually transmitted, the driver must provide an fsync method but not wait in write.
+6.3.2
+
+6.4
+asynchronize r/w support for only one file.
+
+
+20120210
+6.3.2
+6.3.1 (before 6.3.1.1)review:
+block i/o blocks in kernel space, 
+but nonblock i/o with select/poll will block in select/poll system call(not kernel driver interface), until one of the file can read/write.(that is: when one of then files with nonblock open mode available, the select/poll will return,so we can wait all files altogether but not only block on only one file, we can check the file availability before real write / read it)
+
+20120209
+6.3.1
+
+20120208
+review:6.2.6
+review:6.2.5.3
+review:6.2.5.2
+sleep by manual:
+1)put to wait queue
+2)set process stat(when waken , the state became runnable, but it happens before set process state)e
+3)shedule(before shedule should do a test, in case wake before set process stat)
+4)cleanup(stat to runnable, remove wait entry)
+20120207
+review:6.2.4
+
+20120206
+review:6.2.2
+review:6.2.1:
+rules to sleep:
+a)The first of these rules is: never sleep when you are running in an atomic context. 
+b)you can make no assumptions about the state of the system after you wake up, and you must check to ensure that the condition you were waiting for is, indeed, true.
+c)One other relevant point, of course, is that your process cannot sleep unless it is assured that somebody else, somewhere, will wake it up.
+6.2.6(needs review).
+
+20120203
+6.2.5.2
+
+20120131
+6.2.5.1
+
+20120130
+5.8
+5.6
+spin lock使用的一些规则：
+while holding a spinlock, be atomic. cannot sleep;
+avoiding this trap requires disabling interrupts (on the local CPU only) while the spinlock is held.
+spinlocks must always be held for the minimum time possible.
+自旋锁锁住调度，锁住多cpu，可以让中断进入也可不让中断进入。
+
+20120121
+5.4
+竞争源于多个执行单元同时访问共享资源。避免竞争的一些原则：1）尽量少使用共享的资源。2）如果不得不用，也应注意共享资源不仅仅是全局变量，比如还可能是指针所指的内存。3）使用一些互斥机制管理共享资源的访问。4）引用计数。
+return -ERESTARTSYS;
+return -EINTR;
+completion不可中断。
+
+20120120
+4.6.6
+EIP寄存器
+　　IP是指令寄存器，存放当前指令的下一条指令的地址。CPU该执行哪条指令就是通过IP来指示的。
+　　EIP是32位机的指令寄存器。
+SysRq魔术键
+20120110
+4.3.1.3 An older interface
+20120109
+4.3.1.2 An older interface
+20120105
+4.2.6. Printing Device Numbers
+20110922
+4.2.4. Turning the Messages On and Off
+20110802
+4.1. Debugging Support in the Kernel
+20110801
+read and write
+20110729
+3.4
+20110728
+2.10
+20110727
+2.4
+20110726(开始学习英文版本,从第2章开始)
+2.3
+
+20110725
+1.6章(至此，发现中文版本翻译不好)
+上面学习<Linux设备驱动>,
+参考
+(英)http://www.makelinux.net/ldd3/
+(中)http://www.deansys.com/doc/ldd3/
+-------------
+20110713
+p288
+20110712
+p256
+20110711
+p244
+20110708
+p227
+20110707
+p213
+20110706
+p175
+20110705
+p164
+20110704
+p149
+20110701
+p138
+20110630
+p118
+20110629
+p95
+20110628
+p84
+20110627
+p72
+20110624
+p57
+20110623
+p35
+20110621
+p21
+
+上面学习书籍＜Linux内核设计与实现（第2版）＞
+
+---
+20100727
+p12
+20100729
+p22
+20100806
+p26
+
+kernel 源代码主makefile 1350行浏览。
+kernel 源代码主makefile 580行第二次浏览。
+
+
+*杂乱收获
+================
+这里记录学习时候的杂乱知识。
+
+进程的数目有限制，修改这个限制可以修改文件：
+/proc/sys/kernel/pid_max来提高上限。
+
+设置回写的参数，修改这：
+/proc/sys/vm
+
+

@@ -1,0 +1,26 @@
+今天 Ubuntu 7.04 正式发布，想来有很多朋友正在升级吧。在升级完成之后，不妨查看一下 Ubuntu 的版本号，以便确认升级是否取得成功。为了查看 Ubuntu 的版本号，可以采用以下两种方法之一。
+
+方法一
+
+在终端中执行下列指令：
+
+cat /etc/issue
+
+可以查看当前正在运行的 Ubuntu 的版本号。其输出结果类似下面的内容：
+
+Ubuntu 7.04 \n \l
+
+方法二
+
+使用 lsb_release 命令也可以查看 Ubuntu 的版本号，与方法一相比，内容更为详细。执行指令如下：
+
+sudo lsb_release -a
+
+将输出结果：
+
+Distributor ID: Ubuntu
+Description: Ubuntu 7.04
+Release: 7.04
+Codename: feisty
+
+

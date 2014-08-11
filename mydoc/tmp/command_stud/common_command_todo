@@ -1,0 +1,15 @@
+关于fg:
+使用[Ctrl]z停止程序之后，可以用"fg %<程序名的前部分匹配>"将程序调出来.
+例如使用vi test和emacs test都[Ctrl]z之后，
+命令fg %v就会把vi那个调出来。
+
+关于可执行程序的args[0]:
+如果创建一个连接用连接执行那个可执行程序，那么args[0]就是连接的名称。
+另外实际args[0]是exec函数的第二个参数，可以随意指定的，而exec的第一个参数才是程序的位置。
+
+====待整理
+关于set-user-id
+   # chmod u+s tsys 
+
+改变文件属主:
+   # chown root tsys                         change owner

@@ -1,0 +1,131 @@
+# 这个文件是一个简单的资源文件的模板
+# 写一个资源文件，需要做的：
+# 1）指定资源路径
+# 2）定义资源风格
+# 3）指定谁使用什么资源
+# 然后在代码里面有相关的和资源文件挂钩的代码。
+#
+#
+# 1,用下面这句话指定图片的搜索路径
+# pixmap_path "<dir 1>:<dir 2>:<dir 3>:..."
+#
+# 2,定义各种风格的格式语法
+# style <name> [= <name>]
+# {
+#   <option>
+# }
+#
+# 3,为特定的构件类型指定风格
+# widget_class <widget_class_set> style <style_name>
+#
+# 4,为某个特定构件集合指定前面的风格的语法
+# widget <widget_set> style <style_name>
+#
+
+# 5,这里列出所有状态。注意有些状态不能用在一定的构件上。
+#
+# NORMAL -构件的一般状态，如鼠标不位于构件上方，键未按下时构件所处的状态。 
+#
+# PRELIGHT - 当鼠标移到构件上方，在此状态下定义的颜色生效。
+# 
+#
+# ACTIVE -当处于构件上的鼠标键被按下或点击时，该构件被激活，相应的属性值将生效。
+# 
+#
+# INSENSITIVE -当构件被设置为不敏感 (insensitive) 时，它不能被激活，相应属性值起作用。
+# 
+#
+# SELECTED -选中一个对象时，取相应的属性值。
+#
+# 给定了这些状态，我们就能使用以下指令设置在这些状态下构件的属性。
+#
+# fg - 设置构件的前景色。
+# bg - 设置构件的背景色。
+# bg_pixmap - 设置构件的背景为一幅象素图。
+# font - 设置给定构件所用的字体。
+#
+############################################################
+# 本例设置一种名为"button"的风格。这个名称实际不重要，因为在本文件的后面这个风格都分
+# 配给了实际的构件。 
+
+#1.这里先指定资源路径
+pixmap_path "/usr/include/X11R6/pixmaps:/home/imain/pixmaps"
+
+#2.定义各种风格
+style "window"
+{
+	  #此处设置窗口背景为指定的像素图。
+	  #bg_pixmap[<STATE>] = "<pixmap filename>"
+	  bg_pixmap[NORMAL] = "warning.xpm"
+}
+
+style "scale"
+{
+	  #设置"NORMAL"状态下前景色(字体颜色)为红色。
+	  
+	  fg[NORMAL] = { 1.0, 0, 0 }
+	    
+	    #设置此构件的背景像素图为其父构件的背景像素图。
+	  bg_pixmap[NORMAL] = "<parent>"
+}
+
+style "button"
+{
+	  # 显示一个按钮的所有可能状态，唯一未用的状态是SELECTED。
+	  
+	  fg[PRELIGHT] = { 0, 1.0, 1.0 }
+	  bg[PRELIGHT] = { 0, 0, 1.0 }
+	  bg[ACTIVE] = { 1.0, 0, 0 }
+	  fg[ACTIVE] = { 0, 1.0, 0 }
+	  bg[NORMAL] = { 1.0, 1.0, 0 }
+	  fg[NORMAL] = { .99, 0, .99 }
+	  bg[INSENSITIVE] = { 1.0, 1.0, 1.0 }
+	  fg[INSENSITIVE] = { 1.0, 0, 1.0 }
+}
+
+# 在本例中，我们继承"button"风格的属性，然后重设PRELIGHT状态下的字体和背景色以创建一个新的"main_button"风格。
+
+style "main_button" = "button"
+{
+	  font = "-adobe-helvetica-medium-r-normal--*-100-*-*-*-*-*-*"
+		    bg[PRELIGHT] = { 0.75, 0, 0 }
+}
+
+style "toggle_button" = "button"
+{
+	  fg[NORMAL] = { 1.0, 0, 0 }
+	  fg[ACTIVE] = { 1.0, 0, 0 }
+		  
+	  # 这里设置toggle_button的背景像素图为其父构件的像素图(在应用程序中已定义)。
+	  bg_pixmap[NORMAL] = "<parent>"
+}
+
+style "text"
+{
+	  bg_pixmap[NORMAL] = "marble.xpm"
+	  fg[NORMAL] = { 1.0, 1.0, 1.0 }
+}
+
+style "ruler"
+{
+	  font = "-adobe-helvetica-medium-r-normal--*-80-*-*-*-*-*-*"
+}
+
+# pixmap_path "~/.pixmaps"
+
+# 下面设置使用以上所定义风格的构件类型。
+# 构件类型是在类的组织中列出的，但是恰有可能在本文档中列出供用户参考。
+
+widget_class "GtkWindow" style "window"
+widget_class "GtkDialog" style "window"
+widget_class "GtkFileSelection" style "window"
+widget_class "*Gtk*Scale" style "scale"
+widget_class "*GtkCheckButton*" style "toggle_button"
+widget_class "*GtkRadioButton*" style "toggle_button"
+widget_class "*GtkButton*" style "button"
+widget_class "*Ruler" style "ruler"
+widget_class "*GtkText" style "text"
+
+# 设置作为“main windows”的子构件的所有按钮构件为main_button风格。
+# 这些(专门命名的构件）都必须附有文档说明让用户更好地使用它们。
+widget "main window.*GtkButton*" style "main_button"

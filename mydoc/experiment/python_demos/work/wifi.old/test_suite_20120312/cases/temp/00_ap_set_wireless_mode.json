@@ -1,0 +1,28 @@
+{
+    "name":"ap_set_wireless_mode",
+    "type":{"name":"seq"},
+    "description":"set cisco ap wireless mode(mixed,b-only,n-only).",
+    "scenarios":[
+    {
+        "login":{
+            "fname":"ap/cisco/scenario_login.json", 
+            "type":{"name":"seq"}, 
+            "parameter":{
+                "ip":"192.168.1.1"
+            }
+        }},
+		{"set_wireless_mode":{
+			"fname":"ap/cisco/scenario_set_wireless_mode.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"netMode":{"5G":"A","2G":"B/G"},
+                "band":"5G2G"
+			}
+		}},
+        {"logout":{
+            "fname":"ap/cisco/scenario_logout.json", 
+            "type":{"name":"seq"}
+        }
+    }
+    ]
+}

@@ -1,0 +1,39 @@
+方法还不太理想，但是可用，有待以后更新。
+
+
+//修改：hello-world-statusbar3.c
+尝试的方法：
+void my_entry_pressed(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+  g_print("press my entry!\n");
+  GtkWidget *p;
+  gboolean ret;
+  p = gtk_widget_get_parent(gtk_widget_get_parent(gtk_widget_get_parent(GTK_WIDGET(data))));
+  /*from panel-window.c button press*/
+  gtk_window_set_accept_focus (GTK_WINDOW(p), TRUE);/*lkadd*/
+  g_signal_emit_by_name(G_OBJECT(p), "focus-in-event", NULL, &ret);/*lkadd*/
+  gdk_keyboard_grab (GTK_WIDGET (p)->window, 
+		       FALSE, GDK_CURRENT_TIME);/*lkadd*/
+}
+
+
+
+static void hildon_status_bar_helloworld_init(HildonStatusBarHelloWorld3 *helloworld)
+{
+...
+info->entry = gtk_entry_new();
+g_signal_connect(G_OBJECT(info->entry), "button-press-event",
+               G_CALLBACK(my_entry_pressed), helloworld);/*lkupdate,add signal to the statusbar button*/
+gtk_entry_set_text(GTK_ENTRY(info->entry), "test");
+gtk_container_add(GTK_CONTAINER(helloworld), info->entry);
+...
+}
+
+//修改hildon-desktop-panel-window.c 
+hildon_desktop_panel_window_in_focus (GtkWidget *widget, GdkEventFocus *event, gpointer user_data)
+{
+  return FALSE; 
+}
+
+还有其他的方法在插件里修改。参见源代码：hello-world-statusbar3.bak2.tar.gz
+里面有相应的说明，可以实现修改宏定义开关，编译生成相应的方法。

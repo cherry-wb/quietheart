@@ -1,0 +1,146 @@
+tail [Option]... [File]...
+[功能]
+打印文件的最后部分。
+
+[描述]
+这个命令会打印文件的最后10行。如果指定多个文件那么会在每个文件的开始打印出相应的文件名称。
+常用选项：
+--retry
+即使tail开始时就不能访问或者在tail运行后不能访问,也仍然不停地尝试打开文件. 只与-f合用时有用. 
+-c, --bytes=N
+输出最后N个字节 
+-f, --follow[={name|descriptor}]
+当文件增长时,输出后续添加的数据; -f, --follow以及 --follow=descriptor 都是相同的意思 
+使用--follow (-f)时,tail默认后接文件描述符, 这意味着即使tail显示的文件改名了,tail仍然可以追踪到其末尾部分. 如果你确实希望查询文件的实际名而非文件描述符 (例如,日志轮转时), 这种默认的操作就不是你所期望的了. 在这种情况下应使用--follow=name. 这将导致tail通过周期性地重新打开所指定的文件来追踪其是否被删除了,或者被其他程序重新创建了.
+-n, --lines=N
+输出最后N行,而非默认的最后10行 
+--pid=PID
+与-f合用,表示在进程ID,PID死掉之后结束. 
+-q, --quiet, --silent
+从不输出给出文件名的首部 
+-s, --sleep-interval=S
+与-f合用,表示在每次反复的间隔休眠S秒 
+-v, --verbose
+总是输出给出文件名的首部 
+--help
+显示帮助信息后退出 
+--version
+输出版本信息后退出 
+
+如果N(字节或者行数)的第一个字符为`+', 那么从每个文件的开头算起的第N项开始显示, 否则, 显示该文件的最后N项. N可以有一个倍数前缀: b表示512,k表示1024,m表示1048576(1兆). 
+
+[举例]
+测试的文件内容如下:
+[quietheart@lv-k tail_test]$ cat tail_test 
+1  04_libraryTest
+2  a.out
+3  a.out.symbol
+4  autotools
+5  core.31058
+6  cpp_test
+7  download_blog
+8  gpg_test
+9  hello-1.0.tar.gz
+10  hello-2.0
+11  hello-2.0.tgz
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+
+*显示文件的最后10行：
+[quietheart@lv-k tail_test]$ tail tail_test 
+7  download_blog
+8  gpg_test
+9  hello-1.0.tar.gz
+10  hello-2.0
+11  hello-2.0.tgz
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+这样，会显示文件myfile的最后10行。
+
+*显示文件的最后N行：
+[quietheart@lv-k tail_test]$ tail -n 5 tail_test 
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+这样，会显示文件myfile的最后5行。
+
+*从第5行开始显示文件：
+[quietheart@lv-k tail_test]$ tail -n +5 tail_test 
+5  core.31058
+6  cpp_test
+7  download_blog
+8  gpg_test
+9  hello-1.0.tar.gz
+10  hello-2.0
+11  hello-2.0.tgz
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+这里，注意指定的数字前面有'+'代表从这个数字相应的位置开始，显示后面的内容。
+
+*显示文件最后38个字节的内容：
+[quietheart@lv-k tail_test]$ tail -c 38 tail_test 
+ynctest
+    15  tail_
+    16  tail_test
+这里，使用-c指定显示的单位是字节计算。
+
+*显示文件第38个字节开始之后的内容：
+[quietheart@lv-k tail_test]$ tail -c +38 tail_test 
+   3    a.out.symbol
+     4  autotools
+     5  core.31058
+     6  cpp_test
+     7  download_blog
+     8  gpg_test
+     9  hello-1.0.tar.gz
+    10  hello-2.0
+    11  hello-2.0.tgz
+    12  main.cpp
+    13  mysql20110512.sql
+    14  rsynctest
+    15  tail_
+    16  tail_test
+这里，注意指定的数字前面有'+'代表从这个数字相应的位置开始，显示后面的内容。
+
+*跟踪(以文件描述符号方式)文件的增长:
+[quietheart@lv-k tail_test]$tail  -f tail_test
+7  download_blog
+8  gpg_test
+9  hello-1.0.tar.gz
+10  hello-2.0
+11  hello-2.0.tgz
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+这里，输入之后，显示默认的文件的后10行，但是tail并没有因此而结束，而是一直在运行着，保持这那个文件对应的索引节点的打开状态。接下来，如果通过"echo new >>tail_test"向文件追加内容，那么会看到tail又继续将追加的内容打印出来。如果使用"echo new>tail_test"那么tail会输出类似"tail: tail_test: file truncated"的字样来告诉文件内容被truncated了。这个命令用户跟踪动态增长的文件，例如系统日志。需要注意的是，默认来说tail就根据它自己的文件描述符号来跟踪文件，有时就向前面所说的，有的程序追加文件内容的时候会将文件删除然后新建立一个，例如有些日志程序会在一定的时候将追加的日志文件重命名，然后再建立一个之前同名的新日志文件追加新的内容，这样的话这个命令就不好用了。例如有些编辑器例如vim进行修改文件的时候，无法跟踪其变化。通过"ls -il"对vim编辑之前的文件和之后的文件的inode号对比发现，两者不同，应当是编辑的时候先删除文件的索引节点再新建立一个，新建的节点内容才包含了最新的内容，而之前tail打开的那个索引节点已经被删除了，看不见了，所以当然不会发生变化，如果想要确定那么就先用"ps -aux |grep tail"找到tail的进程号，进入/proc目录的tail进程号目录中，查看其fd文件中的某个描述符号，例如"cat 3"这样会发现原来的内容。
+
+*跟踪文件增长（以文件名方式）：
+[quietheart@lv-k tail_test]$ tail --follow=name log
+7  download_blog
+8  gpg_test
+9  hello-1.0.tar.gz
+10  hello-2.0
+11  hello-2.0.tgz
+12  main.cpp
+13  mysql20110512.sql
+14  rsynctest
+15  tail_
+16  tail_test
+这样，tail根据文件名称跟踪文件的变化，默认来说tail就根据它自己的文件描述符号来跟踪文件，就像前面所说的，有的程序追加文件内容的时候会将文件删除然后新建立一个，例如有些日志程序会在一定的时候将追加的日志文件重命名，然后再建立一个之前同名的新日志文件追加新的内容，那么默认的方式就无法跟踪到文件的变化了，因为文件描述符号是代表一个索引节点的，而新追加的内容可能追加到新的索引节点上面了，这个时候就使用这个选项。这样，如果当文件新追加内容是追加到同一名称的不同索引节点的情况发生时，那么tail那里就会提示 "tail: “tail_test” has been replaced;  following end of new file"之后再重新显示追加之后的新的最后10行。
+
+
+[其它]
+更多的信息参见"info tail"。

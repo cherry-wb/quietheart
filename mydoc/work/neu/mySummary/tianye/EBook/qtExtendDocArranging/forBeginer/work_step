@@ -1,0 +1,42 @@
+umount /mediasync
+/sbin/modprobe g_file_storage file=/dev/mmcblk0p6 removable=1 stall=0
+
+//从Pc umount /mediasync
+
+rmmod g_file_storage
+mount -t vfat -o iocharset=utf8 /dev/mmcblk0p6 /mediasync
+
+
+
+/usr/local/qtex/bin/sendmsg -a 2 -t 2 -p `cat /var/run/ebookhardware` -l 32 -q "13"
+
+0）连接开发板：
+插线之后运行
+#minicom
+这样可以在pc上面和板子进行交互。
+
+1)启动开发板子之后运行：
+/sbin/modprobe g_file_storage file=/dev/mmcblk0p6 removable=1 stall=0
+这样在pc上面的/dev/目录下面生成一个类似/dev/sdc的文件。
+2)在pc上面挂载板子上的存储系统：
+mount /dev/sdb /mnt
+3)向板子传输数据：
+cp * /mnt
+4)在pc上面卸载板子上的存储系统：
+umount /mnt
+5)在板子上面运行如下命令：
+rmmod g_file_storage
+6)在板子上面重新挂载存储系统：
+umount /mediasync
+mount -t vfat /dev/mmcblk0p6 /mediasync/
+这样，在/mediasync中就可以看到刚才用pc传输的数据了。
+
+mv libqneuebdep.so.1 /usr/lib
+. /etc/qpe.env
+
+如果文件系统坏了，重新格式化：
+umount /mediasync
+mkfs.vfat -F 32 /dev/mmcblk0p6
+
+
+qDebug()<<__FILE__<<":"<<__LINE__<<":"<<__PRETTY_FUNCTION__<<":"<<"++++++";

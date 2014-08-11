@@ -1,0 +1,4 @@
+这里使用QCopChannel机制
+实现两个QtEmbeded的程序
+mysnd和myrcv之间的通信。
+mysnd发送消息，myrcv接受消息。

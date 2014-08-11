@@ -1,0 +1,432 @@
+内容：
+===============================
+*需要整理的问题和计划
+*待完成工作
+*临时常用命令和代码片段
+*其他
+
+
+
+*需要整理的问题和计划
+===============================
+浏览qt的各种函数以及文档。
+！工作中三个最大的问题：1）Qt的插件机制2）qtopia中的task3）qtextend中的编译机制
+qt资源：file:///usr/local/Trolltech/Qt-4.5.0/doc/html/resources.html
+qtstyle：
+file:///usr/local/Trolltech/Qt-4.5.0/doc/html/stylesheet-reference.html#list-of-properties
+file:///usr/local/Trolltech/Qt-4.5.0/doc/html/qstyle.html
+ Q_UNUSED(e);这个宏的作用就是使用一下e,防止出现没有使用的变量e的warning。
+学习qLog(ok)
+file:///usr/local/Trolltech/Qt-4.5.0/doc/html/threads.html#thread-safe
+
+
+
+未完成工作
+===============================
+没有svn commit的需要把代码拷贝到svn目录中。
+有svn commit没有ok表示只需要到svn目录提交即可
+有svn commit有ok表示已经提交
+有svn commit有两个ok表示已经提交并且写到了release note.
+<<k1>>
+
+
+<<eb306>>
+IME去掉锁，防止点击的时候没有响应??
+
+ QpeInputMethods::loadIME()中的
+             //  if( lang == "en_US.UTF-8" )
+                if( lang == "en_US" )
+
+
+svn commit -m "添加了stop立即响应的功能"
+
+<<foxconn>>
+
+绘制UML图
+svn commit -m "添加了一个空白的桌面，以及自动启动commebook程序的桌面"
+
+<<sourceforge>>
+18_menu修改了一点,(myCallback.cpp)popup和exec
+
+<<neuebook>>
+svn commit -m "添加了在liteon上面第一次启动ebook无法消去waitindator的bug"(ok)
+
+
+临时常用命令和代码片段
+===============================
+
+<<发送信息通道>>
+旋转：
+实际上是：
+qcop service send RotationManager "setCurrentRotation(int)" 90
+代码片段为：
+QtopiaServiceRequest svreq("RotationManager","setCurrentRotation(int)");
+svreq << 270;
+svreq.send();
+
+
+声音报警：
+qcop service send Alert "soundAlert()"
+qcop service send Ringtone "startMessageRingtone()"
+
+关闭程序：
+qcop send QPE/System 'close()'
+打开：
+qcop send QPE/Application/calculator 'raise()'
+
+qcop send QPE/Application/ereader 'setDocument(QString)' 'filename'
+qcop send QPE/Application/audioplayer 'setDocument(QString)'
+
+//qlog
+[K1Search]                                                                                        
+Enabled = 1                             
+Name[] = Ebook K1 Search function
+Help[] = Logging related to the k1 search application.
+
+
+sudo ifconfig usb0 192.168.100.1
+mount -t nfs -o nolock 192.168.100.1:/var/nfs/qtex /usr/local/qtex
+
+清理内存：
+echo 3>/proc/sys/vm/drop_caches
+
+运行的时候首先在桌面程序中相应的程序入口处添加如下代码：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/myapp.desktop",false);
+applink.execute();
+然后即可运行。
+
+运行的时候首先在桌面程序中相应的程序入口处添加如下代码：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/mybutton.desktop",false);
+applink.execute();
+然后即可运行。
+
+
+
+
+运行的时候
+运行的时候首先在桌面程序中相应的程序入口处添加如下代码：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/myapp.desktop",false);
+applink.execute();
+然后即可运行。
+注意：
+如果在qbuild.pro中加入
+CONFIG+=qtopia quicklaunch
+
+在.desktop中修改：
+[Translation]
+File=myapp-nct
+为：
+[Translation]
+File=QtopiaApplications
+
+
+设置uboot参数：
+bootargs=console=ttyS0,115200 uart_dma root=/dev/nfs nfsroot=192.168.100.118:/home/quietheart/nfs,proto=tcp ip=192.168.100.99:192.168.100.1::255.255.255.0::usb0:on
+
+
+setenv bootargs console=ttyS0,115200 uart_dma root=/dev/nfs nfsroot=192.168.100.118:/home/quietheart/nfs,proto=tcp ip=192.168.100.99:192.168.100.1::255.255.255.0::usb0:on
+
+
+
+/home/quietheart/buildTmp/eb306_build/qtex/src/3rdparty/plugins/codecs/libwma/libvoWMADec.so: undefined reference to `LINUX_RVDS'
+collect2: ld returned 1 exit status
+
+
+scp /home/quietheart/buildTmp/eb306_build/build/src/server/qpe liulijun@10.1.105.50:/home/liulijun/51_copy/lv-k
+
+旋转：
+1.
+m_powerStageHoldPress = new 
+QValueSpaceObject("/PowerStage/HoldKeyPress/", this)
+需要旋转关闭：m_powerStageHoldPress->setAttribute("HoldState", true);
+2.
+
+需要旋转打开：m_powerStageHoldPress->setAttribute("HoldState", false);
+
+
+可以通过下面方法来调用：
+QValueSpaceItem valueItem("/PowerStage/HoldKeyPress/");
+
+bool holdValue = valueItem.value("HoldState",false).toBool();
+
+格式化板子：mkfs.vfat -F 32 /dev/mmcblk0p6
+
+通过这个来对应，谢谢。
+
+
+
+
+
+*其他
+=================
+使用prelink之前，qpe启动时间统计：
+测试方法，
+# echo 3 > /proc/sys/vm/drop_caches
+#qpe
+
+有log:
+15.5
+15.89
+18.89
+14.94
+
+
+prelink
+下载地址：
+http://packages.debian.org/sid/armel/prelink/download
+
+http://packages.debian.org/sid/armel/libselinux1/download
+
+
+1,prelink.conf和相应二进制文件拷贝到板子上面。
+2,
+export LD_LIBRARY_PATH=/usr/local/qtex/lib:/lib:/usr/lib
+prelink -amR
+似乎不好用。
+
+
+
+14:09
+
+
+
+prelink资料：
+http://hi.baidu.com/kikicat0_0/blog/item/cc3ad4fb9498089d58ee90ec.html
+
+
+sudo apt-get install libelfg0-dev
+这样可以configure
+
+ sudo apt-get install libelf-dev
+
+
+QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+
+
+export LD_LIBRARY_PATH=/usr/local/qtex/lib:/lib:/usr/lib
+prelink -avmR --dynamic-linker=/lib/ld-linux.so.3
+
+
+
+向板子传输数据的方法：
+0）连接开发板：
+插线之后运行
+#minicom
+这样可以在pc上面和板子进行交互。
+
+1)启动开发板子之后运行：
+/sbin/modprobe g_file_storage file=/dev/mmcblk0p6 removable=1 stall=0
+这样在pc上面的/dev/目录下面生成一个类似/dev/sdc的文件。
+2)在pc上面挂载板子上的存储系统：
+mount /dev/sdb /mnt
+3)向板子传输数据：
+cp * /mnt
+4)在pc上面卸载板子上的存储系统：
+umount /mnt
+5)在板子上面运行如下命令：
+rmmod g_file_storage
+6)在板子上面重新挂载存储系统：
+umount /mediasync
+mount -t vfat /dev/mmcblk0p6 /mediasync/
+这样，在/mediasync中就可以看到刚才用pc传输的数据了。
+
+mv libqneuebdep.so.1 /usr/lib
+. /etc/qpe.env
+
+如果文件系统坏了，重新格式化：
+umount /mediasync
+mkfs.vfat -F 32 /dev/mmcblk0p6
+
+
+
+一个测试用例：
+目的：比较mmc(sd 卡)和nand(flash)启动的速度：
+工作过程：
+mmc启动：
+1,将文件系统拷贝到sd卡中
+使用读卡器，插入sd卡，这样在pc上面会有类似/dev/sdb之类的设备出现。
+使用mount挂载设备之后，把文件系统拷贝到设备中。
+2，设置uboot从sd卡启动。
+setenv bootargs root=/dev/mmcblk0p1 rootdelay=3 rootfstype=ext3 console=ttySAC0,115200
+之后启动板子:重启或者run bootcmd
+
+
+nand flash启动：
+3，将文件系统从sd卡拷贝到nand flash中。
+在板子上面运行如下命令：
+mkdir -p /mnt/nand
+mount -t yaffs2 /dev/mtdblock3 /mnt/nand
+这样，板子上面的nand flash对应的设备mtdblk3就挂到了/mnt/nand上面。
+然后拷贝sd卡上面的文件系统到/mnt/nand
+4,设置uboot从nand flash启动：
+setenv bootargs root=/dev/mtdblock3 rootdelay=3 rootfstype=yaffs2 console=ttySAC0,115200
+之后启动板子:重启或者run bootcmd
+
+
+
+烧写liteon的步骤：
+第一次烧写：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)插入sd卡,上电,进入uboot,设置uboot为uart终端,再重启，进入uboot
+这里，设置的uboot启动参数是：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=ext2 rootdelay=5 console=ttyS0,115200 uart_dma
+3)烧写内核：
+Aspenite>> mmcinfo 0
+这会查看sd卡的信息。这里必须是vfat系统要不不能用fatload.
+Aspenite>> nand erase 0x920000 0x400000
+Aspenite>> nand erase 0xd20000 0x14000000
+在写入之前先擦写，因为nand只能支持从1到0的单方向变化，所以写数据之前要擦写。
+Aspenite>> fatload mmc 0 0x1000000 zImage
+从卡中向nand中拷贝数据。这里原来的命令是"fatload mmc 0 zImage 0x1000000"是错误的.
+Aspenite>> nand write 0x1000000 0x920000 0x400000
+4)重启系统
+
+不是第一次烧写（更新内核和文件系统）：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)拷贝rootfs.tgz文件到sd卡上。
+3)插入sd卡,启动系统
+4)这时候会自动升级,升级之后会自动重启。
+5)拔出sd卡或者删除sd卡中的updater
+
+wifi驱动：
+1)把sd8686.bin 和 helper_sd.bin移动到/lib/firmware/mrvl
+2)把sd8686.ko 移动到 /lib/modules/
+3)insmod sd8686.ko
+
+usb部件：
+1)把g_ether.ko移动到/lib/modules/
+2)insmod g_ether.ko
+3)运行“ifconfig usb0 192.168.1.1 up” 设置usb以太网。
+
+
+操作时候遇到的问题：
+Aspenite>> fatls mmc 0
+     2419   bar.jpg 
+    19312   bg.jpg 
+     4100   font.psf 
+  1130978   uploader 
+  3810224   zimage 
+            8686/
+            gadget/
+
+5 file(s), 2 dir(s)
+
+Aspenite>> fatload mmc 0 zimage 0x1000000
+reading 0x1000000
+
+** Unable to read "0x1000000" from mmc 0:1 **
+
+
+
+
+
+
+
+一、烧写内核：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)插入sd卡,上电,进入uboot
+3)依次运行如下命令：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=vfat rootdelay=5 console=ttyS0,115200 uart_dma
+Aspenite>> save
+Aspenite>> mmcinfo 0
+Aspenite>> nand erase 0x920000 0x400000
+Aspenite>> nand erase 0xd20000 0x14000000
+Aspenite>> fatload mmc 0 0x1000000 zImage
+Aspenite>> nand write 0x1000000 0x920000 0x400000
+4)重启系统,打印的全部log信息
+参见附件：kernelburnlog1
+
+******其它注意的信息：
+(1)这里拷贝firmware/*.*到sd卡上之前，sd卡必须格式化成为vfat系统,要不不能用fatload.
+(2)启动uboot之后，运行"Aspenite>> fatls mmc 0"，输出如下：
+     2419   bar.jpg 
+    19312   bg.jpg 
+     4100   font.psf 
+  1130978   uploader 
+  3810224   zimage 
+            8686/
+            gadget/
+
+5 file(s), 2 dir(s)
+(3)按照文档，烧写文件系统的最后一条命令文档给出的是“fatload mmc 0 zImage 0x1000000"是错误的,提示的错误信息如下：
+Aspenite>> fatload mmc 0 zimage 0x1000000
+reading 0x1000000
+** Unable to read "0x1000000" from mmc 0:1 **
+(4)可能是因为没有文件系统，所以导致不断地重启板子，加载内核，再重启板子。
+
+二、启动系统
+1,尝试用vfat方式启动：
+1）拷贝文件系统到sd卡。
+无法拷贝文件系统,因为当前sd卡是vfat格式的，所以无法拷贝文件系统。
+
+2,尝试用vfat方式启动2：
+1)用vfat重新格式化sd卡
+2)拷贝rootfs.tgz到sd卡，此时的sd卡是vfat格式的。
+3)拷贝firmware/*.*到sd卡.
+4）重新启动。
+这时候会发现正在烧写文件系统，烧写完毕之后，又自动重启。
+5）在自动重启加载内核之前，赶快将卡拔出，再重启。如果不是vfat格式的sd卡文件系统，那么无法将sd卡中的文件系统烧写。
+打印的启动log信息参见附件：vfatlog
+
+2,用ext2方式启动：
+1）先将sd卡格式化成ext2格式。
+2)将文件系统拷贝到sd卡.
+3)启动板子，无法加载内核以及文件系统。
+设置uboot信息：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=vfat rootdelay=5 console=ttyS0,115200 uart_dma
+Aspenite>> save
+4)重启系统，打印的全部log信息
+参见附件：ext2Log
+
+
+
+
+
+setenv bootargs root=/dev/mtdblock4 rootdelay=3 rootfstype=yaffs2 console=ttyS0,115200
+setenv bootargs root=/dev/mtdblock4 rootdelay=3 rootfstype=jffs2 console=ttyS0,115200
+
+
+==============
+To大家好，
+From吕凯
+后面是结合文件系统读取速度的对比数据，分析的导致系统启动以及程序慢的可能原因。
+主要就是：如果哪个程序尝试向只读区域写，就会导致一次停滞，然后打印“向只读区域写”的错误提示。
+所以我们需要关注一下，具体哪里显示或者隐式地发生了不该有的写操作。
+这里的只读区域就是除了/root/下的非Documents目录之外的所有目录。（之前规定过只能向/root下的非Documents写）
+
+2010年9月6日
+
+具体如下：
+=====================
+一、速度测试结果
+上午测试完了sd卡ext2，cramfs以及yaffs2三种文件系统的读取速度发现：
+1)读取20M的大数据时，
+cramfs读取最快，消耗时间0.964s 速度大约是20.75M/s,
+sd卡的ext2读取次之，消耗时间1.604s 速度大约是12.47M/s,
+yaffs2读取最慢，消耗时间11.592s 速度大约是1.73M/s.
+
+2）读取1M的小数据时，
+sd卡的ext2读取最快，消耗时间0.112s, 速度大约是8.93M/s,
+cramfs的读取次之，消耗时间0.152s, 速度大约是6.58M/s,
+yaffs2读取的最慢，消耗时间0.636s, 速度大约是1.57M/s.
+
+综上，
+如果频繁读写/root下的非Documents目录（即yaffs2文件系统），会导致速度变慢。
+如果读取的文件不大，那么一般sd卡上面的读取比cramfs上面的读取更快。
+这点需要注意一下。
+
+二、需要注意的log
+另外，我发现，如果在启动系统的时候，如果某个程序尝试向只读区域（即除了/root/下非Documents目录之外的部分）会导致整个进程停滞一段时间（我测了下，大致1秒左右）。
+只通过log打印的信息，就发现启动过程中有许多程序都尝试向只读区域写数据，或者是请求server端写，或者是程序自己写，结果是导致程序不正常（例如语言设置）或者系统速度降低。在我这里都无法定位所以需要相应模块的担当通过代码关注。
+
+
+
+
+LLJneusoft1013+
+
+liulj
+LLJ%neusoft1013+
+LLJllj1013+
+
+
+

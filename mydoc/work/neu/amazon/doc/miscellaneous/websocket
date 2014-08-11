@@ -1,0 +1,16 @@
+https://github.com/Lawouach/WebSocket-for-Python
+http://www.defuze.org/oss/ws4py/docs/
+http://www.defuze.org/oss/ws4py/docs/index.html
+
+安装websocket测试框架：
+apt-get install python-setuptools
+apt-get install libevent-dev
+apt-get install python-greenlet python-greenlet-dev
+apt-get install python-gevent
+apt-get install gunicorn
+easy_install gevent-websocket
+easy_install ws4py
+
+如果成功安装的话，运行时会有错误，把这两行的If语句注释掉
+/usr/local/lib/python2.7/dist-packages/gevent/pywsgi.py
+Line 394

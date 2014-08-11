@@ -1,0 +1,46 @@
+
+
+其它：
+举例：
+**用nat端口转发访问不同局网的机器：
+有一个双网卡的机器，地址：10.1.10.111 连接在10.1.10.*网，
+同时另外一块网卡和192.168.1.*局域网连接，相应ip为192.168.l.111
+
+如果在10.1.10.*的一台机器10.1.10.222想要访问该机器的192.168.1.*局域网机器，那么这样：
+
+10.1.10.111:
+open ip forwarding before:
+#sysctl  -A | grep forward | grep ipv4
+#sysctl  -w net.ipv4.ip_forward=1
+this could be see in /proc/sys/net/ipv4/ip_forward:
+#cat /proc/sys/net/ipv4/ip_forward
+1
+
+（1）在10.1.10.222上面：
+#route add -net 192.168.1.0/24 gw 10.1.10.111
+添加192.168.1.*的路由表选项：
+
+（2）在10.1.10.111上面：
+iptables -t nat -A POSTROUTING -s 10.1.10.0/24 -o eth1 -j MASQUERADE
+进行端口映射
+
+这样，10.1.10.222也能够通过192.168.1.*访问10.1.10.111机器的192.168.1.*局域网段了。
+
+
+see the config
+iptables -L -t nat
+
+
+怎么取消？
+将-A改成-D即可。
+
+所有的例子都是在命令行中进行的。在测试新的规则时，这是一种很好的方式，但一旦测试结果令人满意，就可以将它们保存为脚本。可以使用 iptables-save 命令来实现：
+ $ iptables-save > iptables-script
+信息包过滤表中的所有规则都被保存在文件iptables-script中。无论何时再次引导系统，都可以使用iptables-restore命令将规则集从该脚本文件恢复到信息包过滤表。恢复命令如下所示：
+ $ iptables-restore iptables-script
+如果愿意在每次引导系统时自动恢复该规则集，则可以将上面指定的这条命令放到任何一个初始化Shell脚本中。
+***
+
+参考资料：
+http://linux.ccidnet.com/art/737/20040317/96576_1.html
+http://linux.ccidnet.com/pub/html/tech/iptables/index.htm

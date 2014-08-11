@@ -1,0 +1,873 @@
+20120117
+===============
+查看代码
+
+20120116
+===============
+硬件说明书：
+smb://10.1.2.228/SonyFS/Documents/TechnologyDoc/Diabloデータシート
+
+20120112
+===============
+一、编译T-Kernel的实践：
+1,准备：
+cd .../PFXBaseEU11/src/HWSpecific/diablo_t
+make -C Kernels diablo
+mkdir -p /usr/development/t-kernel/
+cp -a Kernels/include/ /usr/development/t-kernel/include_1.02.04
+cp -a Kernels/build/std_diablo /usr/development/t-kernel/lib/diablo_1.02.04/
+
+2,编译：
+make
+
+3,注意：
+这个时候，如果出现错误"undefined reference to `PFX_usermain'"
+则如下修改：
+diablo/build/diablo_objects.mk，将"include $(PFX_USERMAIN)/PFX_usermain.mk"打开注释。
+修改之后再make。
+
+二、ERDD测试：
+Emma,rosetta,Diablo&Diablo-T
+了解到的调用关系链:
+method 2/3:
+Emma(0)-emif-->Rosetta-sc2p-->Diablo-wkram-->DiabloT-wkram-->Diablo-csi-->Emma-emif-->Rosetta......
+
+                +-----------+
+                | EMMA      | <----- 
+                +-/---------+       \--------------------+
+                 /                                       |
+                v                                        |
+     +---------+             +----------+ <---------- +----------+
+     |rosetta  | ........... | diablo-t |             | diablo   |
+     +---------+             +----------+ ----------> +---^------+
+           |                                              |
+           +----------------------------------------------+
+
+
+method 1/4:
+Emma-csi-->Diablo-wkram-->DiabloT-wkram-->Diablo-sc2p-->Rosetta-emif-->Emma-csi-->Diablo......
+
+
+
+
+
+20120110
+===============
+一、关于SC2P
+	关于SC2P的驱动，实际就是sysconf的驱动。这个sysconf就是一系列的控制寄存器，而传输数据的时候用的是另外的内存。
+控制寄存器的地址，在内核中有一个物理地址一个虚拟地址，而T-Kernel中修改mmu.c表添加一条，使寄存器物理地址映射成虚拟地址（其实两者一样），然后直接用虚拟地址访问寄存器。关于交换的内存，为防止直接在tkernel分配时候不够，则直接使用uncached宏转换linux上面的物理地址并且直接访问。
+
+	另外，补充一点内存映射的内容(20120106说过)，内存通过mmu管理的时候，mmu表项存放物理和虚拟地址映射关系，mmu通过这个表项进行初始化，使用mmu管理的时候只能访问虚拟地址，如果一个虚拟地址没有在表项中映射过，那么访问这个地址就会有问题，所以通过mmc访问一个地址，那么这个地址必然是虚拟地址，并且虚拟地址在mmu表中要添加相应的表项。另外，mmu映射的大小单位至少是一页。当然如果dma方式的话，就不需要这个虚拟地址物理地址映射了，直接给出地址进行访问。
+	还有一个就是对于外设寄存器映射，可能多个外设在同一个总线的地址空间上面，这样想要使用相应的寄存器的地址进行访问，只需要映射一下相应的总线，就行了，不用对所有的寄存器都进行映射。
+
+
+二、进行ERDD测试的说明：
+这里的ERDD的意思是四块板子：(EMMA,ROSETTA,DIABLO,FAKEDIABLO)。
+
+1，编译过程：
+(1)首先将之前测试使用的头文件拷贝到/usr/development/t-kernel下，之后该目录的内容如下：
+[root@localhost Diablo]# ls /usr/development/t-kernel
+include_1.02.04  lib
+[root@localhost Diablo]# ls /usr/development/t-kernel/include_1.02.04/
+arch  basic.h  ctype.h  device  libstr.h  machine.h  stdtype.h  sys  tk  tm  typedef.h
+[root@localhost Diablo]# ls /usr/development/t-kernel/lib
+fakediablo_1.02.04  fakediablo_1.02.04_3  vermeer_1.02.04  vermeer_1.02.04_3
+
+(2)拷贝lib，将"libdiablo.a libemif.a libcsilib.a"到"PFXSoft/Products/Prototype/PFXBase/lib"
+这里，使用最新的scel8.0进行编译，并且：
+libdiablo.a的生成方式：
+http://10.1.3.252/subversion/PFX_CODE/repos/02.SourceCodeLibrary/1.Trunk/Libraries/diablo下面运行"make"
+
+libemif.a的生成方式：
+http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/FromIA/PFXBase_C16_Must_Branch_4/PFXSoft/Products/Prototype/PFXBaseEU11/src/targets/HWSpecific/libemif
+
+libcsi.a的生成方式：
+http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/FromIA/PFXBase_C16_Must_Branch_4/PFXSoft/Products/Prototype/PFXBaseEU11/src/targets/HWSpecific/libcsi
+生成三种库不需要"make libraries"。
+
+(3)拷贝最新的diablo sub cpu代码(T-kernel)
+拷贝到PFXSoft/Products/Prototype/PFXBase/src/HWSpecific/Diablo-T（注意保留其中的SubMakefile文件）。
+
+(4)拷贝最新的wkram cpu0侧的lib代码。
+拷贝到PFXSoft/Products/Prototype/PFXBase/src/HWSpecific/diablo/cpu1comm/
+
+(5)如下编译：
+#cd PFXSoft
+#make libraries
+#cd PFXSoft/Products/Prototype/PFXBase
+#make ASTYLE=disabled
+这样编译之后，会有T-Kernel的链接错误，因为目前T-Kernel内部做了一步链接生成t-kernel的bin文件，这一步目前是在外部进行链接的，如果在内部连接的话，有些上层app的库并没有在编译T-kernel的时候生成，这样导致错误。
+#cd executables/DiabloT
+#make ASTYLE=disabled
+#cd DiabloT
+#make ASTYLE=disabled
+虽然上面连接错误，但是进入的这里的目录进行make之后，会重新在上层进行链接一下，生成最后的T-Kernel的bin文件。
+生成的文件在：PFXSoft/Products/Prototype/PFXBase/executables/target。
+
+编译之后，生成的文件在target目录下面，如下：
+[root@localhost target]# tree
+.
+|-- Diablo
+|   |-- AVPCsi
+|   |-- AVPSc2p
+|   |-- Diablo
+|   |-- MbpWKRAM
+|   `-- diablo_test.sh
+|-- DiabloT
+|   |-- DiabloT.bin
+|   |-- DiabloT.elf
+|   `-- DiabloT.srec
+|-- Emma
+|   |-- EMMACsi
+|   |-- EMMAEmif
+|   |-- EmmaResA
+|   |-- EmmaResB
+|   `-- emma_test.sh
+`-- FakeDiablo
+    |-- FakeDiablo.bin
+	    |-- FakeDiablo.elf
+		    `-- FakeDiablo.srec
+2，烧写过程：
+将生成的文件DiabloT.bin烧写到Diablo上面，烧写的过程前面说过。
+
+将FakeDiablo.bin烧写到FakeDiablo上面，烧写的一个方式大致过程描述如下：
+a)将FakeDiablo.bin拷贝到Emma文件系统中的相应目录。
+b)启动FakeDiablo，串口线通信中输入"help"可以查看FakeDiablo的所有命令（例如start命令可以启动mind）。
+c)启动Emma。
+d)在FakeDiablo的串口shell中，输入"sysupdate -t FD"，等待接收emma处的烧写请求。
+e)在Emma的shell中，运行命令：./vup-cmifscnd FakeDiablo.bin
+具体参见：https://10.1.3.250:8443/pages/viewpageattachments.action?pageId=23692510中的"EU11之通关秘笈.ppt"中的p25,p26,p27。
+另外emma的rootfs和kernel的下载地址:
+10.1.1.205
+10.1.1.208
+等测试机器，为root，密码：IA_camera*118
+内核：10.1.2.205:/tftpboot/vmlinux_emma_C18B_1222.bin，svn上面也可以下载。
+文件系统：也有相关的位置。
+
+3，运行过程：
+首先启动FakeDiablo，
+然后会自动自动DiabloT，
+然后启动Diablo，运行./diablo_test.sh
+最后启动Emma，运行./emma_test.sh
+这里，前面的次序无所谓，只要是Emma上面的启动次序是最后的就行。
+
+
+20120109
+===============
+关于erdd测试：
+当前的机器是只有/usr/local/scel8.0编译环境的机器，但是编译"make libraries"的时候没有通过，请确认一下如下的方法是否正确。
+
+目前采用的步骤：
+1,准备环境文件：
+首先将之前测试使用的头文件拷贝到/usr/development/t-kernel下，之后该目录的内容如下：
+[root@localhost Diablo]# ls /usr/development/t-kernel
+include_1.02.04  lib
+[root@localhost Diablo]# ls /usr/development/t-kernel/include_1.02.04/
+arch  basic.h  ctype.h  device  libstr.h  machine.h  stdtype.h  sys  tk  tm  typedef.h
+[root@localhost Diablo]# ls /usr/development/t-kernel/lib
+fakediablo_1.02.04  fakediablo_1.02.04_3  vermeer_1.02.04  vermeer_1.02.04_3
+
+2,编译libraries
+#cd /usr/development
+#tar -xzvf t-kernel_bak.tgz
+#cd PFXBase_C16_Must_Branch_4/PFXSoft
+#make libraries
+然后出现如下错误：
+......前面省略......
+Compiling objects/coverage/AVCDecoderProxyAdapter.cpp
+Compiling objects/coverage/AVCEncoderProxyAdapter.cpp
+Compiling objects/coverage/ActiveMediaHolderProxyAdapter.cpp
+Compiling objects/coverage/ActiveMediaHolderRegistryAPI.cpp
+Compiling objects/coverage/AddEMWhilePlayingApplicationProxyAdapter.cpp
+在包含自 objects/coverage/include/Utility/SelectActiveMedia/capability/ActiveMediaHolderRegistryAPI.hpp：8 的文件中 ，
+                 从 /root/lv-k/t-kernelport/IA_branch/PFXBase_C16_Must_Branch_4/PFXSoft/Components/objects/coverage/ActiveMediaHolderRegistryAPI.cpp：1:
+/usr/development/include/Registry/RegistryCache.hpp:12:37: 错误：utility/sys/pfx_mutex.hpp：没有那个文件或目录
+/usr/development/include/Registry/RegistryCache.hpp:51: 错误：‘mutex’ 在命名空间 ‘pfx::utility’ 中没有命名一个类型
+Compiling objects/coverage/AddEMWhilePlayingHandlerProxyAdapter.cpp
+make[3]: *** [objects/coverage/Objects///root/lv-k/t-kernelport/IA_branch/PFXBase_C16_Must_Branch_4/PFXSoft/Components/objects/coverage/ActiveMediaHolderRegistryAPI.o] 错误 1
+make[3]: *** 正在等待未完成的任务....
+make[3]: Leaving directory `/root/lv-k/t-kernelport/IA_branch/PFXBase_C16_Must_Branch_4/PFXSoft/Components'
+make[2]: *** [all] 错误 2
+make[2]: Leaving directory `/root/lv-k/t-kernelport/IA_branch/PFXBase_C16_Must_Branch_4/PFXSoft/Components'
+make[1]: *** [libraries] 错误 2
+make[1]: Leaving directory `/root/lv-k/t-kernelport/IA_branch/PFXBase_C16_Must_Branch_4/PFXSoft/Features'
+
+
+2,PFXSoft
+由于上面过程失败，所以没有继续进行。
+
+
+
+关于跳线：
+1,eu11上面启动cpu1的跳线：
+s1200上面总共4个。
+将s1200上面的1号拨上去（on），就是启动NBL的shell，否则不启动。(类似原来的avp13的s1902)
+将s1200上面的2号拨上去（on），就是启动cpu1，否则是不启动。
+
+2,测试双flash的时候，
+测试之前，diablo附近的S600跳线已经跳到双Flash选项上
+
+新的mind
+在PFXBase_C16_Must_Branch_4/Libraries/mind/rpm下面运行"make"，不需要外部的东西。
+
+20120106
+===============
+关于内存的管理现状：
+32位的cpu，总共寻址空间4G，而使用的各种设备通过地址进行访问。这些设备有些是片外的有些是片内的（片外和片内是指是否集成到cpu芯片中，片内就是在一款cpu中，但是可能片外也在板子上）。具体如下：
+1)cpu芯片在板子上面；片内的设备在cpu芯片上面；
+2)片外的各种设备不在cpu芯片上面，而可能在板子上面；
+3)各种设备其物理地址固定。
+4)片外的设备，其物理地址随板子（接线方式）而不同(板子不变就不变)；
+5)片内的设备（以及寄存器等），其物理地址随cpu类型而不同(cpu不变就不会改变)。
+6)这里的设备，包括寄存器，ddr内存，等等各种设备。
+假设这里，将ddr内存设计为片外的了，其物理地址特殊处理了，linux定义为PHY_OFFSET
+在Linux Kernel中的arch/arm/mach-diablo/generic.c中定义了其相应的内容。
+
+ddr内存总共512M（其物理地址和系统无关，cpu0和cpu1看到的物理地址一样，这一点和中断号和cpu无关类似），其管理方式如下：
+Cpu0上面看到的ddr情况是:
+(1G)|-----------252M---|--------------------NNNM--------|-------XXXM-------|(1G+512M)
+这里252M+NNNM用于cpu0。
+XXXM用于cpu1。
+其中252M是cpu0的linux内核管理可以看到的，可以用kmalloc,get_free_pages分配到(参见arch/arm/mach-diablo/highmem/memoryDriver.c)。
+NNNM是无法内核管理的，只能用ioremap方式访问到其内容。（目前的sc2p就从这里分配）
+如果想要修改XXXM的起始地址，那么需要修改Linux(例如memoryDriver.c)和NBL中的相关部分。
+其中的1G就是内存ddr的起始物理地址，用PHY_OFFSET定义的。
+可以对[1G,1G+512M]以及这个区间之外的所有地址进行ioremap，不过被remap的地址在区间之外就不是ddr内存的了，而是别的设备的了。
+
+cpu1上面看到的情况是：
+1)上面的XXXM中，开始一部分给app的text段，然后一部分给stack，最后才有一部分分给了t-kernel上面的管理分配函数分配。所以使用t-kernel上面的管理分配函数，可以分配stack之后的内容，如果空间不够了，那么就需要调整XXXM的地址。
+
+2)
+总共内存512M，实际物理地址就是512-1G。
+内存被映射了两次到虚拟空间，
+映射方式可变，目前定义的是，虚拟地址的0-512映射为缓存的，512-1G映射为非缓存的，也就是说，非缓存的虚拟和物理地址一样。而使用t-kernel的内存分配函数分配的就是如上所说，512M尾部XXXM中最后的一段中的内容，并且应该是cached的。
+具体定义参见tmonitor/src/mmu.c，其cache或者非cached的映射宏为：CACHED_RAM(...)和UNCACHED_RAM(...)。
+
+综上，将sc2p从cpu0上移植到cpu1上，其内存映射修改方式要么就是修改nbl和linux相关的内存偏移;
+要么就直接使用cpu0上面传给ioremap的物理地址（即用于sc2p的物理地址），但是使用前最好使用UNCACHED_RAM转换一下。
+
+
+20120105
+===============
+(1)编码移植，同时确认移植中的一些难点。
+(2)清理代码
+(3)测试程序
+
+20120104
+===============
+计划步骤：
+（1）查看sc2plib相关的代码(ok)
+（2）查看sc2pLinux侧驱动相关的代码(ok)
+（3）查看t-kernel编译体系，以确定将sc2p驱动添加到哪里。(ok)
+（4）确定如何进行测试程序。
+
+ http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/FromIA/PFXBase_C16_Must_Branch_4/PFXSoft/Products/Prototype/PFXBaseEU11/src/HWSpecific/diablo_t
+编译方法：
+1）首先生成头文件：
+# cd Kernels/
+# make
+编译完成后将Kernels下的include所有内容 copy到：
+/usr/development/t-kernel/include_1.02.04/
+将diablo_t/Kernels/build/std_diablo下所有内容copy到：
+/usr/development/t-kernel/lib/diablo_1.02.04/
+只有第一次需要这样（除非修改了Kernel下面的内容要重新替换一下）。
+
+2)编译
+# cd ../
+# make
+生成的文件在：./tmonitor/build/tkernel.bin
+
+3）目录说明如下：
+diablo           codec以及codec wrapper, oswrapper
+drivers         drivers以及oswrapper
+tmonitor      tmonitor
+Kernels       统一用t-kernel内核
+Makefile     外层编译文件。
+
+最终生成的tkernel.bin在tmonitor/build下。
+
+20111231
+===============
+计划步骤：
+（1）查看sc2plib相关的代码(ok)
+（2）查看sc2pLinux侧驱动相关的代码(ok?)
+（3）查看t-kernel编译体系，以确定将sc2p驱动添加到哪里。
+（4）确定如何进行测试程序。
+什么是sc2p?
+
+20111230
+===============
+sc2p相关的驱动路径：Kernel/arch/arm/mach-diablo/avp13/sc2pphy
+lib路径：Rootfs/diablo/diabloMainCpu/sc2plib
+计划步骤：
+（1）查看sc2plib相关的代码
+（2）查看sc2pLinux侧驱动相关的代码
+（3）查看t-kernel编译体系，以确定将sc2p驱动添加到哪里。
+（4）确定如何进行测试程序。
+
+sc2plib:
+环形缓存，write=read表示空，两者差1表示满。
+包：第一个包包含大小信息，后面的就不包含了。
+
+20111230
+===============
+将要做SC2P通信机制向T-Kernel移植的内容。
+Eu11上面的通信简介
+	通信部分，涉及到三个片子：Diablo、Rosetta、Emma。
+	三者上面运行的系统分别是：
+	(a)Diablo是一个双arm11 cpu核的cpu。cpu0上运行的系统为CELinux，cpu1上运行的系统为T-Kernel。
+	(b)Rosetta不一定为几个核(好象3个核，这3个核也不一定全是cpu核，例如还有dsp核)，不同的核跑不同的内容。其上运行系统为T-kernel。
+	(c)Emma是一个cpu，只有一个arm cpu核。其上运行的系统为CELinux。
+
+下面具体叙述如下：
+1、Diablo上面的cpu0<->cpu1通信
+（1）通信内容
+	这部分通信只用于cpu0和cpu1之间的通信，具体通信是什么也不用关心。
+
+（2）关于diablo上面的cpu0和cpu1
+	只有diablo上面有cpu0和cpu1的概念，cpu1上面运行的T-Kernel，cpu0上面运行的CELinux。
+
+（3）实现通信的方式
+	这部分通信内容通过wkram芯片（一个片内的，也就是集成在cpu里面的公共内存可用于cpu0和cpu1通信）；wkram的通信驱动(Tkernel和CELinux端的)在2011年1230之前已经调试通过。等待后续处理。
+
+2、Emma<->Diablo通信
+（1）通信内容
+	确切地说Emma上面的系统(具体是T-Kernel还是CELinux还未知???)和Diablo上面的Cpu0的CElinux、以及Cpu1的T-Kernel之间进行用户控制信息相关的通信。
+
+（2）关于Emma
+	这部分通信用于控制信息的传递，控制面板就是Emma（相当与原来的system block）上面可以有各种"控制菜单"让用户选择；而接收到这些控制命令并处理、反馈的就是Diablo上面的Cpu0。
+
+（3）关于Diablo
+	最开始(mediablock，也就是mbp)，原来codec和mediaIF和mux/demux和stream control都在cpu0上面运行。
+	后来，将stream去掉了（实际是放到了其它的地方），而mux/demux没有通信，所以通信的部分就只涉及到media IF和Codec。
+	总之，这部分控制信息应该是csi的，而csi的通信没有t-kernel版本的，原来已经有了diablo的cpu0的csi通信驱动，可能要将它们移植到T-Kernel上面。
+
+（4）实现通信的方式
+	这部分通信内容采用CSI方式进行。
+
+3、Rosetta<->Diablo通信
+（1）通信内容
+	确切地说是Rosetta的系统和Diablo进行Codec相关的通信。
+
+（2）关于Rosetta
+	Rosetta是对原AVP13的FPGA的模拟。
+	原来的FPGA的作用如下：
+	当录画的时候，从镜头抓取的信息经过FPGA转化成SDI信号，给Diablo使用，这样就可以进行codec模块的动作了；播放的时候，从codec模块生成SDI信号，给FPGA，然后就能在显示器上面显示画面了。
+	其中用于codec模块的信息是用RTMeta形式信息（包含时间戳等的实时元数据，另外相对地，有一种NRTMeta数据，也就是非实时数据）传递。
+	再后来，Codec将要被移植到cpu1上面，而目前只有Cpu0上面的sc2p通信机制，所以通信的时候，用于和Codec通信的Rtmeta只能由Rosetta<->cpu0<->cpu1的方式，这样，路径比较长，所以提案考虑Rosetta通信的时候，用于Codec的部分通信直接控制成Rosetta<->cpu1，而不用经过cpu0<->cpu1这个环节了（这个环节应该使用前面的wkram）。
+	由上面可知，这个部分的通信内容是经过Codec的内容，而Codec在cpu1上面，所以应该主要是Rosetta和Diablo上面的cpu1进行通信。
+
+（3）实现通信的方式
+	这部分通信方式采用的是SC2P方式。
+
+20111215
+===============
+一、总结
+昨天开会大致总结了一下：
+1)wkram为了实现同步，数据结构和目前的实现之间有所不同。
+2)cpu0（linux）侧的接口有所变化(去掉了receive_wait以及只给receive接口传递缓存大小)。
+目前打算先在已实现基础上将基本的通信调通，然后再根据开会的内容修改实现相应的结构。
+
+二、设计
+结合昨天开会，和目前已有的实现，新暂定的结构和实现大致是（也是一个建议的设计方案）：
+以cpu0->cpu1为例：
+1)大体结构：
+发送或者接收的ram目前2k（可以调整大小）。
+发送和接收的ram（例如2k）分为3个区域(对应aui每次发送的video,audio,rt，3个请求；数目可能以后会变化)。
+每个区域有对应的大小，表示当前发送有多少数据在本次区域上面读取。
+另外，有一块"状态空间"用来专门维护各个区域的可用信息(如每个区域数据大小，及当前可用区域情况，空间在2K里划分)。
+
+2)大体实现：
+每次发送会将数据发送到"下一个没有被发送过的区域上"。(根据"下次读取号"与"最后发送号"计算)
+每次发送之后，会向"状态空间"记录"最后一次发送所使用的区域号"。(即"最后发送号")
+同时，"状态空间"里也维护"第一个被发送，但是还没有被接收的区域号"。(即"下次读取号")
+
+每次读取时，从"下次读取号"开始读取。
+读取结束会更新"下次读取号"。
+
+结构大致如图：
+	   cpu0->cpu1发送的缓存结构
+       +------+------+--------+----+ \
+       |下次  |最后  |每个区域|空满|状态空间
+       |读取号|发送号|数据大小|标记|状态空间
+       +------+------+--------+----+ /
+       |              data         |\
+       +---------------------------+ \
+       |                 data      |  \
+       +---------------------------+    实际存放数据的空间
+       |                   data    |    通过r,w循环队列管理缓存。
+       +---------------------------+
+       |                      data |  /
+       +---------------------------+ /
+       | data                      |/
+       +---------------------------+
+
+	   cpu0->cpu1发送的缓存结构
+       +------+------+---------+----+ \
+       | next | last |area size|full| status
+       | read | send |  array  |flag| space
+       +------+------+---------+----+ /
+       |               data         |\
+       +----------------------------+ \
+       |                  data      |  \
+       +----------------------------+    data space
+       |                    data    |    loop buffer with
+       +----------------------------+    r,w,pointer.
+       |                       data |  /
+       +----------------------------+ /
+       | data                       |/
+       +----------------------------+
+
+
+三、注意
+区域数目表示接收之前，最多可以发送多少次。
+目前区域数目暂定为3，大致思想和原有的emif一致，但是考虑到已有实现的方式，所以细节上有所不同。
+每次发送期间，不能有其它进程/线程同时发送。
+使用循环队列方式管理缓存，发送时没有可用区域则阻塞，接收时没有数据也阻塞。
+cpu1->cpu0发送和接收和此类似。
+
+这是目前考虑到的情况，如果还有其它问题，还请及时讨论下。
+
+20111209
+===============
+*PFXSoft的编译过程：
+#cd /root/buildTmp/t-kernelport/work/PFXSoft
+#make libraries
+#cd /root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase
+#make
+这里，前面进行"make libraries"之后，以后就不用再次进行了。并且，这里在这个PFXBase下面进行的编译支持差分编译。
+
+*清除上次编译结果：
+#cd /root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase
+#make clean
+
+*编译的时候不进行source code format:
+#make ASTYLE=disabled
+
+Linux侧代码：
+如果修改了cpucomm库代码，那么需要在executablesAA/中的相应应用程序中make clean一下，再编译，因为库更新了并不会被make识别出来。
+另外如果
+#cd /root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase/executablesAA
+#make ASTYLE=disabled
+之后，会对代码编译，然后运行"cpToTarget.sh"会将编译的结果拷贝到"target"目录中。
+
+
+Tkernel代码修改的编译过程：
+1)
+#cd /root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase/executablesAA
+#make ASTYLE=disabled
+出现链接错误导致中断，不用管。
+2)
+#cd /root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase/executablesAA/Diablo-T
+#make ASTYLE=disabled
+这样生成的代码在
+"/root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase/executablesAA/Diablo-T/objects/arm-elf-arm11"
+
+
+
+关键部分的分析：
+1)/root/buildTmp/t-kernelport/work/PFXSoft/Products/Prototype/PFXBase里面的代码。
+2)/root/buildTmp/t-kernelport/work/PFXSoft/Libraries/mind/mind-cpp-mbp/src/mind/remoting
+里面的文件
+MbpWKRAMContainerRemoteProxy.cpp
+MbpWKRAMProcessAdapter.cpp
+是Linux上面调用收和发接口问题。
+
+3)/root/buildTmp/t-kernelport/work/PFXSoft/Libraries/mind/mind-cpp-diablot/src/mind/remoting
+这个里面的文件是Tkernel侧调用收和发接口的地方。
+
+收发代码测试程序：
+/root/buildTmp/t-kernelport/work/PFXSoft/Features/src/CommunicationTest
+入口代码在：
+PFXBase/src/targets/pc/common/main，
+调用过程：
+//PFXBase/src/targets/pc/common/main
+GETINSTANCE(EmmaResourceAPort)->method1(param1);//cpu0
+
+///root/buildTmp/t-kernelport/work/PFXSoft/Features/src/CommunicationTest/Emma/EmmaResourceA
+WIRED_INVOKE(DiabloResourceAPort, method1, ++param);//cpu0->cpu0
+
+///root/buildTmp/t-kernelport/work/PFXSoft/Features/src/CommunicationTest/Diablo/DiabloResourceA
+WIRED_INVOKE(RosettaResourceAPort, method1, ++param);//cpu0->cpu1
+
+///root/buildTmp/t-kernelport/work/PFXSoft/Features/src/CommunicationTest/Rosetta/RosettaResourceA
+WIRED_INVOKE(EmmaResourceAPort, method1, ++param);//cpu1->cpu0
+
+由于调用形成一个链接，所以循环下去。
+cpu0->cpu0,cpu0->cpu0,cpu0->cpu1,cpu1->cpu0,cpu0->cpu0,cpu0->cpu1,cpu1->cpu0,cpu0->cpu0,cpu0->cpu1,cpu1->cpu0,...
+
+
+20111208
+===============
+了解的状况为：
+1)用旧的（即宝哥提供的Tkernel的base进行工作），为什么？
+2）旧的T-kernel已经修改成可以用arm-elf-gcc进行编译（版本应该是4.5.*的），原来使用arm-sony-gcc编译的。
+3）旧的T-Kernel+旧的Linux Kernel可以在avp13板子上面启动（将s1902最外面的跳线8号设置off则启动tkernel，每次烧写的时候也要将跳线设置回来安全点，不设置也行）。
+4）旧的T-Kernel+新的Linux Kernel(目前C16上面的)无法启动Tkernel（因为启动Linux之后有些时钟被注册了，而以前这些时钟为了适配tkernel没有全部注册，原来的cpu1部分不要参与编译，否则会与新的cpu1comm驱动的中断冲突）。
+5）让旧的T-Kernel+新的Linux Kernel可以工作的方法：
+1)diabloTimer.h中的9该成8。（只使用8个时钟中断，其实只改这里即可，但是为以后方便也要进行下面的第2步）。
+2）diabloTimer.c中的init函数中，for循环中的第一句话加入旧Linux Kernel相应位置的那个if判断。
+
+20111202
+===============
+T-Kernel侧调用到自定义的函数的方式：
+1)T-Kernel/Fake_Diablo/Drivers/emif/emif_main.c:emif_start()
+a)开始设置好我们自己定义的缓存结构(EMIFInfo*    p_info)，
+结构EMIFInfo包括：
+一系列表示缓存的指针，一个gdi的指针（gdi对应的GDI结构中有指向GDefDev的指针），等。
+b)然后调用emif_registDevice()(参见Drivers/emif/emif_main.c)，通过这个函数将一个刚才自定义的缓存结构p_info和一个GDefDev类型的结构相互关联（也就是两者都含有指向对方的指针）。
+结构GDefDev包括:
+一些函数指针例如emif_open可以通过gdi找到p_info等，以及一个指向p_info的指针，等。
+c)然后通过task线程方式(tk_cre_tsk)启动emif_rtask()(参见Drivers/emif/emif_task.c)，这个task用于读取。
+
+2)T-Kernel/Fake_Diablo/Drivers/emif/emif_task.c:emif_rtask()就是读取的线程：
+a)首先设置一个while(1)循环，这样线程一般就不会退出了。
+b)然后通过GDI_Accept()参见（Kernels/lib/libdrvif/src/gdrvif.c），等待请求。
+这里，传入GDI_Accept()的参数包含一个表示等待read的命令码，一个p_info所包含的Gdi(其中含有相应的GDefDev)，以及返回T_DEVREQ*类型的devReq(这个里面包含收到表示read的命令码。)
+c)当GDI_Accept()返回的时候根据其中devReq中包含的命令码判断，如果是read就执行我们自己定义的用于read的函数emif_data_read（）(它将对p_info进行具体操作，具体参见Drivers/emif/emif_task.c)。
+
+综上，估计，对于读取，首先用户调用tk_read,,,（名字忘记了）这个标准函数，这样会导致GDI_Accept()返回。
+写应该类似吧。
+
+20111130
+===============
+目前重要的问题：
+1)tkernel测的对应
+2）如何实现不拷贝数据直接传送地址
+memdriver中的memmap
+3)传送时候的同步
+semphore
+4)传送时候的命令
+iocttl
+
+20111129
+===============
+对cpu0和cpu1接收双方参数的处理。
+cpu1接收和发送只对wkram进行操作。
+注意有一个：
+tkernel/diablo/include/diabloChip.h:#define DIABLO_WKRAM_BASE          0xBFF00000
+tkernel/diablo/include/hardware.h:
+/* Work RAM */
+#define DIABLO_WORKRAM_PHYS_BASE    0xBFF00000
+#define DIABLO_WORKRAM_VIRT_BASE    0xFDEEE000
+#define DIABLO_WORKRAM_SIZE         SZ_8K
+
+
+cpu0
+1)在函数Kernel/arch/arm/mach-diablo/cpu1/diabloHandShake.c:diablobspHandShakeGenIsr()中：
+DIABLO_SWCOMMON_INFO*   pSwCommonInfo = (DIABLO_SWCOMMON_INFO *)(DIABLO_SWCOMINFO_VIRADDR);
+DIABLO_HANDSHAKE_FRAME*     pHSF = (DIABLO_HANDSHAKE_FRAME *)0;
+while((pSwCommonInfo->pCpuHandShakeRcvWP) != (pSwCommonInfo->pCpuHandShakeRcvRP))
+{
+	pHSF = (DIABLO_HANDSHAKE_FRAME *)(pSwCommonInfo->pCpuHandShakeRcvRP - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE);
+	kmsg_que_id_t*  MsgQ = diablobspHandShakeModuleTable[modId];//根据modId访问,modId == DIABLO_CPU0CPU1_COMMUNICATION
+	kmsg_que_send( MsgQ, (void*)pHSF, sizeof(DIABLO_HANDSHAKE_FRAME), NO_WAIT );
+	pSwCommonInfo->pCpuHandShakeRcvRP += sizeof(DIABLO_HANDSHAKE_FRAME);
+	if (pSwCommonInfo->pCpuHandShakeRcvRP >= pSwCommonInfo->pCpuHandShakeRcvBufEnd)
+	{
+		pSwCommonInfo->pCpuHandShakeRcvRP = pSwCommonInfo->pCpuHandShakeRcvBufStart;
+	}
+}
+收到的信息存放在DIABLO_SWCOMMON_INFO结构，具体是依次处理其中的DIABLO_HANDSHAKE_FRAME结构。
+
+2)在函数Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c:CodecSimulatorDrvThreadTask(...)中：
+DIABLO_HANDSHAKE_FRAME msg_data;
+ret = kmsg_que_receive(&codec_pxdev_kmsg_que, &msg_data, sizeof(msg_data), WAIT_FOREVER);
+通过msg_data.modCode分发进入switch，然后switch中进行获取参数并处理,大致如下：
+CODECCORECPUCOMMMSG *parm_from_cpu1;
+parm_from_cpu1 = (CODECCORECPUCOMMMSG *)kernel_phys_to_virt(msg_data.pParam);
+
+//zou3App/include/cpu1/diabloHandShake.h
+#define DIABLO_SWCOMINFO_VIRADDR (RB_DIABLO_WKRAM_SWCOMMON - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE)
+
+//zou3Kernel/diablo1176jzs/rbDiablo.h
+/* WKRAM */
+#define RB_DIABLO_WKRAM_BCT     (DIABLO_WKRAM_BASE + 0x0000)
+#define RB_DIABLO_WKRAM_EXTRACT_INFO    (DIABLO_WKRAM_BASE + 0x0080)
+#define RB_DIABLO_WKRAM_LAPTIME_LOG (DIABLO_WKRAM_BASE + 0x0100)
+#define RB_DIABLO_WKRAM_SWCOMMON    (DIABLO_WKRAM_BASE + 0x0400)
+#define RB_DIABLO_WKRAM_HFDMA_DESCBASE  (DIABLO_WKRAM_BASE + 0x0800)
+#define RB_DIABLO_WKRAM_HANDSHAKE_BUF0  (DIABLO_WKRAM_BASE + 0x1000)
+#define RB_DIABLO_WKRAM_HANDSHAKE_BUF1  (DIABLO_WKRAM_BASE + 0x1400)
+#define RB_DIABLO_WKRAM_BSPLOGREC_ADR   (DIABLO_WKRAM_BASE + 0x1800)
+#define RB_DIABLO_WKRAM_BSPLOGREC_START (DIABLO_WKRAM_BASE + 0x1804)
+#define RB_DIABLO_WKRAM_BSPLOGREC_END   (DIABLO_WKRAM_BASE + 0x2000)
+#define RB_DIABLO_WKRAM_END     (DIABLO_WKRAM_BASE + 0x2000)
+
+综上，
+下面给出接收和发送数据处理的代码，这里只列出关键逻辑部分，实现时候细节需要参考相应文件。
+1)cpu0->cpu1:
+a)cpu0侧的cpu1/diabloHandShake.c:diablobspHandShakeSend()函数发送数据。其中的主要代码：
+DIABLO_SWCOMMON_INFO*       pSwCommonInfo = (DIABLO_SWCOMMON_INFO *)(DIABLO_SWCOMINFO_VIRADDR);
+DIABLO_HANDSHAKE_FRAME*     pHSF          = (DIABLO_HANDSHAKE_FRAME *)0;
+pHSF = (DIABLO_HANDSHAKE_FRAME *)(pSwCommonInfo->pCpuHandShakeSendWP - DIABLO_WORKRAM_PHYS_BASE
+		+DIABLO_WORKRAM_VIRT_BASE);
+pHSF->modCode = (seqNo << DIABLO_HANDSHAKE_SEQ_NUM_SHIFT) |
+(funcNo << DIABLO_HANDSHAKE_FUNC_ID_SHIFT) |
+(moduleId << DIABLO_HANDSHAKE_MOD_ID_SHIFT);
+pHSF->pParam = pPara;//!!!关键
+pSwCommonInfo->pCpuHandShakeSendWP+= sizeof(DIABLO_HANDSHAKE_FRAME);
+if (calcTemp >= pSwCommonInfo->pCpuHandShakeSendBufEnd)
+{
+	calcTemp = pSwCommonInfo->pCpuHandShakeSendBufStart;
+}
+writel (DIABLO_HANDSHAKE_INTR_SEND, DIABLO_HANDSHAKE_INTR);//触发cpu1可读中断，源代码中两遍，gaoyf说一遍就行。
+
+b)cpu1侧的CpuComm.c:InterruptHandlerfunction()，接收数据。它被cpu1可读中断处理函数激活，接收方式是：
+CPUCOMM_MESSAGE*    pMsg;
+pMsg = (CPUCOMM_MESSAGE*)WKRAM_INFO_TABLE.pCpuCommRingBuff0RP;
+nModuleID    = pMsg->nModuleID;
+nMessageID   = pMsg->nMessageID;
+nSequenceNum = pMsg->nSequenceNum;
+pParameter   = pMsg->pParameter;//!!!关键
+pMsg++;
+if( (VOID*)pMsg >= WKRAM_INFO_TABLE.pCpuCommRingBuff0End ) {
+	pMsg = (CPUCOMM_MESSAGE*)WKRAM_INFO_TABLE.pCpuCommRingBuff0Top;
+}
+
+上面，cpu0侧采用的DIABLO_HANDSHAKE_FRAME结构的链表，和cpu1侧采用的CPUCOMM_MESSAGE链表，这两个结构实际内容一样，只是不同系统名称不同，通过地址便可知道。
+
+2)cpu1->cpu0:
+a)cpu1上面的CpuComm.c:cpuCommMessageSend()函数发送数据。其中的代码是：
+CPUCOMM_MESSAGE*    pMsg;
+pMsg = (CPUCOMM_MESSAGE*)WKRAM_INFO_TABLE.pCpuCommRingBuff1WP;
+pMsg->nModuleID     = nModuleID;
+pMsg->nMessageID    = nMessageID;
+pMsg->nSequenceNum  = nSequenceNum;
+pMsg->pParameter    = pParameter;//!!!关键
+WKRAM_INFO_TABLE.pCpuCommRingBuff1WP += 1;
+if( (VOID*)WKRAM_INFO_TABLE.pCpuCommRingBuff1WP >= WKRAM_INFO_TABLE.pCpuCommRingBuff1End ) {
+	 KRAM_INFO_TABLE.pCpuCommRingBuff1WP = WKRAM_INFO_TABLE.pCpuCommRingBuff1Top;
+}
+
+b)cpu0上面的cpu1/diabloHandShake.c:diablobspHandShakeGenIsr()函数接收数据。其中的代码是：
+DIABLO_SWCOMMON_INFO*   pSwCommonInfo = (DIABLO_SWCOMMON_INFO *)(DIABLO_SWCOMINFO_VIRADDR);
+DIABLO_HANDSHAKE_FRAME*     pHSF = (DIABLO_HANDSHAKE_FRAME *)0;
+while((pSwCommonInfo->pCpuHandShakeRcvWP) != (pSwCommonInfo->pCpuHandShakeRcvRP))
+{
+	pHSF = (DIABLO_HANDSHAKE_FRAME *)(pSwCommonInfo->pCpuHandShakeRcvRP - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE);
+	kmsg_que_id_t*  MsgQ = diablobspHandShakeModuleTable[modId];//根据modId访问,modId == DIABLO_CPU0CPU1_COMMUNICATION
+	kmsg_que_send( MsgQ, (void*)pHSF, sizeof(DIABLO_HANDSHAKE_FRAME), NO_WAIT );
+	pSwCommonInfo->pCpuHandShakeRcvRP += sizeof(DIABLO_HANDSHAKE_FRAME);
+	if (pSwCommonInfo->pCpuHandShakeRcvRP >= pSwCommonInfo->pCpuHandShakeRcvBufEnd)
+	{
+		pSwCommonInfo->pCpuHandShakeRcvRP = pSwCommonInfo->pCpuHandShakeRcvBufStart;
+	}
+}
+接收的数据通过kmsg_que_send()发送，在函数CodecSimulatorDriver.c:CodecSimulatorDrvThreadTask(...)中如下处理：
+DIABLO_HANDSHAKE_FRAME msg_data;//接收到的DIABLO_HANDSHAKE_FRAME
+ret = kmsg_que_receive(&codec_pxdev_kmsg_que, &msg_data, sizeof(msg_data), WAIT_FOREVER);
+通过msg_data.modCode分发进入switch，然后switch中进行获取参数并处理,大致如下：
+CODECCORECPUCOMMMSG *parm_from_cpu1;
+parm_from_cpu1 = (CODECCORECPUCOMMMSG *)kernel_phys_to_virt(msg_data.pParam);//!!!msg_data.pParam是关键
+
+上面，cpu0侧采用的DIABLO_HANDSHAKE_FRAME结构的链表，和cpu1侧采用的CPUCOMM_MESSAGE链表，这两个结构实际内容一样，只是不同系统名称不同，通过地址便可知道。
+
+
+
+
+
+
+
+20111128
+===============
+根据之前的调查结果，总结如下：
+1)cpu1上面消息的收发：
+通过调用cpuComm/CpuComm.c:cpuCodecCommMessageSend来发送。
+通过调用msgQReceive来接收。
+
+2）cpu0上面消息的收发：
+通过打开设备文件，然后调用ioctl系统调用接口来实现消息的收发。大致代码结构如下：
+int devFD = getCodecFD();
+...;
+ioctl( devFD, CODEC_PROXY_CODEC_CONFIG, &codec_config_parm );
+而系统调用ioctl接口的实现在Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c
+
+综上，问题是，接收什么样的消息，以及接收的消息格式。
+难点在于cpu0上面ioctl的实现，需要和codec相关人员具体协商所需的参数形式。
+
+------再深入一些：
+cpu1:
+开始cpu1启动cpuComm/CpuComm.c:InterruptHandlerfunction(),MainCpuSimulator/MainCpuSimulator.c:codeccommApp()循环等待，
+当cpu0发送过来消息之后，根据cpuComm/CpuComm.c:cpuCommInitialize()可知，会调用:
+cpuComm/CpuComm.c:cpuCommInterruptHandler(),然后其"semGive"导致:
+cpuComm/CpuComm.c:InterruptHandlerfunction继续运行，运行时读取wkram(这就是接收的内容)，调用MsgSendToApp，导致：
+MainCpuSimulator/MainCpuSimulator.c:MsgSendToApp，其调用"msgQSend"导致:
+MainCpuSimulator/MainCpuSimulator.c:codeccommApp()处理(根据接收消息分发)，其处理参数之后导致：
+cpuComm/CpuComm.c:cpuCodecCommMessageSend()->cpuCommMessageSend(),其写完wkram后REG_SYSC_INT=...等导致:
+在cpu0端产生中断，告诉cpu0消息发送出去了。
+
+
+cpu0:
+1)在Kernel/arch/arm/mach-diablo/cpu1/diabloHandShake.c:diablobspHandShakeInit()
+注册diablobspHandShakeGenIsr()函数，这个函数用来处理收到cpu1消息的中断。
+
+在Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c:CodecSimulatorDrvThreadTask()
+中通过kmsg_que_receive()等待接收的消息。
+
+2)其中Kernel/arch/arm/mach-diablo/cpu1/diabloHandShake.c:diablobspHandShakeGenIsr()的：
+kmsg_que_id_t*  MsgQ = diablobspHandShakeModuleTable[modId];
+kmsg_que_send(...);
+会将消息发送kmsg_que_receive()等待接收的消息，
+这里注意diabloMainCpu/zou3App/lib/cpu1/CpuCommunationWrapper.c:diablobspHandShakeEntry()有对diablobspHandShakeModuleTable[modId]的初始化，它由驱动代码diablobspHandShakeEntry.c初始化阶段调用。
+
+3)然后再到：
+Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c:CodecSimulatorDrvThreadTask()继续对收到的消息进行具体的处理。大致的处理方式就是：
+DIABLO_HANDSHAKE_FRAME msg_data;
+CODECCORECPUCOMMMSG *parm_from_cpu1;
+kmsg_que_receive(&codec_pxdev_kmsg_que, &msg_data, sizeof(msg_data), WAIT_FOREVER);
+parm_from_cpu1 = (CODECCORECPUCOMMMSG *)kernel_phys_to_virt(msg_data.pParam);
+...
+费解的是，如何将tkernel的wkram内容转化成msg_data中的pParam成员的？
+
+
+而在Kernel/arch/arm/mach-diablo/cpu1/diabloHandShake.c:diablobspHandShakeSend()
+中的是向cpu1发送消息的部分。
+通过writel (DIABLO_HANDSHAKE_INTR_SEND, DIABLO_HANDSHAKE_INTR);给cpu1发送中断。
+关键在于发送中断之前哪些设置的参数指针。
+
+总结问题：
+1）将要在kernel和tkernel侧重新写一个驱动。
+2）总体流程已经知道，但是收发消息的时候cpu0如何将tkernel的wkram转换识别需要仔细研究。
+3）tkernel的4个接口是标准接口，如何调用到我们自己写的tkernel函数，有待研究。
+4）文档有待研究，确定设计的wkram结构，然后写tkernel的收发函数。
+5）解决以上问题之后，应该在kernel和tkernel侧两部分写代码，并且弄清编译手顺。
+
+20111125
+===============
+跟踪过程：
+1，Cpu1上面：
+1)cpuComm/CpuComm.c:void start_app(void)：
+使用taskspawn调用到codeccommApp。
+
+2)MainCpuSimulator/MainCpuSimulator.c:VOID codeccommApp
+大致如下：
+while(1)
+{
+	...
+		rcvByte = msgQReceive(app_MbxId
+				, &msgbuff
+				, sizeof(MSGQSENDTOAPP)
+				, WAIT_FOREVER );//接收（可能来自cpu0）
+	...
+		switch( nMessageID )
+		{//根据接收的信息，发送消息(cpu1->cpu0)。
+			case***:
+			pMsg=***;
+			status =cpuCodecCommMessageSend (DSP_WINDOW_RESET_RETURN,
+					nSequenceNum,
+					pMsg);
+			...
+			或者
+			status =cpuCodecCommMessageSend (DSP_WINDOW_RESET_RETURN,
+					nSequenceNum,
+					cpu1_virt_to_phys(pMsg, sizeof(pMsg)));//gaoyf说用这个方式发送从宏控制中也可以看得出来。
+		}
+}
+这里，其实nSequenceNum为0。
+可知，发送消息的函数就是:cpuComm/CpuComm.c:cpuCodecCommMessageSend
+最终实际是调用：
+CPU1STATUS  cpuCommMessageSend ( IN UINT8    nModuleID, IN UINT8    nMessageID,
+    IN UINT16   nSequenceNum,
+    IN VOID*    pParameter)
+
+
+2，Cpu0上面
+1，实际cpu0从cpu1收，或者cpu0向cpu1发消息，上层的大致代码形式如下：
+参考：zou3Codec/CodecSimulator/CodecSimulator.c
+{
+	...
+		int devFD = getCodecFD();
+	...
+		ioctl( devFD, CODEC_PROXY_CODEC_CONFIG, &codec_config_parm );
+	...
+}
+具体的动作就落实在那个ioctl中，也就是内核中通信的驱动部分。
+
+3，Kernel中通信的驱动:Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c
+
+20111124
+===============
+代码看了一部分，结果：
+大致能够确定一些主要的部分。
+例如
+编译框架：zhaohp
+1)通信逻辑主题的部分：
+t-kernelport/tkbase/tkernel/diablo/MainCpuSimulator(赵tq,高yf)<--- cpu1
+和Source/Rootfs/diablo/diabloMainCpu/zou3Codec/CodecSimulator(赵tq，高yf)<---cpu0
+2)逻辑调用的通信的具体实现部分：
+t-kernelport/tkbase/tkernel/diablo/cpuComm(liuxingb,gaoyf)
+启动入口函数部分:tkernel/main(liuxingb)
+3)linux-->tkernel一些接口的转化
+tkernel/diablo/wrapper(qi-t,luhl)
+
+待查看2)中的逻辑调用，来得到
+cpu0->cpu1发送数据的相关接口，
+以及cpu1->cpu0发送数据的相关接口。
+
+
+20111123
+===============
+大致了解T-Kernel的启动过程。开始着手看代码。
+NBL--load ram-->T-Monitor---->T-Kernel---->system process task.
+
+最初的情况是，从IA获得T-Kernel，这个T-kernel是他们修改过来的，修改之前的t-kernel也有。我们是在他们修改之后的t-kernel基础上面进行修改。
+而目前的工作将要在这个修改之后的工作上面继续修改。
+
+
+20111122
+===============
+以下，main cpu就是cpu0，sub cpu就是cpu1。
+情况：
+1）最初(MBP)所做： VxWorks->CELinux
+情况是:
+原来VxWorks上，main cpu + sub cpu(dv,lpcm)
+后来到CELinux上，main cpu（成功移植） + sub cpu(这部分没有做，所以不可用，实际根本没有启动sub cpu)
+
+2）后来所做：CELinux(main cpu)->CELinux(main cpu) + T-Kernel(sub cpu)
+情况是：
+CELinux上，main cpu（由vxworks成功移植的） + sub cpu(这部分没有做，所以不可用，实际根本没有启动sub cpu)
+后来，CELinux运行在main cpu上面，并且去掉了codec组件；T-Kernel运行在sub cpu上面，运行codec组件。
+实际的结果就是，性能并没有多大的提升。移植T-Kernel的时候有些驱动也做了相应的移植。
+
+3)再后来所做：
+在CELinux上面的组件（较底层）与IA的Feature（上层）之间，封装了一个Wrapper层，这个Wrapper层的介绍参见Wrapper相关文档。Wrapper层将通过接口统一提供codec、mux/demux、file system部分接口给上层。
+
+4）目前将要做的：
+目前首先将Wrapper所进行的统一封装接口也拆分成相应的codec、mux/demux、file system三个部分，然后将wrapper的codec部分的组件和接口移植到cpu1上面。没有沿用以前T-Kernel的codec组件的工作，是因为那之后做的Wrapper层导致变化很大，所以将codec组件部分移植到T-Kernel上面的工作相当于重新做了。
+
+5）根据邮件，本人应该负责:
+"2. mindCpp + WKRAM通信驱动结合驱动对应(需要和IA人员一起检讨确认，本周展 开，下周完成) 吕凯"
+大致就是，WKRAM内存用于mindCpp通信用。写一个WKRAM驱动，然后向mindCpp提供接口。接口可以自己定，也可mindcpp定，这个最好自己能够定，但是首先要看代码进行检讨，看看代码，以及可以提供什么接口。而之前所做T-kernel在cpu1上面，是通过cpu间通信进行的，这里要加上一个mind，让mind可以通过WKRAM和cpu进行通信。以前好象有相关的WKRAM的代码。当然，cpu1上面有T-Kernel的mindcpp+所需的wkram，cpu1上面也应当有celinux的mindcpp+wkram。
+
+
+20111121
+===============
+各位：
+
+本周工作目标明确，请各位按时完成，有问题请提前联系：
+1. Mux单独运行在CPU0上面性能瓶颈(最高桢率以及CPU占用率、SxS Pro+)  陆海 龙(本周务必完成)
+2. mindCpp + WKRAM通信驱动结合驱动对应(需要和IA人员一起检讨确认，本周展 开，下周完成) 吕凯
+3. T-Kernel移植方案确定，初版设计文档提出   刘兴宝
+4. 基于新的框架以及王亮他们调查的通信事件列表确认可减少的事件或者可异步 的事件列表(本周展开，不完成)  杜宇、刘兴宝
+5. BASE合并检讨(PFX统和BASE去除Codec＋T-Kernel+PFX统合版本Codec)以及BASE 制作(本周展开，下周完成) 孪京明、吕凯协助
+
+后续工作担当明确：
+1. nath、beaune、pcie向t-Kernel的移植  陆海龙、赵惠朋
+2. 高速启动相关 赵惠朋
+3. Wrapper通信对应和检讨  刘兴宝、聂广高
+4. OS接口适配与调试相关   孪京明
+5. CPU间通信却动相关。 吕凯
+请各位大体了解我们今后和本周工作内容及时展开，任何问题联系我。谢谢。
+
+以上。
+LiuXingbao wrote:
+> 各位：
+>
+> 附件是Codec向CPU1移植的相关资料，请先行了解。
+> 目前方案没有最终敲定，预计本周内敲定。
+>
+> ＰＳ：各位目前暂时不幸的划分到了本组来对应下一步的T-Kernel移植相关内容。
+> 另外后续人员可能会变动，暂定如此。
+>
+> 以上。

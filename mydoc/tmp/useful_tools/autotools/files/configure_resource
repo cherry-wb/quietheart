@@ -1,0 +1,496 @@
+非常好的资料，最好看原版。
+http://blog.csdn.net/yah99_wolf/archive/2011/02/04/6172614.aspx
+http://blog.csdn.net/yah99_wolf/archive/2011/02/04/6172617.aspx
+
+
+大型项目使用Automake/Autoconf完成编译配置(1)——提纲挈领
+
+使用过开源C/C++项目的同学们都知道，标准的编译过程已经变成了简单的三部曲：configure/make/make install, 使用起来很方便，不像平时自己写代码，要手写一堆复杂的Makefile，而且换个编译环境，Makefile还需要修改（Eclipse也是这样）。
+
+ 
+
+这么好的东东当然要拿来用了，但GNU的Autotool系列博大精深，工具数量又多，涉及的语言也多，要是自己从头看到尾，黄花菜都凉了，项目估计早就结束了；上网搜样例倒是有一大堆，但都是“hello world”的样例，离真正完成大型项目的目标还差得远。
+
+ 
+
+没有办法，对照网上的样例，再找几个开源的源码，然后参考各种Autotools的手册，花了2天时间，终于完成了一个基本可用的Autotools。为了避免其他XDJM也浪费时间，因此将过程总结下来，就算是新年礼物，送给大家！！
+
+ 
+
+提纲挈领：使用Autotools其实很简单
+
+大家不要看到那么多工具，其实使用起来很简单，总结起来就是两部分：
+
+1） 按照顺序调用各个工具；
+
+2）修改或者添加3个文件；
+
+听到我这么讲，大家是否觉得有信心了？好的，下面我们来看具体如何操作：
+
+1.         源码根目录调用autoscan脚本，生成configure.scan文件，然后将此文件重命名为configure.ac(或configure.in,早期使用.in后缀)
+
+2.         【修改】configure.ac，利用autoconf提供的各种M4宏，配置项目需要的各种自动化探测项目
+
+3.         调用aclocal收集configure.ac中用到的各种非Autoconf的宏，包括【自定义宏】
+
+4.         调用autoheader，扫描configure.ac(configure.in)、acconfig.h（如果存在），生成config.h.in宏定义文件，里面主要是根据configure.ac中某些特定宏(如AC_DEFINE)生成的#define和#undefine宏，configure在将根据实际的探测结果决定这些宏是否定义（具体见后面例子）。
+
+5.         按照automake规定的规则和项目的目录结构，【编写】一个或多个Makefile.am(Makefile.am数目和存放位置和源码目录结构相关)，Makefile.am主要写的就是编译的目标及其源码组成。
+
+6.         调用automake，将每个Makefile.am转化成Makefile.in，同时生成满足GNU编码规范的一系列文件（带-a选项自动添加缺少的文件，但有几个仍需要自己添加，在执行automake前需执行touch NEWS README AUTHORS ChangeLog）。如果configure.ac配置了使用libtool(定义了AC_PROG_LIBTOOL宏（老版本）或LT_INIT宏)，需要在此步骤前先在项目根目录执行libtoolize --automake --copy --force，以生成ltmain.sh，供automake和config.status调用。
+
+7.         调用autoconf，利用M4解析configure.ac，生成shell脚本configure。以上几步完成后，开发者的工作就算完成了，后面的定制就由开源软件的用户根据需要给configure输入不同的参数来完成。
+
+8.        开源用户调用configure，生成Makefile，然后make && make install。
+
+整个过程步骤有8步，但其中有5步你只需要简单的敲一个命令即可，只有剩下的三步需要你动手写一些东西，对应上面步骤中的蓝色黑体字部分，下一篇博文将重点讲述如何在大型项目中完成这三歩。
+
+
+
+======================
+大型项目使用Automake/Autoconf完成编译配置(2)——步步为营 
+在第一篇里面，我们已经提纲挈领的讲述了操作步骤，整个过程步骤有8步，但其中有5步你只需要简单的敲一个命令即可，只有剩下的三步需要你动手写一些东西，对应上面步骤中的蓝色黑体字部分，而本篇的重点就是如何在大型项目中完成这三歩。
+
+ 
+
+步步为营：三步完成编译配置
+
+【第一步：修改configure.ac文件】
+
+从上面的步骤可以看到，使用autoscan工具扫描后就会生成一个简单的configure.ac文件，这已经是一个完整的configure.ac文件框架了，但还不足以达到我们的要求，因此我们要在框架里面添加一些东西：
+
+1.1 添加AM_INIT_AUTOMAKE宏
+
+在AC_INIT 宏下一行添加AM_INIT_AUTOMAKE([foreign -Wall -Werror])，中括号里面的选项可以根据需要来修改，具体请看automake手册关于这个宏的说明。
+
+1.2 如果需要，添加AC_CONFIG_HEADERS([config.h])宏
+
+添加这个宏很简单，但关键是“如果需要”，什么情况下需要这个宏呢？
+
+这个宏的目的是输出config.h，这是一个C的头文件，里面主要是包含很多宏定义#define，说到这里其实就很明确了，输出这个文件的目的就是提供各种相关的宏，而宏在代码中的作用就是#ifdef，也就是说：如果你的代码需要用到宏开关进行控制，那么就要输出这个文件。具体的使用方法如下：
+
+1） 首先确定代码中需要使用什么宏来进行开关定制，确定宏的名称，编写和宏相关的代码，且要包含config.h的头文件；
+
+2） 在configure.ac中的各种处理（例如AC_CHECK_***，AC_ARG_***）中使用AC_DEFINE宏定义C/C++的宏，名称和上面的相同；如果是使用AC_CHECK_HEADERS，会自动添加宏定义；
+
+3） 执行完第7歩后，Autoconf就会自动生成config .h文件
+
+1.3添加编译链接需要的程序
+
+编译链接需要用到的程序需要添加在# Checks for programs.注释后面。对于C/C++来说，最常见的就是gcc, g++, 静态库编译、动态库编译，对应的选项如下：
+
+AC_PROG_CXX
+
+AC_PROG_CC
+
+AC_PROG_RANLIB
+
+如果使用libtool编译，则选项如下，注意使用了libtool则需要将AC_PROG_RANLIB去掉
+
+LT_INIT
+
+1.4 在configure.ac代码中各个部分添加自己的检测处理
+
+这一步是我们的主要工作，需要根据自己的项目具体情况来编写。至于具体添加在哪个地方，configure.ac中的注释已经清楚的告诉你了，例如：
+
+# Checks for libraries.
+
+# Checks for library functions.
+
+1.5 在AC_OUTPUT上一行添加AC_CONFIG_FILES宏
+
+添加这个宏的目的是制定Autoconf输出哪些文件，常见的文件就是Makefile文件，config.h在AC_CONFIG_HEADERS宏里面指定了，这里不需要再次指定。例如：
+
+AC_CONFIG_FILES([Makefile tools/Makefile common/Makefile worker/Makefile])
+
+ 
+
+【第二步：编写自定义的Autoconf宏】
+
+Autoconf虽然提供了很多内置的宏，但在实际项目中，这些宏不可能满足所有的要求，有的处理还是要自己完成。虽然在configure.ac文件中可以直接编写各种处理代码，但这样做有几个缺点：
+
+1） 很不美观：打开configure.ac文件，密密麻麻的一大段花花绿绿的Shell代码，看着眼花缭乱；
+
+2） 修改起来很麻烦：要找半天才能找到要修改的位置，一不小心就改错了；
+
+就像写C/C++代码要进行封装一样，Autoconf的处理也需要进行封装，这个封装就是自定宏，定义完成后在configure.ac中调用，看起来很清爽，修改也很简单。
+
+下面我们来看如何自定义宏：
+
+2.1 新建一个单独的目录，用于存放自定义宏，一般定义为m4
+
+2.2 新建自定义宏文件
+
+建议每个宏一个文件，文件必须以.m4结尾，文件名就是宏名（当然如果你非要不这么做也可以，文件名随便取）
+
+2.3 编写Autoconf宏
+
+具体的编写方式请参考Autoconf的手册，最好边看手册边对照一个开源软件的样例，这样效果最好了。这里说明几个需要注意的地方：
+
+1）m4宏不是shell，请不要直接在文件中写shell代码，而要在宏的各个部分里面写代码；
+
+最常见的就是if-else判断，如果要在代码中编写if-else判断，需要使用AS_IF宏，或者在其它宏里面写，例如AC_ARG_WITH, AC_CACHE_CHECK；
+
+2）AC_DEFUN是定义autoconf的宏，AC_DEFINE是定义C/C++的config .h里面的宏，不要混淆了；
+
+2.4 运行aclocal工具，生成aclocal.m4
+
+由于自定义宏是放在我们新建的目录中的，configure.ac并没有像C/C++那样的include语句可用，因此也就找不到这些宏，这时就需要aclocal工具了：aclocal会将自定义宏编译成configure.ac可用的宏，保存在和configure.ac同级目录下的aclocal.m4文件中，这样在configure.ac就能够直接使用了。具体的编译方法如下（m4就是你的目录）:
+
+aclocal -I m4
+
+同时需要在根目录下的Makefile.am中添加ACLOCAL_AMFLAGS = -I m4。
+
+ 
+
+还有一种方法是将所有的自定义宏都放入到一个acinclude.m4文件中，不过不推荐这种方法，原因是因为这种方法的缺点和直接将所有自定义宏放入configure.ac中没有多大差别。
+
+【第三步：编写Makefile.am文件】
+
+对于大型项目来说，代码一般都是分目录存放的，而不会像Hello world样例那样简单的就几个文件，因此写Makefile.am就麻烦一些，但其实主要是工作量增加了，原则都是一样的：
+
+原则1：每个目录一个Makefile.am文件；同时在configure.ac的AC_CONFIG_FILES宏中指定输出所有的Makefile文件，例如：
+
+AC_CONFIG_FILES([Makefile tools/Makefile common/Makefile worker/Makefile])
+
+原则2：父目录需要包含子目录
+
+在父目录下的Makefile.am中添加: SUBDIRS = 所有子目录，例如SUBDIRS=test tools
+
+原则3：Makefile.am中指明当前目录如何编译
+
+前两个原则很简单，这里就不多说了，重点说一下如何编写Makefile.am。
+
+ 
+
+编写Makefile.am主要是完成3件事情：编译(make)、安装(make install)、打包(make dist)，下面我们一一来进行讲解。
+
+3.1 编译安装
+
+编译和安装的规则是绑定在一起的，通过同一条语句同时指定了编译和安装的处理方式，具体的格式为：安装目录_编译类型=编译目标
+
+3.1.1【安装目录】
+
+例如：bin_PROGRAMS = hello subdir/goodbye，其中安装目录是bin，编译类型是PROGRAMS，编译目标是两个程序hello, goodbye.
+
+常用缺省的安装目录如下
+
+目录
+	
+
+Makefile.am中的变量
+	
+
+使用方式
+
+prefix
+	
+
+/usr/local
+	
+
+安装目录，通过--prefix指定
+
+exec_prefix
+	
+
+${prefix}
+	
+
+同prefix
+
+bindir
+	
+
+${exec_prefix}/bin
+	
+
+bin_编译类型
+
+libdir
+	
+
+${exec_prefix}/lib
+	
+
+lib_编译类型
+
+includedir
+	
+
+${prefix}/include
+	
+
+include_编译类型
+
+noinstdir
+	
+
+无
+	
+
+noinst_编译类型，特殊的目录，表示编译目标不安装。
+
+除了常用的缺省目录外，有时候我们还需要自定义目录，例如日志目录log，配置目录config，这种目录可以通过自定义目录方式定义，然后按照缺省目录的使用方式使用即可。例如：自定义config目录的方式如下：
+
+configdir=${prefix}/log  => 定义一个自定义的目录名称config,注意dir后缀是固定的
+
+config_DATA=config/test.ini  => 使用自定义的目录config，必须要有这句，否则目录不会创建, =号后面如果有对应的文件，安装时会将对应的文件拷贝到config目录下。
+
+ 
+
+3.1.2【编译类型】
+
+常见编译类型如下，没有自定义编译类型
+
+类型
+	
+
+说明
+	
+
+使用方式
+
+PROGRAMS
+	
+
+可执行程序
+	
+
+bin_PROGRAMS
+
+LIBRARIES
+	
+
+库文件
+	
+
+lib_LIBRARIES
+
+LTLIBRARIES (Libtool libraries)
+	
+
+libtool库文件
+	
+
+lib_LTLIBRARIES
+
+HEADERS
+	
+
+头文件
+	
+
+include_HEADERS
+
+SCRIPTS
+	
+
+脚本文件，有可执行权限
+	
+
+test_SCRIPTS（需要自定义test目录）
+
+DATA
+	
+
+数据文件，无可执行权限
+	
+
+conf_DATA(需要自定义conf目录)
+
+ 
+
+3.1.3【编译目标】
+
+编译目标其实就是编译类型对应的具体文件，其中需要make生成的文件主要有如下几个：可执行程序_PROGRAMS，普通库文件_LIBRARIES，libtool库文件_LTLIBRARIES,其它类型对应的编译目标不需要编译，源文件就是目标文件。
+
+Ø  标准的编译配置
+
+如果你熟悉gcc的编译命令写法，那么Automake的Makefile.am编译过程就很好写了。因为Automake只是将写在一行gcc命令里的各个不同部分的信息分开定义而已。我们来看具体是如何定义的：
+
+_SOURCES：对应gcc命令中的源代码文件
+
+_LIBADD：编译链接库时需要链接的其它库，对应gcc命令中的*.a, *.so等文件
+
+_LDADD：编译链接程序时需要链接的其他库，对应gcc命令中的*.a, *.so等文件
+
+_LDFLAGS：链接选项，对应gcc命令中的-L, -l, -shared, -fpic等选项
+
+_LIBTOOLFLAGS：libtool编译时的选项
+
+**FLAGS(例如_CFLAGS/_CXXFLAGS)：编译选项，对应gcc命令中的-O2, -g, -I等选项
+
+举例如下：
+
+#不同的编译类型只是第一句不一样，后面的编译配置都是一样的
+
+bin_PROGRAMS= myproject
+
+myproject_SOURCES = main.c
+
+myproject_LDADD   = ./utils/libutils.a ./module1/libmodule1.a ./core1/libcore.a
+
+myproject_LDFLAGS = -L/home/test/local -lmemcached
+
+myproject_CFLAGS  = -I./core1/ -I./module1/ -I./utils/ -O2 -g
+
+ 
+
+Ø  如何编译可执行程序
+
+对于大型项目来说，代码基本上都是分目录存放的，如果是直接写makefile文件，一般都是将所有源文件首先编译成*.o的文件，再链接成最终的二进制文件。但在Automake里面这样是行不通的，因为你只要仔细看编译类型表格就会发现，并没有一种编译类型能够编译*.o文件，无法像常规makefile那样来编写，所以就需要采取一些技巧。
+
+其实这个技巧也很简单：将非main函数所在目录的文件编译成静态链接库，然后采用链接静态库的方式编译可执行程序。
+
+样例如下：
+
+=================根目录Makefile.am======================
+
+#对应Makefile.am原则2
+
+SUBDIRS = tools common worker
+
+ 
+
+=================tool目录Makefile.am======================
+
+#只是为了编译而生成的.a库文件，没有必要安装, 所以是noinst
+
+noinst_LIBRARIES=libtools.a
+
+libtools_a_SOURCES=./urlcode.h \
+
+                   ./stringtools.cpp \
+
+                   ./stringtools.h \
+
+                   ./urlcode.c
+
+ 
+
+===============common目录Makefile.am======================
+
+#只是为了编译而生成的.a库文件，没有必要安装, 所以是noinst
+
+noinst_LIBRARIES=libcommon.a
+
+libcommon_a_SOURCES=./iniparser.c \
+
+                    (省略很多文件, 实际使用时要一一填写)
+
+                    ./exception.h \
+
+ 
+
+==============worker目录Makefile.am============================
+
+bin_PROGRAMS=worker
+
+worker_SOURCES=./workeralgorithm.cpp \
+
+                ./worker.cpp \
+
+                (省略很多文件, 实际使用时要一一填写)
+
+               ./worker.h
+
+#通过_LDADD告诉Automake需要链接哪些库
+
+worker_LDADD=../tools/libtools.a ../common/libcommon.a
+
+ 
+
+Ø  如何编译静态库
+
+Automake天然支持编译静态库，只需要将编译类型指定为_LIBRARIES即可。
+
+ 
+
+Ø  如何编译动态库
+
+需要注意的是：_LIBRARIES只支持静态库(即*.a文件),而不支持编译动态库(*.so)文件，要编译动态链接库,需要使用_PROGRAMS。除此之外，还需要采用自定义目录的方式避开Automake的两个隐含的限制：
+
+1)      如果使用bin_PROGRAMS, 则库文件会安装到bin目录下，这个不符合我们对动态库的要求；
+
+2)      automake不允许用lib_ PROGRAMS
+
+下面假设将utils编译成so，采用自定义目录的方式，修改Makefile.am如下：
+
+mylibdir=$libdir         #$libdir其实就是lib目录，请参考【安装目录】表格
+
+mylib_PROGRAMS= libutils.so
+
+libutils_so_SOURCES = utils.c utils.h
+
+libutils_so_LDFLAGS = -shared –fpic  #这个就是gcc编译动态库的选项
+
+ 
+
+Ø  如何编译libtool库
+
+对于跨平台可移植的库来说，推荐使用libtool编译，而且Automake内置了libtool的支持，只需要将编译类型修改为_LTLIBRARIES即可。
+
+需要注意的是：如果要使用libtool编译，需要在configure.ac中添加LT_INIT宏，同时注释掉AC_PROG_RANLIB，因为使用了LT_INIT后，AC_PROG_RANLIB就没有作用了。
+
+ 
+
+3.2 打包
+
+Automake缺省情况下会自动打包，自动打包包含如下内容：
+
+1)      所有源文件
+
+2)      所有Makefile.am/Makefile.in文件
+
+3)      configure读取的文件
+
+4)      Makefile.am’s (using include) 和configure.ac’ (using m4_include)包含的文件
+
+5)      缺省的文件，例如README, ChangeLog, NEWS, AUTHORS
+
+ 
+
+如果除了这些缺省的文件外，你还想将其它文件打包，有如下两种方法：
+
+(1)   粗粒度方式：通过EXTRA_DIST来指定，例如：
+
+EXTRA_DIST=conf/config.ini  test/test.php  tools/initialize.sh
+
+(2)   细粒度方式：在“安装目录_编译类型=编译目标”前添加dist(表示需要打包), 或者nodist(不需要打包)，例如：
+
+#将data_DATA= distribute-this打包
+
+dist_data_DATA = distribute-this
+
+ 
+
+#foo_ SOURCES不打包
+
+bin_PROGRAMS = foo
+
+nodist_foo_SOURCES = do-not-distribute.c
+
+ 
+
+【后记】
+
+GNU Autotool工具博大精深，我也是结合项目的实际应用来使用的，并没有完整的研究所有的工具，因此难免存在瑕疵和纰漏，如果大家发现有疑问或者问题的地方，欢迎大家指正。当然，GNU自己的手册是最权威的，如果你有疑问的话，参考手册，以手册为准。
+
+ 
+
+同时感谢我的同事胡大侠，他写了一份很好的入门的材料，为我提供了很大的帮助。
+
+ 
+
+【参考资料】
+
+1. 入门材料：http://sources.redhat.com/autobook/autobook/autobook_toc.html 。
+
+2. autoconf手册：http://www.gnu.org/software/autoconf/manual/autoconf.html 。
+
+3. automake手册：http://sources.redhat.com/automake/automake.html 。
+
+4. libtool手册：http://www.gnu.org/software/libtool/manual/libtool.html
+
+5. tutorial：http://www.lrde.epita.fr/~adl/dl/autotools.pdf 。

@@ -1,0 +1,33 @@
+这里介绍如何调整statusbar上面插件的位置：
+一，有两个方法：
+1，使statusbar中添加控件的次序由原来的从右向左添加，改变为从左向右添加的方法：
+进入到hildon-desktop-panel-expandable.c，定位到函数：hilldon_desktop_panel_expandable_constructor
+  HILDON_DESKTOP_PANEL (panel)->pack_start = TRUE;/*lkupdate*/
+2，使statusbar中添加控件的次序由原来的从右向左添加，改变为从左向右添加的方法：
+进入到hildon-desktop-panel.c文件，定位到函数:hildon_desktop_panel_calc_positions,改变条件:
+if(!panel->pack_start)
+如何将指定的插件添加到左面，其他的添加到右面，也可以修改这里。
+修改之前，需要知道一些知识：
+1）系统添加插件的方法是通过gtk_box_pack_start和gtk_box_pack_end两者之一来添加的。
+2）当前的item是否是自己指定的那个插件？判断方法目前可以通过item->position来判断，至于通过item->name来判断目前似乎还未找到。position是标志item插件出现的次序的变量。它从0开始计算。当前插件的position的值实际就是在./osso/hildon-desktop/statusbar.conf里面，可用的.desktop插件在该文件里面出现的次序。
+然后，通过添加如下部分进行修改(假设我们需要将第1个出现的可用插件放到左面，其他的放到右面)：
+if(0==position)
+{
+panel->pack_start ^= 1;
+}
+......原来的pack_start相关代码......
+if(0==position)
+{
+	panel->pack_start ^= 1;
+}
+
+
+
+二，其他杂乱相关：
+相关的语句：
+hildon-desktop-panel-expandable.c中的函数：
+hildon_desktop_panel_expandable_add_button中，有：  
+g_object_set (G_OBJECT (item), "position", ex_panel->priv->current_position++, NULL); 
+3,未尝试的：
+hildon-desktop-panel.c中其他有可能改变属性的函数：hildon_desktop_panel_set_property,
+hildon_desktop_panel_real_add_button（可能改变宽度，它调用了hildon_desktop_panel_calc_positions）

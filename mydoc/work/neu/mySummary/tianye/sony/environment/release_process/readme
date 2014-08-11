@@ -1,0 +1,74 @@
+这里记述了release的过程：
+
+一，通知release(周三)
+通知之前，把release note表格在release svn上面建立好相应的sheet。然后发送全员邮件.
+
+例如：
+=周三
+TO:各位Leader
+FM:周磊  
+
+Release要求如下：
+1. 本周四下班前请各组将验证后的代码提交到 Release SVN，以subblock(kernel以module)为单位提交，请控制commit次数。
+2.  提交代码时请添加正确的 svn log message(与RN格式及内容相同)，要求使用日语填写RN和追记log message，请将新增、删除、修改的文件追记清楚，避免遗漏。
+
+RN地址：
+http://10.1.29.125/svn/MBP/software/trunk/MediaBlockLinux/Source/ReleaseNote
+请填写其中的［Rootfs及びAPP V_0.1.0 ］和［BootLoader及びKernel V_0.1.0 ］Sheet。填写格式可以参照前版本。
+希望各位Leader遵守Release中的规则以及时间约定，感谢配合！
+
+以上
+
+
+二，提示release开始测试(周五)
+1,最开始和每个leader确认好每个模块的代码都更新到release库上面了(最好再周四确认好)
+2,早上就开始把release svn上面的内容全部编译.
+3,通过之后根据releasenote 把svn最近的动作复制到sony svn上面，并release也复制上去。
+4,根据本地工作拷贝"svn status"确认sonysvn提交好了，编译并release生成sony svn的全编译镜像让他们测,
+
+例如:
+=周五
+TO: ALL
+FM: 周磊
+
+Sony MBP V_0.1.0 版代码发布完毕，本地编译通过，请各组进行基本动作确认，如有问题请及时修正并联系追加Release。
+
+Rom路径：
+\\10.1.29.125\SonyFS\Development\Release\Sony_MBP_V0.1.0\Rom
+
+感谢配合！
+以上。
+
+==========
+上一次release完成
+==========
+TO: ALL
+FM: 周磊
+
+Sony MBP V_0.1.0版Release结束，按计划下次Release时间定为下周五（2011/1/21)。
+
+Rom路径：
+\\10.1.29.125\SonyFS\Development\Release\Sony_MBP_V0.1.0\Rom
+
+感谢配合！
+以上。
+
+==========
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,30 @@
+{
+	"name":"ap_set_security_mode",
+	"type":{"name":"seq"},
+	"description":"set cisco ap security mode.",
+	"scenarios":[
+	
+		{"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ip":"10.1.10.32:8080"
+			           }
+                          }
+		},
+             
+        {"set_security_mode":{
+			"fname":"ap/cisco/scenario_set_security_mode.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+                                "s_mode":{"5G":"WPA2/WPA","2G":"WPA2"}
+			             }
+		                  }
+               },
+		{"logout":{
+					  "fname":"ap/cisco/scenario_logout.json", 
+					  "type":{"name":"seq"}
+		           }
+		}
+	]
+}

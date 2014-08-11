@@ -1,0 +1,195 @@
+这里主要介绍如何用源代码安装qt库。
+
+主要内容：
+*Qt版本简介
+*需要的软件包
+*安装软件包
+*配置环境
+*工作环境简介
+*其他
+
+*Qt版本简介
+=====================================================
+先看看Qt的各个版本简介：
+1.什么是QT
+Qt是一个完整的C++应用程序开发框架。它包含一个类库，和用于跨平台开发及国际化的工具。Qt API在所有支持的平台上都是相同的，Qt工具在这些平台上的使用方式也一致， 因而Qt应用的开发和部署与平台无关。
+
+2.什么是Qtopia
+Qtopia 是一个面向嵌入式Linux的全方位应用程序开发平台，同时也是用于基于Linux的PDA（个人数字助理），智能电话（Smartphone）以及其他移动设备的用户界面。简单地说，Qtopia实质上是一组关于PDA和智能电话的应用程序结合，如果需要开发这类产品可以在这组程序的基础上迅速构建出 PDA或者智能电话。Qtopia实质上依赖Qt/Embedded。
+
+3.什么是Qt/Embedded
+Qt/Embedded 是一个完整的自包含GUI和基于Linux的嵌入式平台开发工具。这个开发工具的名字好像最容易混淆，当然Qt/Embedded是最熟悉的名字，好像 Qtopia Core说的也是它。最近，奇趣公司又该名字了，它的新名字叫做qt-embedded-linux-xxxx，看来这个Qt/Embedded的马甲还很多哈。
+
+
+*需要的软件包
+=====================================================
+下载源码包
+qt-x11-opensource-src-4.5.0.tar.bz2
+qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+下载地址:ftp://ftp.qtsoftware.com/qt/source/
+
+
+*安装软件包
+=====================================================
+1)编译及安装qt-x11-opensource-src-4.5.0
+$tar xjvf qt-x11-opensource-src-4.5.0.tar.bz2
+$cd qt-x11-opensource-src-4.5.0
+$sudo ./configure
+$sudo make
+$sudo make install
+这里可能需要安装sudo apt-get install xorg-dev
+
+2)编译及安装qt-embedded-linux-opensource-src-4.5.0为x86版本
+$tar xjvf qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+$mv qt-embedded-linux-opensource-src-4.5.0 qt-embedded-linux-opensource-src-4.5.0-x86
+$cd qt-embedded-linux-opensource-src-4.5.0-x86
+$sudo ./configure -prefix /usr/local/Trolltech/QtEmbedded-4.5.0-x86 -embedded x86 -qvfb
+$sudo make
+$sudo make install
+
+3)编译及安装qt-embedded-linux-opensource-src-4.5.0为arm版本
+$tar xjvf qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+$mv qt-embedded-linux-opensource-src-4.5.0 qt-embedded-linux-opensource-src-4.5.0-arm
+$cd qt-embedded-linux-opensource-src-4.5.0-arm
+$sudo ./configure -prefix /usr/local/Trolltech/QtEmbedded-4.5.0-arm -embedded arm
+$sudo make
+$sudo make install
+
+4)编译安装qvfb工具
+$cd qt-x11-opensource-src-4.5.0
+$cd /tools/qvfb
+$sudo make
+$sudo cp ../..bin/qvfb /usr/local/Trolltech/QtEmbedded-4.5.0-x86/bin
+
+
+*配置环境(export?)
+=====================================================
+1)qt-x11:
+$vi setenv_x11.sh
+添加如下内容:
+##########
+QTDIR=/usr/local/Trolltech/Qt-4.5.0
+PATH=$QTDIR/bin:$PATH
+MANPATH=$QTDIR/doc/man:$MANPATH
+LD_LIBRARY_PATH=$QTDIR/lib:$LD_LIBRARY_PATH
+export   QTDIR   PATH   MANPATH   LD_LIBRARY_PATH
+##########
+添加之后保存退出.移到/usr/local/Trolltech/Qt-4.5.0中。
+
+2)qt-embedded-x86:
+$vi setenv_embeded_x86.sh
+添加如下内容:
+##########
+QTEDIR=/usr/local/Trolltech/QtEmbedded-4.5.0-x86
+PATH=$QTEDIR/bin:$PATH
+LD_LIBRARY_PATH=$QTEDIR/lib:$LD_LIBRARY_PATH
+export QTEDIR PATH LD_LIBRARY_PATH
+##########
+添加之后保存退出.移到/usr/local/Trolltech/QtEmbedded-4.5.0-x86中。
+
+3)qt-embedded-arm:
+$vi setenv_embeded_arm.sh
+添加如下内容:
+##########
+QTEDIR=/usr/local/Trolltech/QtEmbedded-4.5.0-arm
+PATH=$QTEDIR/bin:$PATH
+LD_LIBRARY_PATH=$QTEDIR/lib:$LD_LIBRARY_PATH
+export QTEDIR PATH LD_LIBRARY_PATH
+##########
+添加之后保存退出.移到/usr/local/Trolltech/QtEmbedded-4.5.0-arm中。
+
+4)测试环境：
+$cd /usr/local/Trolltech/QtEmbedded-4.5.0-x86
+$source setenv.sh
+$cd /usr/local/Trolltech/QtEmbedded-4.5.0-x86/demos/books
+$qvfb -width 640 -height 480 &
+$./books -qws
+
+说明：我们在使用上述三种环境之一时，分别运行对应的脚本即可，比如我们要用qt-x11:
+$cd /usr/local/Trolltech/Qt-4.5.0
+$source setenv.sh
+然后就可以用qmake designer等工具了.
+
+*工作环境简介
+=====================================================
+1)关于编译及安装qt-x11-opensource-src-4.5.0
+	这里，安装的是桌面上开发环境的qt库，用于pc机器上qt程序的开发，以及对qvfb的编译。
+
+2)关于编译及安装qt-embedded-linux-opensource-src-4.5.0为x86版本
+	这里，安装的是x86系列嵌入式板子上开发环境的qt库，用于x86系列嵌入式机器上qt程序的开发。开发出来的程序pc上面编译之后，只能在x86体系板子上面运行，如果想要在机器上模拟运行，需要用qvfb(虚拟framebuffer).
+
+3)关于编译及安装qt-embedded-linux-opensource-src-4.5.0为arm版本
+	这里，安装的是arm系列嵌入式板子上开发环境的qt库，用于arm系列嵌入式机器上qt程序的开发。开发出来的程序pc上面编译之后，只能在arm体系板子上面运行，如果想要在机器上模拟运行，用qvfb(虚拟framebuffer)也是不行的，qvfb只是模拟x86体系的.这时需要：
+	首先，将程序用qt-embedded-linux-opensource-src-4.5.0-x86编译。
+	其次，编译好的程序在qvfb上面模拟运行。
+	再次，运行成功后再用qt-embedded-linux-opensource-src-4.5.0-x86编译。
+	最后，将成品复制到arm板子上即可运行。
+4)关于编译安装qvfb工具
+	qvfb是虚拟framebuffer,qvfb只能执行x86架构的应用程序，所以需要让qt-embedded生成关于x86的库和其他文件。 
+	前面编译安装qt的三个库之后，还有qvfb没有编译,需要到qt-x11-opensource-src-4.5.0中重新编译,这会在qt-x11-opensource-src-4.5.0/bin下生成qvfb,我们将它copy至/usr/local/Trolltech/QtEmbedded-4.5.0-x86/bin下即可。
+
+*其他
+=====================================================
+注意：出错信息一般为:
+Error opening framebuffer device /dev/fb0QScreenLinuxFb::connect: No such file or directory
+这种情况发生最多的是编译Qt-Embedded的x86版本，希望在qvfb上运行应用时
+使用者在
+第一步运行qvfb后
+第二步运行./myapp -qws
+出现以上的提示错误
+原因是Qt-Embedded在查找系统的显示设备时，默认去寻找LinuxFb，也即Linux的/dev/fb0设备，但是如果Qt- Embedded安装了其它显示设备，比如qvfb,则可以在qvfb上显示，但是需要一个插件(或者说驱动，可能会和设备驱动混淆)，使Qt- Embedded能使用qvfb。 为了作到这一点，需要在编译Qt-Embedded时的configure命令加上如下选项
+./configure -plugin-gfx-qvfb -plugin-kbd-qvfb -plugin-mouse-qvfb 或./configure -qt-gfx-qvfb -qt-kbd-qvfb -qt-mouse-qvfb
+如果，你不想重新编译Qt-Embedded，也可以单独编译qvfb的gfxdrivers,命令如下
+$ cd qt-embedded-linux-opensource-src-4.5.1/src/plugins/gfxdrivers/qvfb/$/usr/local/Trolltech/QtEmbedded-4.5.1/bin/qmake$ sudo make install
+对应所在的路径，在大家的机器上可能不尽相同，领会意思就行
+
+
+
+
+
+各位：
+   1）QT rootfs v0.1 已放到ftp上，地址如下：
+   ftp://10.1.14.235/EBookReader/rootfs/v0.1/ebook-qt-rootfs-v0.1.tgz
+   rootfs主要包含如下内容：
+   glic-2.8 + busybox-1.15.2  + qt-embedded-4.5.0
+   可以将rootfs解压到SD卡中，在Marvell Aspen开发板上运行。用户名root，没
+有密码。
+   qt安装在/usr/local目录下。
+
+   2）交叉编译工具链推荐使用  
+     arm-2009q1-203-arm-none-linux-gnueabi-i686-pc-linux-gnu
+     ftp地址如下：
+ftp://10.1.14.235/EBookReader/tools/toolchain/arm-2009q1-203-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
+
+   3）qt 使用 qt-embedded-4.5.0版本
+    rootfs中qt的编译选项如下：
+    ./configure -prefix /usr/local/qte-4.5.0 -embedded arm -xplatform
+qws/linux-arm-g++ -release -shared -stl -accessibility
+-plugin-sql-sqlite -no-qt3support -webkit -qt-zlib -qt-gif -qt-libtiff
+-qt-libpng -qt-libmng -qt-libjpeg -no-nis -no-cups -iconv -no-freetype
+-no-opengl -depths 4,8,16,32 -no-gfx-multiscreen -qt-kbd-usb
+-no-mouse-tslib -qt-mouse-pc -qt-mouse-bus -qt-mouse-yopy
+-qt-mouse-vr41xx
+    注：编译选项以后会有调整。例如：增加tslib支持等。
+       如果大家对编译选项有什么要求或建议可以邮件回复。
+
+张峰
+
+
+
+./configure -prefix /usr/local/qte-4.5.0_arm -embedded arm -xplatform qws/linux-arm-g++ -release -shared -stl -accessibility -plugin-sql-sqlite -no-qt3support -webkit -qt-zlib -qt-gif -qt-libtiff -qt-libpng -qt-libmng -qt-libjpeg -no-nis -no-cups -iconv -no-freetype -no-opengl -depths 4,8,16,32 -no-gfx-multiscreen -qt-kbd-usb -no-mouse-tslib -qt-mouse-pc -qt-mouse-bus -qt-mouse-yopy -qt-mouse-vr41xx\
+
+
+
+
+////////无法使用QtUiTools
+尝试
+1.添加
+ -scripttools
+ 不管用。
+2.在源代码目录中tools里面的designer里面有关于qtuitools相关的目录，将它用qmake&&make之后源代码中的lib目录下面多了关于QtUi的库，将include和lib下的QtUitools相关文件都拷过去。
+ sudo cp libQtUiTools.prl libQtUiTools.a /usr/local/qte-4.5.0_arm/lib
+3,缺少
+../../tools/designer/src/uitools/quiloader.h
+所以在源代码中把文件拷贝到对应的位置上面。
+编译通过。

@@ -1,0 +1,756 @@
+20110127
+本文目的：
+这里介绍制作arm平台下面交叉编译工具链的方法以及实践步骤。
+
+目前，据我所知，制作交叉编译工具链的方法有三种,从易到难依次为：
+一、直接下载别人已经制做好的交叉编译工具链。
+二、使用crosstool脚本工具半自动地制作交叉编译工具链。
+三、自己下载源代码，手动编译并制作交叉编译工具链。
+很惭愧，我只把最简单的方法做出来了，其他方法都没弄出来，以后有时间再弄。
+
+一、直接到指定网站上面下载人家已经制作好的交叉编译工具链。
+这个是最简单的方法。通常下载的有rpm包或者tar包等。
+前者使用rpm命令可以直接将交叉编译工具链安装到指定的路径。
+如果是tar包，那么的具体安装位置还需要参考其中的文档，或者也可以使用包中的arm-linux-gcc -v来得到安装位置。
+把解压后的包拷贝到相应的位置，然后添加环境变量就行了。
+
+(1)提供编译好的可用的交叉编译工具链的常用的网站有：
+http://www.kernel.org/pub/tools/crosstool/
+说明查看：
+http://www.kernel.org/pub/tools/crosstool/index_old.shtml
+但是，这个网站提供的都没有glibc.
+
+(2)另外做的很好的可以下载的交叉编译工具链的网站：
+http://www.codesourcery.com
+其中的:http://www.codesourcery.com/sgpp/lite/arm/portal/release1600
+下面可以下载(其中的lite的是免费的)。
+这里面的把glibc也添加进去了。
+下载之后，直接解压，然后把其中的bin目录添加到环境量就可以直接编译内核和app了。
+
+(3)实验工具链使用的过程：
+3.1)下载工具链
+$wget http://www.codesourcery.com/public/gnu_toolchain/arm-none-linux-gnueabi/arm-2010.09-50-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
+
+3.2)安装工具链
+#tar -xjvf arm-2010.09-50-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2 -C /usr/local
+#export PATH=/usr/local/arm-2010.09/bin/:$PATH
+
+3.3)使用工具链编译内核(编译通过)
+#cd <kernel path in sony release svn>/Kernel
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- mrproper
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- avp13_defconfig
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi-
+
+这样编译的内核虽然通过了，但是不知为什么，用zImage无法运行起来。后来重新弄了一次，用elf启动。
+make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- s3c2410_defconfig
+
+3.4)制做对应的文件系统
+#wget http://www.busybox.net/downloads/busybox-1.17.3.tar.bz2
+#tar -xjvf busybox-1.17.3.tar.bz2
+#mkdir {build,target}
+#cd busybox-1.17.3
+#make O=$(pwd)/../build defconfig
+#cd $(pwd)/../build
+#make menuconfig
+	Build Options  ---> 
+	[*] Build BusyBox as a static binary (no shared libs) 
+	...
+	(arm-none-linux-gnueabi-) Cross Compiler prefix
+	...
+#make
+#make CONFIG_PREFIX=../target install
+这样，在../target中有基本的busybox工具了，在其中建立好proc,sys,以及dev目录之后，建立好init即可成为最简单的文件系统,经过测试这样做出来的文件系统是好用的。
+最后，将编译好的文件系统挂载成nfs文件系统，准备从开发板启动它。
+
+3.5)编辑并编译一个小型的"hello world"程序：
+$vi main.c
+	内容如下：
+	/*! @file main.c */
+	#include <stdio.h>
+	int main(int argc, char *argv[])
+	{
+		printf("hello!\n");
+		return 0;
+	}
+$make CC=arm-none-linux-gnueabi-gcc CFLAGS+=-static main
+将生成的"main"程序拷贝到nfs文件系统上面即可正常运行。
+
+!!有一个需要注意的地方：
+编译出来的程序，用file可以看出它是否是eabi的(一种新的特性，在内核里面也有支持这个特性的配置选项)。
+如果是则输出类似如下：
+$file vmlinux
+vmlinux: ELF 32-bit LSB executable, ARM, version 1 (SYSV), statically linked, stripped
+如果不是,我没有实践过，则输出中(SYSV)->(ARM)(即SYSV变成ARM)。
+内核以及编译出来的应用程序必须都支持eabi或者都不支持，才能运行起来，否则不行。
+即使都支持eabi,版本不同，也有可能无法运行。
+支持eabi的交叉工具链名称一般类似：arm-none-linux-gnueabi-***
+不支持的一般类似:arm-linux-***
+
+
+二、使用Crosstool脚本工具制作交叉编译工具链。
+这个有点半自动化的性质,过程有待实践。
+crosstool相关信息可以参考如下网站：
+http://www.kegel.com/crosstool/
+可能这个脚本会不错吧？不过很惭愧，我不太想琢磨这个脚本，也没有实践。
+
+三、手动自己编译生成交叉编译工具链。
+很惭愧，上网查了不少资料做了7，8遍，用这个方式也没有做出一个自己的完整的交叉编译工具链。
+不过倒是做出来了一个不包含glibc的gcc,可以用它来编译内核。
+这里就记录一下自己工作的步骤吧。
+
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.4.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+4)编译gcc的辅助编译器:
+-------
+第一次(失败)：
+============
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.4.2.tar.gz
+$mkdir build-gcc
+$cd build-gcc/
+$vi ../gcc-4.4.2/gcc/config/arm/t-linux
+...在文件末尾添加如下两行：
+TARGET_LIBGCC2_CFLAGS += -Dinhibit_libc -D__gthr_posix_h
+T_CFLAGS = -Dinhibit_libc -D__gthr_posix_h
+
+$cd $PRJROOT/kernel
+$tar -xjvf linux-2.6.32.tar.bz2
+$cp -r linux-2.6.32/include/ ./
+$cd $PRJROOT/build-tools/
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.4.2/gmp
+$mv mpfr-2.4.1 gcc-4.4.2/mpfr
+$cd build-gcc
+$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --with-headers=$PRJROOT/kernel --disable-shared --disable-threads --enable-languages="c"(执行两次？才通过)
+$make
+...出错了...
+
+第二次(失败):
+============
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.4.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)准备内核头文件：
+$cd $PRJROOT/kernel/linux-2.6.32
+$make s3c2410_defconfig ARCH=arm
+$make include/linux/version.h
+$mkdir -p $PRJROOT/tools/usr/include
+$cp -a include/asm-generic $PRJROOT/tools/usr/include
+$cp -a include/linux $PRJROOT/tools/usr/include
+$cp -a include/mtd $PRJROOT/tools/usr/include
+$cp -a include/scsi $PRJROOT/tools/usr/include
+$cp -a include/sound $PRJROOT/tools/usr/include
+
+4)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+$cp -a ../binutils-2.20/include/libiberty.h ../../tools/usr/include/
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+5)编译gcc的辅助编译器:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.4.2.tar.gz
+$mkdir build-gcc
+$cd build-gcc/
+$vi ../gcc-4.4.2/gcc/config/arm/t-linux
+...在文件末尾添加如下两行：
+TARGET_LIBGCC2_CFLAGS += -Dinhibit_libc -D__gthr_posix_h
+T_CFLAGS = -Dinhibit_libc -D__gthr_posix_h
+
+$cd $PRJROOT/build-tools/
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.4.2/gmp
+$mv mpfr-2.4.1 gcc-4.4.2/mpfr
+$cd build-gcc
+
+#以下，我用了各种方式对gcc进行configure,终于最后一次通过了
+#$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --with-headers=$PRJROOT/tools/usr/include --disable-shared --disable-threads --enable-languages="c"(执行两次？)
+$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --disable-shared --disable-threads --disable-libmudflap --without-headers --disable-libssp --enable-languages="c"
+checking for pid_t... no
+checking for library containing strerror... configure: error: Link tests are not allowed after GCC_NO_EXECUTABLES.
+make[1]: *** [configure-target-libiberty] 错误 1
+make[1]: Leaving directory `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc'
+make: *** [all] 错误 2
+
+
+第三次(失败):
+============
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.4.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)准备内核头文件：
+$cd $PRJROOT/kernel/linux-2.6.32
+$make s3c2410_defconfig ARCH=arm
+$make include/linux/version.h
+$mkdir -p $PRJROOT/tools/include
+$cp -a include/asm-generic $PRJROOT/tools/include
+$cp -a include/linux $PRJROOT/tools/include
+$cp -a include/mtd $PRJROOT/tools/include
+$cp -a include/scsi $PRJROOT/tools/include
+$cp -a include/sound $PRJROOT/tools/include
+
+4)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+$cp -a ../binutils-2.20/include/libiberty.h ../../tools/usr/include/
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+5)编译gcc的辅助编译器:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.4.2.tar.gz
+$mkdir build-gcc
+$cd build-gcc/
+$vi ../gcc-4.4.2/gcc/config/arm/t-linux
+...在文件末尾添加如下两行：
+TARGET_LIBGCC2_CFLAGS += -Dinhibit_libc -D__gthr_posix_h
+T_CFLAGS = -Dinhibit_libc -D__gthr_posix_h
+
+$cd $PRJROOT/build-tools/
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.4.2/gmp
+$mv mpfr-2.4.1 gcc-4.4.2/mpfr
+$cd build-gcc
+
+#以下，我用了各种方式对gcc进行configure,终于最后一次通过了
+#$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --with-headers=$PRJROOT/tools/usr/include --disable-shared --disable-threads --enable-languages="c"(执行两次？)
+#$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --disable-shared --disable-threads --disable-libmudflap --disable-libssp --enable-languages="c"
+$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --disable-shared --disable-threads --disable-libmudflap --disable-libssp --enable-bootstrap --enable-languages="c"
+
+......
+checking for i686-pc-linux-gnu-gcc...  /home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc/./prev-gcc/xgcc -B/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc/./prev-gcc/ -B/home/quietheart/lvkTmp/mkCrossTool/tools/arm-linux/bin/
+checking for C compiler default output file name... configure: error: in `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc/intl':
+configure: error: C compiler cannot create executables
+See `config.log' for more details.
+make[2]: *** [configure-stage2-intl] 错误 77
+make[2]: Leaving directory `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc'
+make[1]: *** [stage2-bubble] 错误 2
+make[1]: Leaving directory `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc'
+make: *** [all] 错误 2
+
+第四次(失败):
+============
+经过了以上三步，发现，始终无法实现第一编译gcc，所以再次查找资料，从内核官方网站上看到了一些似乎比较有用的资料。
+资源网站如下：
+http://www.kernel.org/pub/tools/crosstool/
+步骤：
+1)下载的资源：
+-------
+i686-gcc-4.4.0-nolibc_arm-linux.tar.bz2
+binutils-2.15.tar.bz2
+gcc-4.0.2.tar.bz2
+glibc-2.3.6.tar.bz2
+glibc-linuxthreads-2.3.6.tar.bz2
+linux-libc-headers-2.6.12.0.tar.bz2
+-------
+这里，
+不依赖gcc的编译好的程序：
+http://www.kernel.org/pub/tools/crosstool/files/bin/i686/4.4.0/i686-gcc-4.4.0-nolibc_arm-linux.tar.bz2
+
+linux内核头文件下载：
+http://www.kernel.org/pub/tools/crosstool/files/src/linux-libc-headers-2.6.12.0.tar.bz2
+
+Binutils信息在：
+http://www.kernel.org/pub/tools/crosstool/files/src/binutils-2.15.tar.bz2
+
+Gcc源代码信息在：
+http://www.kernel.org/pub/tools/crosstool/files/src/gcc-4.0.2.tar.bz2
+
+glibc源代码下载:
+http://www.kernel.org/pub/tools/crosstool/files/src/glibc-2.3.6.tar.bz2
+
+glibc-threads源代码下载：
+http://www.kernel.org/pub/tools/crosstool/files/src/glibc-linuxthreads-2.3.6.tar.bz2
+
+glibc-linuxthreads源代码下载:
+http://www.kernel.org/pub/tools/crosstool/files/src/linux-libc-headers-2.6.12.0.tar.bz2
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+既然已经有了编译好的辅助gcc那么直接开始编译glibc.
+
+3)放置编译好的辅助gcc编译器以及binutils工具：
+$cd $PRJROOT/build-tools
+$tar -xjvf i686-gcc-4.4.0-nolibc_arm-linux.tar.bz2
+$cd gcc-4.4.0-nolibc/arm-linux/
+$cp -a * $PRJROOT/tools
+
+4)为glibc准备内核头文件：
+$cd $PRJROOT/kernel/
+$tar -xjvf linux-libc-headers-2.6.12.0.tar.bz2
+$cd linux-libc-headers-2.6.12.0
+$cp -a include $PRJROOT/tools/arm-linux/
+
+5)编译glibc
+$export PATH=$PRJROOT/tools/bin:$PATH
+$cd $PRJROOT/build-tools
+$tar -xjvf glibc-2.3.6.tar.bz2
+$tar -xjvf glibc-linuxthreads-2.3.6.tar.bz2 --directory=glibc-2.3.6
+$mkdir build-glibc
+
+#竟然无法确定这个--prefix的值，郁闷，开始用各种方法进程configure, 但是就是没有通过过.
+#$mkdir -p $PRJROOT/tools/glibc_temp
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/glibc_temp --enable-add-ons --with-headers=$PRJROOT/tools/arm-linux/include
+
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --build=i686-pc-linux-gnu --host=i686-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+
+#痛定思痛，不能再胡来了，开始查看人家的辅助gcc是如何配置的,准备下次再次卷土重来。
+$arm-linux-gcc -v
+输入如下：
+Using built-in specs.
+Target: arm-linux
+Configured with: /home/tony/buildall/src/gcc/configure --target=arm-linux --enable-targets=all --prefix=/home/tony/buildall/tools//gcc-4.4.0-nolibc/arm-linux/ --enable-languages=c --without-headers --enable-sjlj-exceptions --with-system-libunwind --disable-nls --disable-threads --disable-shared --disable-libmudflap --disable-libssp --disable-libgomp --disable-decimal-float --enable-checking=release --disable-bootstrap --with-mpfr=/home/tony/buildall/local --with-gmp=/home/tony/buildall/local --program-prefix=arm-linux-
+Thread model: single
+gcc version 4.4.0 (GCC) 
+
+第五次(失败):
+============
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.4.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)准备内核头文件：
+$mkdir -p $PRJROOT/tools/arm-linux/include
+$cd $PRJROOT/kernel/linux-2.6.32
+$make s3c2410_defconfig ARCH=arm
+$make include/linux/version.h
+$cp -a include/asm-generic $PRJROOT/tools/arm-linux/include
+$cp -a include/linux $PRJROOT/tools/arm-linux/include
+$cp -a include/mtd $PRJROOT/tools/arm-linux/include
+$cp -a include/scsi $PRJROOT/tools/arm-linux/include
+$cp -a include/sound $PRJROOT/tools/arm-linux/include
+
+4)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+$cp -a ../binutils-2.20/include/libiberty.h ../../tools/arm-linux/include/
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+5)编译gcc的辅助编译器:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.4.2.tar.gz
+$mkdir build-gcc
+$cd build-gcc/
+$vi ../gcc-4.4.2/gcc/config/arm/t-linux
+...在文件末尾添加如下两行：
+TARGET_LIBGCC2_CFLAGS += -Dinhibit_libc -D__gthr_posix_h
+T_CFLAGS = -Dinhibit_libc -D__gthr_posix_h
+
+
+...以下步骤实践中......
+$cd $PRJROOT/build-tools/
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.4.2/gmp
+$mv mpfr-2.4.1 gcc-4.4.2/mpfr
+$cd build-gcc
+
+#依旧各种配置尝试，然后最后一种通过了！
+#$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools --disable-shared --disable-threads --disable-libmudflap --disable-libssp --enable-languages="c"
+$../gcc-4.4.2/configure --target=arm-linux --prefix=$PRJROOT/tools/arm-linux --disable-shared --without-headers --enable-sjlj-exceptions --with-system-libunwind --disable-nls --disable-threads --disable-libmudflap --disable-libssp --disable-libgomp --disable-decimal-float --enable-checking=release --disable-bootstrap --program-prefix=arm-linux- --enable-languages="c"
+
+$make
+$make install
+这里，倒是编译通过了，对比人家做好的辅助编译器，生成的路径非常之乱。肯定是哪个参数设置不对，如下：
+
+在tools/arm-linux/bin下面的内容是：
+ar             arm-linux-gcc        arm-linux-gccbug  as  nm       objdump  strip
+arm-linux-cpp  arm-linux-gcc-4.4.2  arm-linux-gcov    ld  objcopy  ranlib
+在tools/bin下面的内容是：
+arm-linux-addr2line  arm-linux-c++filt  arm-linux-nm       arm-linux-ranlib   arm-linux-strings
+arm-linux-ar         arm-linux-gprof    arm-linux-objcopy  arm-linux-readelf  arm-linux-strip
+arm-linux-as         arm-linux-ld       arm-linux-objdump  arm-linux-size
+在tools/arm-linux下面的内容是：
+arm-linux  bin  include  info  lib  libexec  man  share
+tools/arm-linux/arm-linux下面其内容很奇怪，就是一个空的lib子目录。
+
+#忍了，继续往下.
+6)编译glibc
+-------
+$export PATH=$PRJROOT/tools/bin:$PATH
+$cd $PRJROOT/build-tools
+$tar -xzvf glibc-2.11.tar.gz
+$tar -xzvf glibc-linuxthreads-2.3.4.tar.gz -C glibc-2.11
+$mkdir build-glibc
+
+#对glibc进行各种手段，各种配置
+#$mkdir -p $PRJROOT/tools/glibc_temp
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/glibc_temp --enable-add-ons --with-headers=$PRJROOT/tools/arm-linux/include
+
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+#$CC=arm-linux-gcc ../glibc-2.3.6/configure --build=i686-pc-linux-gnu --host=i686-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+#$CC=arm-linux-gcc ../glibc-2.11/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+#CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.11/configure  --build=i686-pc-linux-gnu --host=i686-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --cache-file=config.cache --with-headers=$PRJROOT/tools/arm-linux/include
+config.cache内容如下：
+libc_cv_forced_unwind=yes
+libc_cv_c_cleanup=yes
+libc_cv_arm_tls=yes
+libc_cv_gnu99_inline=yes 
+
+configure: error: gcc must provide the <cpuid.h> header
+还是无法通过！！！尝试"sudo mv ../glibc-2.11/include/cpuid.h /usr/include/"也不行！！！
+尝试把buildbin中的相关内容拷贝到arm-linux/bin 中也不行！！！
+难道还少了什么？需要什么patch吗？
+
+网上找了一个编译好的完整gcc,先查看它的配置如下：
+Reading specs from /home/quietheart/Desktop/cross_test/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/bin/../lib/gcc/arm-softfloat-linux-gnu/3.4.5/specs
+Configured with: /home/Anthony/downloads/crosstool-0.43/build/arm-softfloat-linux-gnu/gcc-3.4.5-glibc-2.3.6/gcc-3.4.5/configure --target=arm-softfloat-linux-gnu --host=i686-host_pc-linux-gnu --prefix=/opt/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu --with-float=soft --with-headers=/opt/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/arm-softfloat-linux-gnu/include --with-local-prefix=/opt/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/arm-softfloat-linux-gnu --disable-nls --enable-threads=posix --enable-symvers=gnu --enable-__cxa_atexit --enable-languages=c,c++ --enable-shared --enable-c99 --enable-long-long
+Thread model: posix
+gcc version 3.4.5
+
+#可能就是因为，之前gcc路径很乱的原因吧？好！！再重来一遍！！
+第六次:
+============
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.4.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+$mkdir -p $PRJROOT/tools/arm-linux/include
+4)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+#$cp -a ../binutils-2.20/include/libiberty.h ../../tools/arm-linux/include/
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+5)编译gcc的辅助编译器:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.4.2.tar.gz
+$mkdir build-gcc
+$cd build-gcc/
+$vi ../gcc-4.4.2/gcc/config/arm/t-linux
+...在文件末尾添加如下两行：
+TARGET_LIBGCC2_CFLAGS += -Dinhibit_libc -D__gthr_posix_h
+T_CFLAGS = -Dinhibit_libc -D__gthr_posix_h
+$cd $PRJROOT/build-tools/
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.4.2/gmp
+$mv mpfr-2.4.1 gcc-4.4.2/mpfr
+$cd build-gcc
+$../gcc-4.4.2/configure --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu --target=arm-linux --prefix=$PRJROOT/tools/ --disable-shared --without-headers --enable-sjlj-exceptions --with-system-libunwind --disable-nls --disable-threads --disable-libmudflap --disable-libssp --disable-libgomp --disable-decimal-float --enable-checking=release --disable-bootstrap --program-prefix=arm-linux- --enable-languages="c"
+(这样第一遍竟然没有通过configure?但是之后我把终端关闭就重启就好了，好象是环境变量设置错了？可以参考别人已经有的arm-linux-gcc -v的输出来进行配置，例如www.kernel.org里面的)
+$make
+$make install
+(出奇顺利，编译时间：16:05-16:20,安装时间16:20-16:25)
+至此，$PRJROOT/tools/bin下面多了arm-linux-gcc工具。
+这次我仔细检查了所有的参数路径，还好，这次生成的内容和人家官方的路径结构差不多了。
+这个工具是没有glibc的交叉编译工具，把这个工具所在路径添加到$PATH中，然后编译内核，编译好了内核之后，可以运行。
+
+这是一个比较大的进步，先把信息仔细记录一下：
+工具和编译好的信息如下：
+"$arm-linux-gcc -v"
+Using built-in specs.
+Target: arm-linux
+Configured with: ../gcc-4.4.2/configure --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu --target=arm-linux --prefix=/home/quietheart/lvkTmp/mkCrossTool/tools/ --disable-shared --without-headers --enable-sjlj-exceptions --with-system-libunwind --disable-nls --disable-threads --disable-libmudflap --disable-libssp --disable-libgomp --disable-decimal-float --enable-checking=release --disable-bootstrap --program-prefix=arm-linux- --enable-languages=c
+Thread model: single
+gcc version 4.4.2 (GCC) 
+
+"$file arm-linux-gcc"
+arm-linux-gcc: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), for GNU/Linux 2.6.9, dynamically linked (uses shared libs), for GNU/Linux 2.6.9, not stripped
+"$file vmlinux"
+vmlinux: ELF 32-bit LSB executable, ARM, version 1 (ARM), statically linked, stripped
+
+6)准备内核头文件：
+-------
+$mkdir -p $PRJROOT/tools/arm-linux/include
+$cd $PRJROOT/kernel/linux-2.6.32
+#$make s3c2410_defconfig ARCH=arm
+$make ARCH=arm CROSS_COMPILE=arm-linux- s3c2410_defconfig
+$make include/linux/version.h
+$cp -a include/linux $PRJROOT/tools/arm-linux/include
+$cp -a include/asm-generic $PRJROOT/tools/arm-linux/include
+$cp -a arch/arm/include/asm/ $PRJROOT/tools/arm-linux/include
+
+###下面几个我没有拷贝，因为感觉没有用.
+???$cp -a arch/arm/mach-s3c2410/include/mach/
+???$cp -a include/mtd $PRJROOT/tools/arm-linux/include
+???$cp -a include/scsi $PRJROOT/tools/arm-linux/include
+???$cp -a include/sound $PRJROOT/tools/arm-linux/include
+
+7)编译glibc:
+-------
+$export PATH=$PRJROOT/tools/bin:$PATH
+$cd $PRJROOT/build-tools
+$tar -xzvf glibc-2.11.tar.gz
+$tar -xzvf glibc-linuxthreads-2.3.4.tar.gz -C glibc-2.11
+$mkdir build-glibc
+
+######各种配置，各种尝试，各种资料搜索与提问，TNND就是配置不过！！！！！！！！墙在哪呢？我要撞撞去......
+#$mkdir -p $PRJROOT/tools/glibc_temp
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/glibc_temp --enable-add-ons --with-headers=$PRJROOT/tools/arm-linux/include
+
+#$CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.3.6/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+#$CC=arm-linux-gcc ../glibc-2.3.6/configure --build=i686-pc-linux-gnu --host=i686-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+#$CC=arm-linux-gcc ../glibc-2.11/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+#CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld ../glibc-2.11/configure  --build=i686-pc-linux-gnu --host=i686-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --enable-shared --cache-file=config.cache --with-headers=$PRJROOT/tools/arm-linux/include
+config.cache内容如下：
+libc_cv_forced_unwind=yes
+libc_cv_c_cleanup=yes
+libc_cv_arm_tls=yes
+libc_cv_gnu99_inline=yes 
+
+#$CC=arm-linux-gcc ../glibc-2.11/configure --host=arm-linux --prefix=$PRJROOT/tools/arm-linux --target=arm-linux --enable-add-ons --enable-shared --with-headers=$PRJROOT/tools/arm-linux/include
+
+CC=arm-linux-gcc AS=arm-linux-as LD=arm-linux-ld RANLIB=arm-linux-ranlib AR=arm-linux-ar ../glibc-2.11/configure --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu --target=arm-linux --prefix=$PRJROOT/tools/arm-linux --enable-add-ons --with-headers=$PRJROOT/tools/arm-linux/include --with-binutils=$PRJROOT/tools/arm-linux/bin --with-tls --with-__thread --enable-sim --enable-nptl --enable-kernel=2.6.0 --disable-profile --without-gd --without-cvs --cache-file=config.cache
+config.cache内容如下：
+libc_cv_forced_unwind=yes
+libc_cv_c_cleanup=yes
+libc_cv_arm_tls=yes
+libc_cv_gnu99_inline=yes 
+
+结果:configure: error: gcc must provide the <cpuid.h> header
+
+...看来有必要先修炼一番，好好研究一下auto tools，然后继续。。。
+

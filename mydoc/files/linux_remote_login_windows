@@ -1,0 +1,115 @@
+http://butian.org/knowledge/linux/1759.html
+rdesktop是RDP协议(windows远程连接采用开放的RDP(Remote Desktop Protocol)协议)在linux下的客户端。
+
+用法举例：rdesktop -f -uAdministrator -pbamfif -r sound:local -r clipboard:PRIMARYCLIPBOARD -r disk:Frdisk=/mnt/rdisk 223.195.151.114
+
+常用的rdesktop命令行参数有：
+
+-u： 用户名
+
+-p： 密码
+
+-a： 颜色色深，一般用16
+
+-f： 全屏模式,使用Ctrl+Alt+Enter可以退出全屏
+
+-g：设置屏幕大小，后跟WidthxHeight
+
+-D： 隐藏窗口栏
+
+-r： 设备重定向，例如-r sound:local可以将声音重定向到客户端机,-r clipboard:PRIMARYCLIPBOARD使主机客户机共享剪切板，-r disk:Frdisk=/mnt/rdisk使客户端的/mnt/rdisk挂截到windows的Frdisk盘。
+
+SelectHost.sh
+
+#!/bin/bash
+
+echo "Select Rmote Hostname:"
+
+echo "1): 192.168.1.30"
+
+echo "2): 192.168.1.40"
+
+echo "3): 192.168.1.50"
+
+echo ""
+
+echo "Please select remote host :"
+
+read host
+
+case "$host" in
+
+1) rdesktop -f -a 16 192.168.1.30
+
+;;
+
+2) rdesktop -f -a 16 192.168.1.40
+
+;;
+
+3) rdesktop -f -a 16 192.168.1.50
+
+;;
+
+*) echo "Error,Please select 1,2 or 3: "
+
+;;
+
+esac
+
+
+http://cache.baidu.com/c?m=9d78d513d98317f819b4d2234f01d6160e25f6744da7c7657ec3e74c84652b56366cf4c857356100c4b47f7346ef1753b0b67030200253aa8698d80bcabbe56a698f6423706bd71c4dce58f494047b963d875b9de91decadf045c9e88d8d&p=846fc80f889212a05cbd9b7f094c&user=baidu
+
+Linux下的远程控制Windows——Rdesktop
+        
+Rdesktop是基于命令行的远程控制软件，当然，当你使用命令执行软件后，还是图形界面的。
+
+a、下载最新版本的rdesktop
+
+b、解压下载回来的压缩包
+
+tar -zxvf rdesktop-1.5.0.tar.gz
+
+c、进入解压后的目录
+
+cd rdesktop-1.5.0
+
+d、依次执行下面命令
+
+./configure
+
+make
+
+make install
+
+安装完毕，应清除编译过程中产生的临时文件和配置过程中产生的文件。键入如下命令：
+
+make clean
+
+make distclean
+
+(ubuntu中，在终端中执行sudo apt-get install rdesktop 来安装)
+
+远程命令：rdesktop -u username -p password ip
+
+例如:
+
+远程服务器IP地址：192.168.1.7
+
+远程服务器登录名：feelam
+
+远程服务器密码为：feelamcheung
+
+那么我可以直接终端输入 rdesktop -u feelam -p feelamcheung 192.168.1.7就可以远程控制了。
+
+当然也可以在终端输入 rdesktop 192.168.1.7
+
+等到连接上远程服务器后再进行用户名和密码的输入。
+
+小技巧：
+
+Ctrl+Alt+Enter 可以退出全屏。
+
+再次Ctrl+Alt+Enter即可再次进入全屏！
+
+更多关于rdesktop的使用方法可以在终端输入 rdesktop --help 查看。

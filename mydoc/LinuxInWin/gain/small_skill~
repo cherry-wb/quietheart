@@ -1,0 +1,261 @@
+1.under the shell:
+控制字符：
+*Ctl+B   光标后退
+*Ctl+C    终止程序
+*Ctl+D    退出当前shell
+Ctl+G    beep，扬声器响
+*Ctl+H    退格键功能
+Ctl+I      tab键功能
+Ctl+J      新行
+Ctl+K    删除光标到结尾字符
+*Ctl+L     clear清屏
+Ctl+M    enter回车
+Ctl+S     挂起，在终端里被挂起
+Ctl+Q     继续，回复被挂起
+Ctl+U     删除光标到行首的所有字符
+Ctl+W    删除当前光标到前面最近一个空格的字符
+
+
+http://cache.baidu.com/c?m=9d78d513d9821bf806b3837e7c479126474380126cc3975521dbc90ed5264c40347bfefe62670704a494202f49e5034bea876a25711e7af1c496950086fdcf747ac27c672c49d306418f04afc9442fc2238d58e8b81991bafa3484aea59285120c94&p=882a9f02828415e80be294121c&user=baidu
+命令行编辑快捷键
+
+　　history 显示命令历史列表
+
+　　*↑(Ctrl+p) 显示上一条命令
+
+　　*↓(Ctrl+n) 显示下一条命令
+
+　　!num 执行命令历史列表的第num条命令
+
+　　!! 执行上一条命令
+
+　　!?string? 执行含有string字符串的最新命令
+
+　　Ctrl+r 然后输入若干字符，开始向上搜索包含该字符的命令，继续按Ctrl+r，搜索上一条匹配的命令
+
+　　Ctrl+s 与Ctrl+r类似,只是正向检索
+
+　　Alt+< 历史列表第一项
+
+　　Alt+> 历史列表最后一项
+
+　　Ctrl+f 光标向前移动一个字符,相当与->
+
+　　Ctrl+b 光标向后移动一个字符,相当与<-
+
+　　Alt+f 光标向前移动一个单词
+
+　　Alt+b 光标向后移动一个单词
+
+　　ls !$ 执行命令ls，并以上一条命令的参数为其参数
+
+　　*Ctrl+a 移动到当前行的开头
+
+　　*Ctrl+e 移动到当前行的结尾
+
+　　Esc+b 移动到当前单词的开头
+
+　　Esc+f 移动到当前单词的结尾
+
+　　Ctrl+l 清屏
+
+　　Ctrl+u 剪切命令行中光标所在处之前的所有字符(不包括自身)
+
+　　Ctrl+k 剪切命令行中光标所在处之后的所有字符(包括自身)
+
+　　Ctrl+d 删除光标所在处字符
+
+　　Ctrl+h 删除光标所在处前一个字符
+
+　　Ctrl+y 粘贴刚才所删除的字符
+
+　　Ctrl+w 剪切光标所在处之前的一个词(以空格、标点等为分隔符)
+
+　　Alt+d 剪切光标之后的词
+
+　　Esc+w 删除光标所在处之前的字符至其单词尾(以空格、标点等为分隔符)
+
+　　Ctrl+t 颠倒光标所在处及其之前的字符位置，并将光标移动到下一个字符
+
+　　Alt+t 交换当前与以前单词的位置
+
+　　Alt+u 把当前词转化为大写
+
+　　Alt+l 把当前词转化为小写
+
+　　Alt+c 把当前词汇变成首字符大写
+
+　　Ctrl+v 插入特殊字符,如Ctrl+v+Tab加入Tab字符键
+
+　　Esc+t 颠倒光标所在处及其相邻单词的位置
+
+　　Ctrl+c 删除整行
+
+　　Ctrl+(x u) 按住Ctrl的同时再先后按x和u，撤销刚才的操作
+
+　　Ctrl+s 挂起当前shell
+
+　　Ctrl+q 重新启用挂起的shell
+
+		 
+2.Linux系统下强制踢掉登录用户
+      linux系统root用户可强制踢制其它登录用户，首先可用＄w命令查看登录用户信息，显示信息如下：
+      [root@Wang ~]# w
+     10:01:23 up 1:23, 3 users, load average: 0.71, 0.58, 0.57
+     USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+     root     tty2     -                09:59    1:53   0.01s 0.01s -bash
+     root     pts/0    :0.0             10:01    0.00s 0.03s 0.00s w
+     wangbo   pts/2    192.168.0.196    09:42   18:50   0.01s 0.01s -bash
+     [root@Wang ~]#
+    
+
+    强制踢人命令格式：pkill -kill -t tty
+
+    解释：
+
+    pkill -kill -t 　踢人命令
+
+   tty　所踢用户的TTY
+
+   如上踢出liu用户的命令为： pkill -kill -t pts/1
+   只有root用户才能踢人，至少我测试的是这样的。如果同时有二个人用root用户登录，任何其中一个可以   踢掉另一个。任何用户都可以踢掉自己-_-
+   如何踢掉用终端登陆的用户，如：
+   root     pts/0    :0.0             10:01    0.00s 0.03s 0.00s w
+   首先用命令查看pts/0的进程号，命令如下：
+   [root@Wang ~]# ps -ef | grep pts/0
+   root     15846 15842 0 10:04 pts/0    00:00:00 bash
+   root     15876 15846 0 10:06 pts/0    00:00:00 ps -ef
+   root     15877 15846 0 10:06 pts/0    00:00:00 grep pts/0
+   踢掉用户的命令：
+   kill -9 15846
+
+3.如何查看出当前shell
+http://www.ixpub.net/thread-749213-1-1.html
+ask:OS:redhat as4
+默认shell为bash，从bash进入ksh后，如何查看出当前shell为ksh？
+在bash下，输入echo $SHELL，可以看到当前shell为/bin/bash。
+但是在ksh中输入echo $SHELL后，仍然输出/bin/bash。
+
+answer:按我理解 当前所使用的SHELL是针对某个用户而言的 执行KSH命令 只能说运行了一个ksh的shell解释器 并没有改变用户所使用的SHELL 除非执行chsh
+
+reanswer:谢谢panther911的解答。使用chsh后，重新登录，发现shell已经改变。
+
+
+4.sh、bash的区别
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc794c31337194ca30531213a5c16b1605b8392cfd803d6543733de7c595dd5786fdc577328c2c33771e8d4113d14da4981174c72a9b5aeea51be2eaf02593d98895800a478f0e452c8fb1d14d00659a3cb14e&p=882a9546c59812a059f1d025115f&user=baidu
+在shell脚本的开头往往有一句话来定义使用哪种sh解释器来解释脚本。
+目前研发送测的shell脚本中主要有以下两种方式：
+(1) #!/bin/sh
+(2) #!/bin/bash
+在这里求教同福客栈的各位大侠们一个问题：
+以上两种方式有什么区别？对于脚本的实际运行会产生什么不同的影响吗？
+
+脚本test.sh内容：
+#!/bin/sh
+source pcy.sh #pcy.sh并不存在
+echo hello
+执行./test.sh，屏幕输出为：
+./test.sh: line 2: pcy.sh: No such file or directory
+由此可见，在#!/bin/sh的情况下，source不成功，不会运行source后面的代码。
+修改test.sh脚本的第一行，变为#!/bin/bash，再次执行./test.sh，屏幕输出为：
+./test.sh: line 2: pcy.sh: No such file or directory
+hello
+由此可见，在#!/bin/bash的情况下，虽然source不成功，但是还是运行了source后面的echo语句。
+但是紧接着我又试着运行了一下sh ./test.sh，这次屏幕输出为：
+./test.sh: line 2: pcy.sh: No such file or directory
+表示虽然脚本中指定了#!/bin/bash，但是如果使用sh 方式运行，如果source不成功，也不会运行source后面的代码。
+
+为什么会有这样的区别呢？
+
+junru同学作了解释
+
+1). sh一般设成bash的软链
+[work@zjm-testing-app46 cy]$ ll /bin/sh
+lrwxrwxrwx 1 root     root          4 Nov 13   2006 /bin/sh -> bash
+2). 在一般的linux系统当中（如redhat），使用sh调用执行脚本相当于打开了bash的POSIX标准模式
+3). 也就是说 /bin/sh 相当于 /bin/bash --posix
+
+所以，sh跟bash的区别，实际上就是bash有没有开启posix模式的区别
+
+so，可以预想的是，如果第一行写成 #!/bin/bash --posix，那么脚本执行效果跟#!/bin/sh是一样的（遵循posix的特定规范，有可能就包括这样的规范：“当某行代码出错时，不继续往下解释”） 
+
+5. sync
+
+在 Linux 系统中，为了加快数据的读取速度，所以，预设的情况中，某些数据将不会直接被写入硬盘，而是先暂存在内存当中，如此一来，如果一个数据被你重复的改写，那么由于他尚未被写入硬盘中，因此可以直接由内存当中读取出来，在速度上一定是快上相当多的！不过，如此一来也造成些许的困扰，那就是，万一当你重新开机，或者是关机，或者是不正常的段电的情况下，由于数据尚未被写入硬盘当中，哇！所以就会造成数据的更新不正常啦！那要怎么办呢？这个时候就需要 sync 这个指令来进行数据的写入动作啦！直接在文字接口下输入 sync ，那么在内存中尚未被更新的数据，就会被写入硬盘中！所以，这个指令在系统关机或重新开机之前，很重要喔！最好多执行几次！( 注：这个指令也只有 root 可以执行喔！ )
+　
+[root@test root]# sync
+
+
+6.history
+例如某用户在一周前登录linux系统并且删除、创建文件，或者修改文件属性，这些操作现在可以由管理员账户查看到吗？
+不是仅仅知道用户何时登录过，还能看出来他的具体操作。
+# cat ~/.bash_histroy
+or
+# histrory
+
+7.如何查看系统正在使用的内核详细版本号？
+http://cache.baidu.com/c?m=9d78d513d9d430a54f9a91697d65c0176e4381132ba7d00208df8438e7732b47506793e57c7e574ec4c40c7070a95e2a99e74601207250a09ab89f3adface52c38f82423006b9206528d16f58d0067d621e347f4ff49a6adf045c2f4898f8c130f9119127af7acdc1c1d52902fa74767f4a6ef4c1f5b15bbeb2765895a6029e92057b630a3a66d30&p=8f769a4086cc47ad1dbac23f4f53&user=baidu
+uname -a
+
+[havn't tried the following in 7]
+再问，我已经编译好多个内核，怎样才能在系统重起时加载我想要的内核呢？ 我用的是FC4
+
+vi /etc/grub.conf
+
+grub.conf内容如下
+
+# grub.conf generated by anaconda
+#
+# Note that you do not have to rerun grub after making changes to this file
+# NOTICE:  You have a /boot partition.  This means that
+#          all kernel and initrd paths are relative to /boot/, eg.
+#          root (hd0,0)
+#          kernel /vmlinuz-version ro root=/dev/VolGroup00/LogVol00
+#          initrd /initrd-version.img
+#boot=/dev/hda
+default=1
+timeout=5
+splashimage=(hd0,0)/grub/splash.xpm.gz
+hiddenmenu
+title Fedora Core (2.6.15)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.15 ro root=/dev/VolGroup00/LogVol00 linux
+        initrd /initrd-2.6.15.img
+title Fedora Core (2.6.11-1.1369_FC4)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.11-1.1369_FC4 ro root=/dev/VolGroup00/LogVol00 linux
+        initrd /initrd-2.6.11-1.1369_FC4.img
+
+系统现在加载的是2.6.11-1.1369_FC4，但我想要的是2.6.15，该怎样改呢？
+
+
+default=1   >>>>>  default=0
+
+
+8.cd 的妙用
+http://www.linuxdiyf.com/viewarticle.php?id=61109
+说cd这个命令是Linux上使用率最高的两个命令之一不为过吧（另一个当然是ls了），前两天看到了一个cd命令的小技巧是我一直都不知道的，呵呵，这里顺便记下来。
+
+cd - #回到上次所在目录，这个技巧我原来还真是不知道，感觉还是比较有用，省略了很多输入。
+cd !$ #把上个命令的参数作为输入。
+cd #回到主目录
+cd ~ #同样也是回到主目录
+
+下面连贯的做一个例子来说明：
+webop@localhost:~$ pwd #查看当前目录路径
+/home/webop
+webop@localhost:~$ sudo tar xf wordpress.tar.gz -C /opt/lampp/htdocs/wordpress #解压压缩包到/opt/lampp/htdocs/wordpress目录
+webop@localhost:~$ cd !$ #执行cd !$把上个命令最后的参数作为输入，即/opt/lampp/htdocs/wordpress
+
+cd /opt/lampp/htdocs/wordpress
+webop@localhost:/opt/lampp/htdocs/wordpress$ pwd #查看当前目录路径
+/opt/lampp/htdocs/wordpress
+webop@localhost:/opt/lampp/htdocs/wordpress$ cd #执行cd命令回到了主目录
+webop@localhost:~$ pwd #查看当前目录路径
+/home/webop
+webop@localhost:~$ cd - #执行cd -，回到上次所在目录。
+/opt/lampp/htdocs/wordpress
+webop@localhost:/opt/lampp/htdocs/wordpress$ pwd #查看当前目录路径
+/opt/lampp/htdocs/wordpress
+
+这样应该能看明白吧。

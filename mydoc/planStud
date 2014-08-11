@@ -1,0 +1,1072 @@
+说明：
+(delaying)表示该项内容暂时不看了，没有涉及。
+
+内容：
+===============================
+*无事可做之时
+*需要整理的问题和计划
+*临时常用命令和代码片段
+*未完成工作
+
+*无事可做之时
+===============================
+看看内核源码,makefile
+看看shell
+看看驱动
+整理整理开源代码
+整理整理文档
+学一个工具或者命令
+解决一下这里面列出的没有解决的问题
+eclipse vim快捷键
+wordpress权限查看管理
+Mock测试
+邮件如何备份？清理联系方式?wordpress的备份以及权限管理插件，window上面运行。
+cpu的参数，vnc
+内联函数
+
+shell中的$()和${}
+squid
+pkg-config
+kill 一个信号之后，kill是信号处理函数处理完毕返回，还是发送完信号就返回？
+关于网络连接
+关于GNU权限
+eclipse
+cpp的throw,assert
+为什么无法为抽象数据类型分配对象？
+LVM
+kvm
+printf等
+
+vim精确定位例如命名空间等
+自然码，五笔
+linux中文显示
+autotools
+整理一套测试程序覆盖率以及测试程序的过程。
+
+
+*需要整理的问题和计划
+===============================
+
+1，命令和工具
+shutdown
+busybox(oking)
+crosstool(doing)
+valgrind
+sysconf
+git
+vpn
+vnc
+dev/event0
+mysql
+cppcheck
+ls
+head
+stty
+getty
+makeimage (uboot相关)
+oprofile
+vi缩进,指定文件的搜索，更新cscope和tags，如果当前没有索引就自动寻找上层的索引。
+dokuwiki&apache
+gdb for qtextend applications and event etc 
+uml工具ash**
+perl
+c语言的断言
+strtoken
+
+我的vi配置：
+1)set paste
+2)set unnamed?
+3)set ic?
+*设置当前目录自动跟随当前文件:
+输入":set autochdir".
+或输入":set acd".
+ftp/smbclient上面如何下载整个目录或者多个文件？
+
+输入":set nobackup".
+od(ok)
+
+2，语言类
+当型和util型循环??
+正则表达式的学习
+switch后面要有分号吗？大括号呢？
+
+c语言常用的库函数：
+popen
+setlocale
+ftw
+
+linux系统调用学习：
+open:O_APPEND原子的，不同于先lseek在write
+read
+write
+lseek
+pread
+pwrite
+dup
+dup2
+fcntl
+sync
+
+fork
+exec
+wait
+fdopen
+
+3，其他类
+mvc架构(ok)
+rndis内核支持网络
+进程的各种数据段
+dd的块等等
+
+lgpl和gpl
+内核定时器
+内存管理
+记录一下常用的16进制
+记录一下cpu都有那些型号以及ddr，频率等信息
+svn 配置
+vpmn是什么？
+
+整理一下自己的文档分类，例如正在学习的东西，学习的进度以及计划等等。
+man proc
+浏览qt的各种函数以及文档(delaying)。
+elf文件格式(ok)
+深入理解计算机系统
+QSocketNotifier(delaying)
+！工作中三个最大的问题：1）Qt的插件机制2）qtopia中的task3）qtextend中的编译机制(delaying)
+
+!!!!!!将decksim_common.h中的log函数摘抄出来。
+
+
+夏令时
+Daylight Saving Time：DST
+http://baike.baidu.com/view/100246.htm
+linux如何撤销删除？如何查看拷贝的进度？
+将pa_offset以sysconf(SC_PAGE_SIZE)对齐：
+pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE) - 1);
+vfs学习
+
+vi中为什么不代码自动对齐？
+
+未完成工作
+===============================
+没有svn commit的需要把代码拷贝到svn目录中。
+有svn commit没有ok表示只需要到svn目录提交即可
+有svn commit有ok表示已经提交
+有svn commit有两个ok表示已经提交并且写到了release note.
+ok?表示这一步骤可能还没有做完，需要确认一下。 
+
+<<sourceforge>>
+
+
+<<neuebook>>
+
+<<sony，devel>>
+
+<<sony,pfx,eu11>>
+
+
+todo
+-------------
+20120105
+!!!versionupdate driver<->32M
+sfmem的驱动还没有提交上去。
+!!!T-kernel port
+build体系
+t-kernel 通信链接错误
+t-kernel 的wkram部分代码合并IA的svn上面(ok，未提交)。
+t-kernel设备名称如何变化
+
+
+(2011/12/05 12:11), 劉傑 wrote:
+> 吕 san：
+>
+>  你好。
+>  有几点：
+>  1 (3) 環境変数の設定
+>  这部分，按照客户的要求，是不让自己指定的。
+>  关于编译器的path的内容，客户要求写到makefile里面。
+>
+>  2 4　開発ボードへの焼きこみ
+>  这里还遗留有关于IP的信息，是不是应该将其也修改过来？
+>
+>  另外，dhcp server的设置内容也没有，如果有时间的话，
+>  可以将该部分作为 option 加上。
+>
+>  多谢
+>
+> 刘杰 
+
+
+
+20111121
+为build.sh添加：
+export PATH=/usr/local/scel8.0/arm-sony-linux-gnueabi/cross/bin:${PATH//\/usr\/local\/scel8.0\/arm-sony-linux-gnueabi\/cross\/bin:/}(ok)
+
+20111109
+1，确认version up 接口交互问题。（ok）
+3，参照eu11中Make调用关系图示，修改脚本。(ok)(ok)
+8，制做rpm包也应该考虑不同平台的问题(ok)(ok)
+2，采用新的编译环境进行编译待尝试，包含diablo部分。(ok)
+4，明确使用glibc编译，修改busybox的相关脚本。
+5，build.sh脚本的clean问题确认。--NATH部分开关，第一次下载之后，修改去掉，那么好用，但是clean之后就不好用了。
+6，脚本本身有些小bug问题有待改进。(ok)
+7，version up的需求再仔细确认（特别是块设备部分），还有就是diablo flash驱动确认。
+8，如果用glibc编译，那么busybox去掉多余的sony库(doing)
+
+svn commit -m "[ES][diablo][a)change scripts of diablo due to eu11 make structure.  b)improve rpm scripts, for platform select etc. c)improve kernel build Makefile for some small bugs before][lv-k]"
+
+
+
+delay
+-------------
+20111108
+1)Kernel中的sfmem.c更新
+2）Operating systems 中的patch.sh权限(nothing)
+3）Operating systems中的Kernel部分的makescripts/avp_13/17_8.0的GNUmakefile(to do)
+总是有报告错误的情况。
+目前，有些脚本不知道为什么权限变化了，无法执行导致编译出错。
+
+
+
+调查串口烧写文件的方法和原理(delay)
+脚本中涉及的文件***.nfs变成***.develop;***.initrd变成***.release(delay)
+赵惠鹏发送的关于busybox的邮件20110120
+makerootfs.sh中，makerootfs.sh rootfs命令可能会在拷贝的时候，不将init更新，同时all差分的时候也是有这样得问题。
+
+
+临时常用命令和代码片段
+===============================
+www.dailiav.com
+<<下载网页>>
+wget \
+--recursive \
+--no-clobber \
+--page-requisites \
+--html-extension \
+--convert-links \
+--restrict-file-names=windows \
+--domains www.woodpecker.org.cn \
+--no-parent \
+http://www.woodpecker.org.cn:9081/doc/abyteofpython_cn/chinese/
+
+清理内存：
+echo 3>/proc/sys/vm/drop_caches
+
+设置uboot参数：
+bootargs=console=ttyS0,115200 uart_dma root=/dev/nfs nfsroot=192.168.100.118:/home/quietheart/nfs,proto=tcp ip=192.168.100.99:192.168.100.1::255.255.255.0::usb0:on
+
+setenv bootargs console=ttyS0,115200 uart_dma root=/dev/nfs nfsroot=192.168.100.118:/home/quietheart/nfs,proto=tcp ip=192.168.100.99:192.168.100.1::255.255.255.0::usb0:on
+
+
+sizeof相关：
+最基本的概念与基本使用方法
+1)用于数据类型　
+sizeof使用形式：sizeof（type）　
+数据类型必须用括号括住。如sizeof（int）。　
+2)用于变量　
+sizeof使用形式：sizeof（var_name）或sizeof　var_name　
+变量名可以不用括号括住。如sizeof　(var_name)，sizeof　var_name等都是正确形式。
+sizeof操作符不能用于函数类型，不完全类型或位字段。如函数名，未知的数组大小，以及void。
+
+loadb 0x31000000
+
+svn merge -r 392:393 /home/quietheart/buildTmp/release_svn/MBP/software/branches/Temp/rootfs/test1/trunk/MediaBlockLinux/Source/Rootfs/
+
+
+sony
+-----
+当前统计的设备节点信息列表如下：
+设备节点名称				节点类型		主次号		是否需要insmod
+(ok)/dev/vrefDriver		char			239,0			否
+(ok)/dev/memoryDriver		char			245,0			否
+(ok)/dev/avp13_sync		char			246,0			否
+(ok)/dev/avselDriver		char			240,0			否
+(ok)/dev/diablo_bsif		char			241,0			否
+(ok)/dev/sxs_blk0			block			288,1			否
+(ok)/dev/torino				char			242,0			否
+(ok)/dev/gpio_hlc				char			243,0			否
+(ok)/dev/hfdma_dev			char			244,0			否
+mknod ／dev／lpcm c 248 0
+mknod $1/dev/ddvcd c 250 0
+mknod $1/dev/cpu1Driver c 255 0
+mknod c 249 0 /dev/expcd
+mknod $1/dev/dsphost c 252 0 
+mknod /dev/diablo_cmn_debug c 247 0
+mknod /dev/sysconif c 238 0
+       mknod /dev/udc_sxs0 b 288 1    
+       mknod /dev/udc_sxs1 b 288 9    
+       mknod /dev/udc_uba1 b 180 1    
+       mknod /dev/udc_ubb1 b 180 9   
+
+crw-r--r-- 1 root root 260,  0 03-10 15:30 umsc0
+crw-r--r-- 1 root root 260,  1 03-10 15:30 umsc1
+ /dev/diablo_self_diagnose c 236 0
+ /dev/debugDriver c 237 0
+
+
+
+翻译：
+==========================================================
+ＣＣ: liuxingb; zhou-lei; hezhg
+件名: 翻译求助：Release Note
+
+To苏小婷：
+From吕凯
+Cc何正光，刘兴宝，周磊
+
+麻烦将下面的内容翻译成日文，多谢！!
+
+2011年3月3日
+
+需要翻译内容如下：
+=============
+增加设备节点。
+
+增加dsphost设备节点。
+
+Rootfs\busybox-dev\extra\sbin\init.nfs
+Rootfs\makerootfs\makerootfs.sh
+
+=================
+回复：
+デバイスノード追加。
+
+dsphostデバイスノード追加。
+
+Rootfs\busybox-dev\extra\sbin\init.nfs
+Rootfs\makerootfs\makerootfs.sh
+=============================================================
+
+
+
+翻译求助：Release Note
+To：刘美
+From：吕凯
+Cc：刘兴宝，周磊
+
+麻烦将下面的内容翻译成日文，多谢！!
+
+2011年3月31日
+
+需要翻译内容如下：
+=============
+改善镜像制作脚本。
+
+将制作文件系统的中间目录集中到makerootfs目录下。
+
+
+Rootfs\makerootfs\makerootfs.sh
+Rootfs\busybox-dev\build_busybox.sh
+
+
+http://10.1.3.252/subversion/IAQ2100124_PFX/repos/4.DevelopLibrary/08.SourceCode(COD)/Groups/ES/PFXBase_E26_ES
+http://10.1.3.252/subversion/IAQ2100124_PFX/repos/4.DevelopLibrary/08.SourceCode\(COD\)/Groups/ES/PFXBase_E26_ES
+
+http://10.1.3.252/subversion/IAQ2100124_PFX/repos/4.DevelopLibrary/08.SourceCode(COD)/Groups/ES/PFXBase_E26_ES
+libsvn-java
+eclipse目录下的eclipse.ini添加 -Djava.library.path=/usr/lib/jni
+
+
+
+
+
+环境变量
+----------------
+1)编译内核相关部分之前需要设置如下：
+export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+2)编译app相关部分之前需要设置如下：
+export PATH=/usr/local/arm-sony-linux-gnueabi/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/bin:/}
+
+让路径中之后app的交叉工具链：
+export PATH=${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+export PATH=${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/bin:/}
+
+export PATH=/usr/local/arm-sony-linux-gnueabi/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/bin:/}
+
+
+编译内核与安装内核头文件：
+----------------
+make mrproper
+make avp13_defconfig
+make avp13_rel_defconfig
+make
+make kernel_headers_install
+
+编译NBL
+-----------------
+$ ./setup diablo avp13 rom
+$ make
+
+update -f net:tftp:nbl-avp13_uart.nui
+cp uart:xmodem:vmlinux.bin sdmd::
+
+各种NBL设置与启动方式：
+-----------------
+NBL> print
+myip=10.1.29.180
+gateip=10.1.29.1
+autoboot=on
+console=on
+set boot_option "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.195:/home/quietheart/nfs ip=10.1.2.193::10.1.2.1:255.255.254.0"
+servip=10.1.29.22
+ethaddr=5544332211006699
+
+
+boot -r net:tftp:vmlinux.bin
+bootprof param -k sdmd:raw:vmlinux.bin -c "mem=252MB console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.135::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+bootprof param -k sdmd:raw:vmlinux.bin -c "mem=252MB console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+
+bootprof param -k sdmd:raw:vmlinux -c "mem=252MB console=ttyS0,115200n8 initrd=0x40a00000,6998528 rdinit=/sbin/init ip=10.1.2.174::10.1.2.1:255.255.254.0" -i sdme:raw:ramdisk.img -t 3 -n 3 Linux
+
+boot -t elf -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.2.180::10.1.29.1:255.255.255.0" net:c:vmlinux
+boot -initrd sdme1:uvfat:/boot/ramdisk.img -d -t bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+
+boot -d -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.195:/home/quietheart/nfs ip=10.1.2.176::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+
+set boot_option "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.195:/home/quietheart/nfs ip=10.1.2.209::10.1.2.1:255.255.254.0"
+set boot_option "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.195:/home/quietheart/nfs ip=10.1.2.176::10.1.29.1:255.255.255.0"
+set boot_option "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.195:/home/quietheart/nfs ip=10.1.2.131::10.1.2.1:255.255.254.0"
+boot -d -r sdmd:raw:vmlinux.bin
+boot -t elf sdmd:raw:vmlinux
+
+boot -initrd sdme1:uvfat:/boot/ramdisk.img -d -r -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:zImage
+boot -initrd sdme1:uvfat:/boot/ramdisk.img -d -r -c "console=ttyS0,115200n8 root=/dev/ram0 rdinit=/sbin/init" sdmd:raw:zImage
+boot -initrd sdme1:uvfat:/boot/ramdisk.img -r -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+
+
+0313
+boot -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.178:/root/SVNROOT/diablo/makerootfs/target/develop/rootfs_2011-03-11 ip=10.1.2.243::10.1.2.1:255.255.255.0" sdmd:raw:vmlinux.bin
+
+boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.35:/usr/local/arm-sony-linux-gnueabi/target ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+
+boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/home/quietheart/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+
+ boot -initrd sdme1:uvfat:/boot/ramdisk.img -t elf sdmd:raw:vmlinux
+
+mount -t nfs -o nolock 10.1.2.195:/home/quietheart/nfs FIFO/ ;cd FIFO; ./diablo_c2.bin&
+
+
+set myip
+set servip
+set gateip
+set netmask
+ifconfig -u
+boot -t elf -c "mem=236MB console=ttyS0,115200n8 root=/dev/nfs ip=dhcp nfsroot=10.1.2.213:/home/nfs_test" sdmd:raw:vmlinux.elf.13
+boot -t elf -c "mem=236MB console=ttyS0,115200n8 root=/dev/nfs ip=dhcp nfsroot=/home/nfs_test" sdmd:raw:vmlinux.elf.13
+
+
+自己定义的vi快捷按键：
+----------------
+弹出预览：
+:map [j <C-w>}
+
+关闭预览：
+:map [k <C-w>z
+
+切换窗口：
+:map [n <C-w>w
+
+最大化水平：
+:map [l <C-w>_
+
+tag：
+:map ]j <C-]>
+弹出：
+:map ]k <C-t>
+查看头文件预览：
+:map [h ?????
+
+
+
+
+
+
+svn
+http://i18n-zh.googlecode.com/svn-history/r734/www/svnbook-1.4/index.html
+
+
+
+
+*********当前的sxs卡设备的情况：
+----------------
+类型和主次号码重要，设备名不重要。
+
+b 288 0~7用于slot0,且目前只有0,1好用
+b 288 8~15用于slot1,且目前只有8,9好用
+前面说的0,１是slot０上卡的第0,1个分区
+8,9是slot1上的第0,1个分区。
+目前udf只能有1号分区。vxworks格式化fat的不能有0号分区，因为0好被mbr后面的分区表占用了。并且udf的只能是0好分区
+
+mount -t udf -o bs=2048 ...
+
+综上，创建设备节点如下：
+mknod /dev/sxs_blk0 b 1
+mknod /dev/sxs_blk1 b 9
+
+mknod /dev/sxs_blk11 b 0
+mknod /dev/sxs_blk01 b 8
+
+mount -t vfat -o shortname=winnt /dev/sxs_blk0 /SlotA\: ||
+#mount -t udf -o bs=2048 /dev/sxs_blk0 /SlotA\: ||
+mount -t vfat -o shortname=winnt /dev/sxs_blk1 /SlotA\: ||
+#mount -t udf -o bs=2048 /dev/sxs_blk1 /SlotA\: ||
+mount -t udf -o bs=2048 /dev/sxs_blk11 /SlotA\: ||
+mount -t udf -o bs=2048 /dev/sxs_blk01 /SlotA\:
+
+
+
+
+
+
+
+
+versionup
+----------------
+
+boot -t elf -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.182:/home/kim/source/mbpwrapper_1102/Rootfs/makerootfs/target/release/rootfs_2011-11-04 ip=10.1.2.222::10.1.2.1:255.255.255.0" net:tftp:vmlinux.elf
+
+
+
+6M:6291446
+8M:8388608
+
+./flashup -w -s 6291446 -l 1144583 ramdiskzip.img /dev/sfmem
+./flashup -r -s 6291446 -l 1144583 /dev/sfmem ramdiskzip.gz
+
+./flashup -w -s 6291456 -l 9129973 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 6291456 -l 9129973 /dev/sfmem ramdiskbzip.tbz
+
+Assume: total size of every flash is 8M.
+on chip0
+./flashup -w -s 6291456 -l 1144583 ramdiskzip.img /dev/sfmem
+./flashup -r -s 6291456 -l 1144583 /dev/sfmem ramdiskzip.gz
+
+on chip1
+./flashup -w -s 8388608 -l 1144583 ramdiskzip.img /dev/sfmem
+./flashup -r -s 8388608 -l 1144583 /dev/sfmem ramdiskzip.gz
+
+on chip 0 - chip 1
+./flashup -w -s 7388608 -l 1144583 ramdiskzip.img /dev/sfmem
+./flashup -r -s 7388608 -l 1144583 /dev/sfmem ramdiskzip.gz
+
+on chip0 - chip 1 where total size big than 8M
+./flashup -w -s 6291456 -l 9129973 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 6291456 -l 9129973 /dev/sfmem ramdiskbzip.tbz
+
+
+./flashup -w -s 600000 -l 8b4ff5 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 600000 -l 8b4ff5 /dev/sfmem ramdiskbzip.tbz
+
+avp17
+chip0:
+14M
+14680064
+./flashup -w -s 14680064 -l 1144583 ramdiskzip.img /dev/sfmem
+./flashup -r -s 14680064 -l 1144583 /dev/sfmem ramdiskzip.gz
+
+15M
+15728640
+./flashup -w -s 15728640 -l 9129973 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 15728640 -l 9129973 /dev/sfmem ramdiskbzip.tbz
+
+/ # md5sum rootfsdev.tbz
+6611271c3ade18717c6c7d1038e60a1d  rootfsdev.tbz
+/ # md5sum ramdiskbzip.tbz
+e0b266b33e7da51aafafa82cb5fc138b  ramdiskbzip.tbz
+
+1M
+1048576+8081397
+./flashup -w -s 15728640 -l 9129973 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 15728640 -l 1048576 /dev/sfmem r1
+./flashup -r -s 16777216 -l 8081397 /dev/sfmem r2
+cat r1 r2 >all1
+
+
+/ # md5sum all1
+e0b266b33e7da51aafafa82cb5fc138b  all1
+./flashup -w -s 15728640 -l 9129973 all1 /dev/sfmem
+./flashup -r -s 15728640 -l 1048576 /dev/sfmem r1_2
+./flashup -r -s 16777216 -l 8081397 /dev/sfmem r2_2
+/ # md5sum r1
+7199288215dcb5b5e843cf4059a68744  r1
+/ # md5sum r1_2
+7199288215dcb5b5e843cf4059a68744  r1_2
+/ # md5sum r2
+97f9eb2446531d0c26b3642c7b8372c9  r2
+/ # md5sum r2_2
+97f9eb2446531d0c26b3642c7b8372c9  r2_2
+/ # cat r1_2 r2_2 >all2
+/ # md5sum all1 
+e0b266b33e7da51aafafa82cb5fc138b  all1
+/ # md5sum all2 
+e0b266b33e7da51aafafa82cb5fc138b  all2
+/ # ./flashup -r -s 15728640 -l 9129973 /dev/sfmem all_2
+/ # md5sum all_2 
+e0b266b33e7da51aafafa82cb5fc138b  all_2
+/ # ./flashup -w -s 15728640 -l 9129973 rootfsdev.tbz /dev/sfmem
+/ # rm ramdiskbzip.tbz 
+/ # ./flashup -r -s 15728640 -l 9129973 /dev/sfmem ramdiskbzip.tbz
+/ # md5sum ramdiskbzip.tbz 
+e0b266b33e7da51aafafa82cb5fc138b  ramdiskbzip.tbz
+/ # md5sum rootfsdev.tbz 
+6611271c3ade18717c6c7d1038e60a1d  rootfsdev.tbz
+/ # ./flashup -w -s 15728640 -l 9129973 all1 /dev/sfmem
+/ # ./flashup -r -s 15728640 -l 9129973 /dev/sfmem all_3
+/ # md5sum all1 
+e0b266b33e7da51aafafa82cb5fc138b  all1
+/ # md5sum all_3 
+e0b266b33e7da51aafafa82cb5fc138b  all_3
+/ # ./flashup -w -s 14680064 -l 9129973 all1 /dev/sfmem
+/ # ./flashup -r -s 14680064 -l 9129973 /dev/sfmem all_4
+/ # md5sum all1 
+e0b266b33e7da51aafafa82cb5fc138b  all1
+/ # md5sum all_4 
+7d870ff446a019678d3b3db2ac8e7fc8  all_4
+./flashup -r -s 14680064 -l 1048576 /dev/sfmem r1_3
+/ # md5sum r1_3 
+7199288215dcb5b5e843cf4059a68744  r1_3
+/ # md5sum r1
+7199288215dcb5b5e843cf4059a68744  r1
+综上，非常确定的一点就是，跨越操作的时候，flash0部分的读写没有问题。
+./flashup -r -s 16777216 -l 7032821 /dev/sfmem r2_2
+
+
+
+
+
+
+chip1(ok):
+16M
+16777216
+./flashup -w -s 16777216 -l 9129973 rootfsdev.tbz /dev/sfmem
+./flashup -r -s 16777216 -l 9129973 /dev/sfmem ramdiskbzip.tbz
+
+./flashup -w -s 600000 -l 9129973 rootfsdev.tbz /dev/sfmem
+
+
+
+
+=========
+To 孙兴华
+From 吕凯
+
+目前的情况是：
+# rpm -qa |grep mind
+mind-4.8-alpha
+1）在一台新的编译机器上进行编译的时候，make libraries无法编译通过；但是在另外一台机器上面可以通过。
+2）根据你说的erdd所依赖的库libcsi.a和libemif.a在"PFXBaseEU11/src/targets/HWSpecific/"下直接make可以生成，但是我尝试了一下，两台机器上都编译出错，这样无法进行erdd相关的工作。
+3）我换了一个用pfx-celinux-cross-compiler-8.0.1.4-3.i386.rpm安装的交叉编译环境，可以生成ibcsi.a和libemif.a但是"make libraries"还是无法编译通过。
+
+我怀疑很可能是编译环境问题，目前我发现我们这里编译环境的状况（例如编译器或者相关库的版本等）比较乱，为避免后续工作的麻烦，希望给出一份完整的环境安装说明或者网址者负责此部分内容担当的联系方式。谢谢！
+
+
+boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/emma_nfs ip=10.1.2.333::10.1.2.1:255.255.254.0" net:tftp:vmlinux_emma_C18B_1222.bin
+
+
+boot -t elf -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/diablo_nfs ip=10.1.2.230::10.1.2.1:255.255.254.0" net:tftp:vmlinux_erdd.elf
+
+
+boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.21:/home/nfs/emma/C17/rootfs ip=10.1.2.230::10.1.2.1:255.255.254.0" net:tftp:vmlinux_emma_C18B_1222.bin
+
+
+===================================
+---------fake diablo
+SHELL > start
+SHELL >
+SHELL >
+SHELL > RosettaResourceBPort::method2
+RosettaResourceB::method2 param = 1
+RosettaResourceCPort::method3
+RosettaResourceC::method3 param = 1
+
+
+
+---------diablo
+NBL> boot -t elf -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/diablo_nfs ip=10.1.2.23
+0::10.1.2.1:255.255.254.0" net:tftp:vmlinux_erdd.elf
+i8254x: Ethernet address: 16:26:36:46:56:66
+i8254x: Link is up, 100Mbps Full Duplex
+2703396+121760=0x2b3ba0
+Elf file is loaded : start = 0xc0008000, length = 0x002b3ba0
+linux.c:platform_invoke_linux(entry 0xc0008000, args 0xc3f6b924)
+    834.033 ms : NBL: platform_init()
+    844.838 ms : NBL: loader()
+    845.969 ms : NBL: H/W setup done
+ 104604.794 ms : NBL: fixup_cmdline() end
+ 104604.904 ms : NBL: setup nblargs end
+ 104604.908 ms : NBL: load_exec_linux()
+ 104604.912 ms : NBL: platform_invoke_lin
+ 104710.854 ms : NBL: arm_exec_linux()
+
+Linux version 2.6.29.6-rt24-alp_nl-avp13 (root@localhost.localdomain) (gcc version 4.5.1 (20110425 (Sony CE Linux 8.
+0.1.1)) ) #3 PREEMPT Fri Jan 13 09:18:56 CST 2012
+NEU VERSION: 0.2.2
+CPU: ARMv6-compatible processor [410fb767] revision 7 (ARMv7), cr=00c5387f
+CPU: VIPT nonaliasing data cache, VIPT nonaliasing instruction cache
+Machine: Sony AVP13 evaluation board
+Memory policy: ECC disabled, Data cache writeback
+Built 1 zonelists in Zone order, mobility grouping off.  Total pages: 64008
+Kernel command line: mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/diablo_nfs ip=10.1.2.23
+0::10.1.2.1:255.255.254.0
+NR_IRQS:121
+PID hash table entries: 1024 (order: 10, 4096 bytes)
+Dentry cache hash table entries: 32768 (order: 5, 131072 bytes)
+Inode-cache hash table entries: 16384 (order: 4, 65536 bytes)
+Memory: 252MB = 252MB total
+Memory: 246400KB available (2540K code, 6434K data, 100K init)
+SLUB: Genslabs=10, HWalign=32, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+Calibrating delay loop... 398.95 BogoMIPS (lpj=1994752)
+Mount-cache hash table entries: 512
+CPU: Testing write buffer coherency: ok
+net_namespace: 296 bytes
+NET: Registered protocol family 16
+[BCT] board_conf_init() @379 :> force avp17 board-id to 15
+[BCT] board_conf_init() @382 :> board-id is 15
+pci 0000:00:06.0: PME# supported from D0 D1 D2 D3hot
+pci 0000:00:06.0: PME# disabled
+pci 0000:00:06.1: PME# supported from D0 D1 D2 D3hot
+pci 0000:00:06.1: PME# disabled
+pci 0000:00:06.2: PME# supported from D0 D1 D2 D3hot
+pci 0000:00:06.2: PME# disabled
+pci 0000:00:08.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:08.0: PME# disabled
+pci 0000:00:0a.0: PME# supported from D0
+pci 0000:00:0a.0: PME# disabled
+PCI: bus0: Fast back to back transfers disabled
+[PCIE] diablo_pciehc_init() @1534 :> PCIEx4L Driver is compiled for Normal PCIEx4L Bus
+[PCIE] diablo_pciehc_init() @1547 :> PCIE bus number start from 1
+[PCIE] diablo_pciehc_init() @1551 :> Slot Exchange = OFF
+[PCIE] diablo_pciehc_init() @1557 :> PCIEx4L is enabled!
+[PCIE] diablo_pciehc_setup() @1331 :> No ExpressCard in port 0
+PCI: bus1: Fast back to back transfers enabled
+[PCIE] diablo_pciehc_setup() @1331 :> No ExpressCard in port 1
+PCI: bus2: Fast back to back transfers enabled
+bio: create slab <bio-0> at 0
+usbcore: registerednew interface driver usbfs
+usbcore: registered new interface driver hub
+
+
+
+usbcore: registered new device driver usb
+
+=NET: Registered protocol family 2
+==IP route cache hash table entries: 2048 (order: 1, 8192 bytes)
+===TCP established hash table entries: 8192 (order: 4, 65536 bytes)
+=TCP bind hash table entries: 8192 (order: 3, 32768 bytes)
+=TCP: Hash tables configured (established 8192 bind 8192)
+===========TCP reno registered
+=NET: Registered protocol family 1
+===netlink_kernel_create failed.
+==============================msgmni has been set to 481
+=io scheduler noop registered
+io scheduler cfq registered (default)
+
+==ipmi message handler version 39.2
+= ttynull: NULL console driver $Revision: 1.1.2.1 $
+                 DiabloSerial: 8250/16550 driver, 1 ports, IRQ sharing enabled
+ serial8250.0: ttyS0 at MMIO 0xefff4800 (irq = 9) is a 16550A
+Cconsole [ttyS0] enabled
+PU1                     ===
+========================================================
+20110421_1 <HB>
+
+Wbrd: module loaded
+aiting for INFO_READY from CPU0...Done.
+
+================T-Kernel Version 1.02.04================
+
+usermain Start!
+[test_wkram_main][start] line 239 ******loop: module loaded
+****Intel(R) PRO/1000 Network Driver - version 7.3.21-k3-NAPI
+*Copyright (c) 1999-2006 Intel Corporation.
+***************
+[wkram_main][start] line 426 ac 0
+[wkram_start][start] line 164
+[comm_init][start] line 458,BUF0_OFF:2048,BUF1_OFF:4096
+++++++sizeof W_BUF:1936,sizeof R_BUF:1936
+[comm_init] line 474 ****************write_buf_wp BFF00810 write_buf_rp BFF00810
+[wkram_registDevice] line 71 err 0
+[wkram_registDevice] line 75 err 0
+[wkram_start][start] line 173
+[wkram_start][end] line 218
+[wkram_start][end] line 233
+[wkram_rtask] line 23
+[wkram_rtask] line 26 err 0 to be sleep *********
+[wkram_wtask] line 74
+[wkram_wtask] line 77 err 0 to be sleep *********
+[wkram_start][end] line 252
+[wkram_main][end] line 441
+111111111111111run the process form transfer_entry
+1
+22222222222222run the process form transfer_entry
+[wkram_rtask] line 28  wakeup*********
+[wkram_data_read][start] line 123
+[test_wkram_main][succ] line 319+++++++++++++++++
+[test_wkram_main][end] line 335 **************************
+e1000: 0000:00:08.0: e1000_probe: (PCI:33MHz:32-bit) 16:26:36:46:56:66
+e1000: eth0: e1000_probe: Intel(R) PRO/1000 Network Connection
+ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+PCI: enabling device 0000:00:06.2 (0140 -> 0142)
+ehci_hcd 0000:00:06.2: EHCI Host Controller
+ehci_hcd 0000:00:06.2: new USB bus registered, assigned bus number 1
+ehci_hcd 0000:00:06.2: Enabling legacy PCI PM
+ehci_hcd 0000:00:06.2: irq 69, io mem 0xd0062000
+ehci_hcd 0000:00:06.2: USB 2.0 started, EHCI 1.00
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 5 ports detected
+TCP cubic registered
+NET: Registered protocol family 17
+RPC: Registered udp transport module.
+RPC: Registered tcp transport module.
+[SFMEM] sfmem_init() @990 :> sfmem module start !!
+[SFMEM] sfmem_init() @1002 :> Flash 1 Vendor[WINBOND], Device[W25Q128]
+[SFMEM] sfmem_init() @1014 :> Flash 0 Vendor[WINBOND], Device[W25Q128]
+VFP support v0.3: not present
+IP-Config: Complete:
+     device=eth0, addr=10.1.2.230, mask=255.255.254.0, gw=10.1.2.1,
+     host=10.1.2.230, domain=, nis-domain=(none),
+     bootserver=255.255.255.255, rootserver=10.1.2.188, rootpath=
+Looking up port of RPC 100003/2 on 10.1.2.188
+e1000: eth0 NIC Link is Up 10 Mbps Full Duplex, Flow Control: RX/TX
+Looking up port of RPC 100005/1 on 10.1.2.188
+VFS: Mounted root (nfs filesystem) readonly on device 0:12.
+Freeing init memory: 100K
+Warning: unable to open an initial console.
+
+
+
+BusyBox v1.4.2 (2011-11-07 10:12:29 CST) Built-in shell (ash)
+Enter 'help' for a list of built-in commands.
+
+/ # cd Diablo
+nfs: server 10.1.2.188 not responding, still trying
+nfs: server 10.1.2.188 OK
+/Diablo # ./diablo_test.sh
+/Diablo # Running main() for AVPCsi!
+[AVPCsi]Start to receive message
+Running main() for AVPSc2p!
+[AVPSc2p]Start to receive message
+Running main() for MbpWKRAM!
+[MbpWKRAM]Start to receive message
+Running main() for Diablo!
+[Diablo]Start to receive message
+[/tmp/sc2plib_semaphore]open_or_create the ftok value is 820157
+[/tmp/csilib_semaphore]open_or_create the ftok value is 820122
+[Recv][CSI][C_ID:4][Len:1009][Data:00 00 DA 03
+[Time][CSI]  Start at:132 s 284111 us
+[Recv][SC2P]Receive CRC32 value[0x974ca98d]
+[Recv][SC2P][C_ID:1][Len:1009][Data:05 00 DA 03
+[Time][SC2P]  Start at:132 s 295553 us
+[Recv][SC2P]Receive CRC32 value[0x915f2611]
+[Recv][SC2P][C_ID:2][Len:1009][Data:06 00 DA 03
+[Time][SC2P]  End at:137 s 446650 us
+[Time][SC2P]  Start -> End Use:5 s 151 ms
+[Recv][CSI][C_ID:7][Len:1009][Data:03 00 DA 03
+[Time][CSI]  End at:137 s 448326 us
+[Time][CSI]  Start -> End Use:5 s 164 ms
+
+
+
+---------emma
+NBL Build #1 (base: 8.0-PSGCAMS_20110228) <built 11:06:20, 09/21/11 JST>
+Machine: EVSY (arm/emev/evsy)
+RAM: 0xc0008000-0xc1e00000 available
+Boot Mode: eMMC (2)
+NBL> boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/emma_nfs ip=10.1.2.230::10.
+1.2.1:255.255.254.0" net:tftp:vmlinux_emma_C18B_1222.bin
+Auto-negotiation: 100Base-TX FD
+Binary file is loaded : start = 0xc0008000, length = 0x00328360
+linux.c:platform_invoke_linux(entry 0xffffffff, args 0xc1f50ab0)
+Linux version 2.6.29.6-rt24-alp_nl (root@IA-Jif) (gcc version 4.5.1 (20110425 (Sony CE Linux 8.0.1.1)) ) #1 PREEMPT
+Wed Dec 21 19:46:56 CST 2011
+CPU: ARMv7 Processor [411fc093] revision 3 (ARMv7), cr=10c5387f
+CPU: VIPT nonaliasing data cache, VIPT nonaliasing instruction cache
+Machine: EVSY
+Memory policy: ECC disabled, Data cache writeback
+EMEV system_rev=0x30
+NBLArgs: searching for nblargs on memory(0xc1ffe000@0x1000).
+NBLArgs: Valid NBLArgs region found in 0x41ffe000(0xc1ffe000)
+NBLArgs: reserved entry region (0x41ffe000@0x1000).
+NBLArgs: reserve_bootmem_common(): key=boottime, 0x2000@0x41ef6000, param=-><-
+NBLArgs: reserve_bootmem_common(): key=nblver, 0x44@0x41efc000, param=-><-
+NBLArgs: reserve_bootmem_common(): key=sdminfo, 0x534@0x41ef8000, param=-><-
+NBLArgs: added 3 entry.
+Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 64008
+Kernel command line: mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.2.188:/home/emma_nfs ip=10.1.2.230:
+:10.1.2.1:255.255.254.0
+NR_IRQS:326
+PID hash table entries: 1024 (order: 10, 4096 bytes)
+Dentry cache hash table entries: 32768 (order: 5, 131072 bytes)
+Inode-cache hash table entries: 16384 (order: 4, 65536 bytes)
+Memory: 252MB = 252MB total
+Memory: 252024KB available (2896K code, 359K data, 88K init)
+SLUB: Genslabs=10, HWalign=32, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+Calibrating delay loop... 1064.96 BogoMIPS (lpj=5324800)
+Mount-cache hash table entries: 512
+CPU: Testing write buffer coherency: ok
+net_namespace: 296 bytes
+NET: Registered protocol family 16
+L310 cache controller enabled
+l2x0: 8 ways, CACHE_ID 0x410000c4, AUX_CTRL 0x40040000
+bio: create slab <bio-0> at 0
+SCSI subsystem initialized
+usbcore: registered new interface driver usbfs
+usbcore: registered new interface driver hub
+usbcore: registered new device driver usb
+NET: Registered protocol family 2
+IP route cache hash table entries: 2048 (order: 1, 8192 bytes)
+TCP established hash table entries: 8192 (order: 4, 65536 bytes)
+TCP bind hash table entries: 8192 (order: 3, 32768 bytes)
+TCP: Hash tables configured (established 8192 bind 8192)
+TCP reno registered
+NET: Registered protocol family 1
+spi_probe():1662 run here!
+emif_dl_drv_init():991 1013-1
+before enable irq 0xe0050194 = 0x00000000
+after enable irq 0xe0050194 = 0x00000020
+phyadr: registered device phyadr [phyadr]
+spi: registered device spi [spi]
+success to init FR_SpiVup device[258998272].
+NBLArgs: freeing key=nblver, 0x44@0x41efc000
+NBLArgs: 0k freed
+msgmni has been set to 492
+io scheduler noop registered
+io scheduler cfq registered (default)
+emxx_fb: emxx_fb_probe: cannot reserve smem
+emxx_fb: probe of emxx_fb failed with error -12
+ttynull: NULL console driver $Revision: 1.1.2.1 $
+Serial: 8250/16550 driver, 2 ports, IRQ sharing disabled
+serial8250.0: ttyS0 at MMIO 0xe1020000 (irq = 40) is a TI16750
+console [ttyS0] enabled
+serial8250.0: ttyS1 at MMIO 0xe1030000 (irq = 41) is a TI16750
+loop: module loaded
+smsc911x: Driver version 2008-10-21.
+smsc911x-mdio: probed
+eth0: attached PHY driver [Generic PHY] (mii_bus:phy_addr=0:01, irq=-1)
+net eth0: MAC Address: 12:32:42:22:52:66
+Linux video capture interface: v2.00
+emxx_v4l2: registered device video0 [v4l2]
+i2c /dev entries driver
+Driver 'sd' needs updating - please use bus_type methods
+ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+emxx-ehci-driver emxx-ehci-driver: EMXX EHCI
+emxx-ehci-driver emxx-ehci-driver: new USB bus registered, assigned bus number 1
+emxx-ehci-driver emxx-ehci-driver: irq 115, io mem 0xe2701000
+emxx-ehci-driver emxx-ehci-driver: USB 2.0 started, EHCI 1.00
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 1 port detected
+ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+emxx-ohci-driver emxx-ohci-driver: EMXX OHCI
+emxx-ohci-driver emxx-ohci-driver: new USB bus registered, assigned bus number 2
+emxx-ohci-driver emxx-ohci-driver: irq 115, io mem 0xe2700000
+hub 2-0:1.0: USB hub found
+hub 2-0:1.0: 1 port detected
+Initializing USB Mass Storage driver...
+usbcore: registered new interface driver usb-storage
+USB Mass Storage support registered.
+rtc-RX8025 0-0032: chip found, driver version 0.4.3
+rtc-RX8025 0-0032: rtc core: registered rtc-RX8025 as rtc0
+Registered led device: mmc2
+usbcore: registered new interface driver usbhid
+usbhid: v2.6:USB HID core driver
+TCP cubic registered
+NET: Registered protocol family 17
+RPC: Registered udp transport module.
+RPC: Registered tcp transport module.
+VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 1
+rtc-RX8025 0-0032: setting system clock to 2001-01-01 02:15:06 UTC (978315306)
+mmc0: new high speed MMC card at address 0001
+mmcblk0: mmc0:0001 004G00 3.72 GiB
+ p1
+usb 1-1: new high speed USB device using emxx-ehci-driver and address 2
+hub 1-1:1.0: USB hub found
+hub 1-1:1.0: 2 ports detected
+net eth0: SMSC911x/921x identified at 0xd0018000, IRQ: 167
+IP-Config: Complete:
+     device=eth0, addr=10.1.2.230, mask=255.255.254.0, gw=10.1.2.1,
+     host=10.1.2.230, domain=, nis-domain=(none),
+     bootserver=255.255.255.255, rootserver=10.1.2.188, rootpath=
+Looking up port of RPC 100003/2 on 10.1.2.188
+Looking up port of RPC 100005/1 on 10.1.2.188
+VFS: Mounted root (nfs filesystem) readonly on device 0:13.
+Freeing init memory: 88K
+
+
+
+BusyBox v1.4.2 (2011-12-05 13:07:00 CST) Built-in shell (ash)
+Enter 'help' for a list of built-in commands.
+
+/ # cd Emma
+/Emma # ./emma_test.sh
+/Emma # Running main() for EMMACsi!
+[EMMACsi]Start to receive message
+Running main() for EmmaResB!
+Running main() for EmmaResA!
+[EmmaResA]Start to receive message
+[/tmp/csi_semaphore]open_or_create the ftok value is 888046
+Running main() for EMMAEmif!
+[EMMAEmif]Start to receive message
+[EmmaResB]Start to receive message
+[/tmp/emif_semaphore]open_or_create the ftok value is 887843
+3
+2
+1
+EmmaResourceAPort::method1
+method1 param = 0
+EmmaResourceBPort::method2
+method2 param = 0
+EmmaResourceCPort::method3
+method3 param = 0
+EmmaResourceDPort::method4
+method4 param = 0
+[/tmp/emif_semaphore]open_or_create the ftok value is 887843
+open again m_semid is 98307
+[Send][CSI][C_ID:4][Len:1009][Data:00 00 DA 03
+[/tmp/emif_semaphore]open_or_create the ftok value is 887843
+open again m_semid is 98307
+[Send][EMIF][C_ID:12][Len:1009][RealLen:1017]
+[Send][EMIF]The crc32 value is [0xe6db8a49].
+[/tmp/csi_semaphore]open_or_create the ftok value is 888046
+open again m_semid is 0
+[Send][EMIF][C_ID:12][Len:1009][RealLen:1017]
+[Send][EMIF]The crc32 value is [0x51d48aec].
+[/tmp/csi_semaphore]open_or_create the ftok value is 888046
+open again m_semid is 0
+[Send][CSI][C_ID:7][Len:1009][Data:03 00 DA 03
+
+
+
+
+关于usb架构
+
+简单对usb架构的部分内容进行记录。
+以一个内核版本的内容来简要说明下usb结构中相关的内容：
+#ls linux-2.6.32/drivers/usb
+atm     class  early   host   Kconfig   misc  musb  README  storage         wusbcore
+c67x00  core   gadget  image  Makefile  mon   otg   serial  usb-skeleton.c
+这里，有几个关键的目录：
+core
+host
+gadget
+class
+...
+
+core这个目录存放一些核心的代码，比如初始化整个usb系统，初始化root hub，初始化host controller的代码等等，随着时间的发
+展，这个目录以及usb父目录的其他内容，会被存放到不同的更为合适的地方。
+
+host目录存放主机host controller驱动相关内容。所谓host controller就是控制usb设备的硬件，而主机的各个usb设备，又有它们
+自己的驱动。host目录下的内容，例如：ehci-pci.c用于该host controller是在基于ehci的pci上面的usb hostcontroller，其它的类似，还有基于某个cpu的usb host controller。反正，就是看成把硬件host controller挂接到它所基于的那个上面，然后又通过>这个host controller来控制其上的usb设备。 
+
+class这个目录存放关于某个类的usb设备信息，例如通信类，等等。
+gadget这个目录信息比较多。假设我们将一个本身运行linux系统的嵌入式板子插入到pc上面，通过pc访问插入到这个板子上面的某>个usb设备（例如sd卡）。那么，首先pc的host controller将这个板子识别成为某种类型的设备，所以相关驱动代码大致在pc端的内
+核的与host目录同级的其它驱动目录上（例如storage对应的是海量存储类）。其次，插入到板子上面的usb设备（例如sd卡）被这个
+板子的host controller识别成usb设备(对应的驱动大致在板子端的内核的与host目录同级的其它驱动目录上（例如storage对应的是海量存储类)。然后，板子上又告诉它自己它被当做pc的usb设备来使用(对应的驱动大致在板子端的内核的gadget中的**udc驱动或者类似文件中的代码部分，)。然后板子又根据插入到板子上面的usb设备，让pc能够将这个板子识别成可以访问板子上面usb设备的设>备（对应的驱动大致在板子端的内核的gadget中的其它gadget的文件中的代码部分）。描述的并不是特别精确，但是这是大致的框架结构。总之上面的那种情况，需要的驱动代码分别在pc和板子，对于pc上面，我们一般不会关心，主要是板子上面，三个地方比较关
+键：a)将板子可以做为usb设备的部分(gadget目录中的udc驱动部分) b)将板子识别成什么设备类型的部分（例如板子插入sd卡那么pc将板子识别成sd卡，插入到板子上的usb设备驱动和pc联接得通过它）c)插入板子上的usb设备的驱动部分（以便板子识别它自己身>上的usb设备，就像pc识别板子一样为usb设备一样）。注意，这里板子和pc运行的两套系统。
+
+其他目录:就存放host controller所控制的各种usb设备驱动类。例如storage存放的就是海量存储类（u盘）设备的驱动等等。
+
+另外，并不是所有的usb设备驱动都在这个drivers/usb目录下面，其它地方也有，例如"linux-2.6.32/sound/usb"。
+
+参考：http://blog.csdn.net/fudan_abc/article/details/1791510

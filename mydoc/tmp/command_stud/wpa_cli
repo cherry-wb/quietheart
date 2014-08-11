@@ -1,0 +1,545 @@
+wpa_cli
+使用命令行配置无线网络的命令。
+
+[举例]
+以下命令在android系统上测试。
+*查看网络接口：
+root@android:/ # wpa_cli -iwlan0 interface
+Available interfaces:
+wlan0
+如果wpa_cli不用-i指定网络接口，则使用一个默认的，参见后面。
+
+*扫描并显示可用的接入点：
+root@android:/data # wpa_cli -iwlan0 scan
+OK
+root@android:/data # wpa_cli -iwlan0 scan_result                               
+bssid / frequency / signal level / flags / ssid
+68:7f:74:c5:ca:83       2437    -24     [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][WPS][ESS]
+68:7f:74:19:df:e8       2462    -34     [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][WPS][ESS]       linksys
+00:0b:6b:b1:6d:0e       2462    -38     [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][ESS]
+68:7f:74:c5:ca:84       5240    -45     [WPA2-PSK-CCMP][WPS][ESS]
+58:6d:8f:5a:6f:fe       2412    -46     [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][WPS][ESS]       OpenWrt2
+84:c9:b2:4c:3b:87       2437    -51     [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][WPS][ESS]       DIR-655B1
+74:44:01:51:e7:c6       2412    -55     [WPA2-PSK-CCMP][WPS][ESS]       Lab_test
+74:44:01:51:e7:c5       5765    -68     [WPA2-PSK-CCMP][WPS][ESS]       Lab_test
+00:0e:e8:b0:04:80       2412    -72     [WPA2-PSK-CCMP][ESS]    Boeing
+c0:3f:0e:b8:33:24       2412    -75     [WPA2-PSK-CCMP][WPS][ESS]       NIC
+00:21:27:91:43:80       2437    -92     [ESS]   MERCURY
+38:83:45:a4:0a:c2       2437    -92     [WPA-PSK-CCMP][WPA2-PSK-CCMP][ESS]
+这里，需要将wifi功能打开，这样会列出了所有的无线接入点以及它们内部设置的相应的加密方式。实践发现，如果加入一个无线接入点之后，先运行"scan"再"scan_result"会列出新的接入点。
+
+*查看指定网络接口上所有的配置好的网络：
+root@android:/ # wpa_cli -iwlan0 list_networks
+network id / ssid / bssid / flags
+0       Cisco34585      any
+这里，-i指定将要操作的网络接口是wlan0，而list_networks表示就是要列举出所有配置好的网络。
+
+*为指定网络接口添加一个网络：
+root@android:/ # wpa_cli -iwlan0 add_network
+1
+这里，增加一个网络,会返回一个数字，这里为1，增加之后，可以用"list_networks"命令看到网络会多一个。
+root@android:/ # wpa_cli -iwlan0 list_networks                                 
+network id / ssid / bssid / flags
+0       Cisco34585      any
+1               any     [DISABLED]
+
+*查看网络状态：
+root@android:/ #wpa_cli status
+类似输出如下：
+Using interface 'wlan0'
+wpa_state=SCANNING
+ip_address=192.168.1.105
+address=f0:a2:25:ee:bc:ab
+这里没有连接任何网络。
+如果连接上网络则类似输出如下：
+Using interface 'wlan0'
+bssid=08:86:3b:67:45:d6
+ssid=belkin_5d6_192
+id=3
+mode=station
+pairwise_cipher=CCMP
+group_cipher=CCMP
+key_mgmt=WPA2-PSK
+wpa_state=COMPLETED
+ip_address=192.168.2.2
+address=f0:a2:25:ee:bc:ab
+这里，连接了belkin_5d6_192网络并且使用wpa2方式进行连接。
+
+
+*添加一个网络：
+root@android:/ #wpa_cli add_network
+添加之后，返回一个数字，可以使用list_networks命令查看。
+
+*设置网络的ssid
+root@android:/data # wpa_cli -iwlan0 set_network 0 ssid '"Cisco34585"'         
+OK
+将0号加入Cisco34585网络（或者设置机器上0号网络对应连接的网络的ssid为Cisco34585），这里，注意网络名称ssid是先单引号再双引号，或者使用\"\"来表示其中的双引号，否则设置不成功，后面密码的设置也有这个问题。
+
+**设置网络的属性：
+这里，设置网络的时候，子命令"set_network"后面分别是网络id、一个待设置的属性、以及用双引号括起来的值。例如设置ssid的命令为:
+root@android:/ #wpa_cli set_network 1 ssid "belkin_5d6_192"
+如果"set_network"子命令后面没有参数，则可以列出设置的变量列表。可以使用"#wpa_cli get_network 1 ssid"之类的命令来获得相应的值，设置之后，使用"select_network"子命令可以连接到刚刚设置的网络。 以下连接网络之后，要使用如下命令申请dhcp地址，才能ping通路由: #setprop ctl.start "dhcpcd_wlan0:wlan0"，具体参见后面关于dhcp操作相关内容。
+
+*连接wpa2或者wpa方式，并且密码为"12345678"的网络：
+假设无线路由设置为WPA2方式加密，并且密码为"12345678"，那么使用如下方式连接：
+root@android:/ #wpa_cli set_network 1 ssid "belkin_5d6_192"
+root@android:/ #wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+root@android:/ #wpa_cli set_network 1 key_mgmt "WPA-PSK"
+root@android:/ #wpa_cli set_network 1 proto "WPA RSN"
+root@android:/ #wpa_cli set_network 1 pairwise "CCMP TKIP"
+root@android:/ #wpa_cli set_network 1 psk "12345678"
+root@android:/ #wpa_cli select_network 1
+这里，如果无线路由（ap）上面设置了wpa2方式，那么设备(station)需要使用"wpa_cli set_network"设置好网络，再使用"wpa_cli select_network"命令才能连接到刚刚设置的网络上面，同时禁用其他的网络。使用"wpa_cli status"可以看到连接的结果(wpa_state=COMPLETED)。
+
+*连接没有加密（或者无线网络的security被禁用）的网络：
+root@android:/ #wpa_cli set_network 1 ssid "belkin_5d6_192"
+root@android:/ #wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+root@android:/ #wpa_cli set_network 1 key_mgmt "NONE"
+root@android:/ #wpa_cli select_network 1
+关键在于设置key_mgmt为"NONE"。
+
+*连接WEP64 bit的网络，使用wep generate出来的密码假设为aabbccddee：
+root@android:/ #wpa_cli set_network 1 ssid "belkin_5d6_192"
+root@android:/ #wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+root@android:/ #wpa_cli set_network 1 key_mgmt "NONE"
+root@android:/ #wpa_cli set_network 1 wep_key0 "aabbccddee"
+root@android:/ #wpa_cli set_network 1 wep_tx_keyidx "0"
+root@android:/ #wpa_cli select_network 1
+
+*连接没有加密并且ap的ssid为hidden的情况：
+root@android:/ #wpa_cli set_network 1 ssid "belkin_5d6_192"
+root@android:/ #wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+root@android:/ #wpa_cli set_network 1 key_mgmt "NONE"
+root@android:/ #wpa_cli set_network 1 scan_ssid "1"
+root@android:/ #wpa_cli select_network 1
+这里，假设ap没有设置无线网络加密，并且ssid为hidden，那么需要在设备端指定ssid,关键在于设置scan_ssid为"1"。
+**
+
+*断开wifi网络连接：
+root@android:/ #wpa_cli disconnect
+
+*禁用网络1：
+root@android:/ #wpa_cli disable_network 1
+
+*移除网络：
+root@android:/ #wpa_cli remove_network 1
+
+[其它]
+待整理的命令：
+参考：http://no001.blog.51cto.com/1142339/457523
+关于wpa_supplicant:
+用到wpa_cli命令
+wpa_cli -iwlan0 add_network             // wlan0 是无线网络设备的名字，增加一个网络,会返回一个数字，假设为1
+wpa_cli -iwlan0 set_network 1 ssid '"……"'    //这里ssid是要连接的网络名，注意 后面是单引号+双引号
+wpa_cli -iwlan0 set_network 1 psk '"……"'     //这里psk是密码
+wpa_cli -iwlan0 enable_network 1
+wpa_cli -iwlan0 select_network 1
+wpa_cli -iwlan0 save_config
+dhclient -r wlan0
+dhclient wlan0
+//注意可能wlan0是down的状态，有时需要  ifconfig wlan0 up
+或者/etc/init.d/networking restart
+
+其他辅助命令
+wpa_cli -iwlan0 list_network
+wpa_cli -iwlan0 remove_network 1
+开启wpa_supplicant  服务
+wpa_supplicant -iwlan0 -c/etc/wpa_supplicant.conf -B
+
+加密方式
+wpa_passphrase ssid psk > /etc/wpa_supplicant.conf     //这个文件可以变动
+
+尚不完全清楚内容
+ctrl_interface = /var/run/wpa_supplicant
+update_config =1
+
+==========
+http://hi.baidu.com/left99/item/420089abfd685c9f151073f0
+wpa_supplicant无线网络配置
+目前可以使用wireless-tools 或wpa_supplicant工具来配置无线网络。请记住重要的一点是，对无线网络的配置是全局性的，而非针对具体的接口。
+   wpa_supplicant是一个较好的选择，但缺点是它不支持所有的驱动。请浏览wpa_supplicant网站获得它所支持的驱动列表。另外，wpa_supplicant目前只能连接到那些你已经配置好ESSID的无线网络。wireless-tools支持几乎所有的无线网卡和驱动，但它不能连接到那些只支持WPA的AP。
+    经过编译后的wpa_supplicant源程序可以看到两个主要的可执行工具：wpa_supplicant和wpa_cli。wpa_supplicant是核心程序，它和wpa_cli的关系就是服务和客户端的关系：后台运行wpa_supplicant，使用wpa_cli来搜索、设置、和连接网络。
+       如何用wpa_supplicant使能一个wifi连接？
+Step by step：
+1、运行wpa_supplicant程序；
+执行：/system/bin/wpa_supplicant -d -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+其中：
+-d ：增加调试信息
+-Dwext ：wext，驱动名称
+-iwlan0 ：wlan0，网络接口名称
+/system/bin/wpa_supplicant ：wpa_supplicant可执行程序path
+/data/misc/wifi/wpa_supplicant.conf ：wpa_supplicant的配置文件path
+2、运行命令行工具wpa_cli ；
+执行 ：wpa_cli -iwlan0 -p/data/system/wpa_supplicant
+注，-p/data/system/wpa_supplicant中的wpa_supplicant并不是可执行程序，而是个控制套接字。
+此时会进入交互模式。其中交互模式的命令如下表：
+Full command
+Short command
+Description
+status
+stat
+displays the current connection status
+disconnect
+disc
+prevents wpa_supplicant from connecting to any access point
+quit
+q
+exits wpa_cli
+terminate
+term
+kills wpa_supplicant
+reconfigure
+recon
+reloads wpa_supplicant with the configuration file supplied (-c parameter)
+scan
+scan
+scans for available access points (only scans it, doesn't display anything)
+scan_result
+scan_r
+displays the results of the last scan
+list_networks
+list_n
+displays a list of configured networks and their status (active or not, enabled or disabled)
+select_network
+select_n
+select a network among those defined to initiate a connection (ie select_network 0)
+enable_network
+enable_n
+makes a configured network available for selection (ie enable_network 0)
+disable_network
+disable_n
+makes a configured network unavailable for selection (ie disable_network 0)
+remove_network
+remove_n
+removes a network and its configuration from the list (ie remove_network 0)
+add_network
+add_n
+adds a new network to the list. Its id will be created automatically
+set_network
+set_n
+shows a very short list of available options to configure a network when supplied with no parameters.
+See next section for a list of extremely useful parameters to be used with set_network and get_network.
+get_network
+get_n
+displays the required parameter for the specified network. See next section for a list of parameters
+save_config
+save_c
+saves the configuration
+
+设置网络的基本格式：set_network <network id> <key><parameter> [<parameter>]
+显示网络信息的基本格式：get_network <network id> <key>
+相应的参数如下表：
+Key
+Description
+Parameters
+ssid
+Access point name
+string
+id_str
+String identifying the network
+string
+priority
+Connection priority over other APs
+number (0 being the default low priority)
+bssid
+Mac address of the access point
+mac address
+scan_ssid
+Enable/disbale ssid scan
+0, 1, 2
+key_mgmt
+Type of key management
+WPA-PSK, WPA_EAP, None
+pairwise
+Pairwise ciphers for WPA
+CCMP, TKIP
+group=TKIP
+Group ciphers for WPA
+CCMP, TKIP, WEP104, WEP40
+psk
+Pre-Shared Key (clear or encrypted)
+string
+wep_key0
+WEP key (up to 4: wep_key[0123])
+string
+eap
+Extensible Authentication Protocol
+MD5, MSCHAPV2, OTP, GTC, TLS, PEAP, TTLS
+identity
+EAP identity string
+string
+password
+EAP password
+string
+ca_cert
+Pathname to CA certificate file
+/full/path/to/certificate
+client_cert
+Pathname to client certificate
+/full/path/to/certificate (PEM/DER)
+private_key
+Pathname to a client private key file
+/full/path/to/private_key (PEM/DER/PFX)
+eg.1、连接无加密的AP
+>add_network  (It will display a network id for you, assume it returns 0)
+>set_network 0 ssid "666"
+>set_network 0 key_mgmt NONE
+>enable_network 0
+>quit
+eg.2、连接WEP加密AP
+>add_network   (assume return 1)
+>set_network 1 ssid "666"
+>set_network 1 key_mgmt NONE
+>set_network 1 wep_key0 "your ap password"
+>enable_network 1
+eg.3、连接WPA-PSK/WPA2-PSK加密的AP
+>add_network   (assume return 2)
+>set_network 2 ssid "666"
+>set_network 2 psk "your pre-shared key"
+>enable_network 2
+到此，wifi模块就能连接上AP了。
+3、以上是通过命令行工具wpa_cli来实现wifi网络的连接。当然，也可以通过wpa_supplicant的配置文件来实现连接。
+再回顾下运行wpa_supplicant时执行的命令：
+/system/bin/wpa_supplicant -d -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+我们在执行时加上了-c/data/misc/wifi/wpa_supplicant.conf，我们可以将我们要连接的AP的设置以一定的格式写入wpa_supplicant.conf配置文件中即可。
+eg. 
+ctrl_interface=DIR=/data/system/wpa_supplicant GROUP=system update_config=1
+network={
+ssid="my access point"
+proto=WPA
+key_mgmt=WPA-PSK
+psk="you pass words"
+}
+具体格式可参考：
+#Wifi
+===========
+http://blog.163.com/kissinger_1984/blog/static/16899252010025105713708/
+wpa_cli在网上没有看到详细用法的，所以，经过实验，原创此篇wpa_cli详细用法
+
+ 
+
+1: run wpa_supplicant first
+use the following command:
+       wpa_supplicant -Dwext -iwlan0 -C/data/system/wpa_supplicant -c/data/misc/wifi/wpa_supplicant.conf
+      (use “ps”to make sure wpa_supplicant is running )
+ 
+2: Run the command line tool wpa_cli to connect wifi
+       wpa_cli -p/data/system/wpa_supplicant -iwlan0
+       Then , it will let you set network interactively
+ 
+       some common command:
+       >scan = to scan the neighboring AP
+       >scan_results = show the scan results
+       >status = check out the current connection information
+       >terminate = terminate wpa_supplicant
+       >quit = exit wpa_cli
+       >add_network = it will return a network id to you
+       >set_network <network id> <variable> <value> = set network variables (shows
+list of variables when run without arguments), success will return OK, or will return Fail
+       >select_network <network id> = select a network (disable others)
+       >disable_network <network id> = disable a network
+       >enable_network <network id> = enable a network
+ 
+3: example
+ 
+       for AP that doesn`t have encryption
+              >add_network      (It will display a network id for you, assume it returns 0)
+              >set_network 0 ssid “666”
+              >set_network 0 key_mgmt NONE
+              >enable_network 0
+              >quit
+       if normal, we have connectted to the AP “666”, now you need a IP to access internet, for example:
+              dhcpcd wlan0
+              if everything is ok, it will get an IP & can access internet
+ 
+       for AP that has WEP
+              >add_network      (assume returns 1)
+              >set_network 1 ssid “666”
+              >set_network 1 key_mgmt NONE
+              >set_network 1 wep_key0 “your ap passwork”(if usting ASCII, it need double quotation marks, if using hex, then don`t need the double quotation marks)
+              >set_network 1 wep_tx_keyidx 0
+              >select_network 1  (optional, remember, if you are connecting with another AP, you should select it to disable the another)
+              >enable_network 1
+              and then ,get an IP to access internet
+ 
+       for AP that has WPA-PSK/WPA2-PSK
+              >add_network      (assume returns 2)
+              >set_network 2 ssid “666”
+              >set_network 2 psk “your pre-shared key”
+              >select_network 2  (optional, remember, if you are connecting with another AP, you should select it to disable the another)
+              >enable_network 2
+              there is still some others options to be set, but wpa_supplicant will choose the default for you, the default will include all we need to set
+              and then ,get an IP to access internet
+ 
+
+       for Hidden AP（补充）
+
+        原则上应该只要在上面的基础上去set_network netid scan_ssid 1即可，测试过无加密的Hidden AP，WEP/WPA/WPA2应该道理一样
+===========
+假设使用"adb shell"进入板子。那么需要加载wifi驱动并且启动supplicant才能使用wpa_cli。
+*启用wifi功能：
+1,加载驱动
+（1）如果是broadcom芯片：
+#insmod /system/lib/modules/bcmdhd.ko firmware_path=/system/etc/wifi/firmware.bin
+#setprop wlan.driver.status ok
+（2）如果使TI的：
+#insmod /system/lib/modules/wl12xx_sdio.ko
+#setprop wlan.driver.status ok
+这里，如果驱动已经加载了，那么：
+"getprop wlan.driver.status"命令返回"ok"；并且运行"lsmod"的时候，我们可以看到"bcmdhd"(BROADCOM驱动)或者"wl12xx_sdio"（TI驱动）
+2,启动supplicant：
+#setprop ctl.start "wpa_supplicant:-iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -C/data/misc/wifi/sockets"
+这里，其中选项可参见wpa_supplicant命令。wpa_supplicant本是开源项目源码，被谷歌修改后加入android移动平台，它主要是用来支持WEP，WPA/WPA2和WAPI无线协议和加密认证的，而实际上的工作内容是通过socket（不管是wpa_supplicant与上层还是wpa_supplicant与驱动都采用socket通讯）与驱动交互上报数据给用户，而用户可以通过socket发送命令给wpa_supplicant调动驱动来对WiFi芯片操作。 简单的说，wpa_supplicant就是WiFi驱动和用户的中转站外加对协议和加密认证的支持。-C指定的wpa_supplicant.conf中，包含"wpa_cli list_networks"中列出的网络的密码等各种参数。启动成功之后，"getprop init.svc.wpa_supplicant"应该返回"running"。这样才能使用wpa_cli命令。
+
+*停止wifi功能
+1,停止supplicant:
+#setprop ctl.stop wpa_supplicant
+停止成功之后，"getprop init.svc.wpa_supplicant"应该返回"stopped"。之后还可用"ifconfig wlan0 0.0.0.0 && ifconfig down"关闭网卡。
+2,卸载驱动：
+（1）如果是BROADCOM芯片：
+#rmmod bcmdhd.ko
+#setprop wlan.driver.status unloaded
+（2）如果是TI芯片：
+#rmmod wl12xx_sdio.ko
+#setprop wlan.driver.status unloaded
+以上设置属性的值，例如"failed","stopped"等，具体是android的framework中的代码逻辑中确定的。
+
+*查看dhcp客户端是否启动：
+#getprop init.svc.dhcpcd_wlan0
+如果启动则返回"running"，否则返回其它。
+
+*停止dhcp客户：
+#setprop ctl.stop dhcpcd_wlan0
+
+*操作dhcp之后的状态设置为failed：
+#setprop dhcp.wlan0.result failed
+
+*使用dhcp申请地址：
+#setprop ctl.start "dhcpcd_wlan0:wlan0"
+运行成功之后使用"getprop dhcp.wlan0.result"会返回"ok"；如果错误了，可以通过"getprop dhcp.wlan0.reason"查看错误的原因，可以通过"getprop dhcp.wlan0.server"查看dhcp连接的服务器。"dhcpcd wlan0"
+
+
+
+获取IP地址
+用 quit
+命令退出wpa_cli 。然后用
+dhclient wlan0
+命令获取IP地址。
+
+*查看网络状态：
+netcfg
+
+
+
+-------
+一个完整的例子
+Step1,加载驱动：
+#insmod /system/lib/modules/bcmdhd.ko firmware_path=/system/etc/wifi/firmware.bin
+#insmod /system/lib/modules/wl12xx_sdio.ko
+#setprop wlan.driver.status ok
+这样，设置成功之后，检测结果输出如下：
+#getprop wlan.driver.status
+   ok
+#lsmod 
+   DRIVER_BCMDHD   = 'bcmdhd'
+或者：
+   DRIVER_TI       = 'wl12xx_sdio'
+具体显示哪种，根据芯片类型而不同，前者是broadcom，后者是TI。
+
+
+Step2,启动supplicant：
+#setprop ctl.start "wpa_supplicant:-iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -C/data/misc/wifi/sockets"
+这样，启动成功之后，检测结果输出如下：
+#getprop init.svc.wpa_supplicant
+   running
+
+
+
+Step3,连接网络(ssid, security, password, hidden)
+连接网络之前，首先将待连接的参数写入一个网络配置中，然后通过这个网络配置，连接相应的网络。
+1,为待连接的网络创建一个配置项（网络id）：
+#wpa_cli add_network
+这样会返回网络配置的id，这里假设网络配置id为1。
+
+2,向网络配置中写入待连接的网络的参数：
+#wpa_cli set_network 1 ssid \"xxx\"
+#wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+这里，网络的名称为"xxx"（无冒号），然后根据相应无线路由的设置，需要用不同参数才能连接上待连接的网络。
+(1)如果无线路由中配置的无限网络的加密(security)为非激活状态，则如下设置：
+#wpa_cli set_network 1 key_mgmt "NONE"
+
+(2)如果无线路由中配置的无限网络的加密(security)为WPA或WPA2方式，则如下设置：
+#wpa_cli set_network 1 key_mgmt "WPA-PSK"
+#wpa_cli set_network 1 proto "WPA RSN"
+#wpa_cli set_network 1 pairwise "CCMP TKIP"
+#wpa_cli set_network 1 psk \"12345678\"
+这里，相应的密码为"12345678"（无冒号），加密方式为TKIP或者AES等。
+
+(3)如果无线路由中配置的无限网络的加密(security)为WEP方式，则如下设置：
+#wpa_cli set_network 1 key_mgmt "NONE"
+#wpa_cli set_network 1 wep_key0 "aabbccddee"
+#wpa_cli set_network 1 wep_tx_keyidx "0"
+
+(4)如果无线路由中设置隐藏网络（不广播ssid），则如下设置：
+#wpa_cli set_network 1 scan_ssid
+
+3,使用做好的配置连接网络：
+#wpa_cli select_network 1
+这里，在进行连接之前，可以通过如下命令确认相应的网络ssid是否存在（即待连接的网络的对应ap是否还存在）：
+#wpa_cli scan
+    Using interface 'wlan0'
+    OK
+#wpa_cli scan_result
+    Using interface 'wlan0'
+    bssid / frequency / signal level / flags / ssid
+    00:0b:6b:b1:6d:0e   2462    -51 [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][ESS]    OpenWrt_8
+    98:fc:11:e5:09:05   2437    -45 [WPA2-PSK-CCMP-preauth][WPS][ESS]   wrt120n
+    00:0b:6b:b1:43:b5   2447    -48 [WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP][ESS]    OpenWrt_5
+    ......
+通过scan，可以看到相应网络的名称，以及其他参数。另外，通过如下查看是否连接成功：
+#wpa_cli status
+   COMPLETED
+成功则COMPLETED，否则其他。
+
+##dhcp
+setprop ctl.stop dhcpcd_wlan0
+setprop dhcp.wlan0.result "failed"
+#getprop init.svc.dhcpcd_wlan0
+#   not running
+
+setprop dhcp.wlan0.result ""
+hostname = getprop net.hostname
+setprop ctl.start "dhcpcd_wlan0:-h $hostname wlan0"
+#if no hostname use: setprop ctl.start "dhcpcd_wlan0:wlan0"
+
+##getprop init.svc.dhcpcd_wlan0
+#   running
+##getprop dhcp.wlan0.result
+#   ok
+
+
+###test
+ping
+
+
+###cleanup
+wpa_cli disconnect
+wpa_cli disable_network 1
+wpa_cli remove_network 1
+
+setprop ctl.stop dhcpcd_wlan0
+
+#getprop init.svc.dhcpcd_wlan0
+#   stopped
+
+setprop dhcp.wlan0.result failed
+
+setprop ctl.stop wpa_supplicant
+#getprop init.svc.wpa_supplicant
+#   stopped
+
+ifconfig wlan0 0.0.0.0
+ifconfig wlan0 down
+=======
+
+

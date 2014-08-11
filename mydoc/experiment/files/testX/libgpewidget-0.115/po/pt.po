@@ -1,0 +1,42 @@
+# libgpewidget (Portuguese)
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libgpewidget package.
+# Luis Oliveira <luismbo@netcabo.pt>, 2003.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libgpewidget 0.56\n"
+"POT-Creation-Date: 2003-03-30 15:33+0100\n"
+"PO-Revision-Date: 2003-04-05 06:19+0000\n"
+"Last-Translator: Luis Oliveira <luismbo@netcabo.pt>\n"
+"Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: errorbox.c:42
+#, c-format
+msgid "GPE-ERROR: %s\n"
+msgstr "ERRO-GPE: %s\n"
+
+#: pixmaps.c:82
+#, c-format
+msgid "Unable to load icon \"%s\""
+msgstr "N,bc(Bo foi poss,bm(Bvel carregar o ,bm(Bcone \"%s\""
+
+#: pixmaps.c:168
+#, c-format
+msgid "Icon \"%s\" not loaded"
+msgstr ",bM(Bcone \"%s\" n,bc(Bo carregado"
+
+#: dirbrowser.c:166
+msgid "No directory is selected."
+msgstr "Não está nenhum directório seleccionado."
+
+#: what.c:78
+msgid "No help available."
+msgstr "Ajuda n,bc(Bo dispon,bm(Bvel."
+
+#: question.c:175
+msgid "Question"
+msgstr "Quest,bc(Bo"

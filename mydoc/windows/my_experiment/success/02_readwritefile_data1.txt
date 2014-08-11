@@ -1,0 +1,91 @@
+这里自己就是在excel中执行一个宏，这个宏的功能就是相当于：
+打开一个新建excel工作表的窗口，然后测试各种文本文件读写操作.
+
+实践过程：
+1)首先给excel录制一个宏：
+*依次点击："视图->宏->录制宏"
+这样开始录制一个宏。
+*随便做一些操作之后，点击"视图->宏->停止录制"
+
+2)编辑自己的宏:
+*点击"视图->宏->察看宏"
+从列表中选择自己刚才录制的宏，然后点击"编辑"。
+
+*填入自己的宏代码
+在打开的窗口中，依次存放着当前文件所有的宏.在最后面行追加一个宏代码如下：
+Sub MyRWData()
+'
+' mytest Macro
+'
+	Dim objExcel as Application
+	Set objExcel = CreateObject("Excel.Application")
+	objExcel.Visible = True
+	objExcel.Workbooks.Add
+	objExcel.Cells(15, 1).Value = "My Workbook"
+
+	Dim fso As Object
+	Set fso = CreateObject("Scripting.FileSystemObject")
+	
+	'创建一个文件夹
+	'fso.CreateFolder("c:\myfolder")
+
+	Dim f
+	'创建一个可以被覆盖的文件,原有的文件会被请零(实践发现如果不关闭文件则提示文件存在错误)	
+	'Set f = fso.CreateTextFile("c:\myfolder\testfile.txt", True)
+    	
+	''''''写操作
+	Const ForWriting = 2, ForAppending = 8
+	Set f = fso.OpenTextFile("c:\myfolder\testfile.txt", ForAppending,False)
+    	f.Write "Hello world!"   '写入字符串
+	f.Write "\nHello world2!" '写入字符串(\n无用)
+
+	f.WriteLine("Hello world!") '写入一行
+	f.WriteLine("") '写入一个空行
+	f.WriteLine("Hello world2!") '写入一行
+	f.WriteBlankLines(3)    '相当于按3次回车（三个空行）
+	f.WriteLine("Hello world3!") '写入一行
+    	f.Close	
+	
+	''''''读操作
+	'从文件中读取特定长度的数据并且写到单元格中
+	Const ForReading = 1
+	Set f = fso.OpenTextFile("c:\myfolder\testfile.txt", ForReading, False)
+	Dim retstring
+	Do While f.AtEndOfLine <> True    '是否到行末
+ 		retstring = retstring & f.Read(1)   '读取一个字符		
+	Loop
+	objExcel.Cells(16, 1).Value = retstring
+	
+	'从文件中读取一行（当前文件指针是基于上次的，上次读到哪当前就在上次读取的那）
+	f.Skip (2)      '跳过2个字符,这样就把上次未读取的行结束字符跳过去了。
+	retstring = f.ReadLine    '读取一行
+	objExcel.Cells(17, 1).Value = retstring
+
+	'全部读取（当前位置基于上次读取结束的位置）
+	retstring = f.Readall
+	objExcel.Cells(18, 1).Value = retstring
+
+	'下面是逐行全部读取
+	'Do While f.AtEndOfStream <> True   '是否在 TextStream 文件末尾用这个判断
+    	'	retstring = f.ReadLine    '读取一行
+    	'	Debug.Print retstring    '显示在立即窗口
+	'Loop
+	
+	f.Close
+	
+End Sub
+
+之后保存,这时候"察看宏"列表中会多一个"MyRWData"宏。
+
+3)执行自己编辑的宏：
+点击"视图->宏->察看宏"
+选择刚才写入的"MyRWData"宏，点击"执行".
+这样，结果就像打开了一个新建excel工作表的窗口，然后在单元格15行,1列的位置写入了"MyRWData".
+
+
+注意：
+*目前我还不知道如何直接独立编写excel宏的vba脚本，所以先录制了一个宏，然后才开始编辑。
+*我使用的是excel 2007
+
+其他：
+object.SkipLine跳过一行，没有实践

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>A</title>
+<indexentry><primaryie linkends="WnckActionMenu-struct"><link linkend="WnckActionMenu-struct">WnckActionMenu</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckActionMenu--window"><link linkend="WnckActionMenu--window">WnckActionMenu:window</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-action-menu-new"><link linkend="wnck-action-menu-new">wnck_action_menu_new</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckApplication-struct"><link linkend="WnckApplication-struct">WnckApplication</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckApplication-icon-changed"><link linkend="WnckApplication-icon-changed">WnckApplication::icon-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckApplication-name-changed"><link linkend="WnckApplication-name-changed">WnckApplication::name-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get"><link linkend="wnck-application-get">wnck_application_get</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-icon"><link linkend="wnck-application-get-icon">wnck_application_get_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-icon-is-fallback"><link linkend="wnck-application-get-icon-is-fallback">wnck_application_get_icon_is_fallback</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-icon-name"><link linkend="wnck-application-get-icon-name">wnck_application_get_icon_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-mini-icon"><link linkend="wnck-application-get-mini-icon">wnck_application_get_mini_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-name"><link linkend="wnck-application-get-name">wnck_application_get_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-n-windows"><link linkend="wnck-application-get-n-windows">wnck_application_get_n_windows</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-pid"><link linkend="wnck-application-get-pid">wnck_application_get_pid</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-startup-id"><link linkend="wnck-application-get-startup-id">wnck_application_get_startup_id</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-windows"><link linkend="wnck-application-get-windows">wnck_application_get_windows</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-application-get-xid"><link linkend="wnck-application-get-xid">wnck_application_get_xid</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>C</title>
+<indexentry><primaryie linkends="WnckClassGroup-struct"><link linkend="WnckClassGroup-struct">WnckClassGroup</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckClassGroup-icon-changed"><link linkend="WnckClassGroup-icon-changed">WnckClassGroup::icon-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckClassGroup-name-changed"><link linkend="WnckClassGroup-name-changed">WnckClassGroup::name-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get"><link linkend="wnck-class-group-get">wnck_class_group_get</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-icon"><link linkend="wnck-class-group-get-icon">wnck_class_group_get_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-mini-icon"><link linkend="wnck-class-group-get-mini-icon">wnck_class_group_get_mini_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-name"><link linkend="wnck-class-group-get-name">wnck_class_group_get_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-res-class"><link linkend="wnck-class-group-get-res-class">wnck_class_group_get_res_class</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-class-group-get-windows"><link linkend="wnck-class-group-get-windows">wnck_class_group_get_windows</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckClientType"><link linkend="WnckClientType">WnckClientType</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-create-window-action-menu"><link linkend="wnck-create-window-action-menu">wnck_create_window_action_menu</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>G</title>
+<indexentry><primaryie linkends="wnck-gtk-window-set-dock-type"><link linkend="wnck-gtk-window-set-dock-type">wnck_gtk_window_set_dock_type</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>L</title>
+<indexentry><primaryie linkends="WnckLoadIconFunction"><link linkend="WnckLoadIconFunction">WnckLoadIconFunction</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>M</title>
+<indexentry><primaryie linkends="WnckMotionDirection"><link linkend="WnckMotionDirection">WnckMotionDirection</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>P</title>
+<indexentry><primaryie linkends="WnckPager-struct"><link linkend="WnckPager-struct">WnckPager</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckPagerDisplayMode"><link linkend="WnckPagerDisplayMode">WnckPagerDisplayMode</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-new"><link linkend="wnck-pager-new">wnck_pager_new</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-display-mode"><link linkend="wnck-pager-set-display-mode">wnck_pager_set_display_mode</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-n-rows"><link linkend="wnck-pager-set-n-rows">wnck_pager_set_n_rows</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-orientation"><link linkend="wnck-pager-set-orientation">wnck_pager_set_orientation</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-screen"><link linkend="wnck-pager-set-screen">wnck_pager_set_screen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-shadow-type"><link linkend="wnck-pager-set-shadow-type">wnck_pager_set_shadow_type</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pager-set-show-all"><link linkend="wnck-pager-set-show-all">wnck_pager_set_show_all</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-pid-read-resource-usage"><link linkend="wnck-pid-read-resource-usage">wnck_pid_read_resource_usage</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>R</title>
+<indexentry><primaryie linkends="WnckResourceUsage"><link linkend="WnckResourceUsage">WnckResourceUsage</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="WnckScreen-struct"><link linkend="WnckScreen-struct">WnckScreen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-active-window-changed"><link linkend="WnckScreen-active-window-changed">WnckScreen::active-window-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-active-workspace-changed"><link linkend="WnckScreen-active-workspace-changed">WnckScreen::active-workspace-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-application-closed"><link linkend="WnckScreen-application-closed">WnckScreen::application-closed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-application-opened"><link linkend="WnckScreen-application-opened">WnckScreen::application-opened</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-background-changed"><link linkend="WnckScreen-background-changed">WnckScreen::background-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-class-group-closed"><link linkend="WnckScreen-class-group-closed">WnckScreen::class-group-closed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-class-group-opened"><link linkend="WnckScreen-class-group-opened">WnckScreen::class-group-opened</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-showing-desktop-changed"><link linkend="WnckScreen-showing-desktop-changed">WnckScreen::showing-desktop-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-viewports-changed"><link linkend="WnckScreen-viewports-changed">WnckScreen::viewports-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-window-closed"><link linkend="WnckScreen-window-closed">WnckScreen::window-closed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-window-manager-changed"><link linkend="WnckScreen-window-manager-changed">WnckScreen::window-manager-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-window-opened"><link linkend="WnckScreen-window-opened">WnckScreen::window-opened</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-window-stacking-changed"><link linkend="WnckScreen-window-stacking-changed">WnckScreen::window-stacking-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-workspace-created"><link linkend="WnckScreen-workspace-created">WnckScreen::workspace-created</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-workspace-destroyed"><link linkend="WnckScreen-workspace-destroyed">WnckScreen::workspace-destroyed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-calc-workspace-layout"><link linkend="wnck-screen-calc-workspace-layout">wnck_screen_calc_workspace_layout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-change-workspace-count"><link linkend="wnck-screen-change-workspace-count">wnck_screen_change_workspace_count</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-force-update"><link linkend="wnck-screen-force-update">wnck_screen_force_update</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-free-workspace-layout"><link linkend="wnck-screen-free-workspace-layout">wnck_screen_free_workspace_layout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get"><link linkend="wnck-screen-get">wnck_screen_get</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-active-window"><link linkend="wnck-screen-get-active-window">wnck_screen_get_active_window</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-active-workspace"><link linkend="wnck-screen-get-active-workspace">wnck_screen_get_active_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-background-pixmap"><link linkend="wnck-screen-get-background-pixmap">wnck_screen_get_background_pixmap</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-default"><link linkend="wnck-screen-get-default">wnck_screen_get_default</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-for-root"><link linkend="wnck-screen-get-for-root">wnck_screen_get_for_root</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-height"><link linkend="wnck-screen-get-height">wnck_screen_get_height</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-number"><link linkend="wnck-screen-get-number">wnck_screen_get_number</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-previously-active-window"><link linkend="wnck-screen-get-previously-active-window">wnck_screen_get_previously_active_window</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-showing-desktop"><link linkend="wnck-screen-get-showing-desktop">wnck_screen_get_showing_desktop</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-width"><link linkend="wnck-screen-get-width">wnck_screen_get_width</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-windows"><link linkend="wnck-screen-get-windows">wnck_screen_get_windows</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-windows-stacked"><link linkend="wnck-screen-get-windows-stacked">wnck_screen_get_windows_stacked</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-window-manager-name"><link linkend="wnck-screen-get-window-manager-name">wnck_screen_get_window_manager_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspace"><link linkend="wnck-screen-get-workspace">wnck_screen_get_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspaces"><link linkend="wnck-screen-get-workspaces">wnck_screen_get_workspaces</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspace-count"><link linkend="wnck-screen-get-workspace-count">wnck_screen_get_workspace_count</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspace-index"><link linkend="wnck-screen-get-workspace-index">wnck_screen_get_workspace_index</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspace-neighbor"><link linkend="wnck-screen-get-workspace-neighbor">wnck_screen_get_workspace_neighbor</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-move-viewport"><link linkend="wnck-screen-move-viewport">wnck_screen_move_viewport</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-net-wm-supports"><link linkend="wnck-screen-net-wm-supports">wnck_screen_net_wm_supports</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-release-workspace-layout"><link linkend="wnck-screen-release-workspace-layout">wnck_screen_release_workspace_layout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-toggle-showing-desktop"><link linkend="wnck-screen-toggle-showing-desktop">wnck_screen_toggle_showing_desktop</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-try-set-workspace-layout"><link linkend="wnck-screen-try-set-workspace-layout">wnck_screen_try_set_workspace_layout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckSelector-struct"><link linkend="WnckSelector-struct">WnckSelector</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-selector-new"><link linkend="wnck-selector-new">wnck_selector_new</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-set-client-type"><link linkend="wnck-set-client-type">wnck_set_client_type</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>T</title>
+<indexentry><primaryie linkends="WnckTasklist-struct"><link linkend="WnckTasklist-struct">WnckTasklist</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-loop-time"><link linkend="WnckTasklist--s-fade-loop-time">WnckTasklist:fade-loop-time</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-max-loops"><link linkend="WnckTasklist--s-fade-max-loops">WnckTasklist:fade-max-loops</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-opacity"><link linkend="WnckTasklist--s-fade-opacity">WnckTasklist:fade-opacity</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-overlay-rect"><link linkend="WnckTasklist--s-fade-overlay-rect">WnckTasklist:fade-overlay-rect</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckTasklistGroupingType"><link linkend="WnckTasklistGroupingType">WnckTasklistGroupingType</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-get-minimum-height"><link linkend="wnck-tasklist-get-minimum-height">wnck_tasklist_get_minimum_height</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-get-minimum-width"><link linkend="wnck-tasklist-get-minimum-width">wnck_tasklist_get_minimum_width</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-get-size-hint-list"><link linkend="wnck-tasklist-get-size-hint-list">wnck_tasklist_get_size_hint_list</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-new"><link linkend="wnck-tasklist-new">wnck_tasklist_new</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-button-relief"><link linkend="wnck-tasklist-set-button-relief">wnck_tasklist_set_button_relief</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-grouping"><link linkend="wnck-tasklist-set-grouping">wnck_tasklist_set_grouping</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-grouping-limit"><link linkend="wnck-tasklist-set-grouping-limit">wnck_tasklist_set_grouping_limit</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-icon-loader"><link linkend="wnck-tasklist-set-icon-loader">wnck_tasklist_set_icon_loader</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-include-all-workspaces"><link linkend="wnck-tasklist-set-include-all-workspaces">wnck_tasklist_set_include_all_workspaces</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-minimum-height"><link linkend="wnck-tasklist-set-minimum-height">wnck_tasklist_set_minimum_height</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-minimum-width"><link linkend="wnck-tasklist-set-minimum-width">wnck_tasklist_set_minimum_width</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-screen"><link linkend="wnck-tasklist-set-screen">wnck_tasklist_set_screen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-tasklist-set-switch-workspace-on-unminimize"><link linkend="wnck-tasklist-set-switch-workspace-on-unminimize">wnck_tasklist_set_switch_workspace_on_unminimize</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="WnckWindow-struct"><link linkend="WnckWindow-struct">WnckWindow</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-actions-changed"><link linkend="WnckWindow-actions-changed">WnckWindow::actions-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-geometry-changed"><link linkend="WnckWindow-geometry-changed">WnckWindow::geometry-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-icon-changed"><link linkend="WnckWindow-icon-changed">WnckWindow::icon-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-name-changed"><link linkend="WnckWindow-name-changed">WnckWindow::name-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-state-changed"><link linkend="WnckWindow-state-changed">WnckWindow::state-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindow-workspace-changed"><link linkend="WnckWindow-workspace-changed">WnckWindow::workspace-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowActions"><link linkend="WnckWindowActions">WnckWindowActions</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowGravity"><link linkend="WnckWindowGravity">WnckWindowGravity</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowMoveResizeMask"><link linkend="WnckWindowMoveResizeMask">WnckWindowMoveResizeMask</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowState"><link linkend="WnckWindowState">WnckWindowState</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWindowType"><link linkend="WnckWindowType">WnckWindowType</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-activate"><link linkend="wnck-window-activate">wnck_window_activate</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-activate-transient"><link linkend="wnck-window-activate-transient">wnck_window_activate_transient</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-close"><link linkend="wnck-window-close">wnck_window_close</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get"><link linkend="wnck-window-get">wnck_window_get</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-actions"><link linkend="wnck-window-get-actions">wnck_window_get_actions</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-application"><link linkend="wnck-window-get-application">wnck_window_get_application</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-class-group"><link linkend="wnck-window-get-class-group">wnck_window_get_class_group</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-client-window-geometry"><link linkend="wnck-window-get-client-window-geometry">wnck_window_get_client_window_geometry</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-geometry"><link linkend="wnck-window-get-geometry">wnck_window_get_geometry</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-group-leader"><link linkend="wnck-window-get-group-leader">wnck_window_get_group_leader</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-icon"><link linkend="wnck-window-get-icon">wnck_window_get_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-icon-is-fallback"><link linkend="wnck-window-get-icon-is-fallback">wnck_window_get_icon_is_fallback</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-icon-name"><link linkend="wnck-window-get-icon-name">wnck_window_get_icon_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-mini-icon"><link linkend="wnck-window-get-mini-icon">wnck_window_get_mini_icon</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-name"><link linkend="wnck-window-get-name">wnck_window_get_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-pid"><link linkend="wnck-window-get-pid">wnck_window_get_pid</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-screen"><link linkend="wnck-window-get-screen">wnck_window_get_screen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-session-id"><link linkend="wnck-window-get-session-id">wnck_window_get_session_id</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-session-id-utf8"><link linkend="wnck-window-get-session-id-utf8">wnck_window_get_session_id_utf8</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-sort-order"><link linkend="wnck-window-get-sort-order">wnck_window_get_sort_order</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-state"><link linkend="wnck-window-get-state">wnck_window_get_state</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-transient"><link linkend="wnck-window-get-transient">wnck_window_get_transient</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-window-type"><link linkend="wnck-window-get-window-type">wnck_window_get_window_type</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-workspace"><link linkend="wnck-window-get-workspace">wnck_window_get_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-xid"><link linkend="wnck-window-get-xid">wnck_window_get_xid</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-has-icon-name"><link linkend="wnck-window-has-icon-name">wnck_window_has_icon_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-has-name"><link linkend="wnck-window-has-name">wnck_window_has_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-above"><link linkend="wnck-window-is-above">wnck_window_is_above</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-active"><link linkend="wnck-window-is-active">wnck_window_is_active</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-below"><link linkend="wnck-window-is-below">wnck_window_is_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-fullscreen"><link linkend="wnck-window-is-fullscreen">wnck_window_is_fullscreen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-in-viewport"><link linkend="wnck-window-is-in-viewport">wnck_window_is_in_viewport</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-maximized"><link linkend="wnck-window-is-maximized">wnck_window_is_maximized</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-maximized-horizontally"><link linkend="wnck-window-is-maximized-horizontally">wnck_window_is_maximized_horizontally</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-maximized-vertically"><link linkend="wnck-window-is-maximized-vertically">wnck_window_is_maximized_vertically</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-minimized"><link linkend="wnck-window-is-minimized">wnck_window_is_minimized</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-most-recently-activated"><link linkend="wnck-window-is-most-recently-activated">wnck_window_is_most_recently_activated</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-on-workspace"><link linkend="wnck-window-is-on-workspace">wnck_window_is_on_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-pinned"><link linkend="wnck-window-is-pinned">wnck_window_is_pinned</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-shaded"><link linkend="wnck-window-is-shaded">wnck_window_is_shaded</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-skip-pager"><link linkend="wnck-window-is-skip-pager">wnck_window_is_skip_pager</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-skip-tasklist"><link linkend="wnck-window-is-skip-tasklist">wnck_window_is_skip_tasklist</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-sticky"><link linkend="wnck-window-is-sticky">wnck_window_is_sticky</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-visible-on-workspace"><link linkend="wnck-window-is-visible-on-workspace">wnck_window_is_visible_on_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-keyboard-move"><link linkend="wnck-window-keyboard-move">wnck_window_keyboard_move</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-keyboard-size"><link linkend="wnck-window-keyboard-size">wnck_window_keyboard_size</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-make-above"><link linkend="wnck-window-make-above">wnck_window_make_above</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-make-below"><link linkend="wnck-window-make-below">wnck_window_make_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-maximize"><link linkend="wnck-window-maximize">wnck_window_maximize</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-maximize-horizontally"><link linkend="wnck-window-maximize-horizontally">wnck_window_maximize_horizontally</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-maximize-vertically"><link linkend="wnck-window-maximize-vertically">wnck_window_maximize_vertically</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-minimize"><link linkend="wnck-window-minimize">wnck_window_minimize</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-move-to-workspace"><link linkend="wnck-window-move-to-workspace">wnck_window_move_to_workspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-needs-attention"><link linkend="wnck-window-needs-attention">wnck_window_needs_attention</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-or-transient-needs-attention"><link linkend="wnck-window-or-transient-needs-attention">wnck_window_or_transient_needs_attention</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-pin"><link linkend="wnck-window-pin">wnck_window_pin</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-fullscreen"><link linkend="wnck-window-set-fullscreen">wnck_window_set_fullscreen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-geometry"><link linkend="wnck-window-set-geometry">wnck_window_set_geometry</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-icon-geometry"><link linkend="wnck-window-set-icon-geometry">wnck_window_set_icon_geometry</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-skip-pager"><link linkend="wnck-window-set-skip-pager">wnck_window_set_skip_pager</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-skip-tasklist"><link linkend="wnck-window-set-skip-tasklist">wnck_window_set_skip_tasklist</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-sort-order"><link linkend="wnck-window-set-sort-order">wnck_window_set_sort_order</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-window-type"><link linkend="wnck-window-set-window-type">wnck_window_set_window_type</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-shade"><link linkend="wnck-window-shade">wnck_window_shade</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-stick"><link linkend="wnck-window-stick">wnck_window_stick</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-transient-is-most-recently-activated"><link linkend="wnck-window-transient-is-most-recently-activated">wnck_window_transient_is_most_recently_activated</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmake-above"><link linkend="wnck-window-unmake-above">wnck_window_unmake_above</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmake-below"><link linkend="wnck-window-unmake-below">wnck_window_unmake_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmaximize"><link linkend="wnck-window-unmaximize">wnck_window_unmaximize</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmaximize-horizontally"><link linkend="wnck-window-unmaximize-horizontally">wnck_window_unmaximize_horizontally</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmaximize-vertically"><link linkend="wnck-window-unmaximize-vertically">wnck_window_unmaximize_vertically</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unminimize"><link linkend="wnck-window-unminimize">wnck_window_unminimize</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unpin"><link linkend="wnck-window-unpin">wnck_window_unpin</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unshade"><link linkend="wnck-window-unshade">wnck_window_unshade</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unstick"><link linkend="wnck-window-unstick">wnck_window_unstick</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWorkspace-struct"><link linkend="WnckWorkspace-struct">WnckWorkspace</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWorkspace-name-changed"><link linkend="WnckWorkspace-name-changed">WnckWorkspace::name-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckWorkspaceLayout"><link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-activate"><link linkend="wnck-workspace-activate">wnck_workspace_activate</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-change-name"><link linkend="wnck-workspace-change-name">wnck_workspace_change_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-height"><link linkend="wnck-workspace-get-height">wnck_workspace_get_height</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-layout-column"><link linkend="wnck-workspace-get-layout-column">wnck_workspace_get_layout_column</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-layout-row"><link linkend="wnck-workspace-get-layout-row">wnck_workspace_get_layout_row</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-name"><link linkend="wnck-workspace-get-name">wnck_workspace_get_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-neighbor"><link linkend="wnck-workspace-get-neighbor">wnck_workspace_get_neighbor</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-number"><link linkend="wnck-workspace-get-number">wnck_workspace_get_number</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-screen"><link linkend="wnck-workspace-get-screen">wnck_workspace_get_screen</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-viewport-x"><link linkend="wnck-workspace-get-viewport-x">wnck_workspace_get_viewport_x</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-viewport-y"><link linkend="wnck-workspace-get-viewport-y">wnck_workspace_get_viewport_y</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-width"><link linkend="wnck-workspace-get-width">wnck_workspace_get_width</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-is-virtual"><link linkend="wnck-workspace-is-virtual">wnck_workspace_is_virtual</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>X</title>
+<indexentry><primaryie linkends="wnck-xid-read-resource-usage"><link linkend="wnck-xid-read-resource-usage">wnck_xid_read_resource_usage</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

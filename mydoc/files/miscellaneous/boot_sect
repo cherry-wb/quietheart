@@ -1,0 +1,11 @@
+http://my.chinaunix.net/space.php?uid=21782158&do=blog&id=22679
+备份分区信息：
+shell - # /sbin/fdisk /dev/sda -l >/tmp/pattern.bak
+
+备份MBR：
+shell - # dd if=/dev/sda of=/tmp/mbr bs=512 count=1
+说明：主引导记录512字节中前446是MBR代码,后64字节包含分区表信息，最后2字节标识是MBR。
+
+恢复分区表：
+shell - # dd if=/tmp/mbr of=/dev/sda bs=1 skip=446 count=66
+分享 

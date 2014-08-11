@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite
+END
+manage.py
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/manage.py
+END
+view.py
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/view.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/__init__.py
+END
+root_page.py
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/root_page.py
+END
+settings.py
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/settings.py
+END
+urls.py
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svnroot/quietheart/!svn/ver/97/trunk/codes/pythonDemo/00_miscellaneous/django_demo/1_hello/mysite/urls.py
+END

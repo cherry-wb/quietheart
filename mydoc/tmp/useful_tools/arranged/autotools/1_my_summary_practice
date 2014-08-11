@@ -1,0 +1,497 @@
+					Auto Tools使用流程
+本文内容：
+一、简介
+二、AutoTools相关说明
+三、实际例子
+
+一、简介
+=============
+	本文简单介绍最简单的auto tools工具的使用流程。
+	对于一个UNIX/Linux下C程序员来说，一个比较麻烦的工作就是写自己的Makefile。
+	可能你有如下经验：写一个简单的C程序，自己多写几行gcc命令就把程序变成可执行的了；写一个稍微复杂点的程序，源文件个数可能在30个左右，还是写一行行的gcc命令就麻烦了，你可能想到写个makefile，你可能也在这样做着；但你某一天会发现你写的这个Makefile可能不是一个所有 UNIX/Linux类操作系统下通用的Makefile，比如某人下载了你的程序去他自己电脑上可能make不了。这样，你就有必要了解并学会运用autoconf和automake了。 
+	本节要讲的autotools系列工具正是为此而设的，它只需用户输入简单的目标文件、依赖文件、文件目录等就可以轻松地生成Makefile了，这无疑是广大用户的所希望的。另外，这些工具还可以完成系统配置信息的收集，从而可以方便地处理各种移植性的问题。也正是基于此，现在Linux上的软件开发一般都用autotools来制作Makefile。
+
+二、AutoTools相关说明
+=============
+	在开始使用autoconf和automake之前，首先确认你的系统安装有GNU的如下软件：
+	1. automake
+	2. autoconf
+	3. m4
+	4. perl
+	5. 如果你需要产生共享库（shared library）则还需要GNU Libtool 
+	
+	autoconf和automake工作的几个步骤：
+	步骤解释如下：
+	1、由你的源文件通过autoscan命令生成configure.scan文件，然后修改configure.scan文件并重命名为configure.in
+	2、由aclocal命令生成aclocal.m4
+	3、由autoconf命令生成configure
+	4、编辑一个Makefile.am文件并由automake命令生成Makefile.in文件
+	5、运行configure命令生成Makefile
+	
+	automake支持三种目录层次：flat、shallow和deep。
+	一个flat包指的是所有文件都在一个目录中的包。为这类包提供的Makefile.am不需要SUBDIRS这个宏。这类包的一个例子是termutils。对应咱们程序员来说：就是所有源文件及自己写的头文件都位于当前目录里面，且没有子目录。
+	一个deep包指的是所有的源代码都被储存在子目录中的包；顶层目录主要包含配置信息。GNU cpio是这类包的一个很好的例子，GNU tar也是。deep包的顶层Makefile.am将包括宏SUBDIRS，但没有其它定义需要创建的对象的宏。对应咱们程序员来说：就是所有源文件及自己写的头文件都位于当前目录的一个子目录里面，而当前目录里没有任何源文件。
+	一个shallow包指的是主要的源代码储存在顶层目录中，而各个部分（典型的是库）则储存在子目录中的包。automake本身就是这类包（GNU make也是如此，它现在已经不使用automake）。对应咱们程序员来说：就是主要源文件在当前目录里，而其它一些实现各部分功能的源文件各自位于不同目录。
+	前两个层次的程序编辑方法非常简单，按照上述步骤一步步即可。而第三种层次shallow稍微复杂一点，但这是我们经常写程序用到的结构。下面以一个例子说明shallow层次结构的源文件如何自动生成Makefile文件。
+
+	本文只是用一个非常简单的例子，记录了一个使用autotools的实践步骤：
+	更高级的用法，需要仔细学习这个系列工具的用户手册。
+	
+三、实际例子
+=============
+1)查看目录:
+$ pwd
+/mnt/d/myOwn_all/experiment/program/anyTest/usingAutotools/hello
+[quietheart@lv-k hello]$ tree
+.
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- main.c
+|-- myprint.c
+`-- myprint.h
+
+2 directories, 7 files
+
+2)运行如下：
+$autoscan
+这样输出：
+autom4te: configure.ac: no such file or directory
+autoscan: /usr/bin/autom4te failed with exit status: 1
+
+$ tree 
+.
+|-- autoscan.log
+|-- configure.scan
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- main.c
+|-- myprint.c
+`-- myprint.h
+
+2 directories, 9 files
+
+这里，autoscan首先会尝试去读入“configure.ac”（同configure.in的配置文件）文件，此时还没有创建该配置文件，于是它会自动生成一个“configure.in”的原型文件“configure.scan”。这个configure.scan是一个模板文件，修改这个文件，并且将它重新命名为"configure.in".如下：
+
+3)编辑文件configure.in
+$mv configure.scan configure.in
+$vi configure.in
+修改之后，文件内容大致如下：
+	#                                               -*- Autoconf -*-
+	# Process this file with autoconf to produce a configure script.
+	
+	#This is the version of autoconf(lvkai*)
+	AC_PREREQ(2.59)
+	
+	#This is the pagename,and version,and email of bug report.(lvkai*)
+	#lvkai-
+	#AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+	
+	#lvkai+
+	AC_INIT(hello,1.0)
+	
+	#lvkai+ This used for automake.
+	AM_INIT_AUTOMAKE(hello,1.0)
+	
+	#This check if source file exists,and directory validity.file in current directory.(lvkai*).
+	AC_CONFIG_SRCDIR([main.c])
+	
+	#This is used for autoheader(lvkai*).
+	AC_CONFIG_HEADER([config.h])
+	
+	# Checks for programs.
+	AC_PROG_CC
+	
+	# Checks for libraries.
+	
+	# Checks for header files.
+	
+	# Checks for typedefs, structures, and compiler characteristics.
+	
+	# Checks for library functions.
+	
+	#lvkai+ This is used for generate the Makefile.
+	AC_CONFIG_FILES([Makefile])
+	
+	AC_OUTPUT
+以上内容，"lvkai+"后面的内容是我添加的，"lvkai-"后面的内容是原来就有但是被我删除了的，"lvkai*"表示这是我添加的注释。
+
+4)运行如下：
+$aclocal
+$tree
+.
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- requests
+|   `-- traces.0
+|-- autoscan.log
+|-- configure.in
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- main.c
+|-- myprint.c
+`-- myprint.h
+
+3 directories, 13 files
+这里，新生成了一个文件aclocal.m4.
+
+5)运行如下：
+$autoconf
+$tree
+.
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- output.1
+|   |-- requests
+|   |-- traces.0
+|   `-- traces.1
+|-- autoscan.log
+|-- configure
+|-- configure.in
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- main.c
+|-- myprint.c
+`-- myprint.h
+
+3 directories, 16 files
+这里，生成了一个可以执行的configure.
+
+6)自己创建并编辑一个Makefile.am文件：
+######
+AUTOMAKE_OPTIONS=foreign
+bin_PROGRAMS=hello
+hello_SOURCES=main.c myprint.c myprint.h \
+				iface1/print1.c iface1/print1.h \
+				iface2/print2.c iface2/print2.h
+######
+这里的含义是，表示将要用hello_SOURCES中的文件生成hello程序。
+
+
+7)运行如下：
+$autoheader
+$tree
+.
+|-- Makefile.am
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- output.1
+|   |-- requests
+|   |-- traces.0
+|   `-- traces.1
+|-- autoscan.log
+|-- config.h.in
+|-- configure
+|-- configure.in
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- main.c
+|-- myprint.c
+`-- myprint.h
+
+3 directories, 18 files
+
+这里，这个命令负责生成config.h.in文件。该工具通常会从“acconfig.h”文件中复制用户附加的符号定义，因此此处没有附加符号定义，所以不需要创建“acconfig.h”文件。
+感觉，我不运行这个命令，直接运行下面的automake都行。
+
+8)运行如下：
+$automake --add-missing
+configure.in: installing `./install-sh'
+configure.in: installing `./missing'
+Makefile.am: installing `./depcomp'
+$tree
+.
+|-- Makefile.am
+|-- Makefile.in
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- output.1
+|   |-- requests
+|   |-- traces.0
+|   `-- traces.1
+|-- autoscan.log
+|-- config.h.in
+|-- configure
+|-- configure.in
+|-- depcomp -> /usr/share/automake-1.9/depcomp
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- install-sh -> /usr/share/automake-1.9/install-sh
+|-- main.c
+|-- missing -> /usr/share/automake-1.9/missing
+|-- myprint.c
+`-- myprint.h
+
+3 directories, 22 files
+
+至此，告一段落，已经生成了Makefile.in文件，后面将会根据configure来生成Makefile.注意，这里的文件系统要是linux下面的文件系统，不能是windows文件系统，否则会因为无法创建链接而失败。
+
+9)运行如下：
+$./configure
+$tree
+.
+|-- Makefile
+|-- Makefile.am
+|-- Makefile.in
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- output.1
+|   |-- requests
+|   |-- traces.0
+|   `-- traces.1
+|-- autoscan.log
+|-- config.h
+|-- config.h.in
+|-- config.log
+|-- config.status
+|-- configure
+|-- configure.in
+|-- depcomp -> /usr/share/automake-1.9/depcomp
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- install-sh -> /usr/share/automake-1.9/install-sh
+|-- main.c
+|-- missing -> /usr/share/automake-1.9/missing
+|-- myprint.c
+|-- myprint.h
+`-- stamp-h1
+
+3 directories, 27 files
+这样，生成了Makefile.
+
+10)使用生成的Makefile进行编译：
+$make
+这样，生成的hello程序可以直接运行了。
+
+11)安装程序：
+$./configure --prefix $(pwd)/target
+$./make
+$./make install
+这样，将会在当前路径创建一个target，并在其中安装hello程序。查看安装的信息如下：
+	$ pwd
+	/home/quietheart/test/hello/target
+	[quietheart@lv-k target]$ tree
+	.
+	`-- bin
+	    `-- hello
+	
+	1 directory, 1 file
+
+12)其他命令：
+*清除中间结果：
+$make clean
+这样，清除的内容不会清除安装的内容。（例如前面的target）
+
+*卸载之前的安装：
+$make uninstall
+这样，会把之前安装包target中的安装文件删除，但是target目录并没有删除。
+$ tree target/
+target/
+`-- bin
+
+1 directory, 0 files
+
+
+*将程序打成一个压缩包以便发布：
+$make dist
+查看打包的内容如下：
+$ tar -tzvf hello-1.0.tar.gz 
+drwxrwxr-x 500/500           0 2011-02-01 15:09:13 hello-1.0/
+-rwxrwxrwx 500/500         199 2011-02-01 14:50:53 hello-1.0/Makefile.am
+-rwxr-xr-x 500/500       11014 2010-03-31 18:09:05 hello-1.0/missing
+-rwxrwxrwx 500/500          81 2010-10-19 11:49:36 hello-1.0/main.c
+-rwxr-xr-x 500/500        9233 2010-03-31 18:09:05 hello-1.0/install-sh
+drwxrwxr-x 500/500           0 2011-02-01 15:09:13 hello-1.0/iface2/
+-rwxrwxrwx 500/500          82 2011-02-01 14:40:09 hello-1.0/iface2/print2.c
+-rwxrwxrwx 500/500          60 2011-01-31 15:31:42 hello-1.0/iface2/print2.h
+drwxrwxr-x 500/500           0 2011-02-01 15:09:13 hello-1.0/iface1/
+-rwxrwxrwx 500/500          78 2011-02-01 14:42:55 hello-1.0/iface1/print1.c
+-rwxrwxrwx 500/500          60 2010-10-19 11:58:30 hello-1.0/iface1/print1.h
+-rwxr-xr-x 500/500       15936 2010-03-31 18:09:05 hello-1.0/depcomp
+-rwxrwxrwx 500/500       31120 2011-02-01 14:14:26 hello-1.0/aclocal.m4
+-rwxrwxrwx 500/500         116 2011-01-31 16:06:26 hello-1.0/myprint.c
+-rwxrwxrwx 500/500         874 2011-02-01 14:03:08 hello-1.0/configure.in
+-rwxrwxrwx 500/500          63 2011-01-31 15:32:46 hello-1.0/myprint.h
+-rwxrwxrwx 500/500      130038 2011-02-01 14:16:25 hello-1.0/configure
+-rw-rw-r-- 500/500       20944 2011-02-01 14:51:25 hello-1.0/Makefile.in
+-rwxrwxrwx 500/500         557 2011-02-01 14:25:54 hello-1.0/config.h.in
+
+*清除先前的configure配置:
+$make distclean
+$tree
+.
+|-- Makefile.am
+|-- Makefile.in
+|-- aclocal.m4
+|-- autom4te.cache
+|   |-- output.0
+|   |-- output.1
+|   |-- requests
+|   |-- traces.0
+|   `-- traces.1
+|-- autoscan.log
+|-- config.h.in
+|-- configure
+|-- configure.in
+|-- depcomp -> /usr/share/automake-1.9/depcomp
+|-- iface1
+|   |-- print1.c
+|   `-- print1.h
+|-- iface2
+|   |-- print2.c
+|   `-- print2.h
+|-- install-sh -> /usr/share/automake-1.9/install-sh
+|-- main.c
+|-- missing -> /usr/share/automake-1.9/missing
+|-- myprint.c
+`-- myprint.h
+
+3 directories, 22 files
+这里，一般有了前面的configure，想要把相应的内容删除，那么就用这个命令，然后可以configure重新生成Makefile.它不会清除install的文件以及make dist生成的tar包。
+
+13)其它：
+注意，一般而言，从./configure开始，会向源代码目录中创建许多的中间"垃圾"文件，虽然可以用clean或者diskclean清除它们，但是毕竟直接在源代码目录中直接运行./configure和make是不好的习惯。
+一般会在一个独立的目录，进行配置，编译，安装，清除，发布.中间文件全部存放在这个独立的目录中，不会污染原始目录。
+使用如下流程：
+13.1)查看当前路径：
+$pwd
+/home/quietheart/test
+$ls
+hello
+
+13.2)创建编译目录并在编译目录中配置和编译
+$mkdir build_hello
+$cd build_hello
+$../hello/configure --prefix=$(pwd)/../target
+$tree
+.
+|-- Makefile
+|-- config.h
+|-- config.log
+|-- config.status
+`-- stamp-h1
+
+0 directories, 5 files
+$make
+$tree
+.
+|-- Makefile
+|-- config.h
+|-- config.log
+|-- config.status
+|-- hello
+|-- main.o
+|-- myprint.o
+|-- print1.o
+|-- print2.o
+`-- stamp-h1
+
+0 directories, 10 files
+
+13.3)安装软件包:
+$make install
+$ls ../
+hello build_hello target
+$tree ../target
+../target
+`-- bin
+    `-- hello
+
+1 directory, 1 file
+
+13.4)制作发布包：
+$make dist
+$ tree
+.
+|-- Makefile
+|-- config.h
+|-- config.log
+|-- config.status
+|-- hello
+|-- hello-1.0.tar.gz
+|-- main.o
+|-- myprint.o
+|-- print1.o
+|-- print2.o
+`-- stamp-h1
+
+0 directories, 11 files
+$tar -tzvf hello-1.0.tar.gz 
+drwxrwxr-x 500/500           0 2011-02-01 15:47:17 hello-1.0/
+-rwxrwxrwx 500/500         199 2011-02-01 14:50:53 hello-1.0/Makefile.am
+-rwxr-xr-x 500/500       11014 2010-03-31 18:09:05 hello-1.0/missing
+-rwxrwxrwx 500/500          81 2010-10-19 11:49:36 hello-1.0/main.c
+-rwxr-xr-x 500/500        9233 2010-03-31 18:09:05 hello-1.0/install-sh
+drwxrwxr-x 500/500           0 2011-02-01 15:47:17 hello-1.0/iface2/
+-rwxrwxrwx 500/500          82 2011-02-01 14:40:09 hello-1.0/iface2/print2.c
+-rwxrwxrwx 500/500          60 2011-01-31 15:31:42 hello-1.0/iface2/print2.h
+drwxrwxr-x 500/500           0 2011-02-01 15:47:17 hello-1.0/iface1/
+-rwxrwxrwx 500/500          78 2011-02-01 14:42:55 hello-1.0/iface1/print1.c
+-rwxrwxrwx 500/500          60 2010-10-19 11:58:30 hello-1.0/iface1/print1.h
+-rwxr-xr-x 500/500       15936 2010-03-31 18:09:05 hello-1.0/depcomp
+-rwxrwxrwx 500/500       31120 2011-02-01 14:14:26 hello-1.0/aclocal.m4
+-rwxrwxrwx 500/500         116 2011-01-31 16:06:26 hello-1.0/myprint.c
+-rwxrwxrwx 500/500         874 2011-02-01 14:03:08 hello-1.0/configure.in
+-rwxrwxrwx 500/500          63 2011-01-31 15:32:46 hello-1.0/myprint.h
+-rwxrwxrwx 500/500      130038 2011-02-01 14:16:25 hello-1.0/configure
+-rw-rw-r-- 500/500       20944 2011-02-01 14:51:25 hello-1.0/Makefile.in
+-rwxrwxrwx 500/500         557 2011-02-01 14:25:54 hello-1.0/config.h.in
+
+13.5)清除之前编译结果：
+$make clean
+$ tree
+.
+|-- Makefile
+|-- config.h
+|-- config.log
+|-- config.status
+|-- hello-1.0.tar.gz
+`-- stamp-h1
+
+0 directories, 6 files
+
+13.6)清除所有配置中间结果：
+$make distclean
+$ tree
+.
+`-- hello-1.0.tar.gz
+
+0 directories, 1 file
+
+
+
+作者：QuietHeart
+Email:quiet_heart000@126.com
+2011年2月1日

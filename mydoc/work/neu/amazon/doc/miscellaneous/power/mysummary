@@ -1,0 +1,46 @@
+
+Android关于休眠和wake_lock
+
+Linux中的休眠通过控制/sys/power/state，Android也是。不过，当将休眠状态写入state之后，两者走不同的流程。由于引入了wake_lock机制，Android会在休眠之前的时候检查wake_lock而Linux不会。
+Wake Lock是一种锁的机制, 只要有人拿着这个锁,系统就无法进入休眠， 可以被用户态程序和内核获得. 为了延长电池的使用寿命，Android设备会在一段时间后使屏幕变暗，然后关闭屏幕显示，最后停止CPU。WakeLock是一个电源管理系统服务功能，应用程序可以使用它来控制设备的电源状态。 WakeLock可以用来保持CPU运行，避免屏幕变暗和关闭，以及避免键盘背光灯熄灭。
+要创建一个Wake Lock，需要调用电源管理器的newWakeLock，并指定一下一种WakeLock类型:
+*  FULL_WAKE_LOCK    保持屏幕全亮、键盘背光灯点亮和CPU运行。
+*  SCREEN_BRIGHT_WAKE_LOCK   保持屏幕全亮和CPU运行。
+*  SCREEN_DIM_WAKE_LOCK   保持屏幕开启（但是让它变暗）和CPU运行。
+*  PARTIAL_WAKE_LOCK   保持CPU运行。
+Android中有特定的api来操作wake_lock。
+
+
+**关于休眠控制：
+*查看内核支持哪几种休眠方式:
+# cat /sys/power/state
+
+*控制resume：
+#echo "on" >/sys/power/state
+这样会点亮屏幕，并且wifi等模块启动。
+
+*控制suspend：
+#echo "mem" >/sys/power/state
+这样会关闭屏幕，并且wifi等模块休眠。
+**
+
+**关于wake_lock控制：
+正常应当使用android的api控制wake_lock。
+*获取wake_lock锁:
+$ echo “me” > /sys/power/wake_lock   
+这样，使用"cat wake_lock" 会发现wake_lock文件中会多一项"me"。
+
+*释放wake_lock锁:
+$ echo “me” > /sys/power/wake_unlock  
+这样"cat wake_unlock"会发现wake_lock中的"me"会移出到wake_unlock中。
+
+*检查wake_lock锁状态:
+$ cat /proc/wakelocks
+由上，根据逻辑，应当在休眠(echo "mem" >/sys/power/state)之前获取锁，然后suspend则不起作用直到释放锁，但是实践之后结果并非如此。可能上层应用程序除了写这几个文件之后还进行了其他操作。
+**
+
+
+=======
+控制系统进入休眠:
+# echo standby > /sys/power/state
+

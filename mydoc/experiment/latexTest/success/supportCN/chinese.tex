@@ -1,0 +1,17 @@
+\documentclass[11pt,a4paper]{article}
+
+%中文支持
+\usepackage{fontspec}
+%这里使用的是宋体字
+\setmainfont{AR PL UMing CN}
+%中文断行,如果没有这个中文断行就可能会有问题
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt 
+
+\begin{document}
+hello,world!
+
+%这个非常长的行，如果没有断行相关的宏定义，那么不会自动断行，反而会截断。
+世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!世界,你好!
+
+\end{document}

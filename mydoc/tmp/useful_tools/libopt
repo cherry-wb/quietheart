@@ -1,0 +1,108 @@
+http://book.51cto.com/art/200910/158709.htm
+如果你需要为嵌入式系统进一步缩小C库的大小，可以参考http://libraryopt.sourceforge.net/上的库优化工具（Library Optimizer Tool）。
+
+http://libraryopt.sourceforge.net/
+Purpose
+
+The Library Optimizer Tool is used to reduce the size of shared libraries for an embedded system or other size-contrained environment.
+How It Works
+
+The Library Optimizer examines the complete target file system, resolves all shared library symbol references, and rebuilds the shared libraries with only the object files required to satisfy the symbol references. Detailed information is available on these topics:
+
+    * Using the Library Optimizer Tool
+    * Configuring the Library Optimizer Tool
+
+The Library Optimizer is written in Python.
+Links
+
+    * SourceForge project page.:http://sourceforge.net/projects/libraryopt/
+
+Using the Library Optimizer Tool
+Invoking the Library Optimizer
+
+=================
+The Library Optimizer is invoked as follows:
+
+libopt [-s] [ -d <destroot> ] <targetroot>
+
+<targetroot> should be the base directory of the full target filesystem tree. It must include all the executable programs and shared libraries that will be present on the target.
+
+The optional <destroot> specifies an alternate directory where the optimized libraries will be placed. If <destroot> is not specified, <targetroot> will be used as the destination, overwriting the original target libraries.
+
+The optional argument "-s" should be specified if the optimized libraries should be stripped. This can greatly reduce the size of the optimized libraries, but reduces the amount of debugging information available.
+
+
+==================
+Configuring the Library Optimizer Tool
+Python Support
+
+The Library Optimizer is written in the script language Python. Python support must be installed in the host environment. Python is available for most Linux distributions as well as several other operating system environments. All the Python components required by the Library Optimizer are normally included with even the most basic Python installations.
+Runtime Environment
+
+The Library Optimizer Tool expects certain items to be located in specific places.
+Object Tools
+
+The Library Optimizer uses the programs "objdump" and "nm" to collect information about library object files, shared libraries and executable programs. These programs, or links to them, must be located in the same directory from which the Library Optimizer scripts are executed.
+
+These programs must also be named with the same prefix as the Library Optimizer scripts, if any. For instance, if the Library Optimizer is invoked as "ppc_8xx-libopt", then the "objdump" program must be named "ppc_8xx-objdump".
+
+The combination of these features allows tools for multiple architecture to be present in the host environment without conflicting or requiring complicated invocation procedures.
+Library Information
+
+The Library Optimizer works by rebuilding the target library with only the component object files required to support the executable programs and shared libraries found in the target filesystem. In order to rebuild the library, it must have access to the build instructions for the library, the original library object files, and any other special files required to rebuild the library.
+
+The Library Optimizer searches for this library information relative to the directory from which the Library Optimizer scripts are executed. If "bin" is this directory, the Library Optimizer searches the directory "bin/../target/usr/lib/optinfo" for the library information. Within this directory, it looks at each subdirectory to see if it contains valid library information. If it does, it adds that information to the data it will use to optimize libraries in the target filesystem. See below for information about how valid library information is structured.
+Library Information Structure
+
+Within the directory which the Library Optimizer searches for library information, there should be a subdirectory for each library for which optimization is supported. The following files must be present in each valid subdirectory:
+
+    * path
+    * index
+    * build
+
+Each of these files is described in detail below.
+
+There may also be other files in a subdirectory as required to build the associated library. In general, either an archive of the original library object files or the individual object files themselves will be present.
+path
+
+This file contains the path of the library file in the target filesystem (e.g. "/lib/libc-2.1.3.so"). This should not be the path of any associated symbolic links to the library, but rather the actual object file itself. This is the file in the target filesystem that will be replaced by the optimized library.
+index
+
+This file contains information about the symbols exported and required by each of the object files that make up the target library. This information is extracted from the library object files and stored in a simplified form to reduce the execution time of the Library Optimizer in an interactive development environment.
+
+The Library Optimizer "libindex" script is used to generate this index from the original object files used to build the target library. For most libraries, the index can be generated by invoking the "libindex" script as follows:
+
+libindex <shlib> <object>... > index
+
+<shlib> must be the original unoptimized target library.
+
+If there are certain object files which must always be included in order to build a valid library, these required object files should be specified as follows:
+
+libindex <shlib> -r <required_object>... -o <optional_object>... > index
+build
+
+This is a script or program which contains the instructions to rebuild the target library. See below for information about the arguments and runtime environment of the build script.
+Library Build Script
+
+When the library build script is invoked, the current directory is the library information directory where the build script is located. It is invoked with the following argument list:
+
+build <archdir> <archprefix> <dest> <strip> <object>...
+
+Each of these arguments are described in detail below.
+
+A sample script that was used to rebuild the GNU C library can be seen here.
+archdir
+
+This is the parent directory of the directory from which the Library Optimizer was invoked. In the Hard Hat Linux environment, "<archdir>/bin" contains the compiler and other architecture-dependent tools, and "<archdir>/target" contains installed target binaries.
+archprefix
+
+This is the prefix with which the Library Optimizer was invoked (e.g. "ppc_8xx-" for "ppc_8xx-libopt"). It can be used as a prefix for other tools (e.g. "<archprefix>gcc").
+dest
+
+This is the full path name where the rebuilt library should be placed.
+strip
+
+Contains "strip" if the rebuilt library should be stripped, "nostrip" otherwise.
+object...
+
+This is a list of the optional object files that should be included in the rebuilt library. Required object file names are never passed to the build script; it's assumed that the build script will always include them.

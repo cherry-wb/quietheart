@@ -1,0 +1,40 @@
+1,directory
+files:
+profiles:
+default config for each device and ap.
+
+cases:
+case config files.
+
+scenarios:
+scenario config files, and corresponding .py scripts.
+
+scripts:
+implementation classes and case analyze parser scripts.
+
+2,profiles and databases:
+profile(e.g. profiles/ciso.conf) specifies the database which storages the data.
+
+database:
+data stores in mysql DB. information about default ap settings as following:
+apData ={
+    "serial":"CVQ01k634585",
+    "mac":"68:7F:74:C5:CA:82",
+    "ip":"192.168.1.1",
+    "submask":"255.255.255.0",
+    "dns":"10.1.10.254",
+    "admin":"admin",
+    "password":"admin"
+}
+which were done in scripts/utils/dbgenerate.py.
+
+3,configure files
+for case configure files:
+"type":{"name":"loop","parameter":"5"}: loop for 5 times for this case.
+"type":{"name":"seq"}: which equals to  "type":{"name":"loop","parameter":"1"}
+
+for scenario
+if not support "vendor" and "mac", assume use the following:
+"vendor":"ap:cisco:e3000",
+"mac":"68:7F:74:C5:CA:82",
+which were done in scripts/factory_class.py

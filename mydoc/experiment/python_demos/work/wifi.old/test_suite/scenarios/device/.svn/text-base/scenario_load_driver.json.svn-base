@@ -1,0 +1,8 @@
+{
+	"name":"load_driver",
+	"vendor":"device:tate",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_load_driver.py"},
+	"reporter":["success","fail"],
+	"description":"load wifi driver"
+}

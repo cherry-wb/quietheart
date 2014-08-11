@@ -1,0 +1,151 @@
+﻿開発環境構築及び実行手順に関する説明
+
+【概要】
+本書は主に環境構築及び実行の手順を説明するものである。
+ここではtftpでカーネルをロード、nfsでファイルシステムをマウントする方法を採用する。
+他に直接に開発ボードのflashでカーネルとファイルシステムを起動することを記載している文書がある。
+
+【詳細内容】
+一、PC側設定
+二、開発ボード設定
+三、プログラム実行
+四、補足
+
+
+
+実行環境の構築手順を以下に説明する。
+===================
+一、PC側設定
+===================
+1、nfsサービス設定
+nfsサービス設定はネットを介してnfsのディレクトリをボード環境のルートディレクトリにすることを目的とする。
+ (1)/etc/exports編集
+下記のようなラインを追加する。
+/mynfs *(rw,sync,no_root_squash)
+nfs設定前に、「rpm -q nfs-utils portmap」この2つのソフトバッケージがインストール済みかを確認する必要がある。
+デフォルトの場合、インストール済みのはずである。
+ここの「/mynfs」はローカルのnfsディレクトリとなり、任意に設定できる。詳細は「info exports」を参照のこと。
+(2)サービス再起動
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3) ファイアーウォールを無効にする。
+この手順をしなくてもいい場合がある。
+詳細は「システム→管理→セキュリティーレベルとファイアーウォール」のほうを参照のこと。
+nfsサービスの構築が完了になり、以下の方法でテストする。
+その他のPCで以下のように実行する。
+#mkdir nfstest
+#mount -t nfs <あなたのip>:<あなたのnfsディレクトリ> nfstest
+成功したら、構築完了のことを表す。
+
+2、tftpサービス設定
+tftpサービス設定は、ボードがtftpによってカーネルをダウンロードし起動することを実現することを目的とする。
+(1)tftpクライアントをインストールする。
+sudo yum install tftp.i386
+sudo yum install tftp-server.i386
+ここでもし失敗したら、「sudo yum makecache」を実行してみてください。
+(2)/etc/xinetd.d/tftp編集
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+ここのdisableはtftpサービスを有効にするか無効にするかという意味である。値がyes/noとなる。
+server_argsでtftpサービスのローカルPCへのエクスポート用ディレクトリを指定する。
+その他の引数については「info xinetd.conf」を参照のこと。
+(3)サービス再起動
+#/etc/init.d/xinetd restart
+tftpサービスの構築が完了になり、以下の方法でテストする。
+ローカルPCで以下の内容を実行する。
+#>>/tftpboot/mytest
+その他のPCで以下の内容を実行する。
+#tftp <あなたのipアドレス>
+#get mytest
+そして、「[Ctrl]D」で終了する。その他PCの現在ディレクトリからmytestが見えるなら、成功したことを表す。
+
+3、minicom設定
+minicom設定はminicom経由でPCを開発ボードと接続することを目的とする。
+(1)#minicom -s
+(2)「Serial port setup」を選択する。
+そのうちの以下の内容を設定する。
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4、カーネル準備
+最新カーネルを自PCのtftpサービスのエクスポート用ディレクトリにコピーする。
+(1)カーネルのソースコードを取得する。
+svnの取得パス：http://10.1.29.125/svn/sony/trunk/Source/Kernel
+(2)カーネルをクロスコンパイルする。
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+
+(3)コンパイルしたカーネル(vmlinux.bin)をtftpのエクスポート用ディレクトリに格納する。
+上記の設定により、エクスポート用ディレクトリは次になる：/tftpboot
+cp avp13Build/vmlinux.bin /tftpboot/vmlinux.bin
+
+5、ファイルシステム準備
+svnまたはsmbサーバーからファイルシステムをダウンロードし、設定済みのnfsディレクトリにコピーする。
+svnアドレス：http://10.1.29.125/svn/sony/trunk/Source/Rootfs
+smbアドレス：smb://10.1.29.125/SonyFS/Development/Release/*
+
+
+===================
+二、開発ボード設定
+===================
+PC側設定完了後、minicomを起動してから開発ボードを起動すると、自動的にboot loaderに遷移する。
+1、デフォルトの変数が正しいかを確認する。
+print
+正しい出力は以下のとおり、
+myip=10.1.29.180                                                                            
+console=on                                                                                  
+servip=10.1.29.44                                                                     
+ethaddr=001112334455a966 
+nfsdir=10.1.29.44:/home/quietheart/nfs
+gateip=10.1.29.1
+
+2、正しくない場合、以下のように設定する。
+setenv myip 10.1.29.180
+setenv console on
+setenv servip 10.1.29.44
+setenv ethaddr 001112334455a966
+nfsdir=10.1.29.44:/home/quietheart/nfs
+gateip=10.1.29.1
+MACアドレスの設定がちょっと特別かもしれない、「diag ethaddr 00:11:22:33:44:55」となる場合がある。
+ここのservipはtftpサーバーのアドレス、myipはボードのIP、ethaddrはボードのmacとなり、実際の状況に応じて設定する必要があると注意してください。nfsdirとgateipは保留するだけで、設定しなくてもよい。
+
+3、設定後開発ボードを起動する。
+以下を実行する。
+boot -r -t binary -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/home/quietheart/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+ここでの「nfsroot=10.1.29.44:/home/quietheart/nfs」は自PCのnfsサービスディレクトリに該当し、「ip=10.1.29.180::10.1.29.1:255.255.255.0」はボードのIPアドレスに該当する。実際の状況に応じて変更する。こうして、開発ボードを起動可能になる。nfsディレクトリ経由で開発ボードとPCを関連付けているなら、このディレクトリを通じて開発ボードとPCの間でデータを渡すことができる。
+
+===================
+三、プログラム実行
+===================
+プログラム実行
+開発ボードのルートファイルシステムにディレクトリを作成し、コンパイル済みのファイルを実行するために使用する。詳細は以下のとおり。
+ディレクトリを/home/testとして扱う。
+1) コンパイル済みのファイルbuild/diablo.binを開発ボードの/home/testの配下にコピーする。
+2) コンパイル済みのライブラリosWrapper/*.soを開発ボードの/home/test/lib（なければ作成する）の配下にコピーする。
+3)ライブラリパスを環境変数に追加する
+LD_LIBRARY_PATH:"export LD_LIBRARY_PATH=/home/test/lib:$LD_LIBRARY_PATH"
+こうして、「./diablo.bin」によってプログラム実行可能になる。
+
+===================
+四、補足
+===================
+特に無し。
+
+
+Neusoft
+2010年11月11日

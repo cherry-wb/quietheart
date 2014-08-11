@@ -1,0 +1,26 @@
+test:
+cpptest
+googletest
+
+code manage:
+svn
+
+lisence:
+GNU
+GPL
+
+bug trace:
+
+
+document:
+
+develop document:
+doxygen
+
+tools:
+auto tools
+gdb
+gprof
+gcc
+make
+

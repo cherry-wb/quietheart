@@ -1,0 +1,1023 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="WnckScreen">
+<refmeta>
+<refentrytitle role="top_of_page" id="WnckScreen.top_of_page">WnckScreen</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBWNCK Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>WnckScreen</refname>
+<refpurpose>an object representing a screen.</refpurpose>
+</refnamediv>
+<refsect1 id="WnckScreen.stability-level">
+<title>Stability Level</title>
+Unstable, unless otherwise indicated
+</refsect1>
+
+<refsynopsisdiv id="WnckScreen.synopsis" role="synopsis">
+<title role="synopsis.title">Synopsis</title>
+
+<synopsis>
+#include &lt;libwnck/libwnck.h&gt;
+
+                    <link linkend="WnckScreen-struct">WnckScreen</link>;
+<link linkend="WnckScreen">WnckScreen</link>*         <link linkend="wnck-screen-get-default">wnck_screen_get_default</link>             (void);
+<link linkend="WnckScreen">WnckScreen</link>*         <link linkend="wnck-screen-get">wnck_screen_get</link>                     (<link linkend="int">int</link> index);
+<link linkend="WnckScreen">WnckScreen</link>*         <link linkend="wnck-screen-get-for-root">wnck_screen_get_for_root</link>            (<link linkend="gulong">gulong</link> root_window_id);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-get-number">wnck_screen_get_number</link>              (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-get-width">wnck_screen_get_width</link>               (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-get-height">wnck_screen_get_height</link>              (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="void">void</link>                <link linkend="wnck-screen-force-update">wnck_screen_force_update</link>            (<link linkend="WnckScreen">WnckScreen</link> *screen);
+const <link linkend="char">char</link>*         <link linkend="wnck-screen-get-window-manager-name">wnck_screen_get_window_manager_name</link> (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-screen-net-wm-supports">wnck_screen_net_wm_supports</link>         (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         const <link linkend="char">char</link> *atom);
+<link linkend="WnckWindow">WnckWindow</link>*         <link linkend="wnck-screen-get-active-window">wnck_screen_get_active_window</link>       (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="WnckWindow">WnckWindow</link>*         <link linkend="wnck-screen-get-previously-active-window">wnck_screen_get_previously_active_window</link>
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="GList">GList</link>*              <link linkend="wnck-screen-get-windows">wnck_screen_get_windows</link>             (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="GList">GList</link>*              <link linkend="wnck-screen-get-windows-stacked">wnck_screen_get_windows_stacked</link>     (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="WnckWorkspace">WnckWorkspace</link>*      <link linkend="wnck-screen-get-active-workspace">wnck_screen_get_active_workspace</link>    (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="GList">GList</link>*              <link linkend="wnck-screen-get-workspaces">wnck_screen_get_workspaces</link>          (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="WnckWorkspace">WnckWorkspace</link>*      <link linkend="wnck-screen-get-workspace">wnck_screen_get_workspace</link>           (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> workspace);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-get-workspace-index">wnck_screen_get_workspace_index</link>     (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space);
+enum                <link linkend="WnckMotionDirection">WnckMotionDirection</link>;
+<link linkend="WnckWorkspace">WnckWorkspace</link>*      <link linkend="wnck-screen-get-workspace-neighbor">wnck_screen_get_workspace_neighbor</link>  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space,
+                                                         <link linkend="WnckMotionDirection">WnckMotionDirection</link> direction);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-get-workspace-count">wnck_screen_get_workspace_count</link>     (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="void">void</link>                <link linkend="wnck-screen-change-workspace-count">wnck_screen_change_workspace_count</link>  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> count);
+<link linkend="int">int</link>                 <link linkend="wnck-screen-try-set-workspace-layout">wnck_screen_try_set_workspace_layout</link>
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> current_token,
+                                                         <link linkend="int">int</link> rows,
+                                                         <link linkend="int">int</link> columns);
+<link linkend="void">void</link>                <link linkend="wnck-screen-release-workspace-layout">wnck_screen_release_workspace_layout</link>
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> current_token);
+                    <link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link>;
+<link linkend="void">void</link>                <link linkend="wnck-screen-calc-workspace-layout">wnck_screen_calc_workspace_layout</link>   (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> num_workspaces,
+                                                         <link linkend="int">int</link> space_index,
+                                                         <link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link> *layout);
+<link linkend="void">void</link>                <link linkend="wnck-screen-free-workspace-layout">wnck_screen_free_workspace_layout</link>   (<link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link> *layout);
+<link linkend="void">void</link>                <link linkend="wnck-screen-move-viewport">wnck_screen_move_viewport</link>           (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y);
+<link linkend="gulong">gulong</link>              <link linkend="wnck-screen-get-background-pixmap">wnck_screen_get_background_pixmap</link>   (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-screen-get-showing-desktop">wnck_screen_get_showing_desktop</link>     (<link linkend="WnckScreen">WnckScreen</link> *screen);
+<link linkend="void">void</link>                <link linkend="wnck-screen-toggle-showing-desktop">wnck_screen_toggle_showing_desktop</link>  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="gboolean">gboolean</link> show);
+</synopsis>
+</refsynopsisdiv>
+<refsect1 id="WnckScreen.object-hierarchy" role="object_hierarchy">
+<title role="object_hierarchy.title">Object Hierarchy</title>
+<synopsis>
+  <link linkend="GObject">GObject</link>
+   +----WnckScreen
+</synopsis>
+</refsect1>
+<refsect1 id="WnckScreen.signals" role="signal_proto">
+<title role="signal_proto.title">Signals</title>
+<synopsis>
+  &quot;<link linkend="WnckScreen-active-window-changed">active-window-changed</link>&quot;                          : Run Last
+  &quot;<link linkend="WnckScreen-active-workspace-changed">active-workspace-changed</link>&quot;                       : Run Last
+  &quot;<link linkend="WnckScreen-application-closed">application-closed</link>&quot;                             : Run Last
+  &quot;<link linkend="WnckScreen-application-opened">application-opened</link>&quot;                             : Run Last
+  &quot;<link linkend="WnckScreen-background-changed">background-changed</link>&quot;                             : Run Last
+  &quot;<link linkend="WnckScreen-class-group-closed">class-group-closed</link>&quot;                             : Run Last
+  &quot;<link linkend="WnckScreen-class-group-opened">class-group-opened</link>&quot;                             : Run Last
+  &quot;<link linkend="WnckScreen-showing-desktop-changed">showing-desktop-changed</link>&quot;                        : Run Last
+  &quot;<link linkend="WnckScreen-viewports-changed">viewports-changed</link>&quot;                              : Run Last
+  &quot;<link linkend="WnckScreen-window-closed">window-closed</link>&quot;                                  : Run Last
+  &quot;<link linkend="WnckScreen-window-manager-changed">window-manager-changed</link>&quot;                         : Run Last
+  &quot;<link linkend="WnckScreen-window-opened">window-opened</link>&quot;                                  : Run Last
+  &quot;<link linkend="WnckScreen-window-stacking-changed">window-stacking-changed</link>&quot;                        : Run Last
+  &quot;<link linkend="WnckScreen-workspace-created">workspace-created</link>&quot;                              : Run Last
+  &quot;<link linkend="WnckScreen-workspace-destroyed">workspace-destroyed</link>&quot;                            : Run Last
+</synopsis>
+</refsect1>
+
+<refsect1 id="WnckScreen.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+The <link linkend="WnckScreen"><type>WnckScreen</type></link> represents a physical screen. A screen may consist of
+multiple monitors which are merged to form a large screen area. The
+<link linkend="WnckScreen"><type>WnckScreen</type></link> is at the bottom of the libwnck stack of objects: <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>
+objects exist a <link linkend="WnckScreen"><type>WnckScreen</type></link> and <link linkend="WnckWindow"><type>WnckWindow</type></link> objects are displayed on a
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</para>
+<para>
+The <link linkend="WnckScreen"><type>WnckScreen</type></link> corresponds to the notion of
+<classname>GdkScreen</classname> in GDK.
+</para>
+<para>
+The <link linkend="WnckScreen"><type>WnckScreen</type></link> objects are always owned by libwnck and must not be
+referenced or unreferenced.</para>
+<para>
+</para>
+</refsect1>
+<refsect1 id="WnckScreen.details" role="details">
+<title role="details.title">Details</title>
+<refsect2 id="WnckScreen-struct" role="struct">
+<title>WnckScreen</title>
+<indexterm zone="WnckScreen-struct"><primary>WnckScreen</primary></indexterm>
+<programlisting>typedef struct _WnckScreen WnckScreen;</programlisting>
+<para>
+The <link linkend="WnckScreen"><type>WnckScreen</type></link> struct contains only private fields and should not be
+directly accessed.</para>
+<para>
+</para></refsect2>
+<refsect2 id="wnck-screen-get-default" role="function">
+<title>wnck_screen_get_default ()</title>
+<indexterm zone="wnck-screen-get-default"><primary>wnck_screen_get_default</primary></indexterm>
+<programlisting><link linkend="WnckScreen">WnckScreen</link>*         wnck_screen_get_default             (void);</programlisting>
+<para>
+Gets the default <link linkend="WnckScreen"><type>WnckScreen</type></link> on the default display.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the default <link linkend="WnckScreen."><type>WnckScreen.</type></link> The returned <link linkend="WnckScreen"><type>WnckScreen</type></link> is
+owned by libwnck and must not be referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get" role="function">
+<title>wnck_screen_get ()</title>
+<indexterm zone="wnck-screen-get"><primary>wnck_screen_get</primary></indexterm>
+<programlisting><link linkend="WnckScreen">WnckScreen</link>*         wnck_screen_get                     (<link linkend="int">int</link> index);</programlisting>
+<para>
+Gets the <link linkend="WnckScreen"><type>WnckScreen</type></link> for a given screen on the default display.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>index</parameter>&#160;:</term>
+<listitem><simpara> screen number, starting from 0.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> for screen <parameter>index</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if no such screen
+exists. The returned <link linkend="WnckScreen"><type>WnckScreen</type></link> is owned by libwnck and must not be
+referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-for-root" role="function">
+<title>wnck_screen_get_for_root ()</title>
+<indexterm zone="wnck-screen-get-for-root"><primary>wnck_screen_get_for_root</primary></indexterm>
+<programlisting><link linkend="WnckScreen">WnckScreen</link>*         wnck_screen_get_for_root            (<link linkend="gulong">gulong</link> root_window_id);</programlisting>
+<para>
+Gets the <link linkend="WnckScreen"><type>WnckScreen</type></link> for the root window at <parameter>root_window_id</parameter>, or
+<link linkend="NULL:CAPS"><literal>NULL</literal></link> if no <link linkend="WnckScreen"><type>WnckScreen</type></link> exists for this root window.
+</para>
+<para>
+This function does not work if <link linkend="wnck-screen-get"><function>wnck_screen_get()</function></link> was not called for the
+sought <link linkend="WnckScreen"><type>WnckScreen</type></link> before, and returns <link linkend="NULL:CAPS"><literal>NULL</literal></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>root_window_id</parameter>&#160;:</term>
+<listitem><simpara> an X window ID.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> for the root window at <parameter>root_window_id</parameter>, or
+<link linkend="NULL:CAPS"><literal>NULL</literal></link>. The returned <link linkend="WnckScreen"><type>WnckScreen</type></link> is owned by libwnck and must not be
+referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-number" role="function" condition="since:2.20">
+<title>wnck_screen_get_number ()</title>
+<indexterm zone="wnck-screen-get-number" role="2.20"><primary>wnck_screen_get_number</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_get_number              (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the index of <parameter>screen</parameter> on the display to which it belongs. The first
+<link linkend="WnckScreen"><type>WnckScreen</type></link> has an index of 0.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the index of <parameter>space</parameter> on <parameter>screen</parameter>, or -1 on errors.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-screen-get-width" role="function">
+<title>wnck_screen_get_width ()</title>
+<indexterm zone="wnck-screen-get-width"><primary>wnck_screen_get_width</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_get_width               (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the width of <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the width of <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-height" role="function">
+<title>wnck_screen_get_height ()</title>
+<indexterm zone="wnck-screen-get-height"><primary>wnck_screen_get_height</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_get_height              (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the height of <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the height of <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-force-update" role="function">
+<title>wnck_screen_force_update ()</title>
+<indexterm zone="wnck-screen-force-update"><primary>wnck_screen_force_update</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_force_update            (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Synchronously and immediately updates the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>.
+This bypasses the standard update mechanism, where the list of <link linkend="WnckWindow"><type>WnckWindow</type></link>
+is updated in the idle loop.
+</para>
+<para>
+This is usually a bad idea for both performance and correctness reasons (to
+get things right, you need to write model-view code that tracks changes, not
+get a static list of open windows). However, this function can be useful for
+small applications that just do something and then exit.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-window-manager-name" role="function" condition="since:2.20">
+<title>wnck_screen_get_window_manager_name ()</title>
+<indexterm zone="wnck-screen-get-window-manager-name" role="2.20"><primary>wnck_screen_get_window_manager_name</primary></indexterm>
+<programlisting>const <link linkend="char">char</link>*         wnck_screen_get_window_manager_name (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the name of the window manager.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the name of the window manager, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the window manager
+does not comply with the <ulink
+url="http://standards.freedesktop.org/wm-spec/wm-spec-latest.html">EWMH</ulink>
+specification.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-screen-net-wm-supports" role="function">
+<title>wnck_screen_net_wm_supports ()</title>
+<indexterm zone="wnck-screen-net-wm-supports"><primary>wnck_screen_net_wm_supports</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_screen_net_wm_supports         (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         const <link linkend="char">char</link> *atom);</programlisting>
+<para>
+Gets whether the window manager for <parameter>screen</parameter> supports a certain hint from
+the <ulink
+url="http://standards.freedesktop.org/wm-spec/wm-spec-latest.html">Extended
+Window Manager Hints specification</ulink> (EWMH).
+</para>
+<para>
+When using this function, keep in mind that the window manager can change
+over time; so you should not use this function in a way that impacts
+persistent application state. A common bug is that your application can
+start up before the window manager does when the user logs in, and before
+the window manager starts <link linkend="wnck-screen-net-wm-supports"><function>wnck_screen_net_wm_supports()</function></link> will return <link linkend="FALSE:CAPS"><literal>FALSE</literal></link>
+for every property.
+</para>
+<para>
+See also <link linkend="gdk-x11-screen-supports-net-wm-hint"><function>gdk_x11_screen_supports_net_wm_hint()</function></link> in GDK.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>atom</parameter>&#160;:</term>
+<listitem><simpara> a property atom.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if the window manager for <parameter>screen</parameter> supports the <parameter>atom</parameter>
+hint, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-active-window" role="function">
+<title>wnck_screen_get_active_window ()</title>
+<indexterm zone="wnck-screen-get-active-window"><primary>wnck_screen_get_active_window</primary></indexterm>
+<programlisting><link linkend="WnckWindow">WnckWindow</link>*         wnck_screen_get_active_window       (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the active <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>. May return <link linkend="NULL:CAPS"><literal>NULL</literal></link> sometimes, since
+not all window managers guarantee that a window is always active.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the active <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link>. The returned
+<link linkend="WnckWindow"><type>WnckWindow</type></link> is owned by libwnck and must not be referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-previously-active-window" role="function" condition="since:2.8">
+<title>wnck_screen_get_previously_active_window ()</title>
+<indexterm zone="wnck-screen-get-previously-active-window" role="2.8"><primary>wnck_screen_get_previously_active_window</primary></indexterm>
+<programlisting><link linkend="WnckWindow">WnckWindow</link>*         wnck_screen_get_previously_active_window
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the previously active <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>. May return <link linkend="NULL:CAPS"><literal>NULL</literal></link>
+sometimes, since not all window managers guarantee that a window is always
+active.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the previously active <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link>. The
+returned <link linkend="WnckWindow"><type>WnckWindow</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.8</para></refsect2>
+<refsect2 id="wnck-screen-get-windows" role="function">
+<title>wnck_screen_get_windows ()</title>
+<indexterm zone="wnck-screen-get-windows"><primary>wnck_screen_get_windows</primary></indexterm>
+<programlisting><link linkend="GList">GList</link>*              wnck_screen_get_windows             (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>. The list is not in a defined
+order, but should be "stable" (windows should not be reordered in it).
+However, the stability of the list is established by the window manager, so
+don't blame libwnck if it breaks down.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if there is no
+window on <parameter>screen</parameter>. The list should not be modified nor freed, as it is owned
+by <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-windows-stacked" role="function">
+<title>wnck_screen_get_windows_stacked ()</title>
+<indexterm zone="wnck-screen-get-windows-stacked"><primary>wnck_screen_get_windows_stacked</primary></indexterm>
+<programlisting><link linkend="GList">GList</link>*              wnck_screen_get_windows_stacked     (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter> in bottom-to-top order.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the list of <link linkend="WnckWindow"><type>WnckWindow</type></link> in stacking order on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link>
+if there is no window on <parameter>screen</parameter>. The list should not be modified nor freed,
+as it is owned by <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-active-workspace" role="function">
+<title>wnck_screen_get_active_workspace ()</title>
+<indexterm zone="wnck-screen-get-active-workspace"><primary>wnck_screen_get_active_workspace</primary></indexterm>
+<programlisting><link linkend="WnckWorkspace">WnckWorkspace</link>*      wnck_screen_get_active_workspace    (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the active <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>. May return <link linkend="NULL:CAPS"><literal>NULL</literal></link> sometimes,
+if libwnck is in a weird state due to the asynchronous nature of the
+interaction with the window manager.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the active <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link>. The returned
+<link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-workspaces" role="function" condition="since:2.20">
+<title>wnck_screen_get_workspaces ()</title>
+<indexterm zone="wnck-screen-get-workspaces" role="2.20"><primary>wnck_screen_get_workspaces</primary></indexterm>
+<programlisting><link linkend="GList">GList</link>*              wnck_screen_get_workspaces          (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the list of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>. The list is ordered: the
+first element in the list is the first <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>, etc..</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the list of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>. The list should not be
+modified nor freed, as it is owned by <parameter>screen</parameter>.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-screen-get-workspace" role="function">
+<title>wnck_screen_get_workspace ()</title>
+<indexterm zone="wnck-screen-get-workspace"><primary>wnck_screen_get_workspace</primary></indexterm>
+<programlisting><link linkend="WnckWorkspace">WnckWorkspace</link>*      wnck_screen_get_workspace           (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> workspace);</programlisting>
+<para>
+Gets the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> numbered <parameter>workspace</parameter> on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>workspace</parameter>&#160;:</term>
+<listitem><simpara> a workspace index, starting from 0.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> numbered <parameter>workspace</parameter> on <parameter>screen</parameter>, or
+<link linkend="NULL:CAPS"><literal>NULL</literal></link> if no such workspace exists. The returned <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is owned by
+libwnck and must not be referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-workspace-index" role="function" condition="deprecated:2.20: Use wnck_workspace_get_number() instead.|since:2.14">
+<title>wnck_screen_get_workspace_index ()</title>
+<indexterm zone="wnck-screen-get-workspace-index" role="deprecated"><primary>wnck_screen_get_workspace_index</primary></indexterm><indexterm zone="wnck-screen-get-workspace-index" role="2.14"><primary>wnck_screen_get_workspace_index</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_get_workspace_index     (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space);</programlisting>
+<warning><para><literal>wnck_screen_get_workspace_index</literal> has been deprecated since version 2.20 and should not be used in newly-written code. Use <link linkend="wnck-workspace-get-number"><function>wnck_workspace_get_number()</function></link> instead.</para></warning>
+<para>
+Gets the index of <parameter>space</parameter> on <parameter>screen</parameter>. The first <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> has an
+index of 0. See also <link linkend="wnck-workspace-get-number"><function>wnck_workspace_get_number()</function></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the index of <parameter>space</parameter> on <parameter>screen</parameter>, or -1 on errors.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="WnckMotionDirection" role="enum" condition="since:2.14">
+<title>enum WnckMotionDirection</title>
+<indexterm zone="WnckMotionDirection" role="2.14"><primary>WnckMotionDirection</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_MOTION_UP = -1,
+  WNCK_MOTION_DOWN = -2,
+  WNCK_MOTION_LEFT = -3,
+  WNCK_MOTION_RIGHT = -4
+} WnckMotionDirection;
+</programlisting>
+<para>
+Type defining a direction in which to search a neighbor <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link></para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-MOTION-UP:CAPS" role="constant">
+<term><literal>WNCK_MOTION_UP</literal></term>
+<listitem><simpara> search a neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> above another
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link> 
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-MOTION-DOWN:CAPS" role="constant">
+<term><literal>WNCK_MOTION_DOWN</literal></term>
+<listitem><simpara> search a neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> below another
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-MOTION-LEFT:CAPS" role="constant">
+<term><literal>WNCK_MOTION_LEFT</literal></term>
+<listitem><simpara> search a neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> at the left of another
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-MOTION-RIGHT:CAPS" role="constant">
+<term><literal>WNCK_MOTION_RIGHT</literal></term>
+<listitem><simpara> search a neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> at the right of another
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-screen-get-workspace-neighbor" role="function" condition="deprecated:2.20: Use wnck_workspace_get_neighbor() instead.|since:2.14">
+<title>wnck_screen_get_workspace_neighbor ()</title>
+<indexterm zone="wnck-screen-get-workspace-neighbor" role="deprecated"><primary>wnck_screen_get_workspace_neighbor</primary></indexterm><indexterm zone="wnck-screen-get-workspace-neighbor" role="2.14"><primary>wnck_screen_get_workspace_neighbor</primary></indexterm>
+<programlisting><link linkend="WnckWorkspace">WnckWorkspace</link>*      wnck_screen_get_workspace_neighbor  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space,
+                                                         <link linkend="WnckMotionDirection">WnckMotionDirection</link> direction);</programlisting>
+<warning><para><literal>wnck_screen_get_workspace_neighbor</literal> has been deprecated since version 2.20 and should not be used in newly-written code. Use <link linkend="wnck-workspace-get-neighbor"><function>wnck_workspace_get_neighbor()</function></link> instead.</para></warning>
+<para>
+Gets the neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> of <parameter>space</parameter> in the <parameter>direction</parameter> direction on
+<parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>direction</parameter>&#160;:</term>
+<listitem><simpara> direction in which to search the neighbor.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> of <parameter>space</parameter> in the <parameter>direction</parameter>
+direction on <parameter>screen</parameter>, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if no such neighbor <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> exists.
+The returned <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is owned by libwnck and must not be referenced
+or unreferenced.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-screen-get-workspace-count" role="function">
+<title>wnck_screen_get_workspace_count ()</title>
+<indexterm zone="wnck-screen-get-workspace-count"><primary>wnck_screen_get_workspace_count</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_get_workspace_count     (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the number of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the number of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-change-workspace-count" role="function" condition="since:2.2">
+<title>wnck_screen_change_workspace_count ()</title>
+<indexterm zone="wnck-screen-change-workspace-count" role="2.2"><primary>wnck_screen_change_workspace_count</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_change_workspace_count  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> count);</programlisting>
+<para>
+Asks the window manager to change the number of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>count</parameter>&#160;:</term>
+<listitem><simpara> the number of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> to request.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-screen-try-set-workspace-layout" role="function">
+<title>wnck_screen_try_set_workspace_layout ()</title>
+<indexterm zone="wnck-screen-try-set-workspace-layout"><primary>wnck_screen_try_set_workspace_layout</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_screen_try_set_workspace_layout
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> current_token,
+                                                         <link linkend="int">int</link> rows,
+                                                         <link linkend="int">int</link> columns);</programlisting>
+<para>
+Tries to modify the layout of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>. To do this, tries
+to acquire ownership of the layout. If the current process is the owner of
+the layout, <parameter>current_token</parameter> is used to determine if the caller is the owner
+(there might be more than one part of the same process trying to set the
+layout). Since no more than one application should set this property of
+<parameter>screen</parameter> at a time, setting the layout is not guaranteed to work.
+</para>
+<para>
+If <parameter>rows</parameter> is 0, the actual number of rows will be determined based on
+<parameter>columns</parameter> and the number of <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link> If <parameter>columns</parameter> is 0, the actual
+number of columns will be determined based on <parameter>rows</parameter> and the number of
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link> <parameter>rows</parameter> and <parameter>columns</parameter> must not be 0 at the same time.
+</para>
+<para>
+You have to release the ownership of the layout with
+<link linkend="wnck-screen-release-workspace-layout"><function>wnck_screen_release_workspace_layout()</function></link> when you do not need it anymore.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>current_token</parameter>&#160;:</term>
+<listitem><simpara> a token. Use 0 if you do not called
+<link linkend="wnck-screen-try-set-workspace-layout"><function>wnck_screen_try_set_workspace_layout()</function></link> before, or if you did not keep the
+old token.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>rows</parameter>&#160;:</term>
+<listitem><simpara> the number of rows to use for the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> layout.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>columns</parameter>&#160;:</term>
+<listitem><simpara> the number of columns to use for the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> layout.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> a token to use for future calls to
+<link linkend="wnck-screen-try-set-workspace-layout"><function>wnck_screen_try_set_workspace_layout()</function></link> and to
+<link linkend="wnck-screen-release-workspace-layout"><function>wnck_screen_release_workspace_layout()</function></link>, or 0 if the layout could not be set.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-release-workspace-layout" role="function">
+<title>wnck_screen_release_workspace_layout ()</title>
+<indexterm zone="wnck-screen-release-workspace-layout"><primary>wnck_screen_release_workspace_layout</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_release_workspace_layout
+                                                        (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> current_token);</programlisting>
+<para>
+Releases the ownership of the layout of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>.
+<parameter>current_token</parameter> is used to verify that the caller is the owner of the layout.
+If the verification fails, nothing happens.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>current_token</parameter>&#160;:</term>
+<listitem><simpara> the token obtained through
+<link linkend="wnck-screen-try-set-workspace-layout"><function>wnck_screen_try_set_workspace_layout()</function></link>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="WnckWorkspaceLayout" role="struct" condition="deprecated:2.20:|since:2.12">
+<title>WnckWorkspaceLayout</title>
+<indexterm zone="WnckWorkspaceLayout" role="deprecated"><primary>WnckWorkspaceLayout</primary></indexterm><indexterm zone="WnckWorkspaceLayout" role="2.12"><primary>WnckWorkspaceLayout</primary></indexterm>
+<programlisting>typedef struct {
+  int rows;
+  int cols;
+  int *grid;
+  int grid_area;
+  int current_row;
+  int current_col;
+} WnckWorkspaceLayout;
+</programlisting>
+<warning><para><literal>WnckWorkspaceLayout</literal> has been deprecated since version 2.20 and should not be used in newly-written code. </para></warning>
+<para>
+The <link linkend="WnckWorkspaceLayout"><type>WnckWorkspaceLayout</type></link> struct contains information about the layout of
+<link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on a <link linkend="WnckScreen"><type>WnckScreen</type></link>, and the exact position of a specific
+<link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link></para>
+<para>
+</para><variablelist role="struct">
+<varlistentry>
+<term><link linkend="int">int</link>&#160;<structfield id="WnckWorkspaceLayout.rows">rows</structfield>;</term>
+<listitem><simpara> number of rows in the layout grid.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="int">int</link>&#160;<structfield id="WnckWorkspaceLayout.cols">cols</structfield>;</term>
+<listitem><simpara> number of columns in the layout grid.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="int">int</link>&#160;*<structfield id="WnckWorkspaceLayout.grid">grid</structfield>;</term>
+<listitem><simpara> array of size <parameter>grid_area</parameter> containing the index (starting from 0) of
+the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> for each position in the layout grid, or -1 if the
+position does not correspond to any <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="int">int</link>&#160;<structfield id="WnckWorkspaceLayout.grid_area">grid_area</structfield>;</term>
+<listitem><simpara> size of the grid containing all <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link> This can be
+bigger than the number of <link linkend="WnckWorskpace"><type>WnckWorskpace</type></link> because the grid might not be
+filled.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="int">int</link>&#160;<structfield id="WnckWorkspaceLayout.current_row">current_row</structfield>;</term>
+<listitem><simpara> row of the specific <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>, starting from 0.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="int">int</link>&#160;<structfield id="WnckWorkspaceLayout.current_col">current_col</structfield>;</term>
+<listitem><simpara> column of the specific <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>, starting from 0.
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-screen-calc-workspace-layout" role="function" condition="deprecated:2.20:|since:2.12">
+<title>wnck_screen_calc_workspace_layout ()</title>
+<indexterm zone="wnck-screen-calc-workspace-layout" role="deprecated"><primary>wnck_screen_calc_workspace_layout</primary></indexterm><indexterm zone="wnck-screen-calc-workspace-layout" role="2.12"><primary>wnck_screen_calc_workspace_layout</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_calc_workspace_layout   (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> num_workspaces,
+                                                         <link linkend="int">int</link> space_index,
+                                                         <link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link> *layout);</programlisting>
+<warning><para><literal>wnck_screen_calc_workspace_layout</literal> has been deprecated since version 2.20 and should not be used in newly-written code. </para></warning>
+<para>
+Calculates the layout of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>, with additional information like
+the row and column of the <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> with index <parameter>space_index</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>num_workspaces</parameter>&#160;:</term>
+<listitem><simpara> the number of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> on <parameter>screen</parameter>, or -1 to let
+<link linkend="wnck-screen-calc-workspace-layout"><function>wnck_screen_calc_workspace_layout()</function></link> find this number.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space_index</parameter>&#160;:</term>
+<listitem><simpara> the index of a <link linkend="Workspace."><type>Workspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>layout</parameter>&#160;:</term>
+<listitem><simpara> return location for the layout of <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> with additional
+information.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-screen-free-workspace-layout" role="function" condition="deprecated:2.20:|since:2.12">
+<title>wnck_screen_free_workspace_layout ()</title>
+<indexterm zone="wnck-screen-free-workspace-layout" role="deprecated"><primary>wnck_screen_free_workspace_layout</primary></indexterm><indexterm zone="wnck-screen-free-workspace-layout" role="2.12"><primary>wnck_screen_free_workspace_layout</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_free_workspace_layout   (<link linkend="WnckWorkspaceLayout">WnckWorkspaceLayout</link> *layout);</programlisting>
+<warning><para><literal>wnck_screen_free_workspace_layout</literal> has been deprecated since version 2.20 and should not be used in newly-written code. </para></warning>
+<para>
+Frees the content of <parameter>layout</parameter>. This does not free <parameter>layout</parameter> itself, so you
+might want to free <parameter>layout</parameter> yourself after calling this.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>layout</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspaceLayout."><type>WnckWorkspaceLayout.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-screen-move-viewport" role="function" condition="since:2.4">
+<title>wnck_screen_move_viewport ()</title>
+<indexterm zone="wnck-screen-move-viewport" role="2.4"><primary>wnck_screen_move_viewport</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_move_viewport           (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y);</programlisting>
+<para>
+Asks the window manager to move the viewport of the current <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>
+on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>x</parameter>&#160;:</term>
+<listitem><simpara> X offset in pixels of viewport.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>y</parameter>&#160;:</term>
+<listitem><simpara> Y offset in pixels of viewport.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.4</para></refsect2>
+<refsect2 id="wnck-screen-get-background-pixmap" role="function">
+<title>wnck_screen_get_background_pixmap ()</title>
+<indexterm zone="wnck-screen-get-background-pixmap"><primary>wnck_screen_get_background_pixmap</primary></indexterm>
+<programlisting><link linkend="gulong">gulong</link>              wnck_screen_get_background_pixmap   (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets the X window ID of the background pixmap of <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the X window ID of the background pixmap of <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-screen-get-showing-desktop" role="function" condition="since:2.2">
+<title>wnck_screen_get_showing_desktop ()</title>
+<indexterm zone="wnck-screen-get-showing-desktop" role="2.2"><primary>wnck_screen_get_showing_desktop</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_screen_get_showing_desktop     (<link linkend="WnckScreen">WnckScreen</link> *screen);</programlisting>
+<para>
+Gets whether <parameter>screen</parameter> is in the "showing the desktop" mode. This mode is
+changed when a <link linkend="WnckScreen-showing-desktop-changed"><type>"showing-desktop-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is fullscreen, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-screen-toggle-showing-desktop" role="function" condition="since:2.2">
+<title>wnck_screen_toggle_showing_desktop ()</title>
+<indexterm zone="wnck-screen-toggle-showing-desktop" role="2.2"><primary>wnck_screen_toggle_showing_desktop</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_screen_toggle_showing_desktop  (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                         <link linkend="gboolean">gboolean</link> show);</programlisting>
+<para>
+Asks the window manager to set the "showing the desktop" mode on <parameter>screen</parameter>
+according to <parameter>show</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>show</parameter>&#160;:</term>
+<listitem><simpara> whether to activate the "showing the desktop" mode on <parameter>screen</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+
+</refsect1>
+<refsect1 id="WnckScreen.signal-details" role="signals">
+<title role="signals.title">Signal Details</title>
+<refsect2 id="WnckScreen-active-window-changed" role="signal"><title>The <literal>&quot;active-window-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-active-window-changed"><primary>WnckScreen::active-window-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="WnckWindow">WnckWindow</link> *previously_active_window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)                     : Run Last</programlisting>
+<para>
+Emitted when the active window on <parameter>screen</parameter> has changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>previously_active_window</parameter>&#160;:</term>
+<listitem><simpara> the previously active <link linkend="WnckWindow"><type>WnckWindow</type></link> before this
+change.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-active-workspace-changed" role="signal"><title>The <literal>&quot;active-workspace-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-active-workspace-changed"><primary>WnckScreen::active-workspace-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>    *screen,
+                                                        <link linkend="WnckWorkspace">WnckWorkspace</link> *previously_active_space,
+                                                        <link linkend="gpointer">gpointer</link>       user_data)                    : Run Last</programlisting>
+<para>
+Emitted when the active workspace on <parameter>screen</parameter> has changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>previously_active_space</parameter>&#160;:</term>
+<listitem><simpara> the previously active <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> before this
+change.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-application-closed" role="signal"><title>The <literal>&quot;application-closed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-application-closed"><primary>WnckScreen::application-closed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>      *screen,
+                                                        <link linkend="WnckApplication">WnckApplication</link> *app,
+                                                        <link linkend="gpointer">gpointer</link>         user_data)      : Run Last</programlisting>
+<para>
+Emitted when a <link linkend="WnckApplication"><type>WnckApplication</type></link> is closed on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>app</parameter>&#160;:</term>
+<listitem><simpara> the closed <link linkend="WnckApplication."><type>WnckApplication.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-application-opened" role="signal"><title>The <literal>&quot;application-opened&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-application-opened"><primary>WnckScreen::application-opened</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>      *screen,
+                                                        <link linkend="WnckApplication">WnckApplication</link> *app,
+                                                        <link linkend="gpointer">gpointer</link>         user_data)      : Run Last</programlisting>
+<para>
+Emitted when a new <link linkend="WnckApplication"><type>WnckApplication</type></link> is opened on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>app</parameter>&#160;:</term>
+<listitem><simpara> the opened <link linkend="WnckApplication."><type>WnckApplication.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-background-changed" role="signal"><title>The <literal>&quot;background-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-background-changed"><primary>WnckScreen::background-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the background on the root window of <parameter>screen</parameter> has changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-class-group-closed" role="signal"><title>The <literal>&quot;class-group-closed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-class-group-closed" role="2.20"><primary>WnckScreen::class-group-closed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>     *screen,
+                                                        <link linkend="WnckClassGroup">WnckClassGroup</link> *class_group,
+                                                        <link linkend="gpointer">gpointer</link>        user_data)        : Run Last</programlisting>
+<para>
+Emitted when a <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> is closed on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> the closed <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2><refsect2 id="WnckScreen-class-group-opened" role="signal"><title>The <literal>&quot;class-group-opened&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-class-group-opened" role="2.20"><primary>WnckScreen::class-group-opened</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>     *screen,
+                                                        <link linkend="WnckClassGroup">WnckClassGroup</link> *class_group,
+                                                        <link linkend="gpointer">gpointer</link>        user_data)        : Run Last</programlisting>
+<para>
+Emitted when a new <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> is opened on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>class_group</parameter>&#160;:</term>
+<listitem><simpara> the opened <link linkend="WnckClassGroup."><type>WnckClassGroup.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2><refsect2 id="WnckScreen-showing-desktop-changed" role="signal"><title>The <literal>&quot;showing-desktop-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-showing-desktop-changed" role="2.20"><primary>WnckScreen::showing-desktop-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when "showing the desktop" mode of <parameter>screen</parameter> is toggled.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2><refsect2 id="WnckScreen-viewports-changed" role="signal"><title>The <literal>&quot;viewports-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-viewports-changed" role="2.20"><primary>WnckScreen::viewports-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when a viewport position has changed in a <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> of
+<parameter>screen</parameter> or when a <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> of <parameter>screen</parameter> gets or loses its viewport.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2><refsect2 id="WnckScreen-window-closed" role="signal"><title>The <literal>&quot;window-closed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-window-closed"><primary>WnckScreen::window-closed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when a <link linkend="WnckWindow"><type>WnckWindow</type></link> is closed on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the closed <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-window-manager-changed" role="signal"><title>The <literal>&quot;window-manager-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-window-manager-changed" role="2.20"><primary>WnckScreen::window-manager-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the window manager on <parameter>screen</parameter> has changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2><refsect2 id="WnckScreen-window-opened" role="signal"><title>The <literal>&quot;window-opened&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-window-opened"><primary>WnckScreen::window-opened</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when a new <link linkend="WnckWindow"><type>WnckWindow</type></link> is opened on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the opened <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-window-stacking-changed" role="signal"><title>The <literal>&quot;window-stacking-changed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-window-stacking-changed"><primary>WnckScreen::window-stacking-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link> *screen,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the stacking order of <link linkend="WnckWindow"><type>WnckWindow</type></link> on <parameter>screen</parameter> has changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-workspace-created" role="signal"><title>The <literal>&quot;workspace-created&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-workspace-created"><primary>WnckScreen::workspace-created</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>    *screen,
+                                                        <link linkend="WnckWorkspace">WnckWorkspace</link> *space,
+                                                        <link linkend="gpointer">gpointer</link>       user_data)      : Run Last</programlisting>
+<para>
+Emitted when a <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is created on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&#160;:</term>
+<listitem><simpara> the workspace that has been created.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckScreen-workspace-destroyed" role="signal"><title>The <literal>&quot;workspace-destroyed&quot;</literal> signal</title>
+<indexterm zone="WnckScreen-workspace-destroyed"><primary>WnckScreen::workspace-destroyed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckScreen">WnckScreen</link>    *screen,
+                                                        <link linkend="WnckWorkspace">WnckWorkspace</link> *space,
+                                                        <link linkend="gpointer">gpointer</link>       user_data)      : Run Last</programlisting>
+<para>
+Emitted when a <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is destroyed on <parameter>screen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>screen</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&#160;:</term>
+<listitem><simpara> the workspace that has been destroyed. 
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+</refsect1>
+<refsect1 id="WnckScreen.see-also">
+<title>See Also</title>
+<link linkend="WnckWindow"><type>WnckWindow</type></link>, <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>
+</refsect1>
+
+</refentry>

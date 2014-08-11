@@ -1,0 +1,395 @@
+objcopy [选项]... 输入文件 [输出文件]
+
+[功能]
+将目标文件的一部分或者全部内容拷贝到另外一个目标文件中，或者实现目标文件的格式转换。
+
+[描述]
+objcopy工具使用BFD库读写目标文件，它可以将一个目标文件的内容拷贝到另外一个目标文件当中。objcopy通过它的选项来控制其不同的动作，它可以将目标文件拷贝成和原来的文件不一样的格式。需要注意的是objcopy能够在两种格式之间拷贝一个完全链接的文件，在两种格式之间拷贝一个可重定位的目标文件可能不会正常地工作。
+objcopy在做转换的时候会创建临时文件，然后将这些临时文件删除。objcopy使用BFD来做它所有的转换工作；它访问BFD中描述的所有格式，可以不必指定就识别大多数的格式。
+通过指定输出目标为srec(例如 -O srec)，objcopy可以用来生成S-record文件。
+通过指定输入目标为而进制文件(例如-O binary)，objcopy可以生成原始格式的二进制文件。当objcopy生成一个原始格式的二进制文件的时候，它会生成输入的目标文件的基本内存拷贝，然后所有的标号和可重定位信息都会被去掉。内存拷贝开始于最低段的加载地址，拷贝到输出文件。
+当生成一个S-record或者原始的二进制文件的时候，可以使用-S这个很有用的选项选项来移除一些包含调试信息的节。有时-R可以用来移除一些二进制文件不需要的节。
+注意：objcopy工具不能用来改变文件的大端和小端属性。
+
+命令参数：
+infile/outfile
+源文件/目标文件，如果不指定目标文件那么objcopy将会创建一个临时文件，并且将其命名为源文件。
+
+命令选项：
+-I bfdname
+--input-target=bfdname
+指定输入文件的bfdname,可取值elf32-little，elf32-big等。
+
+-O bfdname
+--output-target=bfdname
+指定输出文件的bfdname
+
+-F bfdname
+--target=bfdname
+指定输入、输出文件的bfdname，目标文件格式，只用于在目标和源之间传输数据，不转换。
+
+-j sectionname
+--only-section=sectionname
+只将由sectionname指定的section拷贝到输出文件，可以多次指定，并且注意如果使用不当会导致输出文件不可用。
+
+-R sectionname
+--remove-section=sectionname
+从输出文件中去除掉由sectionname指定的section，可以多次指定，并且注意如果使用不当会导致输出文件不可用。
+
+-S
+--strip-all
+不从源文件拷贝符号信息和relocation信息。
+
+-g
+--strip-debug
+不从源文件拷贝调试符号信息和相关的段。对使用-g编译生成的可执行文件执行之后，生成的结果几乎和不用-g进行编译生成可执行文件一样。
+
+--strip-unneeded
+去掉所有重定位处理不需要的符号。
+
+-K symbolname
+--keep-symbol=symbolname
+strip的时候，保留由symbolname指定的符号信息。可以指定多次。
+
+-N symbolname
+--strip-symbol=symbolname
+不拷贝由symbolname指定的符号信息，可以多次指定。
+
+-G symbolname
+--keep-global-symbol=symbolname
+只保留symbolname为全局的，让其他的都是文件局部的变量这样外部不可见，这个选项可以多次指定。
+
+-L symbolname
+--localize-symbol=symbolname
+将变量symbolname变成文件局部的变量。可以多次指定。
+
+-W symbolname
+--weaken-symbol=symbolname
+弱化变量。
+
+--globalize-symbol=symbolname
+让变量symbolname变成全局范围，这样它可以在定义它的文件外部可见。可以多次指定。
+
+-w
+--wildcard
+允许对其他命令行选项中的symbolnames使用正则表达式。问号(?)，星号(*)，反斜线(\)，和中括号([])操作可以用在标号名称的任何位置。如果标号的第一个字符是感叹号(!)，那么表示相反的含义，例如：
+		-w -W !foo -W fo*
+表示objcopy将要弱化所有以"fo"开头的标号，但是除了标号"foo"。
+
+-x
+--discard-all
+不从源文件中拷贝非全局变量。
+
+-X
+--discard-locals
+不拷贝编译生成的局部变量(一般以L或者..开头)。
+
+-b byte
+--byte=byte
+只保留输入文件的每个第byte个字节(不会影响头部数据)。byte的范围可以是0到interleave-1。这里，interleave通过-i选项指定，默认为4。将文件创建成程序rom的时候，这个命令很有用。它经常用于srec输出目标。
+
+-i interleave
+--interleave=interleave
+每隔interleave字节拷贝1 byte。通过-b选项指定选择哪个字节，默认为4。如果不指定-b那么objcopy会忽略这个选项。
+
+--gap-fill val
+在section之间的空隙中填充val,
+
+--set-start val
+设定新文件的起始地址为val，并不是所有格式的目标文件都支持设置起始地址。
+
+--change-start incr
+--adjust-start incr
+通过增加incr量来调整起始地址，并不是所有格式的目标文件都支持设置起始地址。
+
+--change-address incr
+--adjust-vma incr
+通过增加incr量调整所有sections的VMA(virtual memory address)和LMA(linear memory address),以及起始地址。
+
+--change-section-address section{=,+,-}val
+--adjust-section-vma section{=,+,-}val
+调整指定section的VMA/LMA地址。
+
+--set-section-flags section=flag
+指定指定section的flag，flag的取值可以alloc，contents, load, noload, readonly, code, data, rom, share, debug。我们可以设置一个没有内容的节的flag，但是清除一个有内容的节的flag是没有意义的--应当把相应的节移除。并不是所有的flags对于所有的目标文件都有意义。
+
+--add-section sectionname=filename
+在拷贝文件的时候，添加一个名为sectionname的section，该section的内容为filename的内容，大小为文件大小。这个选项只在那些可以支持任意名称section的文件好用。
+
+--rename-section oldname=newname[,flags]
+更改section的名
+将一个section的名字从oldname更改为newname，同时也可以指定更改其flags。这个在执行linker脚本进行重命名的时候，并且输出文件还是一个目标文件并不成为可执行的连接文件，这个时候很有优势。
+这个选项在输入文件是binary的时候很有用，因为这经常会创建一个名称为.data的section，例如，你想创建一个名称为.rodata的包含二进制数据的section，这时候，你可以使用如下命令：
+objcopy -I binary -O <output_format> -B <architecture> \
+			--rename-section .data=.rodata,alloc,load,readonly,data,contents \
+			<input_binary_file> <output_object_file>
+
+--add-gnu-debuglink=path-to-file
+创建一个.gnu_debuglink节，这个节包含一个特定路径的文件引用，并且把它添加到输出文件中。
+
+--only-keep-debug
+对文件进行strip，移走所有不会被--strip-debug移走的section，并且保持调试相关的section原封不动。
+这个选项应该和--add-gnu-debuglink选项一起使用，创建一个两部分的可执行文件。一个是已经被stripped的占用RAM空间以及发布的大小很小的二进制文件，另一个是调试信息文件，这个信息只有在调试的时候会用到。建立这样的两个文件的步骤如下：
+a.像正常那样链接可执行文件，foo
+b.运行"objcopy --only-keep-debug foo foo.dbg"创建一个包含调试信息的文件
+c.运行"objcopy --strip-debug foo"创建一个去掉调试信息的(strip的)可执行文件
+d.运行"objcopy --add-gnu-debuglink=foo.dbg foo"，为strip的文件添加调试信息链接。
+注意这里选择".dbg"扩展名是任意的，"--only-keep-debug"的步骤也是可选的，你也可以这样做：
+a.像正常那样链接可执行文件，foo
+b.将"foo"拷贝为"foo.full"
+c.运行"objcopy --strip-debug foo"
+d.运行"objcopy --add-gnu-debuglink=foo.full foo"
+可见，使用--add-gnu-debuglink添加调试信息的可以是完全的可执行文件，不用非得用"--only-keep-debug"创建。
+注意 这个只能用于完全链接的文件，对于一个目标文件来说这个功能没有意义，因为调试信息可能不完整。另外，gnu_debuglink特性当前一个包含调试信息的文件，不能多个文件用于每个文件一个目标文件。
+
+-V
+--version
+显示objcopy的版本号。
+
+@file		可以将选项集中到一个文件中，然后使用这个@file选项载入。
+
+[举例]
+a)后面的测试，我们查看采用的源代码如下：
+[root@lv-k cppDemo]# cat main.cpp 
+#include <iostream>
+using std::cout;
+using std::endl;
+void my_print();
+
+int main(int argc, char *argv[])
+{
+        my_print();
+        cout<<"hello!"<<endl;
+        return 0;
+}
+
+void  my_print()
+{
+        cout<<"print!"<<endl;
+}
+b)对以上源代码进行编译，生成不含调试信息的可执行文件如下：
+[root@lv-k cppDemo]# g++ main.cpp -o main
+
+c)生成包含调试信息的可执行文件如下：
+[root@lv-k cppDemo]# g++ -g main.cpp -o main.debug
+
+d)采用"readelf -S main"查看其段信息如下：
+[root@lv-k cppDemo]# readelf -S main
+There are 29 section headers, starting at offset 0xca0:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1
+  [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4
+  [ 3] .gnu.hash         GNU_HASH        08048168 000168 000030 04   A  4   0  4
+  [ 4] .dynsym           DYNSYM          08048198 000198 0000d0 10   A  5   1  4
+  [ 5] .dynstr           STRTAB          08048268 000268 000183 00   A  0   0  1
+  [ 6] .gnu.version      VERSYM          080483ec 0003ec 00001a 02   A  4   0  2
+  [ 7] .gnu.version_r    VERNEED         08048408 000408 000060 00   A  5   2  4
+  [ 8] .rel.dyn          REL             08048468 000468 000010 08   A  4   0  4
+  [ 9] .rel.plt          REL             08048478 000478 000048 08   A  4  11  4
+  [10] .init             PROGBITS        080484c0 0004c0 000017 00  AX  0   0  4
+  [11] .plt              PROGBITS        080484d8 0004d8 0000a0 04  AX  0   0  4
+  [12] .text             PROGBITS        08048580 000580 000268 00  AX  0   0 16
+  [13] .fini             PROGBITS        080487e8 0007e8 00001c 00  AX  0   0  4
+  [14] .rodata           PROGBITS        08048804 000804 00001a 00   A  0   0  4
+  [15] .eh_frame_hdr     PROGBITS        08048820 000820 000044 00   A  0   0  4
+  [16] .eh_frame         PROGBITS        08048864 000864 00010c 00   A  0   0  4
+  [17] .ctors            PROGBITS        08049970 000970 00000c 00  WA  0   0  4
+  [18] .dtors            PROGBITS        0804997c 00097c 000008 00  WA  0   0  4
+  [19] .jcr              PROGBITS        08049984 000984 000004 00  WA  0   0  4
+  [20] .dynamic          DYNAMIC         08049988 000988 0000e0 08  WA  5   0  4
+  [21] .got              PROGBITS        08049a68 000a68 000004 04  WA  0   0  4
+  [22] .got.plt          PROGBITS        08049a6c 000a6c 000030 04  WA  0   0  4
+  [23] .data             PROGBITS        08049a9c 000a9c 000004 00  WA  0   0  4
+  [24] .bss              NOBITS          08049aa0 000aa0 000098 00  WA  0   0  8
+  [25] .comment          PROGBITS        00000000 000aa0 000114 00      0   0  1
+  [26] .shstrtab         STRTAB          00000000 000bb4 0000e9 00      0   0  1
+  [27] .symtab           SYMTAB          00000000 001128 000510 10     28  53  4
+  [28] .strtab           STRTAB          00000000 001638 0003f4 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+*将文件转换成S-record格式:
+[root@lv-k cppDemo]#objcopy -O srec main main.srec
+这里，如果不指定main.srec那么会改变原来的文件，转换通常涉及到text段，也可以转换.o文件。当然，转换之后的文件不能直接运行了。在生成s-record过程中，有时需要用选项“-S”，“-R”去除掉binary文件，s-record文件不需要的相应信息。
+输出的文件内容类似如下：
+[root@lv-k cppDemo]# head main.rec
+S00B00006D61696E2E726563E7
+S315080481342F6C69622F6C642D6C696E75782E736F57
+S308080481442E3200C6
+S31508048148040000001000000001000000474E550016
+S3150804815800000000020000000600000009000000F4
+S3150804816803000000090000000100000005000000E3
+S31508048178012A102100000000090000000B00000075
+S31508048188AC4BE3C021FDF40914980C4379496BB642
+S3150804819800000000000000000000000000000000C5
+S315080481A83701000000000000540000001200000017
+...省略...
+可见srec格式的文件是文本形式的。
+
+*将文件转换成rawbinary格式:
+[root@lv-k cppDemo]# objcopy -O binary main main.bin
+这里同样，转换之后的main.bin也是不可直接运行的。比较一下三种格式文件的大小：
+[root@lv-k cppDemo]# ls -l main main.rec main.bin 
+-rwxr-xr-x 1 root root 6700 07-07 18:04 main
+-rwxr-xr-x 1 root root 6508 07-19 16:42 main.bin
+-rwxr-xr-x 1 root root 7366 07-19 16:34 main.rec
+将object文件转换成raw binary格式时，通常将去除掉symbols和relocation信息。
+
+*生成一个不含重定位以及标号目标文件：
+[root@lv-k cppDemo]# objcopy -S main main.stripall
+这里，生成的文件，仍然可以运行。查看大小对比如下：
+[root@lv-k cppDemo]# ls -l main.stripall main
+-rwxr-xr-x 1 root root 6700 07-07 18:04 main
+-rwxr-xr-x 1 root root 4296 07-19 17:02 main.stripall
+经过实践，如果对包含调试信息的可执行文件进行这样的操作，生成的文件大小一样。
+可以对比main的信息，查看文件的段信息：
+[root@lv-k cppDemo]#  readelf main.stripall -S
+There are 27 section headers, starting at offset 0xc90:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1
+  [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4
+  [ 3] .gnu.hash         GNU_HASH        08048168 000168 000030 04   A  4   0  4
+  [ 4] .dynsym           DYNSYM          08048198 000198 0000d0 10   A  5   1  4
+  [ 5] .dynstr           STRTAB          08048268 000268 000183 00   A  0   0  1
+  [ 6] .gnu.version      VERSYM          080483ec 0003ec 00001a 02   A  4   0  2
+  [ 7] .gnu.version_r    VERNEED         08048408 000408 000060 00   A  5   2  4
+  [ 8] .rel.dyn          REL             08048468 000468 000010 08   A  4   0  4
+  [ 9] .rel.plt          REL             08048478 000478 000048 08   A  4  11  4
+  [10] .init             PROGBITS        080484c0 0004c0 000017 00  AX  0   0  4
+  [11] .plt              PROGBITS        080484d8 0004d8 0000a0 04  AX  0   0  4
+  [12] .text             PROGBITS        08048580 000580 000268 00  AX  0   0 16
+  [13] .fini             PROGBITS        080487e8 0007e8 00001c 00  AX  0   0  4
+  [14] .rodata           PROGBITS        08048804 000804 00001a 00   A  0   0  4
+  [15] .eh_frame_hdr     PROGBITS        08048820 000820 000044 00   A  0   0  4
+  [16] .eh_frame         PROGBITS        08048864 000864 00010c 00   A  0   0  4
+  [17] .ctors            PROGBITS        08049970 000970 00000c 00  WA  0   0  4
+  [18] .dtors            PROGBITS        0804997c 00097c 000008 00  WA  0   0  4
+  [19] .jcr              PROGBITS        08049984 000984 000004 00  WA  0   0  4
+  [20] .dynamic          DYNAMIC         08049988 000988 0000e0 08  WA  5   0  4
+  [21] .got              PROGBITS        08049a68 000a68 000004 04  WA  0   0  4
+  [22] .got.plt          PROGBITS        08049a6c 000a6c 000030 04  WA  0   0  4
+  [23] .data             PROGBITS        08049a9c 000a9c 000004 00  WA  0   0  4
+  [24] .bss              NOBITS          08049aa0 000aa0 000098 00  WA  0   0  8
+  [25] .comment          PROGBITS        00000000 000aa0 000114 00      0   0  1
+  [26] .shstrtab         STRTAB          00000000 000bb4 0000d9 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+由此可见去掉的两个信息分别是：
+  [27] .symtab           SYMTAB          00000000 001128 000510 10     28  53  4
+  [28] .strtab           STRTAB          00000000 001638 0003f4 00      0   0  1
+
+
+*去掉指定名称的节：
+[root@lv-k cppDemo]# objcopy -R .comment main main.remove
+这里，去掉之后，可执行文件也是可以运行的。通过"readelf -S main.remove"可知，其中的.comment节已经没有了。和此“相反”的操作是通过-j将指定的节拷贝到目标文件。
+
+*添加一个自定义的节到可执行文件并将一个文件内容添加到其中：
+[root@lv-k cppDemo]# objcopy --add-section mysection=hello_text main main.add
+这样，将会创建一个mysection的节并把hello_text的内容添加到其中。通过readelf -S main.add可以看到会多了一个"mysection"节。这个选项只在那些可以支持任意名称section的文件好用。添加到在我的centeros中编译的可执行文件中，可执行文件仍然可以运行。
+
+*将指定的段拷贝出来：
+[root@lv-k cppDemo]# objcopy -j mysection main.add section_hello
+输入之后，输出如下：
+[root@lv-k cppDemo]# objcopy -j mysection main.add section_hello
+BFD: main.add: warning: Empty loadable segment detected, is this intentional ?
+
+BFD: main.add: warning: Empty loadable segment detected, is this intentional ?
+
+这样会将main.add中刚才添加的mysection拷贝出来，拷贝出来的内容存放在section_hello文件中。这个命令将指定的section拷贝到输出文件，可以多次指定，并且注意如果使用不当会导致输出文件不可用。通过file命令查看，发现生成的文件仍然是elf文件，不只有该段的内容。使用"readelf -S section_hello"查看文件内容，如下：
+There are 5 section headers, starting at offset 0x144:
+
+Section Headers:
+[Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+[ 0]                   NULL            00000000 000000 000000 00      0   0  0
+[ 1] mysection         PROGBITS        00000000 0000f4 000028 00      0   0  1
+[ 2] .shstrtab         STRTAB          00000000 00011c 000025 00      0   0  1
+[ 3] .symtab           SYMTAB          00000000 00020c 000020 10      4   2  4
+[ 4] .strtab           STRTAB          00000000 00022c 000001 00      0   0  1
+Key to Flags:
+	W (write), A (alloc), X (execute), M (merge), S (strings)
+	I (info), L (link order), G (group), x (unknown)
+O (extra OS processing required) o (OS specific), p (processor specific)
+readelf: Error: no .dynamic section in the dynamic segment
+
+**分离可执行文件以及调试信息并将两者关联
+这里，main.debug是包含调试信息的可执行文件（使用"gcc -g"编译生成），为了减小文件大小，并且同样可以进行调试，将可执行文件分成两个部分：将其中的调试信息提取出来之后保存成一个文件，再生成去掉调试信息的大小减少了的可执行文件，最后通过链接的形式将两个文件关联。
+过程如下：
+1)生成调试信息文件：
+[root@lv-k cppDemo]# objcopy --only-keep-debug main.debug main.debuginfo
+这样，会将调试信息提取，保存到文件main.debuginfo中。执行之后比较文件大小如下：
+[root@lv-k cppDemo]# ls -l main.debuginfo main main.debug
+-rwxr-xr-x 1 root root  6700 07-07 18:04 main
+-rwxr-xr-x 1 root root 38932 07-07 18:04 main.debug
+-rwxr-xr-x 1 root root 38628 07-21 09:47 main.debuginfo
+这里，main是没有使用-g命令生成的可执行文件只是为了比较。
+
+2)生成不含调试信息的可执行文件：
+[root@lv-k cppDemo]# objcopy --strip-debug main.debug main.stripdebug
+这样，就将原来可执行文件中的调试信息去掉，结果可执行的不含调试信息的可执行文件。生成之后，大小如下：
+[root@lv-k cppDemo]# ls -l main main.debug main.stripdebug 
+-rwxr-xr-x 1 root root  6700 07-07 18:04 main
+-rwxr-xr-x 1 root root 38932 07-07 18:04 main.debug
+-rwxr-xr-x 1 root root  6632 07-21 09:49 main.stripdebug
+
+3)为不含调试信息的可执行文件添加调试信息：
+[root@lv-k cppDemo]# objcopy --add-gnu-debuglink=main.debuginfo main.stripdebug 
+这样，就为main.stripdebug文件添加了调试信息，现在可以运行"gdb main.stripdebug"进行调试了。运行完毕之后，main.stripdebug文件中会多了一个"[26] .gnu_debuglink    PROGBITS        00000000 000bb4 000014 00      0   0  1"节。运行这个命令之后，文件大小信息对比如下：
+[root@lv-k cppDemo]# ls -l main main.debug main.debuginfo main.stripdebug
+-rwxr-xr-x 1 root root  6700 07-07 18:04 main
+-rwxr-xr-x 1 root root 38932 07-07 18:04 main.debug
+-rwxr-xr-x 1 root root 38628 07-21 09:47 main.debuginfo
+-rwxr-xr-x 1 root root  6720 07-21 09:51 main.stripdebug
+注意，实践发现：a)使用上面的命令之后，main.debuginfo以及源代码main.cpp两个文件必须在同一个目录上面才能使用gdb进行调试，否则会在调试的时候出现找不到文件的问题。当然，就是使用-g的选项编译之后，也得让源文件放在正确的路径下面才能够在调试的时候载入文件。b)对于原来没有使用-g生成的可执行文件，也可以使用这个方法为它添加调试信息让它(原来没有用-g生成的并且添加调试信息之后的可执行文件)可以调试。
+**
+
+[其它]
+1，关于可执行文件格式。
+不同的嵌入式环境中，其组织可执行文件的格式也不相同，主要有以下几种：ELF文件格式、S-record文件格式、HEX文件格式、bin文件格式。
+
+1)BIN文件格式
+原始的二进制格式，内部没有地址标记，直接按照二进制格式下载，并且按照绝对地址烧写到Flash中就可以启动了，而如果下载运行，则下载到编译时的地址即可。
+
+2)ELF文件格式（Executable and linking format）
+Executable and linking format(ELF)文件是Linux系统 下的一种常用、可移植目标文件(object file)格式，它有三种主要类型：
+可重定位文件（Relocatable File）：包含适合于与其他目标文件链接来创建可执行文件或者共享目标文件的代码和数据。
+可执行文件（Executable File）：包含适合于执行的一个程序，此文件规定了exec() 如何创建一个程序的进程映像。
+共享目标文件（Shared Object File）：包含可在两种上下文中链接的代码和数据。首先链接编辑器可以将它和其它可重定位文件和共享目标文件一起处理，生成另外一个目标文件。其次，动态链接器（Dynamic Linker）可能将它与某个可执行文件以及其它共享目标一起组合，创建进程映像。
+
+3)S-Record文件格式
+S-Record文件遵循Motorola制定的格式规范，是一种标准的、可打印格式的文件。 S-Record文件是通过对链接器生成的目标程序或 数据进行编码生成的，适用于在计算机平台间传送，也可以在编辑后用于交叉平台间的传送。S-Record文件编码简单，可以通过IDE下载，但无法在线实时调试。S-Record文件是由多条记录组成的，每条记录都是由5个字段组成的ASCII字符串。
+
+4)HEX文件格式
+Intel HEX文件是记录文本行的ASCII文本文件，在Intel HEX文件中,每一行是一个HEX记录，由十六进制数组成的机器码或者数据常量。Intel HEX文件经常被用于将程序或数据传输 存储到ROM、EPROM。大多数编程器和模拟器使用Intel HEX文件。
+
+5)可执行文件格式的差别
+a)HEX文件是包括地址信息的，而BIN文件格式只包括了数据本身，在烧写或下载HEX文件的时候，一般都不需要用户指定地址，因为HEX文件内部的信息已经包括了地址。而烧写BIN文件的时候，用户是一定需要指定地址信息的。
+b)BIN文件格式 对二进制文件而言，其实没有”格式”。文件只是包括了纯粹的二进制数据。
+c)HEX文件格式 HEX文件都是由记录（RECORD）组成的。在HEX文件里面，每一行代表一个记录。记录类型包括：记录数据域，文件结束域，扩展线性地址的记录，扩展 段地址的记录。在上面的后2种记录，都是用来提供地址信息的。每次碰到这2个记录的时候，都可以根据记录计算出一个“基”地址。对于后面的数据记录，计算 地址的时候，都是以这些“基”地址为基础的。
+d)AXF是Arm特有的文件格式，它除了包含bin文件外，还额外包括了许多其他调试信息。在下载到目标板的时候，烧入ROM还是bin文件，额外的调试信息会被去掉
+
+一般来说，可以由elf文件转化为其它两种文件，hex也可以直接转换为bin文件，但是bin要转 化为hex文件必须要给定一个基地址。而hex和bin不能转化为elf文件，因为elf的信息量要大。另外还有一种ads的调试文件axf，它可以用以 下命令fromelf -nodebug xx.axf -bin xx.bin转化为bin文件。
+
+2,将图像编译到可执行文件内(不知道有什么作用)
+Q: 如何将一个二进制文件，比如图片，词典一类的东西做为.o文件，直接链接到可执行文件内部呢？ 
+A: 
+$ objcopy -I binary -O elf32-i386 -B i386 14_95_13.jpg image.o 
+$ gcc image.o tt.o -o tt 
+$ nm tt | grep 14_95 
+0805d6c7 D _binary_14_95_13_jpg_end 
+00014213 A _binary_14_95_13_jpg_size 
+080494b4 D _binary_14_95_13_jpg_start 
+
+参考：
+http://www.cnblogs.com/amethyst623/articles/1946499.html
+http://linux.chinaunix.net/techdoc/develop/2007/10/29/970892.shtml
+http://blog.csdn.net/gogofly_lee/article/details/2636257

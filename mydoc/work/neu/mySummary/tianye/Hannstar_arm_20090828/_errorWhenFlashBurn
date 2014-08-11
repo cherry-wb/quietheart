@@ -1,0 +1,13 @@
+Error information1:
+===================
+/home/tmp # ./ubi_tools_arm/ubiformat /dev/mtd0 -f system_ubi.img
+libmtd: error!: cannot open "/dev/mtd0"
+        error 13 (Permission denied)
+ubiformat: error!: cannot get information about "/dev/mtd0"
+
+Error information2:
+====================
+/home/tmp # ./ubi_tools_arm/ubiformat /dev/mtd0
+libmtd: error!: cannot open "/dev/mtd0"
+        error 13 (Permission denied)
+ubiformat: error!: cannot get information about "/dev/mtd0"

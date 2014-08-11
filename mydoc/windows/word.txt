@@ -1,0 +1,26 @@
+1,word 打开文件之后有提示：
+“word无法启动转换器mswrd632”
+这时候，搜索的答案在：
+http://zhidao.baidu.com/question/146879045.html
+我尝试的是：
+单击开始——运行，键入regedit，然后单击确定。 找到并单击下面的注册表子项： HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Shared Tools\Text Converters\Import\MSWord6.wpc在编辑菜单上，单击删除。
+似乎好了。
+
+2,word打开文件之后，始终有遇到问题需要关闭的提示，然后重启。
+尝试了：http://zhidao.baidu.com/question/129429885.html?fr=ala0
+关闭所有打开的文档，将以下地址粘贴到IE地址栏然后回车打开目录
+%appdata%\microsoft\templates 
+然后删除里面Normal.dot模板，然后重新运行Word。 
+
+不好用。
+
+
+3,2007word如何对当前也进行页面方向设置_百度知道
+http://zhidao.baidu.com/question/154454140.html
+
+网友推荐答案
+方法一：
+选中当前页面内容，点击“页面布局”选项卡下“页面设置”组右下角的小箭头，在弹出的“页面设置”窗体的“页边距”选项卡中，选择“纸张方向”，然后选择应用于“所选文字”。
+
+方法二：
+在当前页面前后分别插入分节符，插入的方法是：点击“页面布局”选项卡下“页面设置”组中的“分隔符”，选中“分节符”中的“下一页”，然后设置同上，选择纸张方向，不过是应用于“本节”。

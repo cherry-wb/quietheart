@@ -1,0 +1,22 @@
+http://hi.baidu.com/hongszh/blog/item/eaccc72a94d28b93023bf6b5.html
+Doxygen \param
+2009-05-19 00:06
+
+\param <parameter-name> { parameter description }
+
+\param 用<parameter-name>开始函数的参数说明，后跟参数描述。它会检查参数是否存在，如果不存在声明或者定义就会给出一个警告。
+\param命令有一个可选的属性用来指定是输入还是输出参数，即：[in]，[out]。如果一个参数既是输入也是输出，可以使用[in,out]作为它的属性。
+
+/*!
+Copies bytes from a source memory area to a destination memory area,
+where both areas may not overlap.
+@param[out] dest The memory area to copy to.
+@param[in] src The memory area to copy from.
+@param[in] n    The number of bytes to copy
+*/
+
+
+http://www.stack.nl/~dimitri/doxygen/commands.html
+
+\return { description of the return value }
+Starts a return value description for a function. The text of the paragraph has no special internal structure. All visual enhancement commands may be used inside the paragraph. Multiple adjacent \return commands will be joined into a single paragraph. The \return description ends when a blank line or some other sectioning command is encountered. See section \fn for an example.

@@ -1,0 +1,256 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.6	//
+AR	app/Makefile	/^AR=arm-sony-linux-gnueabi-dev-ar$/;"	m
+AR	drv/Makefile	/^AR?=arm-sony-linux-gnueabi-dev-ar$/;"	m
+AR	lib/Makefile	/^AR=arm-sony-linux-gnueabi-dev-ar$/;"	m
+BUF0_OFF	drv/cpu1comm_drv.h	50;"	d
+BUF0_SHIFT	drv/cpu1comm_drv.h	51;"	d
+BUF0_SIZE	drv/cpu1comm_drv.h	52;"	d
+BUF1_OFF	drv/cpu1comm_drv.h	57;"	d
+BUF1_SHIFT	drv/cpu1comm_drv.h	58;"	d
+BUF1_SIZE	drv/cpu1comm_drv.h	59;"	d
+BUF_END	drv/cpu1comm_drv.c	76;"	d	file:
+CC	app/Makefile	/^CC=arm-sony-linux-gnueabi-dev-gcc$/;"	m
+CC	drv/Makefile	/^CC?=arm-sony-linux-gnueabi-dev-gcc$/;"	m
+CC	lib/Makefile	/^CC=arm-sony-linux-gnueabi-dev-gcc$/;"	m
+CPU0_HANDSHAKE_RECV_IRQ	drv/cpu1comm_drv.c	49;"	d	file:
+CPU1COMMDRV_MAJOR	drv/cpu1comm_drv.h	11;"	d
+CPU1COMM_API_DBG	lib/cpucomm_api.c	18;"	d	file:
+CPU1COMM_DBG	drv/cpu1comm_drv.c	23;"	d	file:
+CPU1COMM_DEVICE	drv/cpu1comm_drv.h	12;"	d
+CPU1COMM_FAKE_WREAD	drv/cpu1comm_drv.h	36;"	d
+CPU1COMM_FAKE_WWRITE	drv/cpu1comm_drv.h	35;"	d
+CPU1COMM_INIT	drv/cpu1comm_drv.h	17;"	d
+CPU1COMM_MAGIC	drv/cpu1comm_drv.h	16;"	d
+CPU1COMM_NOTIFY_READ	drv/cpu1comm_drv.h	27;"	d
+CPU1COMM_NOTIFY_WRITE	drv/cpu1comm_drv.h	29;"	d
+CPU1COMM_RECEIVE	drv/cpu1comm_drv.h	22;"	d
+CPU1COMM_RELEASE	drv/cpu1comm_drv.h	18;"	d
+CPU1COMM_RWRITE_TEST	drv/cpu1comm_drv.h	38;"	d
+CPU1COMM_SEND	drv/cpu1comm_drv.h	21;"	d
+CPU1COMM_SYNC_KRAM	drv/cpu1comm_drv.h	31;"	d
+CPU1COMM_SYNC_URAM	drv/cpu1comm_drv.h	32;"	d
+CPU1COMM_WAIT_FOR_RECEIVE	drv/cpu1comm_drv.h	30;"	d
+CPU1COMM_WAIT_FOR_SEND	drv/cpu1comm_drv.h	28;"	d
+CPU1COMM_WKRAM_RBUF	drv/cpu1comm_drv.h	24;"	d
+CPU1COMM_WKRAM_RCVWAIT	drv/cpu1comm_drv.h	19;"	d
+CPU1COMM_WKRAM_SBUF	drv/cpu1comm_drv.h	23;"	d
+CPU1COMM_WKRAM_STAT	drv/cpu1comm_drv.h	25;"	d
+CPU1COMM_WWRITE_TEST	drv/cpu1comm_drv.h	37;"	d
+CPU_COMM_RAM	drv/cpu1comm_drv.h	/^} CPU_COMM_RAM;$/;"	t	typeref:struct:__anon4
+DBG_LOG_ON	app/main.c	14;"	d	file:
+DIABLO_SWCOMINFO_VIRADDR	drv/cpu1comm_drv.c	70;"	d	file:
+HANDSHAKE_CPU0TOCPU1_HANDSHAKE_READY	drv/cpu1comm_drv.c	54;"	d	file:
+HANDSHAKE_CPU0TOCPU1_PERIPHERAL_READY	drv/cpu1comm_drv.c	55;"	d	file:
+HANDSHAKE_GEN_CPU0TOCPU1	drv/cpu1comm_drv.c	53;"	d	file:
+HANDSHAKE_INTR	drv/cpu1comm_drv.c	51;"	d	file:
+HANDSHAKE_INTR_SEND	drv/cpu1comm_drv.c	50;"	d	file:
+IOCTL_BUF	drv/cpu1comm_drv.h	/^} IOCTL_BUF;$/;"	t	typeref:struct:__anon1
+KVERSION	drv/Makefile	/^KVERSION ?= $(shell uname -r)$/;"	m
+MAX_SEND_TIME	drv/cpu1comm_drv.h	91;"	d
+RB_DIABLO_WKRAM_BCT	drv/cpu1comm_drv.c	59;"	d	file:
+RB_DIABLO_WKRAM_BSPLOGREC_ADR	drv/cpu1comm_drv.c	66;"	d	file:
+RB_DIABLO_WKRAM_BSPLOGREC_END	drv/cpu1comm_drv.c	68;"	d	file:
+RB_DIABLO_WKRAM_BSPLOGREC_START	drv/cpu1comm_drv.c	67;"	d	file:
+RB_DIABLO_WKRAM_END	drv/cpu1comm_drv.c	69;"	d	file:
+RB_DIABLO_WKRAM_EXTRACT_INFO	drv/cpu1comm_drv.c	60;"	d	file:
+RB_DIABLO_WKRAM_HANDSHAKE_BUF0	drv/cpu1comm_drv.c	64;"	d	file:
+RB_DIABLO_WKRAM_HANDSHAKE_BUF1	drv/cpu1comm_drv.c	65;"	d	file:
+RB_DIABLO_WKRAM_HFDMA_DESCBASE	drv/cpu1comm_drv.c	63;"	d	file:
+RB_DIABLO_WKRAM_LAPTIME_LOG	drv/cpu1comm_drv.c	61;"	d	file:
+RB_DIABLO_WKRAM_SWCOMMON	drv/cpu1comm_drv.c	62;"	d	file:
+RB_Inner	drv/cpu1comm_drv.h	/^    struct RB_Inner {$/;"	s	struct:__anon3
+R_BUF	drv/cpu1comm_drv.h	/^} R_BUF;$/;"	t	typeref:struct:__anon3
+START_OFF	drv/cpu1comm_drv.h	48;"	d
+TIME_SHIFT	drv/cpu1comm_drv.h	90;"	d
+WB_Inner	drv/cpu1comm_drv.h	/^    struct WB_Inner {$/;"	s	struct:__anon2
+WKRAM_BUF0	drv/cpu1comm_drv.c	74;"	d	file:
+WKRAM_BUF1	drv/cpu1comm_drv.c	75;"	d	file:
+WORKRAM_PHYS_BASE	drv/cpu1comm_drv.c	73;"	d	file:
+WORKRAM_SIZE	drv/cpu1comm_drv.h	49;"	d
+WWRITE_CHAR1	drv/cpu1comm_drv.h	39;"	d
+WWRITE_CHAR2	drv/cpu1comm_drv.h	40;"	d
+W_BUF	drv/cpu1comm_drv.h	/^} W_BUF;$/;"	t	typeref:struct:__anon2
+__CPU1COMM_DRV_H	drv/cpu1comm_drv.h	2;"	d
+__CPUCOMM_API_H	lib/cpucomm_api.h	2;"	d
+__KERNEL_PATH	drv/Makefile	/^__KERNEL_PATH?= ..\/..\/..\/Kernel\/$/;"	m
+__MEM_MAP	drv/cpu1comm_drv.h	8;"	d
+__TARGET	app/Makefile	/^__TARGET=main$/;"	m
+base_addr	lib/cpucomm_api.c	/^static char* base_addr;$/;"	v	file:
+buf0_addr	lib/cpucomm_api.c	/^static void* buf0_addr;$/;"	v	file:
+buf1_addr	lib/cpucomm_api.c	/^static void* buf1_addr;$/;"	v	file:
+cache_up	drv/cpu1comm_drv.h	/^        unsigned cache_up: 1; \/*status for if can't send.*\/$/;"	m	struct:__anon2::WB_Inner
+cache_up	drv/cpu1comm_drv.h	/^        unsigned cache_up: 1; \/*status for if can't send.*\/$/;"	m	struct:__anon3::RB_Inner
+cd_cdev	drv/cpu1comm_drv.c	/^    struct cdev cd_cdev;$/;"	m	struct:cpu1commdrv_dev	typeref:struct:cpu1commdrv_dev::cdev	file:
+cd_read_wait	drv/cpu1comm_drv.c	/^    struct completion cd_read_wait;$/;"	m	struct:cpu1commdrv_dev	typeref:struct:cpu1commdrv_dev::completion	file:
+cd_wkram	drv/cpu1comm_drv.c	/^    CPU_COMM_RAM cd_wkram;$/;"	m	struct:cpu1commdrv_dev	file:
+cd_write_wait	drv/cpu1comm_drv.c	/^    struct completion cd_write_wait;$/;"	m	struct:cpu1commdrv_dev	typeref:struct:cpu1commdrv_dev::completion	file:
+clear_handshake	drv/cpu1comm_drv.c	/^static int clear_handshake() {$/;"	f	file:
+cpu1comm_dev	drv/cpu1comm_drv.c	/^static struct cpu1commdrv_dev cpu1comm_dev;$/;"	v	typeref:struct:cpu1commdrv_dev	file:
+cpu1comm_error	drv/cpu1comm_drv.c	86;"	d	file:
+cpu1comm_info	app/main.c	16;"	d	file:
+cpu1comm_info	app/main.c	19;"	d	file:
+cpu1comm_info	drv/cpu1comm_drv.c	37;"	d	file:
+cpu1comm_info	drv/cpu1comm_drv.c	42;"	d	file:
+cpu1comm_info	lib/cpucomm_api.c	27;"	d	file:
+cpu1comm_info	lib/cpucomm_api.c	30;"	d	file:
+cpu1comm_printk	drv/cpu1comm_drv.c	34;"	d	file:
+cpu1comm_printk	drv/cpu1comm_drv.c	41;"	d	file:
+cpu1commdrv_dev	drv/cpu1comm_drv.c	/^struct cpu1commdrv_dev {$/;"	s	file:
+cpu1commdrv_exit	drv/cpu1comm_drv.c	/^module_exit(cpu1commdrv_exit);$/;"	v
+cpu1commdrv_exit	drv/cpu1comm_drv.c	/^void cpu1commdrv_exit(void) {$/;"	f
+cpu1commdrv_fops	drv/cpu1comm_drv.c	/^static const struct file_operations cpu1commdrv_fops = {$/;"	v	typeref:struct:file_operations	file:
+cpu1commdrv_init	drv/cpu1comm_drv.c	/^int cpu1commdrv_init(void) {$/;"	f
+cpu1commdrv_init	drv/cpu1comm_drv.c	/^module_init(cpu1commdrv_init);$/;"	v
+cpu1commdrv_ioctl	drv/cpu1comm_drv.c	/^static int cpu1commdrv_ioctl(struct inode* inodep, struct file* filp, unsigned int cmd, unsigned long arg) {$/;"	f	file:
+cpu1commdrv_llseek	drv/cpu1comm_drv.c	/^static loff_t cpu1commdrv_llseek(struct file* filp, loff_t offset, int orig) {$/;"	f	file:
+cpu1commdrv_major	drv/cpu1comm_drv.c	/^static int cpu1commdrv_major = CPU1COMMDRV_MAJOR;$/;"	v	file:
+cpu1commdrv_mmap	drv/cpu1comm_drv.c	/^static int cpu1commdrv_mmap(struct file* file, struct vm_area_struct* vma) {$/;"	f	file:
+cpu1commdrv_open	drv/cpu1comm_drv.c	/^static int cpu1commdrv_open(struct inode* inode, struct file* filp) {$/;"	f	file:
+cpu1commdrv_read	drv/cpu1comm_drv.c	/^static ssize_t cpu1commdrv_read(struct file* filp, char __user* buf, size_t count, loff_t* ppos) {$/;"	f	file:
+cpu1commdrv_release	drv/cpu1comm_drv.c	/^static int cpu1commdrv_release(struct inode* inode, struct file* filp) {$/;"	f	file:
+cpu1commdrv_write	drv/cpu1comm_drv.c	/^static ssize_t cpu1commdrv_write(struct file* filp, const char __user* buf, size_t count, loff_t* ppos) {$/;"	f	file:
+cpucomm_fake_read	lib/cpucomm_api.c	/^int cpucomm_fake_read(char* des, int count) {$/;"	f
+cpucomm_fake_read2	lib/cpucomm_api.c	/^int cpucomm_fake_read2(char* des, int count) {$/;"	f
+cpucomm_fake_wait	lib/cpucomm_api.c	/^int cpucomm_fake_wait(char* ptr, int* size) {$/;"	f
+cpucomm_fake_write	lib/cpucomm_api.c	/^int cpucomm_fake_write(char* ptr, int size) {$/;"	f
+cpucomm_fake_write2	lib/cpucomm_api.c	/^int cpucomm_fake_write2(char* ptr, int count) {$/;"	f
+cpucomm_initialize	lib/cpucomm_api.c	/^int cpucomm_initialize() {$/;"	f
+cpucomm_kread_test	lib/cpucomm_api.c	/^int cpucomm_kread_test() {$/;"	f
+cpucomm_kwrite_test	lib/cpucomm_api.c	/^int cpucomm_kwrite_test() {$/;"	f
+cpucomm_rcv	lib/cpucomm_api.c	/^int cpucomm_rcv(char* des, const char* src, int count) {$/;"	f
+cpucomm_rcvwait	lib/cpucomm_api.c	/^int cpucomm_rcvwait(char* ptr, int* size) {$/;"	f
+cpucomm_release	lib/cpucomm_api.c	/^int cpucomm_release() {$/;"	f
+cpucomm_send	lib/cpucomm_api.c	/^int cpucomm_send(const char* ptr, int count) {$/;"	f
+cpucomm_sync_kram	lib/cpucomm_api.c	/^static int cpucomm_sync_kram() {$/;"	f	file:
+cpucomm_sync_uram	lib/cpucomm_api.c	/^static int cpucomm_sync_uram() {$/;"	f	file:
+cpucomm_uread_test	lib/cpucomm_api.c	/^int cpucomm_uread_test() {$/;"	f
+cpucomm_uwrite_test	lib/cpucomm_api.c	/^int cpucomm_uwrite_test() {$/;"	f
+data	drv/cpu1comm_drv.h	/^    char* data;$/;"	m	struct:__anon1
+data	drv/cpu1comm_drv.h	/^    volatile char data[BUF0_SIZE-128]; \/*XXX not all used*\/$/;"	m	struct:__anon2
+data	drv/cpu1comm_drv.h	/^    volatile char data[BUF1_SIZE-128];$/;"	m	struct:__anon3
+data_intr	drv/cpu1comm_drv.c	/^static irqreturn_t data_intr (int irq, void* devId) {$/;"	f	file:
+devp	drv/cpu1comm_drv.c	/^static struct cpu1commdrv_dev* devp;$/;"	v	typeref:struct:cpu1commdrv_dev	file:
+diablo_cpu0_status	drv/cpu1comm_drv.h	/^    volatile struct RB_Inner* diablo_cpu0_status;\/*cpu1 read ring buffer status.(Bit[0]--0:not full, 1:full),other bits for len*\/$/;"	m	struct:__anon4	typeref:struct:__anon4::RB_Inner
+diablo_cpu1_status	drv/cpu1comm_drv.h	/^    volatile struct WB_Inner* diablo_cpu1_status;\/*cpu1 write ring buffer status.(Bit[0]--0:not full, 1:full),other bits for len*\/$/;"	m	struct:__anon4	typeref:struct:__anon4::WB_Inner
+fake_receive_wb	drv/cpu1comm_drv.c	/^static int fake_receive_wb(char* buf, size_t count) {$/;"	f	file:
+fake_receive_wb	lib/cpucomm_api.c	/^static int fake_receive_wb(char* buf, size_t count) {$/;"	f	file:
+first_init	lib/cpucomm_api.c	/^static int first_init = 0;$/;"	v	file:
+get_cpu1_cacheup	lib/cpucomm_api.c	/^static int get_cpu1_cacheup() {$/;"	f	file:
+get_cpu1_cacheup2	lib/cpucomm_api.c	/^static int get_cpu1_cacheup2() {$/;"	f	file:
+get_cpu1_lastsend_size	lib/cpucomm_api.c	/^static int get_cpu1_lastsend_size() {$/;"	f	file:
+get_cpu1_nextrecv_size	lib/cpucomm_api.c	/^static int get_cpu1_nextrecv_size() {$/;"	f	file:
+get_cpu1_nextrecv_size2	lib/cpucomm_api.c	/^static int get_cpu1_nextrecv_size2() {$/;"	f	file:
+get_cpu1_recv_num	lib/cpucomm_api.c	/^static int get_cpu1_recv_num() {$/;"	f	file:
+get_cpu1_recv_num2	lib/cpucomm_api.c	/^static int get_cpu1_recv_num2() {$/;"	f	file:
+get_cpu1_rlength	drv/cpu1comm_drv.c	/^static int get_cpu1_rlength() {$/;"	f	file:
+get_cpu1_rlength	lib/cpucomm_api.c	/^static int get_cpu1_rlength() {$/;"	f	file:
+get_cpu1_rrecv_flg	drv/cpu1comm_drv.c	/^static int get_cpu1_rrecv_flg() {$/;"	f	file:
+get_cpu1_rrecv_flg	lib/cpucomm_api.c	/^static int get_cpu1_rrecv_flg() {$/;"	f	file:
+get_cpu1_rsend_flg	drv/cpu1comm_drv.c	/^static int get_cpu1_rsend_flg() {$/;"	f	file:
+get_cpu1_rsend_flg	lib/cpucomm_api.c	/^static int get_cpu1_rsend_flg() {$/;"	f	file:
+get_cpu1_rsent	drv/cpu1comm_drv.c	/^static int get_cpu1_rsent() {$/;"	f	file:
+get_cpu1_rsent	lib/cpucomm_api.c	/^static int get_cpu1_rsent() {$/;"	f	file:
+get_cpu1_rstatus	drv/cpu1comm_drv.c	/^static int get_cpu1_rstatus() {$/;"	f	file:
+get_cpu1_rstatus	lib/cpucomm_api.c	/^static int get_cpu1_rstatus() {$/;"	f	file:
+get_cpu1_send_num	lib/cpucomm_api.c	/^static int get_cpu1_send_num() {$/;"	f	file:
+get_cpu1_wlength	drv/cpu1comm_drv.c	/^static int get_cpu1_wlength() {$/;"	f	file:
+get_cpu1_wlength	lib/cpucomm_api.c	/^static int get_cpu1_wlength() {$/;"	f	file:
+get_cpu1_wrecv_flg	drv/cpu1comm_drv.c	/^static int get_cpu1_wrecv_flg() {$/;"	f	file:
+get_cpu1_wrecv_flg	lib/cpucomm_api.c	/^static int get_cpu1_wrecv_flg() {$/;"	f	file:
+get_cpu1_wsend_flg	drv/cpu1comm_drv.c	/^static int get_cpu1_wsend_flg() {$/;"	f	file:
+get_cpu1_wsend_flg	lib/cpucomm_api.c	/^static int get_cpu1_wsend_flg() {$/;"	f	file:
+get_cpu1_wsent	drv/cpu1comm_drv.c	/^static int get_cpu1_wsent() {$/;"	f	file:
+get_cpu1_wsent	lib/cpucomm_api.c	/^static int get_cpu1_wsent() {$/;"	f	file:
+get_cpu1_wstatus	drv/cpu1comm_drv.c	/^static int get_cpu1_wstatus() {$/;"	f	file:
+get_cpu1_wstatus	lib/cpucomm_api.c	/^static int get_cpu1_wstatus() {$/;"	f	file:
+info	drv/cpu1comm_drv.h	/^    } info;$/;"	m	struct:__anon2	typeref:struct:__anon2::WB_Inner
+info	drv/cpu1comm_drv.h	/^    } info;$/;"	m	struct:__anon3	typeref:struct:__anon3::RB_Inner
+init_handshake	drv/cpu1comm_drv.c	/^static int init_handshake() {$/;"	f	file:
+init_irq	drv/cpu1comm_drv.c	/^static int init_irq() {$/;"	f	file:
+init_ram	drv/cpu1comm_drv.c	/^static int init_ram() {$/;"	f	file:
+init_wkram	lib/cpucomm_api.c	/^static int init_wkram() {$/;"	f	file:
+length	drv/cpu1comm_drv.h	/^    int length;$/;"	m	struct:__anon1
+main	app/main.c	/^int main(int argc, char* argv[]) {$/;"	f
+notify_read	drv/cpu1comm_drv.c	/^static int notify_read() {$/;"	f	file:
+notify_read	lib/cpucomm_api.c	/^static int notify_read() {$/;"	f	file:
+notify_read_test	lib/cpucomm_api.c	/^int notify_read_test() {$/;"	f
+notify_write	drv/cpu1comm_drv.c	/^static int notify_write() {$/;"	f	file:
+notify_write	lib/cpucomm_api.c	/^static int notify_write() {$/;"	f	file:
+notify_write_test	lib/cpucomm_api.c	/^int notify_write_test() {$/;"	f
+obj-m	drv/Makefile	/^obj-m := cpu1comm_drv.o$/;"	m
+print_buffer	lib/cpucomm_api.c	/^static void print_buffer() {$/;"	f	file:
+read_buf	drv/cpu1comm_drv.h	/^    volatile R_BUF* read_buf;$/;"	m	struct:__anon4
+read_buf_rp	drv/cpu1comm_drv.h	/^    volatile char* read_buf_rp;\/*The read pointer of read ring buffer of cpu1.[0,1],read by cpu0.*\/$/;"	m	struct:__anon4
+read_buf_wp	drv/cpu1comm_drv.h	/^    volatile char* read_buf_wp;\/*The write pointer of read ring buffer of cpu1.[0,1],write by cpu1.*\/$/;"	m	struct:__anon4
+receive_rb	drv/cpu1comm_drv.c	/^static int receive_rb(char* buf, size_t count) {$/;"	f	file:
+receive_rb	lib/cpucomm_api.c	/^static int receive_rb(char* buf, size_t count) {$/;"	f	file:
+recv_flg	drv/cpu1comm_drv.h	/^        unsigned recv_flg: 1; \/*interrupt type flag for receive*\/$/;"	m	struct:__anon2::WB_Inner
+recv_flg	drv/cpu1comm_drv.h	/^        unsigned recv_flg: 1; \/*interrupt type flag for receive*\/$/;"	m	struct:__anon3::RB_Inner
+recv_num	drv/cpu1comm_drv.h	/^unsigned recv_num:$/;"	m	struct:__anon2::WB_Inner
+recv_num	drv/cpu1comm_drv.h	/^unsigned recv_num:$/;"	m	struct:__anon3::RB_Inner
+reserved	drv/cpu1comm_drv.h	/^        unsigned reserved: 5;$/;"	m	struct:__anon2::WB_Inner
+reserved	drv/cpu1comm_drv.h	/^        unsigned reserved: 5;$/;"	m	struct:__anon3::RB_Inner
+reserved_flag	drv/cpu1comm_drv.h	/^        unsigned reserved_flag: 27;$/;"	m	struct:__anon2::WB_Inner
+reserved_flag	drv/cpu1comm_drv.h	/^        unsigned reserved_flag: 27;$/;"	m	struct:__anon3::RB_Inner
+send_flg	drv/cpu1comm_drv.h	/^        unsigned send_flg: 1; \/*interrupt type flag for write*\/$/;"	m	struct:__anon2::WB_Inner
+send_flg	drv/cpu1comm_drv.h	/^        unsigned send_flg: 1; \/*interrupt type flag for write*\/$/;"	m	struct:__anon3::RB_Inner
+send_mutex	lib/cpucomm_api.c	/^static pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v	file:
+send_num	drv/cpu1comm_drv.h	/^unsigned send_num:$/;"	m	struct:__anon2::WB_Inner
+send_num	drv/cpu1comm_drv.h	/^unsigned send_num:$/;"	m	struct:__anon3::RB_Inner
+send_wb	drv/cpu1comm_drv.c	/^static int send_wb(const char* buf, size_t count) {$/;"	f	file:
+send_wb	lib/cpucomm_api.c	/^static int send_wb(const char* buf, size_t count) {$/;"	f	file:
+sent_len	drv/cpu1comm_drv.h	/^unsigned sent_len:$/;"	m	struct:__anon2::WB_Inner
+sent_len	drv/cpu1comm_drv.h	/^unsigned sent_len:$/;"	m	struct:__anon3::RB_Inner
+set_cpu1_cacheup	lib/cpucomm_api.c	/^static int set_cpu1_cacheup(int status) {$/;"	f	file:
+set_cpu1_cacheup2	lib/cpucomm_api.c	/^static int set_cpu1_cacheup2(int status) {$/;"	f	file:
+set_cpu1_lastsend_size	lib/cpucomm_api.c	/^static int set_cpu1_lastsend_size(int size) {$/;"	f	file:
+set_cpu1_nextrecv_size	lib/cpucomm_api.c	/^static int set_cpu1_nextrecv_size(int size) {$/;"	f	file:
+set_cpu1_nextrecv_size2	lib/cpucomm_api.c	/^static int set_cpu1_nextrecv_size2(int size) {$/;"	f	file:
+set_cpu1_recv_num	lib/cpucomm_api.c	/^static int set_cpu1_recv_num(int num) {$/;"	f	file:
+set_cpu1_recv_num2	lib/cpucomm_api.c	/^static int set_cpu1_recv_num2(int num) {$/;"	f	file:
+set_cpu1_rlength	drv/cpu1comm_drv.c	/^static int set_cpu1_rlength(int length) {$/;"	f	file:
+set_cpu1_rlength	lib/cpucomm_api.c	/^static int set_cpu1_rlength(int length) {$/;"	f	file:
+set_cpu1_rrecv_flg	drv/cpu1comm_drv.c	/^static int set_cpu1_rrecv_flg(int flag) {$/;"	f	file:
+set_cpu1_rrecv_flg	lib/cpucomm_api.c	/^static int set_cpu1_rrecv_flg(int flag) {$/;"	f	file:
+set_cpu1_rsend_flg	drv/cpu1comm_drv.c	/^static int set_cpu1_rsend_flg(int flag) {$/;"	f	file:
+set_cpu1_rsend_flg	lib/cpucomm_api.c	/^static int set_cpu1_rsend_flg(int flag) {$/;"	f	file:
+set_cpu1_rsent	drv/cpu1comm_drv.c	/^static int set_cpu1_rsent(int length) {$/;"	f	file:
+set_cpu1_rsent	lib/cpucomm_api.c	/^static int set_cpu1_rsent(int length) {$/;"	f	file:
+set_cpu1_rstatus	drv/cpu1comm_drv.c	/^static int set_cpu1_rstatus(int status) {$/;"	f	file:
+set_cpu1_rstatus	lib/cpucomm_api.c	/^static int set_cpu1_rstatus(int status) {$/;"	f	file:
+set_cpu1_send_num	lib/cpucomm_api.c	/^static int set_cpu1_send_num(int num) {$/;"	f	file:
+set_cpu1_wlength	drv/cpu1comm_drv.c	/^static int set_cpu1_wlength(int length) {$/;"	f	file:
+set_cpu1_wlength	lib/cpucomm_api.c	/^static int set_cpu1_wlength(int length) {$/;"	f	file:
+set_cpu1_wrecv_flg	drv/cpu1comm_drv.c	/^static int set_cpu1_wrecv_flg(int flag) {$/;"	f	file:
+set_cpu1_wrecv_flg	lib/cpucomm_api.c	/^static int set_cpu1_wrecv_flg(int flag) {$/;"	f	file:
+set_cpu1_wsend_flg	drv/cpu1comm_drv.c	/^static int set_cpu1_wsend_flg(int flag) {$/;"	f	file:
+set_cpu1_wsend_flg	lib/cpucomm_api.c	/^static int set_cpu1_wsend_flg(int flag) {$/;"	f	file:
+set_cpu1_wsent	drv/cpu1comm_drv.c	/^static int set_cpu1_wsent(int length) {$/;"	f	file:
+set_cpu1_wsent	lib/cpucomm_api.c	/^static int set_cpu1_wsent(int length) {$/;"	f	file:
+set_cpu1_wstatus	drv/cpu1comm_drv.c	/^static int set_cpu1_wstatus(int status) {$/;"	f	file:
+set_cpu1_wstatus	lib/cpucomm_api.c	/^static int set_cpu1_wstatus(int status) {$/;"	f	file:
+size_array	drv/cpu1comm_drv.h	/^        unsigned short size_array[MAX_SEND_TIME];$/;"	m	struct:__anon2::WB_Inner
+size_array	drv/cpu1comm_drv.h	/^        unsigned short size_array[MAX_SEND_TIME];$/;"	m	struct:__anon3::RB_Inner
+status	drv/cpu1comm_drv.h	/^        unsigned status: 1; \/*status flag for full or not(the whole buffer).*\/$/;"	m	struct:__anon2::WB_Inner
+status	drv/cpu1comm_drv.h	/^        unsigned status: 1; \/*status flag for full or not(the whole buffer).*\/$/;"	m	struct:__anon3::RB_Inner
+sync_cpu1_rbwpointer	drv/cpu1comm_drv.c	/^static int sync_cpu1_rbwpointer() {$/;"	f	file:
+sync_cpu1_rbwpointer	lib/cpucomm_api.c	/^static int sync_cpu1_rbwpointer() {$/;"	f	file:
+sync_cpu1_wbrpointer	drv/cpu1comm_drv.c	/^static int sync_cpu1_wbrpointer() {$/;"	f	file:
+sync_cpu1_wbrpointer	lib/cpucomm_api.c	/^static int sync_cpu1_wbrpointer() {$/;"	f	file:
+total_len	drv/cpu1comm_drv.h	/^        unsigned total_len: 13; \/*XXX 8K max for request.*\/$/;"	m	struct:__anon2::WB_Inner
+total_len	drv/cpu1comm_drv.h	/^        unsigned total_len: 13; \/*XXX 8K max for request.*\/$/;"	m	struct:__anon3::RB_Inner
+used	lib/cpucomm_api.c	/^static int used = 0;\/*if wkram haven't be used, memset memory when initialize.*\/$/;"	v	file:
+used_flag	lib/cpucomm_api.c	/^static int used_flag() {$/;"	f	file:
+wait_for_receive	drv/cpu1comm_drv.c	/^static int wait_for_receive() {$/;"	f	file:
+wait_for_receive	lib/cpucomm_api.c	/^static int wait_for_receive() {$/;"	f	file:
+wait_for_send	drv/cpu1comm_drv.c	/^static int wait_for_send() {$/;"	f	file:
+wait_for_send	lib/cpucomm_api.c	/^static int wait_for_send() {$/;"	f	file:
+wkram	lib/cpucomm_api.c	/^static CPU_COMM_RAM wkram;$/;"	v	file:
+write_buf	drv/cpu1comm_drv.h	/^    volatile W_BUF* write_buf;$/;"	m	struct:__anon4
+write_buf_rp	drv/cpu1comm_drv.h	/^    volatile char* write_buf_rp;\/*The read pointer of write ring buffer of cpu1.[0,4],read by cpu1.*\/$/;"	m	struct:__anon4
+write_buf_wp	drv/cpu1comm_drv.h	/^    volatile char* write_buf_wp;\/*The write pointer of write ring buffer of cpu1.[0,4],write by cpu0.*\/$/;"	m	struct:__anon4

@@ -1,0 +1,10 @@
+这里的内容
+resource/
+visual on提供的一个包含mp3 wma pcm音频的解码器，还没有license，只能播放3分钟。
+其中有一个wma的静态库libvoWMADec.a
+
+codedemo/
+中的是解码器移植的时候的一些代码片段。
+
+miscellaneous/
+这里面是看似有用的东西，还没有仔细整理。

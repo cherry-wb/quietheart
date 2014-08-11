@@ -1,0 +1,516 @@
+http://blog.csdn.net/lizhiguo0532/archive/2010/10/17/5946690.aspx
+linux2.6内核initrd机制解析 收藏
+
+题记
+    很久之前就分析过这部分内容，但是那个时候不够深入，姑且知道这么个东西存在，到底怎么用，来龙去脉咋回事就不知道了。前段时间工作上遇到了一个initrd的问题，没办法只能再去研究研究，还好，有点眉目，索性整理了一下。
+    网络上流传着很多关于ramdisk、initrd的各种版本的分析，我的这篇源于对他们的理解，非常感谢那些前辈的无私奉献，要不然我们这些晚辈学起东西来该是多么艰难呀。在这里需要特别声明的是如果文中有引用了您的思想而没有给出参考文献，请您原谅我的疏忽。晚辈就是需要站在像您这种巨人的肩上，技术才会发展，社会才会进步。
+    另外，由于本人水平有限，文中难免有误解及不全面之处，烦请指正，谢谢！
+    欢迎转载，但请保留原文该有的信息。
+   
+    联系方式：李枝果/lizgo   lizhiguo0532@163.com  2010/10/16
+
+目录
+第一部分：ramfs、tmpfs、rootfs、ramdisk
+一、    什么是ramfs
+二、    什么是tmpfs
+三、    什么是rootfs
+四、    什么是ramdisk
+第二部分：initrd、initramfs
+一、    initrd出现的背景
+二、    initrd的种类和制作
+第三部分：kernel初始化initrd代码分析
+一、    bootloader传递给内核的关于initrd的参数
+二、    动态内存分配器slab介绍
+三、    rootfs初始化
+四、    内核初始化阶段对initrd的处理
+五、    老式块设备的initrd的处理函数prepare_namespace()分析
+附文
+参考网址
+
+
+第一部分：ramfs、tmpfs、rootfs、ramdisk
+一、    什么是ramfs？
+1. linux缓存机制
+VFS(虚拟文件系统)层屏蔽了各种真实文件系统的特性，提供给linux上层统一的接口。
+通常，linux对所有文件的读写都会在内存在做高速缓存，当系统再次使用这些文件时，可以直接从内存中读取，以提高系统的I/O性能。当高速缓存中的文件被修改或者有数据写入高速缓存时，系统会在适当的时候将这些高速缓存中的数据回写到对应的文件系统设备(如磁盘、flash等)中去，那么这之后这些高速缓存的状态就被标识为clean(可用)，这样就相当于告诉了系统：这些高速缓存中的数据文件系统设备上有备份，你可以拿去另作他用。但其中的数据会保持到VMS(Virtual Memory System)将这些高速缓存回收重新分配。
+类似于页缓存机制，目录缓存机制也极大地加快了对目录的访问。
+    2. ramfs
+ramfs是一种非常简单的文件系统，它直接利用linux内核已有的高速缓存机制(所以其实现代码很小,也由于这个原因，ramfs特性不能通过内核配置参数屏蔽，它是内核的天然属性)，使用系统的物理内存，做成一个大小可以动态变化的的基于内存的文件系统。
+ramfs工作于虚拟文件系统层(VFS)层，不能被格式化，可以创建多个，默认情况下，ramfs最多能用到内存的一半，必要时也可以使用-o maxsize = 10000(单位是KB)来更改使用的最大内存量。
+ramfs没有对应的文件系统设备，文件被写入ramfs和其他文件系统一样都正常分配页缓存和目录缓存，但是却不可能想其他有存储设备的文件系统一样将高速缓存中的文件回写到存储设备。这就意味着这些为ramfs中的文件和目录分配的高速页或者目录缓存都不可能会被标记为clean(可用)状态，所以系统就永远不会释放ramfs所占用的内存。正因为可以在ramfs下面可以一直往里写数据，直到写满为止，所以这种操作只有root(or trusted user)用户才可以进行ramfs写操作。
+为了解决ramfs的缺点(没有回写设备)导致的种种问题，所以衍生出了tmpfs文件系统。
+
+二、    什么是tmpfs？
+tmpfs是ramfs的衍生物，在ramfs的基础上增加了容量大小的限制和允许向交换
+空间(swap) 写入数据。由于增加了这两个特性，所以普通用户也可以使用tmpfs。
+tmpfs是一种虚拟内存文件系统，它不同于传统的用块设备形式来实现的ramdisk，也不同于针对物理内存的ramfs。tmpfs既可以使用物理内存，也可以使用交换分区。在linux内核中，虚拟内存资源由物理内存和交换分区组成，这些资源由内核中的虚拟内存子系统来负责管理。tmpfs就是和虚拟内存子系统打交道的，它向虚拟内存子系统请求页来存储文件，同linux的其他请求页的部分一样，不知道分配给自己的页是在内存中还是在交换分区中。也就是说tmpfs使用的是虚拟内存，而ramfs使用物理内存。另外tmpfs和ramfs一样，不可以被格式化，同时大小也是不固定的，可以使用-o size =32m或者(1g)来修改。
+另外，tmpfs可以将当前不需要使用的页写入到交换空间。同时由于其使用的虚拟内存，所以tmpfs一旦被卸载，其中的数据都会丢失。
+如果需要使用tmpfs，在内核编译的时候得选择上：
+Virtual memory filesystem support
+ramfs只会在物理内存中被创建，而tmpfs可能在物理内存中创建，也可能在交换    分区中创建。对于想利用内存的高速IO来提高效能的应用，最好是使用ramfs。对于只是想存放临时缓存的应用，最好使用tmpfs，以提高内存的使用率。
+
+三、    什么是rootfs？
+rootfs是一个特定的ramfs(或tmpfs，如果tmpfs被启用)的实例，它始终存在于linux2.6的系统中。rootfs不能被卸载(与其添加特殊代码用来维护空的链表，不如把rootfs节点始终加入，因此便于kernel维护。rootfs是ramfs的一个空实例，占用空间极小)。大部分其他的文件系统安装于rootfs之上，然后忽略它。它是内核启动初始化根文件系统。
+
+四、    什么是ramdisk？
+linux2.6版本之后都不在使用ramdisk了，2.4中还在使用。ramdisk是一种将内存
+中的的一块区域作为物理磁盘来使用的一种技术，也可以说，ramdisk是在一块内存区    域中创建的块设备，用于存放文件系统。对于用户来说，可以把ramdisk与通常的硬盘分区同等对待来使用。ramdisk不适合作为长期保存文件的介质，掉电后ramdisk的内容会消失。
+为了能够使用ramdisk 你的内核必须要支持ramdisk，即：在编译内核时，要选中RAM disk support这一选项，会在配置文件中定义CONFIG_BLK_DEV_RAM。同时为了让内核有能力在内核加载阶段就能装入ramdisk，并运行其中的内容，要选中initial RAM disk(initrd) support 选项，会在配置文件中定义CONFIG_BLK_DEV_INITRD。
+    ramdisk的大小是固定的，安装在其上的文件系统大小也是固定的。ramdisk在使用的时候，这个假的块设备和高速缓存(页缓存和目录缓存)之间有数据的拷贝，而且它还需要文件系统的驱动来格式化和解释这些数据。所以，使用ramdisk不仅浪费了内存，还加重了cpu的负担，同时也无污染了 cache，而且其所有的文件和目录都要通过页和目录缓存进行访问，这些工作ramfs都要执行的，那么ramdisk就可以完全不需要。这是废弃 ramdisk的理由之一。
+    另一个废弃它的理由就是，回环设备的引进，而回环设备提供了一个更灵活和方便的方式(从文件而不是从大块的内存)来创建一个合成块设备。
+
+第二部分：initrd、initramfs
+一、    initrd出现的背景
+在早期的linux系统中，一般只有硬盘或者软盘被用来作为linux根文件系统的存储设备，因此也就很容易把这些设备的驱动程序集成到内核中。但是现在的嵌入式系统中可能将根文件系统保存到各种存储设备上，包括scsi、sata，u-disk等等。因此把这些设备的驱动代码全部编译到内核中显然就不是很方便。
+在内核模块自动加载机制udev中，我们看到利用udevd可以实现内核模块的自动加载，因此我们希望如果存储根文件系统的存储设备的驱动程序也能够实现自动加载，那就好了。但是这里有一个矛盾，udevd是一个可执行文件，在根文件系统被挂载前，是不可能执行udevd的，但是如果udevd没有启动，那就无法自动加载存储根文件系统设备的驱动程序，同时也无法在/dev目录下建立相应的设备节点。
+为了解决这一矛盾，于是出现了基于ramdisk的initrd( bootloader initialized RAM disk )。Initrd是一个被压缩过的小型根目录，这个目录中包含了启动阶段中必须的驱动模块，可执行文件和启动脚本，也包括上面提到的udevd（实现udev机制的demon）。当系统启动的时候，bootloader会把initrd文件读到内存中，然后把initrd文件在内存中的起始地址和大小传递给内核。内核在启动初始化过程中会解压缩initrd文件，然后将解压后的initrd挂载为根目录，然后执行根目录中的/init脚本（cpio格式的initrd为/init,而image格式的initrd<也称老式块设备的initrd或传统的文件镜像格式的initrd>为/initrc），您就可以在这个脚本中运行initrd文件系统中的udevd，让它来自动加载realfs（真实文件系统）存放设备的驱动程序以及在/dev目录下建立必要的设备节点。在udevd自动加载磁盘驱动程序之后，就可以mount真正的根目录，并切换到这个根目录中来。
+这里只是个简单的描述，后面慢慢分析吧。
+
+二、    initrd的种类和制作
+initrd总的来说目前有两种格式：image格式和cpio格式。image格式也叫文件系统镜像文件(老式块设备的initrd文件)，主要在linux 2.4内核中使用流行；在linux 2.5内核开始引入initramfs技术，initramfs实际上已经克服了imgae-initrd的缺点，本质上也是cpio格式的initrd，只不过是和内核编译到了一个image文件，放在了.init.ramfs段内；到linux2.6的内核支持两种格式的initrd，即image-initrd和cpio-initrd，此时的cpio-initrd文件已不再编译进内核而单独成一文件，使用cpio工具生成。后边详述。
+
+在介绍initrd的制作之前，先了解下面的几个命令作用：
+dd：用指定大小的块拷贝一个文件，并在拷贝的同时进行指定的转换。
+1. if=文件名：输入文件名，缺省为标准输入。即指定源文件。< if=input file >
+  注意/dev/zero设备，这个设备是可以源源不断地提供0的设备，用来初始化
+2. of=文件名：输出文件名，缺省为标准输出。即指定目的文件。< of=output file >
+3.bs=bytes：同时设置读入/输出的块大小为bytes个字节。
+4. count=blocks：仅拷贝blocks个块，块大小等于ibs指定的字节数。
+还有其他更详细的参数用法参考：dd命令-详解
+http://blog.csdn.net/liumang_D/archive/2009/02/17/3899462.aspx
+
+mkfs.ext2：等同于mke2fs，建立ext2文件系统。
+mke2fs [-cFMqrSvV][-b <区块大小>][-f <不连续区段大小>][-i <字节>][-N ][-l <文件>][-L <标签>][-m <百分比值>][-R=<区块数>][ 设备名称][区块数]
+1.    -F 不管指定的设备为何，强制执行mke2fs。
+2.    -m<百分比值> 指定给管理员保留区块的比例，预设为5%。
+3.    其余参数默认即可，参考: mkfs.ext2 命令-详解(网络搜索)
+mount：挂在命令.
+mount [-t vfstype] [-o options] device dir
+1.-t vfstype 指定文件系统的类型，通常不必指定。mount 会自动选择正确的类型。
+2.-o options 主要用来描述设备或档案的挂接方式。常用的参数有：
+　loop：用来把一个文件当成硬盘分区挂接上系统
+　ro：采用只读方式挂接设备
+　rw：采用读写方式挂接设备
+　iocharset：指定访问文件系统所用字符集
+3.详细参数参考：mount命令详解(网络搜索)
+
+1)、image-initrd制作
+我们可以通过下面的方法来制作一个老式基于块设备的image-initrd文件:
+# dd if=/dev/zero of=initrd.img bs=4k count=1024
+# mkfs.ext2  -F –m 0 initrd.img
+# sudo mkdir /mnt/ramdisk
+# mount -o loop initrd.img  /mnt/ramdisk
+# cp -r  /opt/filesystem /mnt/ramdisk
+# umount /mnt
+# gzip -9 initrd.img
+通过上面的命令，我们制作了一个4M的initrd，其中/opt/filesystem就是我们用busybox制作的一个根目录。最后我们得到一个名为initrd.img.gz的压缩比最大的压缩文件。更加详细的过程，参考：ramdisk制作
+http://blog.csdn.net/epicyong333/archive/2008/12/24/3590619.aspx
+http://blog.csdn.net/vcvbve/archive/2010/02/27/5329384.aspx
+       
+利用image-initrd可以使内核在启动阶段可以顺利地完成各种存储介质的驱动的加载和realfs文件系统的挂载，然而image-initrd存在以下缺点：
+1.image-initrd大小是固定的，例如上面的压缩之前的initrd大小是4M(4k*1024)，假设您的根目录(上例中的/opt/filesystem)总大小仅仅是1M，它仍然要占用4M的空间。如果您在dd阶段指定大小为1M，后来发现不够用的时候，必须按照上面的步骤重新来一次。
+2.image-initrd是一个虚拟的块设备，您可是使用fdisk对这个虚拟块设备进行分区。在内核中，对块设备的读写还要经过缓冲区管理模块，也就是说，当内核读取initrd中的文件内容时，缓冲区管理层会认为下层的块设备速度比较慢，因此会启用预读和缓存功能。这样initrd本身就在内存中，同时块设备缓冲区管理层还会保存一部分内容。
+   
+2)、initramfs
+为了避免上述缺点，在linux2.5中出现了initramfs，它的作用和initrd类似，只是和内核编译成一个文件(该initramfs是经过gzip压缩后的cpio格式的数据文件)，该cpio格式的文件被链接进了内核中特殊的数据段.init.ramfs上，其中全局变量__initramfs_start和__initramfs_end分别指向这个数据段的起始地址和结束地址。内核启动时会对.init.ramfs段中的数据进行解压，然后使用它作为临时的根文件系统。
+要制作这样的内核，我们只需要在make menuconfig中配置以下选项就可以了：
+General setup  --->
+    [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+    (/opt/filesystem)    Initramfs source file(s)
+其中/opt/filesystem就是我们的小型根目录，这里可以使一个现成的gzip压缩的cpio文件，也可以使一个目录，更可以是txt格式的配置文件，如下面的实例：
+dir /dev 755 0 0
+nod /dev/console 644 0 0 c 5 1
+nod /dev/loop0 644 0 0 b 7 0
+dir /bin 755 1000 1000
+slink /bin/sh busybox 777 0 0
+file /bin/busybox initramfs/busybox 755 0 0
+dir /proc 755 0 0
+dir /sys 755 0 0
+dir /mnt 755 0 0
+file /init initramfs/init.sh 755 0 0
+如果指定的是一个目录而不是一个像这样的配置文件，内核在编译的时候会从指定的目录创建一个配置文件(usr/Makefile调用scripts/gen_initramfs_list.sh来生成)，作为usr/gen_init_cpio.c文件的输入，最后生成一个usr/initramfs_data.cpio.gz文件，通过usr/initramfs_data.S包含到.init.ramfs段中去，最后生成zImage。
+
+3)、cpio-initrd
+这里所说的initrd格式和编译进内核的initramfs格式是一样的，都是cpio，也
+被称为外部initramfs，它是独立存在的，需要bootloader将其加载进内存特定地址，然后将地址和大小传递给内核，在内核的初始化阶段来进行相应的处理。
+这种initrd可以使用cpio命令来实现，如下：
+# sudo find /opt/filesystem/ -depth | cpio -c -o > initrd.img
+# gzip -9 initrd.img
+这样得到的initrd就是cpio格式的，而且这个文件的大小是可变的，意思就是根据
+你的filesystem的大小而变化，不会像前面的image格式的initrd那样大小固定了。当然我觉得前面的initramfs的大小也是可变的了。
+
+关键词：
+ramfs、tmpfs、rootfs、ramdisk
+image-initrd、initramfs、cpio-initrd
+
+第三部分：kernel初始化initrd代码分析
+          arm平台、linux2.6.29
+一、    bootloader传递给内核的关于initrd的参数
+root=
+该参数告诉内核以那个设备作为根文件系统，通常由如下形式：
+        root=/dev/ramx
+root=/dev/mtdblockx  rw  rootfstype = jffs2
+root=31:0x  rootfstype = jffs2
+root=/dev/nfs  nfsroot=serverip:nfs_dir
+第一种在使用ramdisk和image-initrd的时候是必须的，initramfs和cpio-initdrd因为使用的是系统内一直存在的rootfs，所以该参数可以省略。
+第三、四种基本通用，只是，第四种使用的设备号和分区号来指定，比如root=/dev/mtdblock4 等价于 root=31:04，意思就是使用nand设备上的第四分区来作为根文件系统, 同时用rootfstype指定文件系统类型。
+最后一种就是挂在nfs文件系统了，除了要指定root类型之外，还需要指定服务器上的某个目录来作为挂载的根目录。
+   
+    initrd=
+应遵循这种格式：initrd = addr, size ，其中addr表示initrd在内存中的位置，size表示initrd的大小。如initrd = 0xa060000,0x2c6b
+另外一种传递该参数的方法就是：使用tag参数来传递，uboot中使用的是函数setup_initrd_tag()函数来生成对应的tag参数。
+        需要注意的有两点：
+1.    内核初始化先解析tag中的initrd地址和大小参数，然后再去会去执行cmdline解析initrd=参数，如果这两个地方都指定了话，那么最终取决于cmdline中initrd=所指定的参数，因为这两种方法传递的结果都是被内核初始化阶段的全局变量phys_initrd_start和phys_initrd_size中(这是物理地址)，然后再转换成虚拟地址存储在全局变量initrd_start和initrd_size中，供后续使用。
+2.    bootloader传递的大小应该是initrd的实际大小，不能多传更不能少传，否则，gunzip解压缩的时候会出错。
+
+init=
+init指定的是内核启起来后，进入系统中运行的第一个脚本，一般init=/linuxrc(image-initrd使用)和init=/init(initramfs和cpio-initrd使用)。
+ramdisk使用rdinit=/xxx来指定。
+
+小结：( 以下结论均在initrd的地址和大小均通过tag参数传递)
+    通过后面的代码分析，可以做如下总结：
+1.    使用initramfs和cpio-initrd
+不需要root=xxx参数，而init=/init是必须的
+2.    使用image-initrd(记得打开内核对ramdisk和initrd的支持)
+init=/initrc，下面是传递不同root=xxx的情况
+a.    root=/dev/ramx，将image-initrd作为真实的文件系统在使用
+b.    root=/dev/mtdblockx  rw  rootfstype = jffs2，这样image-initrd只是作为一个中间过渡的文件系统，最终还是需要依靠内核1号线程将真实的文件系统挂上来。
+（b中的root= 只是举个例子，真实系统放在什么设备上没关系，主要的是需要在image-initrd文件系统中将真是文件系统存在的设备的驱动程序加载上就好了）
+
+二、    动态内存分配器slab介绍
+linux的每种动态内存管理都使用一种基于堆的分配策略。
+原始的分配策略是这样的，在这种方法中，大块内存（称为 堆）用来为用户定义的目的提 供内存。当用户需要一块内存时，就请求给自己分配一定大小的内存。堆管理器会查看可用内存的情况（使用特定算法）并返回一块内存。搜索过程中使用的一些算 法有 first-fit（在堆中搜索到的第一个满足请求的内存块 ）和 best-fit（使用堆中满足请求的最合适的内存块）。当用户使用完内存后，就将内存返回给堆。这种基于堆的分配策略的根本问题是碎片（fragmentation）。当内存块被分配后，它们会以不同的顺序在不同的时间返回。这样会在堆中留下一些洞，需要花一些时间才能有效地管理空闲内存。这种算法通常具有较高的内存使用效率（分配需要的内存），但是却需要花费更多时间来对堆进行管理。
+    大约在2.0内核之前，出现了另外一种管理机制称为 buddy memory allocation(伙伴内存分配系统)，是一种更快的内存分配技术，它将内存 划分为 2 的幂次方个分区，并使用 best-fit 方法来分配内存请求。当用户释放内存时，就会检查 buddy 块，查看其相邻的内存块是否也已经被释放。如果是的话，将合并内存块以最小化内存碎片。这个算法的时间效率更高，但是由于使用 best-fit 方法的缘故，会产生内存浪费。
+    后来在2.2内核之后，引入了一种全新的动态内存分配器slab分配器，slab分配器的概念首先在Sun Microsystem 的SunOs 5.4操作系统中得以实现，围绕对象缓存进行的。slab层会把不同的对象划分为所谓的高速缓存（cache）组，其中每个高速缓存都存放不同类型的对象。每种对象类型对应一个高速缓存。例如，一个高速缓存用于存放进程描述符（task_struct）,而另一个高速缓存存放索引节点对象（struct inond）。值得一提的是，kmalloc接口建立在slab层之上，使用了一组通用高速缓存。
+下图给出了slab 结构的高层组织结构。在最高层是cache_chain，这是一 个 slab 缓存的链接列表。这对于 best-fit 算法非常有用，可以用来查找最适合所需要的分配大小的缓存（遍历列表）。cache_chain 的每个元素都是一个 kmem_cache 结构的引用（称为一个 cache）。它定义了一个要管理的给定大小的对象池。
+
+图贴不上，《linux内核设计与实现》书上有
+
+这些高速缓存又划分为slab，slab又由一个或多个物理上连续的页组成，每一个物理页被划分为特定的对象。一般情况下，slab也仅仅由一页组成。
+slab分配器的接口：
+创建一个新的高速缓存，它通常在内核初始化时或者首次加载内核模块时执行。
+kmem_cache_t *kmem_cache_creat( const char *name, size_t size,
+size_t align,unsigned long flags;
+　　void (*ctor)(void*, struct kmem_cache *, unsigned long),
+　　void (*dtor)(void*, struct kmem_cache *, unsigned long));
+
+销毁一个高速缓存
+int kmem_cache_destroy(kmem_cache_t *cachep);
+
+创建了高速缓存之后，就可以通过下面的函数从中获取对象
+void *kmem_cache_alloc(kmem_cache_t *cachep,int flags);
+    如果高速缓存中所有的slab中都没有空闲的对象，那么slab层必须通过kmem_getpages()获取新的页，flags值传递给__get_free_pages()。
+
+下面的函数是释放对象，将其返还给原先的slab
+void kmem_cache_free(kmem_cache_t *cachep,void *objp);
+
+更加详细的参看：《linux内核设计与实现》  robrt love著
+    另外值得提到的是在linux2.6.22之后，引进了slub分配器，该分配器保留了slab的基本思想：每个缓冲区由多个小的slab组成，每个 slab包含固定数目的对象。slub分配器简化了kmem_cache，slab等相关的管理数据结构，摒弃了slab分配器中众多的队列概念，并针对多处理器、NUMA系统进行优化，从而提高了性能和可扩展性并降低了内存的浪费。为了保证内核其它模块能够无缝迁移到slub分配器，slub还保留了原有slab分配器所有的接口 API 函数。
+    http://qgjie456.blog.163.com/blog/static/3545136720090622056716/
+三、    rootfs初始化
+该部分代码主要在init/main.c中的start_kernel()函数中的vfs_caches_init_early()和 vfs_caches_init(num_physpages)来实现，其中num_physpages全局变量在mem_init()函数中初始化，代表物理内存的总页数，
+详细的代码分析见：rootfs_initialize.c
+    vfs_caches_init_early()：
+struct hlist_head {
+    struct hlist_node *first;
+};
+
+struct hlist_node {
+    struct hlist_node *next, **pprev;
+};
+总结：
+inode_hashtable就是一数组，每个数组元素都是一个struct hlist_head结构体，该结构体实际上就只有一个指向struct hlist_node对象的指针first，所有指针在arm体系上都是4字节，所以这个函数实际上只是为数组inode_hashtable分配了一段内存空间，该数组是实际上就是一个指针数组，每个元素都是指向struct hlist_node对象的指针。然后最后将这些指针全部置成NULL。至于后续怎么使用还没涉及到。
+同样类似地，对于Dentry cache哈希表(dentry_hashtable)也是一样的，只是创建了一个指针数组而已。
+http://qgjie456.blog.163.com/blog/static/3545136720081126102615685/
+   
+四、    内核初始化阶段对initrd的处理
+start_kernel()函数最后会调用rest_init()，在该函数中会创建两个内核线程kernel_init和 kthreadd(2.6.14内核中只创建了一个内核线程init，但是所做工作基本一样)，内核线程创建后，原来的系统0号进程进入idle状态。
+对initrd的处理函数主要有两个：populate_rootfs()和prepare_namespace()，针对不同的格式，处理情况各不相同。
+这里注意一点的是：populate_rootfs()函数在2.6.14和2.6.29中执行的位置不一样。2.6.14中在 do_basic_setup()函数执行之前，而2.6.29版本中将其移植do_basic_setup()函数中执行，怎么讲呢？高版本中将 populate_rootfs()移到do_initcalls()中执行，也就是编译的时候将函数放在了.initcallrootfs.init段中。
+CONFIG_BLK_DEV_RAM – 该宏被定义，表明内核支持ramdisk，make menuconfig中需要选中RAM disk support一项。
+CONFIG_BLK_DEV_INITRD – 该宏被定义，表明内核有能力在内核加载阶段就能装入RAMDISK，并运行其中的内容，make menuconfig中需要选中initial RAM disk(initrd) support一项。
+下面是各种initrd的不同称呼：
+image-initrd : 老式块设备的initrd，也叫传统的文件镜像格式的initrd
+initramfs   :  和内核编译到一起的cpio格式的initrd
+cpio-initrd  :  cpio格式的独立文件的initrd
+
+populate_rootfs函数分析
+static int __init populate_rootfs(void)
+{
+    char *err = unpack_to_rootfs(__initramfs_start,
+             __initramfs_end - __initramfs_start, 0);
+    /***
+编译进内核的initramfs位于段.init.ramfs中，用全局变量__initramfs_start和__initramfs_end分别指向这个数据段的内存起始地址和结束地址(虚拟地址)
+所以这里了如果__initramfs_end - __initramfs_start等于0，那么unpack_to_rootfs函数不会做任何事情，直接退出。系统认为该initrd不是initramfs文件，所以需要到后面去处理。
+            ***/
+    if (err)
+        panic(err);
+// 判断是否加载了initrd，bootlaoder会将initrd加载到内存地址initrd_start，// 前面已经说到了如何给内核传递这些参数
+    if (initrd_start) {
+#ifdef CONFIG_BLK_DEV_RAM
+    // CONFIG_BLK_DEV_RAM和CONFIG_BLK_DEV_RAM经常是同时定义
+        int fd;
+        printk(KERN_INFO "checking if image is initramfs...");
+        err = unpack_to_rootfs((char *)initrd_start,
+            initrd_end - initrd_start, 1);
+        /***
+判断加载的是不是cpio-initrd。实际上 unpack_to_rootfs有两个功能一个是释放cpio包，另一个就是判断是不是cpio包， 这是通过最后一个参数来区分的， 0：释放 1：查看。
+        ***/
+        if (!err) {
+// 如果是cpio-initrd则利用函数unpack_to_rootfs将其内容释放
+// 到rootfs中
+            printk(" it is\n");
+            unpack_to_rootfs((char *)initrd_start,
+                initrd_end - initrd_start, 0);
+            free_initrd(); // 释放掉原来存放cpio-initrd的内存空间
+            return 0;
+        }
+        /***
+如果执行到这里，说明这是旧的块设备格式的initrd。那么首先在前面挂载的根目录rootfs上创建一个initrd.image文件，再把initrd_start到initrd_end的内容写入到/initrd.image中，最后释放initrd占用的内存空间(它的副本已经保存到/initrd.image中了。)。
+***/
+        printk("it isn't (%s); looks like an initrd\n", err);
+        fd = sys_open("/initrd.image", O_WRONLY|O_CREAT, 0700);
+        if (fd >= 0) {
+            sys_write(fd, (char *)initrd_start,
+                    initrd_end - initrd_start);
+            sys_close(fd);
+            free_initrd();
+        }
+#else
+// 如果没有定义支持image-initrd的宏，那么直接通过下面的代码来处理cpio-initrd
+// 实际上和上面处理cpio-initrd是一样的
+        printk(KERN_INFO "Unpacking initramfs...");
+        err = unpack_to_rootfs((char *)initrd_start,
+            initrd_end - initrd_start, 0);
+        if (err)
+            panic(err);
+        printk(" done\n");
+        free_initrd();
+#endif
+    }
+    return 0;
+}
+rootfs_initcall(populate_rootfs);
+上面的populate_rootfs()执行完后，如果是initramfs和cpio-initrd的话，都已经将他们释放到了前面初始化完成的rootfs中去了，那么根目录下肯定会出现init文件。而如果是image-initrd，那么只会在rootfs根目录下出现一个initrd.image文件。
+所以就下来的处理就更加不一样了。
+static int __init kernel_init(void * unused)
+{
+    …
+    if (!ramdisk_execute_command)
+        ramdisk_execute_command = "/init";
+    // cmdline中存在rdinit=xxx时，ramdisk_execute_command才不为NULL
+   
+    if (sys_access((const char __user *) ramdisk_execute_command, 0) != 0) {
+        ramdisk_execute_command = NULL;
+        prepare_namespace();
+    }
+    /***
+这里尝试访问ramdisk_execute_command，默认为/init，如果访问失败，说明根目录上不存在这个文件。于是调用prepare_namespace()，进一步检查是不是旧的块设备的initrd。
+(在这种情况下，还是一个块设备镜像文件/initrd.image，所以访问/init文件失败。)。
+如果是initramfs或者cpio-initrd就会直接执行init_post()函数，然后在后面执行/init文件
+***/
+    init_post();
+    return 0;
+}
+五、老式块设备的initrd的处理函数prepare_namespace()分析
+cmdline传了里的参数需要包括:
+root=/dev/mtdblockx  rw 或者{root=/dev/ramx }  init=/initrc
+谨记root=指定的设备是最终的真实文件系统的。在处理image-initrd的时候指定了它，那么系统就会认为你这个initrd就是我的真实文件系统了，会跳过很多步骤不执行的。
+void __init prepare_namespace(void)
+{
+    int is_floppy;
+   
+    if (root_delay) {
+        printk(KERN_INFO "Waiting %dsec before mounting root device...\n",
+               root_delay);
+        ssleep(root_delay);
+    }
+   
+    wait_for_device_probe();
+   
+    md_run_setup();
+   
+    if (saved_root_name[0]) {
+        // 如果cmdline有传递root=xxx,那么这里就会将其设备号保存下来
+        root_device_name = saved_root_name;
+        if (!strncmp(root_device_name, "mtd", 3) ||
+            !strncmp(root_device_name, "ubi", 3)) {
+            mount_block_root(root_device_name, root_mountflags);
+            goto out;
+        }
+        ROOT_DEV = name_to_dev_t(root_device_name);
+        /***
+将存储真实文件系统的设备的设备号保存到ROOT_DEV中，如果cmdline传递的是/dev/ramx话，这里的ROOT_DEV = Root_RAM0，如果不是，那么是什么就是什么，后面会根据这个做出不同的事情
+***/
+        if (strncmp(root_device_name, "/dev/", 5) == 0)
+            root_device_name += 5;
+    }
+    /***
+saved_root_name全局数组保存的是由命令行传进来的root=的值，比如你传递了root=/dev/ramx或者root=/dev /mtdblockx  rw，那么上面的if条件成立，那么就通过name_to_dev_t(root_device_name)函数获得该设备的设备号ROOT_DEV。否则就跳过该段不执行。
+    ***/
+   
+    if (initrd_load())    /*** 详见后面注释 ***/
+    /***
+加载老式块设备的initrd，这里也分两种情况，一种是将该initrd作为真实文件系统返回1另外一种就是作为一种过渡的文件系统而已，此时返回0。
+***/
+        goto out;
+
+    /***
+如果要使用老式块设备的initrd作为真实的文件系统的话，需要在cmdline传入一下参数:root=/dev/ramx init=/initrc,同时在内核编译的时候需要打开支持ramdisk和initrd
+    ***/
+    /* wait for any asynchronous scanning to complete */
+    if ((ROOT_DEV == 0) && root_wait) {
+        printk(KERN_INFO "Waiting for root device %s...\n",
+            saved_root_name);
+        while (driver_probe_done() != 0 ||
+            (ROOT_DEV = name_to_dev_t(saved_root_name)) == 0)
+            msleep(100);
+        async_synchronize_full();
+    }/* 如果root=正常传递，该if不会成立 */
+   
+    is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
+    /***
+如果cmdline传递了正确的root=/dev/ramx的话，mount_root()中直接创建一个Root_RAM0类型的/dev/root节点(前面initrd_load()中将image-initrd已经导入到了Root_RAM0ramdisk中了)，所以mount_root()中就可以直接使用。
+    ***/
+    if (is_floppy && rd_doload && rd_load_disk(0))
+        ROOT_DEV = Root_RAM0;
+   
+    mount_root();    // 将ROOT_DEV设备上的真实文件系统mount到rootfs的/root目录中
+out:
+// 注意:上面的过程都已经将真实文件系统挂载到了/root(这里的/还是rootfs),
+// 并且当前目录为/root
+    sys_mount(".", "/", NULL, MS_MOVE, NULL);
+    // mount当前目录为根目录,覆盖掉原来的rootfs
+    sys_chroot(".");
+// 切换当前目录为程序执行所参考的根目录位置，至此，真实文件系统
+// 挂载完毕
+}
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+int __init initrd_load(void)
+{
+    if (mount_initrd) {
+        create_dev("/dev/ram", Root_RAM0);
+        // 建立一个Root_RAM0类型的/dev/ram设备节点，实际上Root_RAM0设备就是
+// 一ramdisk
+       
+        if (rd_load_image("/initrd.image") && ROOT_DEV != Root_RAM0) {
+            // rd_load_image()将文件initrd.image加载进了/dev/ram0中去了
+            sys_unlink("/initrd.image");    // 删除文件initrd.image
+            handle_initrd();            // handle_initrd()函数负责对initrd进行具体的处理
+            return 1;                    /* image-initrd 作为中间过渡的文件系统 */
+        }
+       
+        /***
+        /initrd.image文件保存的就是image-initrd，rd_load_image函数执行具体的加载操作，
+将image-nitrd的文件内容释放到设备类型为Root_RAM0的ramdisk中去(节点名为ram)。判断 ROOT_DEV!=Root_RAM0的含义是(ROOT_DEV不能=0，否则mount的时候会出错)，正如前面所说，如果你在 bootloader里配置了root=/dev/ramx,则实际上真正的根设备就是这个initrd了，所以就不把它作为initrd处理 ，而是作为真实文件系统来处理。
+        ***/
+    }
+    sys_unlink("/initrd.image");// 删除文件initrd.image
+    return 0;        /* image-initrd作为真实的文件系统 */
+}
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+static void __init handle_initrd(void)
+{
+    int error;
+    int pid;
+
+    real_root_dev = new_encode_dev(ROOT_DEV);
+    // real_root_dev全局变量保存的是存放realfs的设备的设备号
+    create_dev("/dev/root.old", Root_RAM0);
+    // 建立一个Root_RAM0类型的/dev/root.old设备节点，实际上就是一ramdisk
+    // 访问root.old和上层函数中创建的ram节点是一样的，对应的是同一设备，内容一样
+    /* mount initrd on rootfs's /root */
+    mount_block_root("/dev/root.old", root_mountflags & ~MS_RDONLY);
+    // 将/dev/root.old中的initrd文件系统挂载到了rootfs的/root目录下
+    sys_mkdir("/old", 0700); /* 在rootfs的根目录下创建old目录 */
+    root_fd = sys_open("/", 0, 0);
+    // 通过这种方式保存原根目录的描述符
+    old_fd = sys_open("/old", 0, 0);
+    // 通过这种方式保存/old的描述符
+    /* move initrd over / and chdir/chroot in initrd root */
+    sys_chdir("/root");
+    sys_mount(".", "/", NULL, MS_MOVE, NULL);
+    sys_chroot(".");
+// 进入/root目录，将当前目录mount为根目录，然后切换当前目录为程序执行所
+// 参考的根目录位置
+   
+    /*
+     * In case that a resume from disk is carried out by linuxrc or one of
+     * its children, we need to tell the freezer not to wait for us.
+     */
+    current->flags |= PF_FREEZER_SKIP;
+   
+    pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
+    // 启动一进程执行/linuxrc，并等待其执行完。可以看出前面执行sys_chroot(".")的意义
+    if (pid > 0)
+        while (pid != sys_wait4(-1, NULL, 0, NULL))
+            yield();
+
+    current->flags &= ~PF_FREEZER_SKIP;
+
+    /* move initrd to rootfs' /old */
+    sys_fchdir(old_fd);
+    sys_mount("/", ".", NULL, MS_MOVE, NULL);
+    // 进入old_fd描述的目录，再将现在的根目录mount到原来根目录下的old目录中
+    /* switch root and cwd back to / of rootfs */
+    sys_fchdir(root_fd);
+    sys_chroot(".");
+    // 进入真正的根目录，然后切换当前目录为程序执行所参考的根目录位置，也就是根
+// 目录还原, 但是真实的文件系统还没有挂载
+    sys_close(old_fd);
+    sys_close(root_fd);
+
+    if (new_decode_dev(real_root_dev) == Root_RAM0) {
+        sys_chdir("/old");
+        return;
+    }
+    // 取真实文件系统所在设备的设备号
+    ROOT_DEV = new_decode_dev(real_root_dev);
+    mount_root();
+    // 将真实文件系统挂载到/root目录中
+    // 注意mount_root()实际调用了函数mount_block_root()函数来实现mount，之后会
+// chdir(/root)，否则后面返回上上层函数有个地方可能看不明白
+   
+    printk(KERN_NOTICE "Trying to move old root to /initrd ... ");
+    error = sys_mount("/old", "/root/initrd", NULL, MS_MOVE, NULL);
+    // 将/old移植/root/initrd中去
+    if (!error)
+        printk("okay\n");
+    else {
+        int fd = sys_open("/dev/root.old", O_RDWR, 0);
+        if (error == -ENOENT)
+            printk("/initrd does not exist. Ignored.\n");
+        else
+            printk("failed\n");
+        printk(KERN_NOTICE "Unmounting old root\n");
+        sys_umount("/old", MNT_DETACH);
+        // 移动不成功就将/old目录卸载掉
+        printk(KERN_NOTICE "Trying to free ramdisk memory ... ");
+        if (fd < 0) {
+            error = fd;
+        } else {
+            error = sys_ioctl(fd, BLKFLSBUF, 0);
+            sys_close(fd);
+        }
+        printk(!error ? "okay\n" : "failed\n");
+    }
+}
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+至此，通过image-initrd将真实的文件系统挂载起来了
+
+
+
+附文：   
+        rootfs_initialize.c  --  rootfs初始化部分的代码分析注解
+        rootfs初始化调用层次.txt
+
+参考网址：
+    http://wiki.debian.org/ramfs
+    http://linux.net527.cn/Linuxwendang/xitongguanliyuan/1926.html
+    http://blog.csdn.net/knock/archive/2010/02/02/5280255.aspx
+    http://www.examda.com/linux/fudao/20090506/101701272.html
+    http://my.donews.com/tangfl/2007/12/17/linux_tmpfs_ramfs/
+    kouu’s home  页面回收
+    http://www.ibm.com/developerworks/cn/linux/l-k26initrd/
+    文中的网址链接也为参考部分

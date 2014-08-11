@@ -1,0 +1,92 @@
+这篇文章记录的是将marvell环境下面的hildondesktop移植到mojo环境下的过程。
+在我的机器上面这样做成功了，但是不保证一定正确，所以仅供参考。
+
+一，可能需要的库文件：
+编译之前：
+cdbs
+gtk-doc-tools
+docbook-dsss1
+glib-gnomevfs2-dev
+xtsl
+编译之后的安装：
+libhildon-1-dev
+libdbus-glib-1-dev
+sapwood
+plankton
+hildon-desktop
+matchbox
+marquee
+
+二，安装和启动hildon-destkop的过程1（非手动）：
+apt-get install hildon-desktop
+这里，需要这个部分才能够进行安装。
+
+cd hildon-desktop
+这里进入从svn下载的源代码中。
+
+./package.sh x86_x11 insdir
+这里x86_x11只是个标识，insdir是已经存在的目录，将要安装的文件放在这里。
+
+cd insdir
+./install x86_x11
+至此可以安装。
+
+vi /usr/bin/start-hildon
+把其中的显示部分修改一下，可以确定显示的界面。
+
+vi ~/.osso/hildon-destkop/desktop.conf
+把home插件去掉，因为home插件有问题会导致无法运行。
+
+start-hildon
+这样就将hildon-desktop启动起来了,但是起来之后界面背景很难看。
+
+apt-get install ildon-theme-plankton
+start-hildon
+这样起来的hildon-desktop有界面背景了。
+
+三，安装插件：
+1,taskmanager
+1)svn checkout http://10.1.14.85/svn/SAMSUNG_MID/trunk/GUI/taskmanager
+
+2)scp -r <username>@10.0.2.2:/...<prefix path>.../taskmanager
+
+3)cd taskmanager
+此时还无法编译，需要：
+3.1)apt-get install libhildondesktop-dev
+3.2)apt-get install libhildonwm-dev
+
+4)./build.sh m_arm_x11
+这里，m_arm_x11就是一个标志，看build.sh脚本就知道了,这样完成taskmanager的编译。
+
+5)mkdir ins
+建立一个目录，把将要install的文件通过package预先放到里面，见后面。
+
+6)./package.sh ins
+这里的参数就是我们刚才建立的文件夹，里面存放了将要安装的文件。
+
+7)cd ins; ./install.sh
+这样就将插件taskmanager安装上去了,需要注意的是这时候没有插件的图标，需要：
+7.1)mkdir /usr/local/share/pixmaps
+这样安装之后就有图标了，但菜单项没有图标,需要把图标移动到：
+/usr/share/icons/hicolor/48x48/places
+例如home插件的图标在代码里面指定的名称是'gohome',我把/usr/share/mobile-basic-flash/menu-icons/Desktop.png 变成gohome.png放到该路径下就行了。
+
+2,home插件可以运行的方法：
+需要svn下面的comm-tools，把这个build并package然后install之后就可以运行home插件并且不报错了。install的时候出现一个错误，不用管，只要第一个安装了就行。
+这样home运行，但是home的资源界面无法显示,因为缺少资源引擎，需要：
+apt-get install gtk2-engines-pixbuf
+
+3,编译settingPlugins的时候要求安装的库(最终好像大部分编译过去了，一部分仍旧有问题，后来没有继续，所以后面的不确定是否完全正确)：
+使用apt-get install命令：
+libgnome2-dev
+libgnomeui-dev
+libasound2-dev
+libxklavier12-dev
+libgnomekdb-dev
+libhal-dev
+libosso-dev
+hildon-desktop-dev(这个好像不用装也能编译)
+hildon-control-panel-dev
+libgtk2.0-bin(为了update-icon-cache不过作用好像也不大)
+
+

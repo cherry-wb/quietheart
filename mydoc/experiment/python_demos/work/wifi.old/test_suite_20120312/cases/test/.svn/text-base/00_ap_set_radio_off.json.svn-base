@@ -1,0 +1,27 @@
+{
+     "name":"ap_set_wireless_mode",
+     "type":{"name":"seq"},
+     "description":"set cisco ap radio off.",
+     "scenarios":[{
+	 "login":{
+	     "fname":"ap/cisco/scenario_login.json", 
+	     "type":{"name":"seq"}, 
+	     "parameter":{
+		 "ip":"10.1.10.32:8080"
+	     }
+	}},
+	{"set_radio_off_5G":{
+	     "fname":"ap/cisco/scenario_set_radio_off.json", 
+	     "type":{"name":"seq"}, 
+	     "parameter":{
+		 "netMode":{"5G":"D","2G":"D"}
+	     }
+	}},
+	{"logout":{
+		"fname":"ap/cisco/scenario_logout.json", 
+		"type":{"name":"seq"}, 
+		"parameter":{
+	     }
+	   }
+        }]
+}

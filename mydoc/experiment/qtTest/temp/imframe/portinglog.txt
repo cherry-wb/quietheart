@@ -1,0 +1,18 @@
+Log for qt3to4 on 周一 10月 19 09:23:04 2009. Number of log entries: 15
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/imframe.cpp at line 10 column 21: QVBoxLayout -> Q3VBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp at line 14 column 21: QHBoxLayout -> Q3HBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp at line 30 column 12: QVBoxLayout -> Q3VBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp at line 30 column 41: QVBoxLayout -> Q3VBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp at line 31 column 12: QHBoxLayout -> Q3HBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp at line 31 column 38: QHBoxLayout -> Q3HBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.cpp: Added the following include directives:
+	#include <Q3VBoxLayout> 
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/main.cpp
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/mainwin.cpp at line 11 column 21: QVBoxLayout -> Q3VBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/mainwin.cpp at line 23 column 12: QVBoxLayout -> Q3VBoxLayout
+In file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/mainwin.cpp at line 23 column 38: QVBoxLayout -> Q3VBoxLayout
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/imframe.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/inputwidget.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/temp/imframe/mainwin.h
+In file imframe.pro: Added entry QT +=  qt3support 
+

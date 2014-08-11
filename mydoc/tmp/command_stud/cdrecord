@@ -1,0 +1,7 @@
+烧录CDR.
+
+SPEED=2          # 如果你的硬件支持的话, 你可以选用更高的速度.
+IMAGEFILE=cdimage.iso
+DEVICE=cdrom
+cdrecord -v -isosize speed=$SPEED dev=$DEVICE $IMAGEFILE
+注意，在这之前需要用mkisofs来创建一个镜像文件。

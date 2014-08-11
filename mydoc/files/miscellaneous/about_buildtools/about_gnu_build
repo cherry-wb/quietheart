@@ -1,0 +1,1867 @@
+http://blog.csdn.net/basonjiang_sz/archive/2010/03/10/5364878.aspx
+linux 可执行文件的分析（gcc GUN BUILEIN）
+1、GCC
+
+The History of GCC
+1984年，Richard Stallman发起了自由软件运动，GNU (Gnu's Not Unix)项目应运而生，3年后，最初版的GCC横空出世，成为第一款可移植、可优化、支持ANSI C的开源C编译器。
+GCC最初的全名是GNU C Compiler,之后，随着GCC支持的语言越来越多，它的名称变成了GNU Compiler Collection。
+这里介绍的gcc是GCC的前端，C编译器.
+
+
+警告信息
+    -Wall : 显示所有常用的编译警告信息。
+    -W    : 显示更多的常用编译警告，如：变量未使用、一些逻辑错误。
+    -Wconversion : 警告隐式类型转换。
+    -Wshadow : 警告影子变量（在代码块中再次声明已声明的变量)
+    -Wcast-qual ：警告指针修改了变量的修饰符。如：指针修改const变量。
+    -Wwrite-strings : 警告修改const字符串。
+    -Wtraditional : 警告ANSI编译器与传统C编译器有不同的解释。
+    -Werror : 即使只有警告信息，也不编译。（gcc默认：若只有警告信息，则进行编译，若有错误信息，则不编译）
+
+
+C语言标准
+
+你可以在gcc的命令行中通过指定选项来选择相应的C语言标准: 从传统c到最新的GNU扩展C. 默认情况下, gcc使用最新的GNU C扩展.
+
+    -ansi : 关闭GNU扩展中与ANSI C相抵触的部分。
+    -pedantic          : 关闭所有的GNU扩展。
+    -std=c89           : 遵循C89标准
+    -std=c99           : 遵循C99标准
+    -std=traditional : 使用原始C
+注意：后4个选项可以与-ansi结合使用，也可以单独使用。
+
+可在gcc中使用大量GNU C扩展.
+
+生成特定格式的文件
+
+以hello.c为例子，可以设置选项生成hello.i, hello.s, hello.o以及最终的hello文件：
+
+    hello.c : 最初的源代码文件；
+    hello.i : 经过编译预处理的源代码；
+    hello.s : 汇编处理后的汇编代码；
+    hello.o : 编译后的目标文件，即含有最终编译出的机器码，但它里面所引用的其他文件中函数的内存位置尚未定义。
+    hello / a.out : 最终的可执行文件
+    (还有.a(静态库文件), .so(动态库文件), .s(汇编源文件)留待以后讨论)
+
+如果你不通过-o指定生成可执行文件名，那么会默认生成a.out. 不指定生成文件名肯能覆盖你上次生成的a.out.
+
+e.g.
+$ gcc hello.c
+在不给gcc传递任何参数的情况下, gcc执行默认的操作: 将源文件编译为目标文件--> 将目标文件连接为可执行文件(名为a.out) --> 删除目标文件.
+
+-c生成.o文件时，默认生成与源代码的主干同名的.o文件。比如对应hello.c生成hello.o. 但也可在生成目标文件时指定目标文件名(注意同时要给出.o后缀): $ gcc -c -o demo.o demo.c
+
+    $ gcc -Wall -c hello.c              : 生成hello.o
+    $ gcc -Wall -c -save-temps hello.c  : 生成hello.i, hello.s, hello.o
+    注意-Wall 选项的使用场合：仅在涉及到编译（即会生成.o文件时，用-Wall）  
+
+多文件编译、连接
+
+如果原文件分布于多个文件中：file1.c, file2,c
+    $ gcc -Wall file1.c file2.c -o name
+
+若对其中一个文件作了修改，则可只重新编译该文件,再连接所有文件：
+    $ gcc -Wall -c file2.c
+    $ gcc file1.c file2.o -c name
+
+注意：若编译器在命令行中从左向右顺序读取.o文件，则它们的出现顺序有限制：含有某函数定义的文件必须出现在含有调用该函数的文件之后。好在GCC无此限制。
+
+编译预处理
+以上述的hello.c为例, 要对它进行编译预备处理, 有两种方法: 在gcc中指定-E选项, 或直接调用cpp.gcc的编译预处理命令程序为cpp，比较新版本的gcc已经将cpp集成了，但仍提供了cpp命令. 可以直接调用cpp命令, 也可以在gcc中指定-E选项指定它只进行编译预处理.
+
+$ gcc -E hello.c                            ==  $ cpp hello.c
+上述命令马上将预处理结果显示出来. 不利于观看. 可采用-c将预处理结果保存:
+$ gcc -E -c hello.i hello.c              ==  $ cpp -o hello.i hello.c
+注意, -c指定名称要给出".i"后缀.
+
+另外, gcc针对编译预处理提供了一些选项:
+(1) 除了直接在源代码中用 #define NAME来定义宏外，gcc可在命令行中定义宏：-DNAME(其中NAME为宏名),  也可对宏赋值: -DNAME=value 注意等号两边不能有空格! 由于宏扩展只是一个替换过程，也可以将value换成表达式，但要在两边加上双括号: -DNAME="statement"
+e.g. $ gcc -Wall -DVALUE="2+2" tmp.c -o tmp
+如果不显示地赋值，如上例子，只给出：-DVALUE,gcc将使用默认值：1.
+
+(2) 除了用户定义的宏外, 有一些宏是编译器自动定义的，它们以__开头，运行: $ cpp -dM /dev/null, 可以看到这些宏. 注意, 其中含有不以__开头的非ANSI宏，它们可以通过-ansi选项被禁止。
+ 
+查看宏扩展
+
+1, 运行 $ gcc -E test.c ，gcc对test.c进行编译预处理，并立马显示结果. (不执行编译) 2, 运行 $ gcc -c -save-temps test.c ，不光产生test.o，还产生test.i, test.s，前者是编译预处理结果, 后者是汇编结果.
+   
+利用Emacs查看编译预处理结果
+
+针对含有编译预处理命令的代码，可以利用emacs方便地查看预处理结果，而不需执行编译，更为方便的是，可以只选取一段代码，而非整个文件：
+1，选择想要查看的代码
+2，C-c C-e (M-x c-macro-expand)
+这样，就自动在一个名为"Macroexpansion"的buffer中显示pre-processed结果.
+
+生成汇编代码
+使用"-S"选项指定gcc生成以".s"为后缀的汇编代码:
+$ gcc -S hello.c
+$ gcc -S -o hello.s hello.c
+
+生成汇编语言的格式取决于目标平台. 另外, 如果是多个.c文件, 那么针对每一个.c文件生成一个.s文件.
+
+包含头文件 在程序中包含与连接库对应的头文件是很重要的方面，要使用库，就一定要能正确地引用头文件。一般在代码中通过#include引入头文件, 如果头文件位于系统默认的包含路径(/usr/includes), 则只需在#include中给出头文件的名字, 不需指定完整路径.  但若要包含的头文件位于系统默认包含路径之外, 则有其它的工作要做: 可以(在源文件中)同时指定头文件的全路径. 但考虑到可移植性，最好通过-I在调用gcc的编译命令中指定。
+
+下面看这个求立方的小程序(阴影语句表示刚开始不存在）:
+
+#include <stdio.h>
+#include <math.h>
+int main(int argc, char *argv[])
+{
+  double x = pow (2.0, 3.0);
+  printf("The cube of 2.0 is %f\n", x);
+  return 0;
+}
+
+使用gcc-2.95来编译它(-lm选项在后面的连接选项中有介绍, 这里只讨论头文件的包含问题):
+$ gcc-2.95 -Wall pow.c -lm -o pow_2.95
+pow.c: In function `main':
+pow.c:5: warning: implicit declaration of function `pow'
+
+程序编译成功，但gcc给出警告: pow函数隐式声明。
+$ ./pow_2.95
+The cube of 2.0 is 1.000000
+
+明显执行结果是错误的，在源程序中引入头文件(#include <math.h>)，消除了错误。
+
+不要忽略Warning信息！它可能预示着，程序虽然编译成功，但运行结果可能有错。故，起码加上"-Wall"编译选项！并尽量修正Warning警告。
+
+搜索路径
+
+首先要理解 #include<file.h>和#include"file.h"的区别:
+#include<file.h>只在默认的系统包含路径搜索头文件
+#include"file.h"首先在当前目录搜索头文件, 若头文件不位于当前目录, 则到系统默认的包含路径搜索头文件.
+
+UNIX类系统默认的系统路径为：
+
+头文件，包含路径：　/usr/local/include/  or  /usr/include/
+库文件，连接路径：　/usr/local/lib/          or  /usr/lib/   
+
+对于标准c库(glibc或其它c库)的头文件, 我们可以直接在源文件中使用#include <file.h>来引入头文件.
+
+如果要在源文件中引入自己的头文件, 就需要考虑下面的问题:
+
+1, 如果使用非系统头文件, 头文件和源文件位于同一个目录, 如何引用头文件呢?
+——我们可以简单地在源文件中使用 #include "file.h", gcc将当前目录的file.h引入到源文件. 如果你很固执, 仍想使用#include <file.h>语句, 可以在调用gcc时添加"-I."来将当前目录添加到系统包含路径. 细心的朋友可能会想到: 这样对引用其它头文件会不会有影响? 比如, #include<file.h>之后紧接着一个#include<math.h>, 它能正确引入math.h吗? 答案是: 没有影响. 仍然能正确引用math.h. 我的理解是: "-I."将当前目录作为包含路径的第一选择, 若在当前目录找不到头文件, 则在默认路径搜索头文件. 这实际上和#include"file.h"是一个意思.
+
+2, 对于比较大型的工程, 会有许多用户自定义的头文件, 并且头文件和.c文件会位于不同的目录. 又该如何在.c文件中引用头文件呢?
+—— 可以直接在.c文件中利用#include“/path/file.h", 通过指定头文件的路径(可以是绝对路径, 也可以是相对路径)来包含头文件. 但这明显降低了程序的可移植性. 在别的系统环境下编译可能会出现问题. 所以还是利用"-I"选项指定头文件完整的包含路径.
+针对头文件比较多的情况, 最好把它们统一放在一个目录中, 比如~/project/include. 这样就不需为不同的头文件指定不同的路径. 如果你嫌每次输入这么多选项太麻烦, 你可以通过设置环境变量来添加路径:
+$ C_INCLUDE_PATH=/opt/gdbm-1.8.3/include
+$ export C_INCLUDE_PATH
+$ LIBRART_PATH=/opt/gdbm-1.8.3/lib
+$ export LIBRART_PATH
+
+可一次指定多个搜索路径，":"用于分隔它们，"."表示当前路径，如：
+$ C_INCLUDE_PATH=.:/opt/gdbm-1.8.3/include:/net/include
+$ LIBRARY_PATH=.:/opt/gdbm-1.8.3/lib:/net/lib
+（可以添加多个路径，路径之间用:相隔，.代表当前目录，若.在最前头，也可省略）
+
+当然，若想永久地添加这些路径，可以在.bash_profile中添加上述语句.
+
+3, 还有一个比较猥琐的办法: 系统默认的包含路径不是/usr/include或/usr/local/include么? 我把自己的头文件拷贝到其中的一个目录, 不就可以了么? 的确可以这样, 如果你只想在你自己的机器上编译运行这个程序的话.
+前面介绍了三种添加搜索路径的方法，如果这三种方法一起使用，优先级如何呢？
+命令行设置　> 环境变量设置　> 系统默认
+
+与外部库连接
+前面介绍了如何包含头文件. 而头文件和库是息息相关的, 使用库时, 要在源代码中包含适当的头文件，这样才能声明库中函数的原型(发布库时, 就需要给出相应的头文件).
+
+和包含路径一样, 系统也有默认的连接路径:
+头文件，包含路径：　/usr/local/include/  or  /usr/include/
+库文件，连接路径：　/usr/local/lib/          or  /usr/lib/  
+
+同样地, 我们想要使用某个库里的函数, 必须将这个库连接到使用那些函数的程序中.
+
+有一个例外: libc.a或libc.so (C标准库,它包含了ANSI C所定义的C函数)是不需要你显式连接的, 所有的C程序在运行时都会自动加载c标准库.
+
+除了C标准库之外的库称之为"外部库", 它可能是别人提供给你的, 也可能是你自己创建的(后面有介绍如何创建库的内容).
+
+外部库有两种：(1)静态连接库lib.a
+                     (2)共享连接库lib.so
+
+两者的共同点：
+    .a, .so都是.o目标文件的集合，这些目标文件中含有一些函数的定义（机器码），而这些函数将在连接时会被最终的可执行文件用到。
+
+两者的区别：
+    静态库.a  : 当程序与静态库连接时，库中目标文件所含的所有将被程序使用的函数的机器码被copy到最终的可执行文件中. 静态库有个缺点: 占用磁盘和内存空间. 静态库会被添加到和它连接的每个程序中, 而且这些程序运行时, 都会被加载到内存中. 无形中又多消耗了更多的内存空间.
+
+    共享库.so : 与共享库连接的可执行文件只包含它需要的函数的引用表，而不是所有的函数代码，只有在程序执行时, 那些需要的函数代码才被拷贝到内存中, 这样就使可执行文件比较小, 节省磁盘空间(更进一步，操作系统使用虚拟内存，使得一份共享库驻留在内存中被多个程序使用).共享库还有个优点: 若库本身被更新, 不需要重新编译与它连接的源程序。
+
+静态库
+
+下面我们来看一个简单的例子，计算2.0的平方根（假设文件名为sqrt.c）：
+#include <math.h>
+#include <stdio.h>
+int
+main (void)
+{
+double x = sqrt (2.0);
+printf ("The square root of 2.0 is %f\n", x);
+return 0;
+}
+
+用gcc将它编译为可执行文件：
+$ gcc -Wall sqrt.c -o sqrt
+编译成功，没有任何警告或错误信息。执行结果也正确。
+$ ./sqrt
+The square root of 2.0 is 1.414214
+    
+下面我们来看看刚才使用的gcc版本：
+$ gcc --version
+  gcc (GCC) 4.0.2 20050808 (prerelease) (Ubuntu 4.0.1-4ubuntu9)
+
+现在我用2.95版的gcc把sqrt.c再编译一次：
+$ gcc-2.95 -Wall sqrt.c -o sqrt_2.95
+  /tmp/ccVBJd2H.o: In function `main':
+  sqrt.c:(.text+0x16): undefined reference to `sqrt'
+     collect2: ld returned 1 exit status
+    
+编译器会给出上述错误信息，这是因为sqrt函数不能与外部数学库"libm.a"相连。sqrt函数没有在程序中定义，也不存在于默认C库 "libc.a"中，如果用gcc-2.95，应该显式地选择连接库。上述出错信息中的"/tmp/ccVBJd2H.o"是gcc创造的临时目标文件，用作连接时用。
+
+使用下列的命令可以成功编译：
+$ gcc-2.95 -Wall sqrt.c /usr/lib/libm.a -o sqrt_2.95
+它告知gcc:在编译sqrt.c时，加入位于/usr/lib中的libm.a库（C数学库）。
+C库文件默认位于/usr/lib, /usr/local/lib系统目录中； gcc默认地从/usr/local/lib, /usr/lib中搜索库文件。（在我的Ubuntu系统中，C库文件位于/urs/lib中。
+
+这里还要注意连接顺序的问题，比如上述命令，如果我改成：
+$ gcc-2.95 -Wall /usr/lib/libm.a sqrt.c -o sqrt_2.95
+gcc会给出出错信息：
+ /tmp/cc6b3bIa.o: In function `main':
+ sqrt.c:(.text+0x16): undefined reference to `sqrt'
+ collect2: ld returned 1 exit status
+
+正如读取目标文件的顺序，gcc也在命令行中从左向右读取库文件——任何包含某函数定义的库文件必须位于调用该函数的目标文件之后！
+
+指定库文件的绝对路径比较繁琐，有一种简化方法，相对于上述命令，可以用下面的命令来替代：
+$ gcc-2.95 -Wall sqrt.c -lm -o sqrt_2.95
+其中的"-l"表示与库文件连接，"m"代表"libm.a"中的m。一般而言，"-lNAME"选项会使gcc将目标文件与名为"libNAME.a"的库文件相连。（这里假设使用默认目录中的库，对于其他目录中的库文件，参考后面的“搜索路径”。）
+
+上面所提到的"libm.a"就是静态库文件，所有静态库文件的扩展名都是.a！
+$ whereis libm.a
+  libm: /usr/lib/libm.a /usr/lib/libm.so
+
+正如前面所说，默认的库文件位于/usr/lib/或/usr/local/lib/目录中。其中，libm.a是静态库文件，libm.so是后面会介绍的动态共享库文件。
+
+如果调用的函数都包含在libc.a中（C标准库被包含在/usr/lib/libc.a中，它包含了ANSI C所定义的C函数）。那么没有必要显式指定libc.a：所有的C程序运行时都自动包含了C标准库！（试试 $ gcc-2.95 -Wall hello.c -o hello)。
+
+共享库
+
+正因为共享库的优点，如果系统中存在.so库，gcc默认使用共享库（在/usr/lib/目录中，库文件以共享和静态两种版本存在）。 
+
+运行：$ gcc -Wall -L. hello.c -lNAME -o hello
+gcc先检查是否有替代的libNAME.so库可用。   
+
+正如前面所说，共享库以.so为扩展名（so == shared object)。
+
+那么，如果不想用共享库，而只用静态库呢？可以加上 -static选项
+$ gcc -Wall -static hello.c -lNAME -o hello
+它等价于：
+$ gcc -Wall hello.c libNAME.a -o hello
+
+$ gcc-2.95 -Wall sqrt.c -static -lm -o sqrt_2.95_static
+$ gcc-2.95 -Wall sqrt.c -lm -o sqrt_2.95_default
+$ gcc-2.95 -Wall sqrt.c /usr/lib/libm.a -o sqrt_2.95_a
+$ gcc-2.95 -Wall sqrt.c /usr/lib/libm.so -o sqrt_2.95_so
+
+$ ls -l sqrt*
+-rwxr-xr-x  1 zp zp  21076 2006-04-25 14:52 sqrt_2.95_a
+-rwxr-xr-x  1 zp zp   7604 2006-04-25 14:52 sqrt_2.95_default
+-rwxr-xr-x  1 zp zp   7604 2006-04-25 14:52 sqrt_2.95_so
+-rwxr-xr-x  1 zp zp 487393 2006-04-25 14:52 sqrt_2.95_static
+
+上述用四种方式编译sqrt.c，并比较了可执行文件的大小。奇怪的是，-static -lm 和 /lib/libm.a为什么有区别？有知其原因着，恳请指明，在此谢谢了！ :)
+
+如果libNAME.a在当前目录，应执行下面的命令：
+$ gcc -Wall -L. hello.c -lNAME -o hello
+-L.表示将当前目录加到连接路径。
+
+利用GNU archiver创建库
+
+$ ar cr libhello.a hello_fn.o by_fn.o
+从hello_fn.o和by_fn.o创建libihello.a，其中cr表示：creat & replace
+$ ar t libhello.a
+列出libhello.a中的内容，t == table
+（也可创建libhello.so）
+
+关于创建库的详细介绍，可参考本blog的GNU binutils笔记
+
+调试 一般地，可执行文件中是不包含任何对源代码的参考的，而debugger要工作，就要知道目标文件／可执行文件中的机器码对应的源代码的信息（如：哪条语句、函数名、变量名...). debugger工作原理：将函数名、变量名，对它们的引用，将所有这些对象对应的代码行号储存到目标文件或可执行文件的符号表中。
+
+GCC提供-g选项，将调试信息加入到目标文件或可执行文件中。
+$ gcc -Wall -g hello.c -o hello
+
+注意：若发生了段错误，但没有core dump，是由于系统禁止core文件的生成！
+$ ulimit -c　　，若显示为0，则系统禁止了core dump
+
+解决方法:
+$ ulimit -c unlimited　　（只对当前shell进程有效）
+或在~/.bashrc　的最后加入： ulimit -c unlimited （一劳永逸）
+
+优化
+GCC具有优化代码的功能，代码的优化是一项比较复杂的工作，它可归为：源代码级优化、速度与空间的权衡、执行代码的调度。
+
+GCC提供了下列优化选项：
+    -O0  : 默认不优化（若要生成调试信息，最好不优化）
+    -O1  : 简单优化，不进行速度与空间的权衡优化；   
+    -O2  : 进一步的优化，包括了调度。（若要优化，该选项最适合，它是GNU发布软件的默认优化级别；
+    -O3  : 鸡肋，兴许使程序速度更慢；
+    -funroll-loops  : 展开循环，会使可执行文件增大，而速度是否增加取决于特定环境；
+    -Os  : 生成最小执行文件；
+
+一般来说，调试时不优化，一般的优化选项用-O2（gcc允许-g与-O2联用，这也是GNU软件包发布的默认选项），embedded可以考虑-Os。
+
+注意：此处为O！（非0或小写的o,-o是指定可执行文件名）。
+
+检验优化结果的方法：$ time ./prog
+
+time测量指定程序的执行时间，结果由三部分组成：
+    real : 进程总的执行时间, 它和系统负载有关(包括了进程调度,切换的时间)
+    user: 被测量进程中用户指令的执行时间
+    sys  : 被测量进程中内核代用户指令执行的时间
+
+user和sys的和被称为CPU时间.
+
+注意：对代码的优化可能会引发警告信息，移出警告的办法不是关闭优化，而是调整代码。
+
+2、ar
+
+    ar用于建立、修改、提取档案文件(archive)。archive是一个包含多个被包含文件的单一文件（也称之为库文件），其结构保证了可以从中检索并得到原始的被包含文件（称之为archive中的member）。member的原始文件内容、模式（权限）、时间戳、所有着和组等属性都被保存在 archive中。member被提取后，他们的属性被恢复到初始状态。
+   
+    ar主要用于创建C库文件
+
+创建静态库 
+    (1) 生成目标文件：  
+
+$ gcc -Wall -c file1.c file2.c file3.c
+   
+    不用指定生成.o文件名(默认生成file1.o, file2.o, file3.o)。
+
+    (2) 从.o目标文件创建静态连接库：
+   
+$ ar rv libNAME.a file1.o file2.o file3.o
+   
+    ar生成了libNAME.a库，并列出库中的文件。
+    r : 将flie1.o, file2,o, file3.o插入archive，如故原先archive中已经存在某文件，则先将该文件删除。
+    v : 显示ar操作的附加信息(如被处理的member文件名)
+
+注: 对于BSD系统, 还需要在创建静态库之后创建索引: $ ranlib libNAME.a Linux中不需要这一步(运行它也是无害的).
+
+创建动态库(利用gcc，未用ar)
+
+(1) 生成目标文件
+
+$ gcc -Wall -c -fpic file1.c file2.c file3.c
+
+-fpic: 指定生成的.o目标文件可被重定址. pic是position idependent code的缩写: 位置无关代码.
+
+(2)生成动态库文件
+
+$ gcc -shared -o libNAME.so file1.o file2.o file3.o
+
+一般地, 连接器使用main()函数作为程序入口. 但在动态共享库中没有这样的入口. 所以就要指定-shared选项来避免编译器显示出错信息.
+
+实际上, 上述的两条命令可以合并为下面这条:
+
+$ gcc -Wall -shared -fpic -o libNAME.so file1.c file2.c file3.c
+
+
+此后，将main函数所在的程序与libNAME.so连接（注意库连接路径和头文件包含路径，以及连接顺序！参考gcc笔记）
+   
+至此，与动态库连接的函数编译成了一个可执行文件。貌似成功了，但还差最后一步。如果直接运行该程序，会给出这样的错误信息:
+
+error while loading shared libraries: libhello.so:
+cannot open shared object file: No such file or directory
+
+这是因为与动态库连接的程序在运行时，首先将该动态库加载到内存中，而gcc默认加载动态库文件所在目录为/usr/local/lib, /usr/lib。刚才的程序虽然能编译成功，但如果我们自己建立的动态库没有位于默认目录中，则执行时会应为无法找到它而失败。
+  
+解决办法：改变加载路径对应的环境变量，然后再执行。
+   
+
+export LD_LIBRARY_PATH=动态库所在目录:$LD_LIBRARY_PATH
+
+
+查看archive内容
+
+$ ar tv archiveNAME
+
+t : 显示archive中member的内容，若不指定member，则列出所有。
+v : 与t结合使用时，显示member的详细信息。
+
+要想进了解ar的详细选项，参考ar的on-line manual
+
+
+nm
+
+    nm用来列出目标文件中的符号，可以帮助程序员定位和分析执行程序和目标文件中的符号信息和它的属性。
+    如果没有目标文件作为参数传递给nm, nm假定目标文件为a.out.
+    这里用一个简单的示例程序来介绍nm的用法:
+
+main.c:
+int main(int argc, char *argv[])
+{
+  hello();
+  bye();
+  return 0;
+}
+
+hello.c:  
+void hello(void)
+{
+  printf("hello!\n");
+}
+
+bye.c:
+   
+void bye(void)
+{
+  printf("good bye!\n");
+}
+
+    运行下列命令:
+    $ gcc -Wall -c main.c hello.c bye.c
+    gcc生成main.o, hello.o, bye.o三个目标文件(这里没有声明函数原型,加了-Wall,gcc会给出警告)
+    $ nm main.o hello.o bye.o
+
+结果显示如下:  
+main.o:
+                 U bye
+                 U hello
+00000000 T main
+
+hello.o:
+00000000 T hello
+                 U puts
+
+bye.o:
+00000000 T bye
+                 U puts
+
+    结合这些输出结果,以及程序代码,可以知道:
+    对于main.o, bye和hello未被定义, main被定义了
+    对于hello.o, hello被定义了, puts未被定义
+    对于bye.o, bye被定义了,puts未被定义
+
+几个值得注意的问题:
+    (1)"目标文件"指.o文件, 库文件, 最终的可执行文件
+    .o  : 编译后的目标文件，即含有最终编译出的机器码，但它里面所引用的其他文件中函数的内存位置尚未定义.
+    (2)如果用nm查看可执行文件, 输出会比较多, 仔细研究输出, 可以对nm用法有更清醒的认识.
+    (3)在上述hello.c, bye.c中, 调用的是printf(), 而nm输出中显示调用的是puts(), 说明最终程序实际调用的puts(), 如果令hello.c或bye.c中的printf()使用格式化输出,则nm显示调用printf(). ( 如: printf("%d", 1); )
+   
+    关于nm的参数选项,参考on-line manual
+
+
+objcopy
+
+    objcopy可以将一种格式的目标文件转化为另外一种格式的目标文件. 它使用GNU BFD库进行读/写目标文件.使用BFD, objcopy就能将原格式的目标文件转化为不同格式的目标文件.
+    以我们在nm中使用的hello.o目标文件和hello可执行为例:
+
+$ file hello.o hello
+  
+    file命令用来判别文件类型, 输出如下:
+   
+hello.o: ELF 32-bit LSB relocatable, Intel 80386, version 1 (SYSV), not stripped
+hello:  ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), for GNU/Linux 2.2.0, dynamically linked (uses shared libs), not stripped
+   
+    现在运行objcopy来改变hello的文件类型: 原先它是ELF格式的可执行程序, 现将它转换为srec格式. srec格式文件是Motolora S-Record格式的文件, 主要用来在主机和目标机之间传输数据.
+   
+$ objcopy -O srec hello hello_srec
+$ file hello.o hello
+
+    file命令结果: hello_srec: Motorola S-Record; binary data in text format
+
+    注意objcopy的格式, "-O"指定输出文件类型; 输入文件名和输出文件名位于命令末尾. 关于objcopy命令的详细选项, 参考on-line manual
+
+
+objdump
+
+    objdump用来显示目标文件的信息. 可以通过选项控制显示那些特定信息. objdump一个最大的用处恐怕就是将C代码反汇编了. 在嵌入式软件开发过程中, 也可以用它查看执行文件或库文件的信息.
+    下面我们用上文提到的hello可执行文件和hello_srec可执行文件为例, 介绍objdump的简单用法:
+   
+$ objdump -f hello hello_srec
+
+输出如下:
+hello:     file format elf32-i386
+architecture: i386, flags 0x00000112:
+EXEC_P, HAS_SYMS, D_PAGED
+start address 0x080482c0
+
+hello_srec:     file format srec
+architecture: UNKNOWN!, flags 0x00000000:
+start address 0x00000000080482c0
+   
+-f : 显示目标文件的头文件概要信息.
+
+生成反汇编代码:
+   
+$ objdump -d hello.o
+
+显示如下:
+hello.o:     file format elf32-i386
+
+Disassembly of section .text:
+
+00000000 <hello>:
+   0:   55                      push   %ebp
+   1:   89 e5                   mov    %esp,%ebp
+   3:   83 ec 08                sub    $0x8,%esp
+   6:   83 ec 0c                sub    $0xc,%esp
+   9:   68 00 00 00 00          push   $0x0
+   e:   e8 fc ff ff ff          call   f <hello+0xf>
+  13:   83 c4 10                add    $0x10,%esp
+  16:   c9                      leave
+  17:   c3                      ret
+
+    -d : 显示目标文件中机器指令使用的汇编语言. 只反汇编那些应该含有指令机器码的节(显示.text段); 如果用-D, 则反汇编所有节的内容.
+    关于objcopy命令的详细选项, 参考on-line manual
+
+
+readelf
+
+    readelf用来显示ELF格式目标文件的信息.可通过参数选项来控制显示哪些特定信息.(注意: readelf不支持显示archive文档, 也不支持64位的ELF文件).
+    下面利用先前的hello可执行文件演示readelf的简单用法:
+   
+$ readelf -h hello
+
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
+  Class:                                           ELF32
+  Data:                                            2's complement, little endian
+  Version:                                        1 (current)
+  OS/ABI:                                          UNIX - System V
+  ABI Version:                                   0
+  Type:                                              EXEC (Executable file)
+  Machine:                                        Intel 80386
+  Version:                                          0x1
+  Entry point address:                       0x80482c0
+  Start of program headers:              52 (bytes into file)
+  Start of section headers:                 3848 (bytes into file)
+  Flags:                                               0x0
+  Size of this header:                          52 (bytes)
+  Size of program headers:                32 (bytes)
+  Number of program headers:          7
+  Size of section headers:                  40 (bytes)
+  Number of section headers:            34
+  Section header string table index:   31
+
+注意: readelf只能用于ELF格式目标文件, 且选项中至少要指定一个(除V, H外)的选项!
+
+
+gprof
+
+    gprof被用来测量程序的性能. 它记录每个函数被调用的次数以及相应的执行时间. 这样就能锁定程序执行时花费时间最多的部分, 对程序的优化就可集中于对它们的优化.
+   
+    用一个简单的数值计算程序来掩饰gprof的用法:
+
+collatz.c:
+
+#include <stdio.h>
+/* Computes the length of Collatz sequences */
+unsigned int step (unsigned int x)
+{
+     if (x % 2 == 0)
+     {
+      return (x / 2);
+     }
+     else
+     {
+      return (3 * x + 1);
+     }
+}
+
+unsigned int nseq (unsigned int x0)
+{
+     unsigned int i = 1, x;
+     if (x0 == 1 || x0 == 0)
+      return i;
+     x = step (x0);
+     while (x != 1 && x != 0)
+     {
+      x = step (x);
+      i++;
+     }
+     return i;
+}
+
+int main (void)
+{
+     unsigned int i, m = 0, im = 0;
+     for (i = 1; i < 500000; i++)
+     {
+      unsigned int k = nseq (i);
+      if (k > m)
+      {
+           m = k;
+           im = i;
+           printf ("sequence length = %u for %u\n", m, im);
+      }
+     }
+     return 0;
+}
+
+    先将collatz.c编译成目标文件collatz.o， gcc通过 -pg选项来打开gprof支持：
+   
+$ gcc -Wall -c -pg collatz.c
+
+$ gcc -Wall -pg -o collatz collatz.o
+
+    注意：两条命令都要加 "-pg"选项。前一条命令生成collatz.o目标文件。后一条命令生成可执行文件，该可执行文件中包含了记录函数执行时间的指令。
+    生成collatz可执行文件后，现执行它，结果与一般程序的执行无疑。但此时在PWD目录生成一个名为"gmon.out"的文件，gprof通过它来分析程序的执行。
+    如果不现执行程序，而直接用gprof来分析它，会提示“gmon.out: No such file or directory”。
+    gprof用法：
+   
+$ gprof ./collatz
+
+关于gprof更多的描述，参考gprof的on-line manual
+
+3、可执行文件格式
+
+目标文件格式与类型
+
+GNU C compiler根据源文件的后缀名来对文件进行预处理、汇编或编译操作。在编译链接时，生成的目标文件都是ELF格式的(可执行链接格式，Executable and Linking Format)。Object文件格式有三种类型：
+
+(1)可重定位(relocatable)文件：用来和其他的object文件一起链接为一个可执行文件(executable)或一个共享文件(.so文件，shared object)。
+
+(2)可执行(executable)文件；
+
+(3)共享目标文件(shared object file)：用于被下面的两个链接器链接。一是链接编辑器(ld)，可以和其他的relocatable或shared object file来创建其他的目标文件，例如.so共享库(可用file命令查看其属性)；二是动态链接器，联合一个可执行文件和其他的shared object file来创建一个进程映像
+
+首先看看ELF文件的总体布局：
+
+ELF header(ELF头部)
+Program header table(程序头表)
+Segment1（段1）
+Segment2（段2）
+………
+Sengmentn（段n）
+Setion header table(节头表，可选)
+
+段由若干个节(Section)构成,节头表对每一个节的信息有相关描述。对可执行程序而言，节头表是可选的。 参考资料 1中作者谈到把节头表的所有数据全部设置为0，程序也能正确运行！ELF头部是一个关于本文件的路线图（road map），从总体上描述文件的结构。下面是ELF头部的数据结构：
+
+typedef struct
+{
+  		unsigned char e_ident[EI_NIDENT];     /* 魔数和相关信息 */
+  		Elf32_Half    e_type;                 /* 目标文件类型 */
+  		Elf32_Half    e_machine;              /* 硬件体系 */
+  		Elf32_Word    e_version;              /* 目标文件版本 */
+  		Elf32_Addr    e_entry;                /* 程序进入点 */
+  		Elf32_Off     e_phoff;                /* 程序头部偏移量 */
+  		Elf32_Off     e_shoff;                /* 节头部偏移量 */
+  		Elf32_Word    e_flags;                /* 处理器特定标志 */
+  		Elf32_Half    e_ehsize;               /* ELF头部长度 */
+  		Elf32_Half    e_phentsize;            /* 程序头部中一个条目的长度 */
+  		Elf32_Half    e_phnum;                /* 程序头部条目个数  */
+  		Elf32_Half    e_shentsize;            /* 节头部中一个条目的长度 */
+  		Elf32_Half    e_shnum;                /* 节头部条目个数 */
+  		Elf32_Half    e_shstrndx;             /* 节头部字符表索引 */
+} Elf32_Ehdr;
+
+下面我们对ELF头表中一些重要的字段作出相关说明，完整的ELF定义请参阅 参考资料6和 参考资料 7。
+
+e_ident[0]-e_ident[3]包含了ELF文件的魔数，依次是0x7f、'E'、'L'、'F'。注意，任何一个ELF文件必须包含此魔数。 参考资料 3中讨论了利用程序、工具、/Proc文件系统等多种查看ELF魔数的方法。e_ident[4]表示硬件系统的位数，1代表32位，2代表64位。 e_ident[5]表示数据编码方式，1代表小印第安排序（最大有意义的字节占有最低的地址），2代表大印第安排序（最大有意义的字节占有最高的地址）。e_ident[6]指定ELF头部的版本，当前必须为1。e_ident[7]到e_ident[14]是填充符，通常是0。ELF格式规范中定义这几个字节是被忽略的，但实际上是这几个字节完全可以可被利用。如病毒Lin/Glaurung.676/666（ 参考资料 1）设置e_ident[7]为0x21,表示本文件已被感染；或者存放可执行代码（ 参考资料 2）。ELF头部中大多数字段都是对子头部数据的描述，其意义相对比较简单。值得注意的是某些病毒可能修改字段e_entry（程序进入点）的值，以指向病毒代码，例如上面提到的病毒Lin/Glaurung.676/666。
+
+一个实际可执行文件的文件头部形式如下：（利用命令readelf）
+
+  	ELF Header:
+  	Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
+  	Class:                             ELF32
+  	Data:                              2's complement, little endian
+  	Version:                           1 (current)
+  	OS/ABI:                            UNIX - System V
+  	ABI Version:                       0
+  	Type:                              EXEC (Executable file)
+  	Machine:                           Intel 80386
+  	Version:                           0x1
+  	Entry point address:               0x80483cc
+  	Start of program headers:          52 (bytes into file)
+  	Start of section headers:          14936 (bytes into file)
+  	Flags:                             0x0
+  	Size of this header:               52 (bytes)
+  	Size of program headers:           32 (bytes)
+  	Number of program headers:         6
+  	Size of section headers:           40 (bytes)
+  	Number of section headers:         34
+  	Section header string table index: 31
+  	
+
+紧接ELF头部的是程序头表，它是一个结构数组，包含了ELF头表中字段e_phnum定义的条目，结构描述一个段或其他系统准备执行该程序所需要的信息。
+
+typedef struct {
+      Elf32_Word  p_type;				/* 段类型 */
+      Elf32_Off   p_offset;     	 	/* 段位置相对于文件开始处的偏移量 */
+      Elf32_Addr  p_vaddr;   			/* 段在内存中的地址 */
+      Elf32_Addr  p_paddr;   			/* 段的物理地址 */
+      Elf32_Word  p_filesz;				/* 段在文件中的长度 */
+      Elf32_Word  p_memsz;				/* 段在内存中的长度 */
+      Elf32_Word  p_flags;				/* 段的标记 */
+      Elf32_Word  p_align;				/* 段在内存中对齐标记 */
+  } Elf32_Phdr;
+
+在详细讨论可执行文件程序头表之前，首先查看一个实际文件的输出：
+
+  Program Headers:
+Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+PHDR           0x000034 0x08048034 0x08048034 0x000c0 0x000c0 R E 0x4
+INTERP         0x0000f4 0x080480f4 0x080480f4 0x00013 0x00013 R   0x1
+      [Requesting program interpreter: /lib/ld-linux.so.2]
+  	LOAD           0x000000 0x08048000 0x08048000 0x00684 0x00684 R E 0x1000
+  	LOAD           0x000684 0x08049684 0x08049684 0x00118 0x00130 RW  0x1000
+  	DYNAMIC        0x000690 0x08049690 0x08049690 0x000c8 0x000c8 RW  0x4
+  	NOTE           0x000108 0x08048108 0x08048108 0x00020 0x00020 R   0x4
+ 	Section to Segment mapping:
+  Segment Sections...
+   00     
+   01     .interp 
+   02     .interp .note.ABI-tag .hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame 
+   03     .data .dynamic .ctors .dtors .jcr .got .bss 
+   04     .dynamic 
+05     .note.ABI-tag
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        080480f4 0000f4 000013 00   A  0   0  1
+  [ 2] .note.ABI-tag     NOTE            08048108 000108 000020 00   A  0   0  4
+  [ 3] .hash             HASH            08048128 000128 000040 04   A  4   0  4
+  [ 4] .dynsym           DYNSYM          08048168 000168 0000b0 10   A  5   1  4
+  [ 5] .dynstr           STRTAB          08048218 000218 00007b 00   A  0   0  1
+  [ 6] .gnu.version      VERSYM          08048294 000294 000016 02   A  4   0  2
+  [ 7] .gnu.version_r    VERNEED         080482ac 0002ac 000030 00   A  5   1  4
+  [ 8] .rel.dyn          REL             080482dc 0002dc 000008 08   A  4   0  4
+  [ 9] .rel.plt          REL             080482e4 0002e4 000040 08   A  4   b  4
+  [10] .init             PROGBITS        08048324 000324 000017 00  AX  0   0  4
+  [11] .plt              PROGBITS        0804833c 00033c 000090 04  AX  0   0  4
+  [12] .text             PROGBITS        080483cc 0003cc 0001f8 00  AX  0   0  4
+  [13] .fini             PROGBITS        080485c4 0005c4 00001b 00  AX  0   0  4
+  [14] .rodata           PROGBITS        080485e0 0005e0 00009f 00   A  0   0 32
+  [15] .eh_frame         PROGBITS        08048680 000680 000004 00   A  0   0  4
+  [16] .data             PROGBITS        08049684 000684 00000c 00  WA  0   0  4
+  [17] .dynamic          DYNAMIC         08049690 000690 0000c8 08  WA  5   0  4
+  [18] .ctors            PROGBITS        08049758 000758 000008 00  WA  0   0  4
+  [19] .dtors            PROGBITS        08049760 000760 000008 00  WA  0   0  4
+  [20] .jcr              PROGBITS        08049768 000768 000004 00  WA  0   0  4
+  [21] .got              PROGBITS        0804976c 00076c 000030 04  WA  0   0  4
+  [22] .bss              NOBITS          0804979c 00079c 000018 00  WA  0   0  4
+  [23] .comment          PROGBITS        00000000 00079c 000132 00      0   0  1
+  [24] .debug_aranges    PROGBITS        00000000 0008d0 000098 00      0   0  8
+  [25] .debug_pubnames   PROGBITS        00000000 000968 000040 00      0   0  1
+  [26] .debug_info       PROGBITS        00000000 0009a8 001cc6 00      0   0  1
+  [27] .debug_abbrev     PROGBITS        00000000 00266e 0002cc 00      0   0  1
+  [28] .debug_line       PROGBITS        00000000 00293a 0003dc 00      0   0  1
+  [29] .debug_frame      PROGBITS        00000000 002d18 000048 00      0   0  4
+  [30] .debug_str        PROGBITS        00000000 002d60 000bcd 01  MS  0   0  1
+  [31] .shstrtab         STRTAB          00000000 00392d 00012b 00      0   0  1
+  [32] .symtab           SYMTAB          00000000 003fa8 000740 10     33  56  4
+  [33] .strtab           STRTAB          00000000 0046e8 000467 00      0   0  1
+  
+
+对一个ELF可执行程序而言，一个基本的段是标记p_type为PT_INTERP的段，它表明了运行此程序所需要的程序解释器（/lib/ld- linux.so.2），实际上也就是动态连接器（dynamic linker）。最重要的段是标记p_type为PT_LOAD的段，它表明了为运行程序而需要加载到内存的数据。查看上面实际输入，可以看见有两个可 LOAD段，第一个为只读可执行（FLg为R E）,第二个为可读可写（Flg为RW）。段1包含了文本节.text，注意到ELF文件头部中程序进入点的值为0x80483cc，正好是指向节.text在内存中的地址。段二包含了数据节.data，此数据节中数据是可读可写的，相对的只读数据节.rodata包含在段1中。ELF格式可以比 COFF格式包含更多的调试信息，如上面所列出的形式为.debug_xxx的节。在I386平台LINUX系统下，用命令file查看一个ELF可执行程序的可能输出是：a.out: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), for GNU/Linux 2.2.5, dynamically linked (uses shared libs), not stripped。
+
+ELF文件中包含了动态连接器的全路径，内核定位"正确"的动态连接器在内存中的地址是"正确"运行可执行文件的保证， 参考资料 13讨论了如何通过查找动态连接器在内存中的地址以达到颠覆（Subversiver）动态连接机制的方法。
+
+最后我们讨论ELF文件的动态连接机制。每一个外部定义的符号在全局偏移表(Global Offset Table GOT)中有相应的条目,如果符号是函数则在过程连接表(Procedure Linkage Table PLT)中也有相应的条目，且一个PLT条目对应一个GOT条目。对外部定义函数解析可能是整个ELF文件规范中最复杂的，下面是函数符号解析过程的一个描述。
+
+1：代码中调用外部函数func,语句形式为call 0xaabbccdd,地址0xaabbccdd实际上就是符号func在PLT表中对应的条目地址（假设地址为标号.PLT2）。
+
+2：PLT表的形式如下
+
+          .PLT0: pushl   4(%ebx)    /* GOT表的地址保存在寄存器ebx中 */
+jmp     *8(%ebx)
+          nop; nop
+          nop; nop
+  	.PLT1:	jmp     *name1@GOT(%ebx)
+          pushl   $offset
+          jmp     .PLT0@PC
+  	.PLT2:	jmp     *func@GOT(%ebx)
+          pushl   $offset
+          jmp     .PLT0@PC
+          
+
+3：查看标号.PLT2的语句,实际上是跳转到符号func在GOT表中对应的条目。
+
+4：在符号没有重定位前，GOT表中此符号对应的地址为标号.PLT2的下一条语句，即是pushl $offset，其中$offset是符号func的重定位偏移量。注意到这是一个二次跳转。
+
+5：在符号func的重定位偏移量压栈后,控制跳到PLT表的第一条目，把GOT[1]的内容压栈，并跳转到GOT[2]对应的地址。
+
+6：GOT[2]对应的实际上是动态符号解析函数的代码，在对符号func的地址解析后，会把func在内存中的地址设置到GOT表中此符号对应的条目中。
+
+7：当第二次调用此符号时，GOT表中对应的条目已经包含了此符号的地址，就可直接调用而不需要利用PLT表进行跳转。
+
+动态连接是比较复杂的，但为了获得灵活性的代价通常就是复杂性。其最终目的是把GOT表中条目的值修改为符号的真实地址，这也可解释节.got包含在可读可写段中。
+
+动态连接是一个非常重要的进步，这意味着库文件可以被升级、移动到其他目录等等而不需要重新编译程序（当然，这不意味库可以任意修改，如函数入参的个数、数据类型应保持兼容性）。从很大程度上说，动态连接机制是ELF格式代替a.out格式的决定性原因。如果说面对对象的编程本质是面对接口（interface）的编程，那么动态连接机制则是这种思想的地一个非常典型的应用，具体的讲，动态连接机制与设计模式中的桥接（BRIDGE）方法比较类似，而它的LAZY特性则与代理（PROXY）方法非常相似。动态连接操作的细节描述请参阅 参考资料 8，9，10，11。通过阅读命令readelf、objdump 的源代码以及 参考资料 14中所提及的相关软件源代码，可以对ELF文件的格式有更彻底的了解。
+
+4. 链接与链接脚本
+
+链接器ld把object文件中的每个section都作为一个整体，为其分配运行的地址(memory layout)，这个过程就是重定位(relocation)；最后把所有目标文件合并为一个目标文件。
+
+
+链接通过一个linker script来控制，这个脚本描述了输入文件的sections到输出文件的映射，以及输出文件的memory layout。
+
+因此，linker总会使用一个linker script，如果不特别指定，则使用默认的script；可以使用‘-T’命令行选项来指定一个linker script。
+
+＊映像文件的输入段与输出段
+
+linker把多个输入文件合并为一个输出文件。输出文件和输入文件都是目标文件(object file)，输出文件通常被称为可执行文件(executable)。
+
+每个目标文件都有一系列section，输入文件的section称为input section，输出文件的section则称为output section。
+
+一个section可以是loadable的，即输出文件运行时需要将这样的section加载到memory(类似于RO&RW段)；也可以是allocatable的，这样的section没有任何内容，某些时候用0对相应的memory区域进行初始化(类似于ZI段)；如果一个 section既非loadable也非allocatable，则它通常包含的是调试信息。
+
+每个loadable或allocatable的output section都有两个地址，一是VMA(virtual memory address)，是该section的运行时域地址；二是LMA(load memory address)，是该section的加载时域地址。
+
+可以通过objdump工具附加'-h'选项来查看目标文件中的sections
+
+＊简单的Linker script
+
+(1) SECTIONS命令：
+
+The SECTIONS command tells the linker how to map input sections into output sections, and how to place the output sections in memory.
+
+命令格式如下：
+
+SECTIONS
+
+{
+
+sections-command
+
+sections-command
+
+......
+
+}
+
+其中sections-command可以是ENTRY命令，符号赋值，输出段描述，也可以是overlay描述。
+
+(2) 地址计数器‘.’(location counter)：
+
+该符号只能用于SECTIONS命令内部，初始值为‘0’，可以对该符号进行赋值，也可以使用该符号进行计算或赋值给其他符号。它会自动根据SECTIONS命令内部所描述的输出段的大小来计算当前的地址。
+
+(3) 输出段描述(output section description)：
+
+前面提到在SECTIONS命令中可以作输出段描述，描述的格式如下：
+
+section [address] [(type)] : [AT(lma)]
+
+{
+
+output-section-command
+
+output-section-command
+
+...
+
+} [>region] [AT>lma_region] [:phdr :phdr ...] [=fillexp]
+
+很多附加选项是用不到的。其中的output-section-command又可以是符号赋值，输入段描述，要直接包含的数据值，或者某一特定的输出段关键字
+
+＊linker script 实例
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+
+OUTPUT_ARCH(arm)
+
+ENTRY(_start)
+
+SECTIONS {
+
+    . = 0xa3f00000;
+
+    __boot_start = .;
+
+    .start ALIGN(4) : {
+
+        *(.text.start)
+
+    }
+
+
+   
+
+setup ALIGN(4) : {
+
+        setup_block = .;
+
+        *(.setup)
+
+        setup_block_end = .;
+
+    }
+
+
+    .text ALIGN(4) : {
+
+        *(.text)
+
+    }
+
+
+    .rodata ALIGN(4) : {
+
+        *(.rodata)
+
+    }
+
+    .data ALIGN(4) : {
+
+        *(.data)
+
+    }
+
+
+    .got ALIGN(4) : {
+
+        *(.got)
+
+    }
+
+    __boot_end = .;
+
+
+    .bss ALIGN(16) : {
+
+        bss_start = .;
+
+        *(.bss)
+
+        *(COMMON)
+
+        bss_end = .;
+
+    }
+
+
+    .comment ALIGN(16) : {
+
+        *(.comment)
+
+    }
+
+    stack_point = __boot_start + 0x00100000;
+
+    loader_size = __boot_end - __boot_start;
+
+    setup_size = setup_block_end - setup_block;
+
+}
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝  
+
+在SECTIONS命令中的类似于下面的描述结构就是输出段描述：
+
+.start ALIGN(4) : {
+
+    *(.text.start)
+
+}
+
+.start为output section name，ALIGN(4)返回一个基于location counter(.)的4字节对齐的地址值。*(.text.start)是输入段描述，*为通配符，意思是把所有被链接的object文件中的.text.start段都链接进这个名为.start的输出段。
+
+源文件中所标识的section及其属性实际上就是对输入段的描述，例如.text.start输入段在源文件start.S中的代码如下：
+
+.section .text.start
+
+.global _start
+
+_start :
+
+    b start
+
+
+--------------------------------------------------------------------------------
+[推荐阅读]
+1.ARM学习报告002--GNU tool开发ARM程序及生成映象文件机理
+2.Using ld, the GNU Linker
+
+5、再议论 链接
+
+1. 概论
+
+每一个链接过程都由链接脚本(linker script, 一般以lds作为文件的后缀名)控制. 链接脚本主要用于规定如何把输入文件内的section放入输出文件内, 并控制输出文件内各部分在程序地址空间内的布局. 但你也可以用连接命令做一些其他事情.
+
+连接器有个默认的内置连接脚本, 可用ld --verbose查看. 连接选项-r和-N可以影响默认的连接脚本(如何影响?).
+
+-T选项用以指定自己的链接脚本, 它将代替默认的连接脚本。你也可以使用<暗含的连接脚本>以增加自定义的链接命令.
+
+以下没有特殊说明，连接器指的是静态连接器.
+
+
+2. 基本概念
+
+链接器把一个或多个输入文件合成一个输出文件.
+
+输入文件: 目标文件或链接脚本文件.
+输出文件: 目标文件或可执行文件.
+
+目标文件(包括可执行文件)具有固定的格式, 在UNIX或GNU/Linux平台下, 一般为ELF格式. 若想了解更多, 可参考 UNIX/Linux平台可执行文件格式分析
+
+有时把输入文件内的section称为输入section(input section), 把输出文件内的section称为输出section(output sectin).
+
+目标文件的每个section至少包含两个信息: 名字和大小. 大部分section还包含与它相关联的一块数据, 称为section contents(section内容). 一个section可被标记为“loadable(可加载的)”或“allocatable(可分配的)”.
+
+loadable section: 在输出文件运行时, 相应的section内容将被载入进程地址空间中.
+
+allocatable section: 内容为空的section可被标记为“可分配的”. 在输出文件运行时, 在进程地址空间中空出大小同section指定大小的部分. 某些情况下, 这块内存必须被置零.
+
+如果一个section不是“可加载的”或“可分配的”, 那么该section通常包含了调试信息. 可用objdump -h命令查看相关信息.
+
+每个“可加载的”或“可分配的”输出section通常包含两个地址: VMA(virtual memory address虚拟内存地址或程序地址空间地址)和LMA(load memory address加载内存地址或进程地址空间地址). 通常VMA和LMA是相同的.
+
+在目标文件中, loadable或allocatable的输出section有两种地址: VMA(virtual Memory Address)和LMA(Load Memory Address). VMA是执行输出文件时section所在的地址, 而LMA是加载输出文件时section所在的地址. 一般而言, 某section的VMA == LMA. 但在嵌入式系统中, 经常存在加载地址和执行地址不同的情况: 比如将输出文件加载到开发板的flash中(由LMA指定), 而在运行时将位于flash中的输出文件复制到SDRAM中(由VMA指定).
+
+可这样来理解VMA和LMA, 假设:
+(1) .data section对应的VMA地址是0x08050000, 该section内包含了3个32位全局变量, i、j和k, 分别为1,2,3.
+(2) .text section内包含由"printf( "j=%d ", j );"程序片段产生的代码.
+
+连接时指定.data section的VMA为0x08050000, 产生的printf指令是将地址为0x08050004处的4字节内容作为一个整数打印出来。
+
+如果.data section的LMA为0x08050000，显然结果是j=2
+如果.data section的LMA为0x08050004，显然结果是j=1
+
+还可这样理解LMA:
+.text section内容的开始处包含如下两条指令(intel i386指令是10字节，每行对应5字节):
+
+jmp 0x08048285
+movl $0x1,%eax
+
+如果.text section的LMA为0x08048280, 那么在进程地址空间内0x08048280处为“jmp 0x08048285”指令, 0x08048285处为movl $0x1,%eax指令. 假设某指令跳转到地址0x08048280, 显然它的执行将导致%eax寄存器被赋值为1.
+
+如果.text section的LMA为0x08048285, 那么在进程地址空间内0x08048285处为“jmp 0x08048285”指令, 0x0804828a处为movl $0x1,%eax指令. 假设某指令跳转到地址0x08048285, 显然它的执行又跳转到进程地址空间内0x08048285处, 造成死循环.
+
+符号(symbol): 每个目标文件都有符号表(SYMBOL TABLE), 包含已定义的符号(对应全局变量和static变量和定义的函数的名字)和未定义符号(未定义的函数的名字和引用但没定义的符号)信息.
+
+符号值: 每个符号对应一个地址, 即符号值(这与c程序内变量的值不一样, 某种情况下可以把它看成变量的地址). 可用nm命令查看它们. (nm的使用方法可参考本blog的GNU binutils笔记)
+
+
+3. 脚本格式
+
+链接脚本由一系列命令组成, 每个命令由一个关键字(一般在其后紧跟相关参数)或一条对符号的赋值语句组成. 命令由分号‘;’分隔开.
+
+文件名或格式名内如果包含分号';'或其他分隔符, 则要用引号‘"’将名字全称引用起来. 无法处理含引号的文件名.
+/* */之间的是注释。
+
+
+4. 简单例子
+
+在介绍链接描述文件的命令之前, 先看看下述的简单例子:
+
+以下脚本将输出文件的text section定位在0x10000, data section定位在0x8000000:
+
+SECTIONS
+{
+. = 0x10000;
+.text : { *(.text) }
+. = 0x8000000;
+.data : { *(.data) }
+.bss : { *(.bss) }
+}
+
+解释一下上述的例子:
+. = 0x10000 : 把定位器符号置为0x10000 (若不指定, 则该符号的初始值为0).
+
+.text : { *(.text) } : 将所有(*符号代表任意输入文件)输入文件的.text section合并成一个.text section, 该section的地址由定位器符号的值指定, 即0x10000.
+
+. = 0x8000000 ：把定位器符号置为0x8000000
+.data : { *(.data) } : 将所有输入文件的.text section合并成一个.data section, 该section的地址被置为0x8000000.
+
+.bss : { *(.bss) } : 将所有输入文件的.bss section合并成一个.bss section，该section的地址被置为0x8000000+.data section的大小.
+
+连接器每读完一个section描述后, 将定位器符号的值*增加*该section的大小. 注意: 此处没有考虑对齐约束.
+
+
+5. 简单脚本命令
+
+- 1 -
+ENTRY(SYMBOL) : 将符号SYMBOL的值设置成入口地址。
+
+入口地址(entry point): 进程执行的第一条用户空间的指令在进程地址空间的地址)
+
+ld有多种方法设置进程入口地址, 按一下顺序: (编号越前, 优先级越高)
+1, ld命令行的-e选项
+2, 连接脚本的ENTRY(SYMBOL)命令
+3, 如果定义了start符号, 使用start符号值
+4, 如果存在.text section, 使用.text section的第一字节的位置值
+5, 使用值0
+
+- 2 -
+INCLUDE filename : 包含其他名为filename的链接脚本
+
+相当于c程序内的的#include指令, 用以包含另一个链接脚本.
+
+脚本搜索路径由-L选项指定. INCLUDE指令可以嵌套使用, 最大深度为10. 即: 文件1内INCLUDE文件2, 文件2内INCLUDE文件3... , 文件10内INCLUDE文件11. 那么文件11内不能再出现 INCLUDE指令了.
+
+- 3 -
+INPUT(files): 将括号内的文件做为链接过程的输入文件
+
+ld首先在当前目录下寻找该文件, 如果没找到, 则在由-L指定的搜索路径下搜索. file可以为 -lfile形式，就象命令行的-l选项一样. 如果该命令出现在暗含的脚本内, 则该命令内的file在链接过程中的顺序由该暗含的脚本在命令行内的顺序决定.
+
+- 4 -
+GROUP(files) : 指定需要重复搜索符号定义的多个输入文件
+
+file必须是库文件, 且file文件作为一组被ld重复扫描，直到不在有新的未定义的引用出现。
+
+- 5 -
+OUTPUT(FILENAME) : 定义输出文件的名字
+
+同ld的-o选项, 不过-o选项的优先级更高. 所以它可以用来定义默认的输出文件名. 如a.out
+
+- 6 -
+SEARCH_DIR(PATH) ：定义搜索路径，
+
+同ld的-L选项, 不过由-L指定的路径要比它定义的优先被搜索。
+
+- 7 -
+STARTUP(filename) : 指定filename为第一个输入文件
+
+在链接过程中, 每个输入文件是有顺序的. 此命令设置文件filename为第一个输入文件。
+
+- 8 -
+OUTPUT_FORMAT(BFDNAME) : 设置输出文件使用的BFD格式
+
+同ld选项-o format BFDNAME, 不过ld选项优先级更高.
+
+- 9 -
+OUTPUT_FORMAT(DEFAULT,BIG,LITTLE) : 定义三种输出文件的格式(大小端)
+
+若有命令行选项-EB, 则使用第2个BFD格式; 若有命令行选项-EL，则使用第3个BFD格式.否则默认选第一个BFD格式.
+
+TARGET(BFDNAME)：设置输入文件的BFD格式
+
+同ld选项-b BFDNAME. 若使用了TARGET命令, 但未使用OUTPUT_FORMAT命令, 则最用一个TARGET命令设置的BFD格式将被作为输出文件的BFD格式.
+
+另外还有一些:
+ASSERT(EXP, MESSAGE)：如果EXP不为真，终止连接过程
+
+EXTERN(SYMBOL SYMBOL ...)：在输出文件中增加未定义的符号，如同连接器选项-u
+
+FORCE_COMMON_ALLOCATION：为common symbol(通用符号)分配空间，即使用了-r连接选项也为其分配
+
+NOCROSSREFS(SECTION SECTION ...)：检查列出的输出section，如果发现他们之间有相互引用，则报错。对于某些系统，特别是内存较紧张的嵌入式系统，某些section是不能同时存在内存中的，所以他们之间不能相互引用。
+
+OUTPUT_ARCH(BFDARCH)：设置输出文件的machine architecture(体系结构)，BFDARCH为被BFD库使用的名字之一。可以用命令objdump -f查看。
+
+可通过 man -S 1 ld查看ld的联机帮助, 里面也包括了对这些命令的介绍.
+
+
+6. 对符号的赋值
+
+在目标文件内定义的符号可以在链接脚本内被赋值. (注意和C语言中赋值的不同!) 此时该符号被定义为全局的. 每个符号都对应了一个地址, 此处的赋值是更改这个符号对应的地址.
+
+e.g. 通过下面的程序查看变量a的地址:
+/* a.c */
+#include <stdio.h>
+int a = 100;
+int main(void)
+{
+    printf( "&a=0x%p ", &a );
+    return 0;
+}
+
+/* a.lds */
+a = 3;
+
+$ gcc -Wall -o a-without-lds a.c
+&a = 0x8049598
+
+$ gcc -Wall -o a-with-lds a.c a.lds
+&a = 0x3
+
+注意: 对符号的赋值只对全局变量起作用!
+
+一些简单的赋值语句
+能使用任何c语言内的赋值操作:
+
+SYMBOL = EXPRESSION ;
+SYMBOL += EXPRESSION ;
+SYMBOL -= EXPRESSION ;
+SYMBOL *= EXPRESSION ;
+SYMBOL /= EXPRESSION ;
+SYMBOL <<= EXPRESSION ;
+SYMBOL >>= EXPRESSION ;
+SYMBOL &= EXPRESSION ;
+SYMBOL |= EXPRESSION ;
+
+除了第一类表达式外, 使用其他表达式需要SYMBOL被定义于某目标文件。
+. 是一个特殊的符号，它是定位器，一个位置指针，指向程序地址空间内的某位置(或某section内的偏移，如果它在SECTIONS命令内的某section描述内)，该符号只能在SECTIONS命令内使用。
+注意：赋值语句包含4个语法元素：符号名、操作符、表达式、分号；一个也不能少。
+被赋值后，符号所属的section被设值为表达式EXPRESSION所属的SECTION(参看11. 脚本内的表达式)
+赋值语句可以出现在连接脚本的三处地方：SECTIONS命令内，SECTIONS命令内的section描述内和全局位置；如下，
+floating_point = 0; /* 全局位置 */
+SECTIONS
+{
+.text :
+{
+*(.text)
+_etext = .; /* section描述内 */
+}
+_bdata = (. + 3) & ~ 4; /* SECTIONS命令内 */
+.data : { *(.data) }
+}
+
+PROVIDE关键字
+该关键字用于定义这类符号：在目标文件内被引用，但没有在任何目标文件内被定义的符号。
+例子：
+SECTIONS
+{
+.text :
+{
+*(.text)
+_etext = .;
+PROVIDE(etext = .);
+}
+}
+当目标文件内引用了etext符号，确没有定义它时，etext符号对应的地址被定义为.text section之后的第一个字节的地址。
+
+
+7. SECTIONS命令
+
+SECTIONS命令告诉ld如何把输入文件的sections映射到输出文件的各个section: 如何将输入section合为输出section; 如何把输出section放入程序地址空间(VMA)和进程地址空间(LMA).该命令格式如下:
+
+SECTIONS
+{
+SECTIONS-COMMAND
+SECTIONS-COMMAND
+...
+}
+
+SECTION-COMMAND有四种:
+(1) ENTRY命令
+(2) 符号赋值语句
+(3) 一个输出section的描述(output section description)
+(4) 一个section叠加描述(overlay description)
+
+如果整个连接脚本内没有SECTIONS命令, 那么ld将所有同名输入section合成为一个输出section内, 各输入section的顺序为它们被连接器发现的顺序.
+
+如果某输入section没有在SECTIONS命令中提到, 那么该section将被直接拷贝成输出section。
+
+输出section描述
+输出section描述具有如下格式:
+
+SECTION [ADDRESS] [(TYPE)] : [AT(LMA)]
+{
+OUTPUT-SECTION-COMMAND
+OUTPUT-SECTION-COMMAND
+...
+} [>REGION] [AT>LMA_REGION] [:PHDR :PHDR ...] [=FILLEXP]
+
+[ ]内的内容为可选选项, 一般不需要.
+SECTION：section名字
+SECTION左右的空白、圆括号、冒号是必须的，换行符和其他空格是可选的。
+每个OUTPUT-SECTION-COMMAND为以下四种之一，
+符号赋值语句
+一个输入section描述
+直接包含的数据值
+一个特殊的输出section关键字
+
+输出section名字(SECTION)：
+输出section名字必须符合输出文件格式要求，比如：a.out格式的文件只允许存在.text、.data和.bss section名。而有的格式只允许存在数字名字，那么此时应该用引号将所有名字内的数字组合在一起；另外，还有一些格式允许任何序列的字符存在于 section名字内，此时如果名字内包含特殊字符(比如空格、逗号等)，那么需要用引号将其组合在一起。
+
+输出section地址(ADDRESS)：
+ADDRESS 是一个表达式，它的值用于设置VMA。如果没有该选项且有REGION选项，那么连接器将根据REGION设置VMA；如果也没有 REGION选项，那么连接器将根据定位符号‘.’的值设置该section的VMA，将定位符号的值调整到满足输出section对齐要求后的值，输出 section的对齐要求为：该输出section描述内用到的所有输入section的对齐要求中最严格的。
+例子：
+.text . : { *(.text) }
+和
+.text : { *(.text) }
+这两个描述是截然不同的，第一个将.text section的VMA设置为定位符号的值，而第二个则是设置成定位符号的修调值，满足对齐要求后的。
+ADDRESS可以是一个任意表达式，比如ALIGN(0x10)这将把该section的VMA设置成定位符号的修调值，满足16字节对齐后的。
+注意：设置ADDRESS值，将更改定位符号的值。
+
+输入section描述：
+最常见的输出section描述命令是输入section描述。
+输入section描述是最基本的连接脚本描述。
+输入section描述基础：
+基本语法：FILENAME([EXCLUDE_FILE (FILENAME1 FILENAME2 ...) SECTION1 SECTION2 ...)
+FILENAME文件名，可以是一个特定的文件的名字，也可以是一个字符串模式。
+SECTION名字，可以是一个特定的section名字，也可以是一个字符串模式
+例子是最能说明问题的，
+*(.text) ：表示所有输入文件的.text section
+(*(EXCLUDE_FILE (*crtend.o *otherfile.o) .ctors)) ：表示除crtend.o、otherfile.o文件外的所有输入文件的.ctors section。
+data.o(.data) ：表示data.o文件的.data section
+data.o ：表示data.o文件的所有section
+*(.text .data) ：表示所有文件的.text section和.data section，顺序是：第一个文件的.text section，第一个文件的.data section，第二个文件的.text section，第二个文件的.data section，...
+*(.text) *(.data) ：表示所有文件的.text section和.data section，顺序是：第一个文件的.text section，第二个文件的.text section，...，最后一个文件的.text section，第一个文件的.data section，第二个文件的.data section，...，最后一个文件的.data section
+下面看连接器是如何找到对应的文件的。
+当FILENAME是一个特定的文件名时，连接器会查看它是否在连接命令行内出现或在INPUT命令中出现。
+当FILENAME是一个字符串模式时，连接器仅仅只查看它是否在连接命令行内出现。
+注意：如果连接器发现某文件在INPUT命令内出现，那么它会在-L指定的路径内搜寻该文件。
+
+字符串模式内可存在以下通配符：
+* ：表示任意多个字符
+? ：表示任意一个字符
+[CHARS] ：表示任意一个CHARS内的字符，可用-号表示范围，如：a-z
+：表示引用下一个紧跟的字符
+
+在文件名内，通配符不匹配文件夹分隔符/，但当字符串模式仅包含通配符*时除外。
+任何一个文件的任意section只能在SECTIONS命令内出现一次。看如下例子，
+SECTIONS {
+.data : { *(.data) }
+.data1 : { data.o(.data) }
+}
+data.o 文件的.data section在第一个OUTPUT-SECTION-COMMAND命令内被使用了，那么在第二个OUTPUT-SECTION-COMMAND命令内将不会再被使用，也就是说即使连接器不报错，输出文件的.data1 section的内容也是空的。
+再次强调：连接器依次扫描每个OUTPUT-SECTION-COMMAND命令内的文件名，任何一个文件的任何一个section都只能使用一次。
+读者可以用-M连接命令选项来产生一个map文件，它包含了所有输入section到输出section的组合信息。
+再看个例子，
+SECTIONS {
+.text : { *(.text) }
+.DATA : { [A-Z]*(.data) }
+.data : { *(.data) }
+.bss : { *(.bss) }
+}
+这个例子中说明，所有文件的输入.text section组成输出.text section；所有以大写字母开头的文件的.data section组成输出.DATA section，其他文件的.data section组成输出.data section；所有文件的输入.bss section组成输出.bss section。
+可以用SORT()关键字对满足字符串模式的所有名字进行递增排序，如SORT(.text*)。
+通用符号(common symbol)的输入section：
+在许多目标文件格式中，通用符号并没有占用一个section。连接器认为：输入文件的所有通用符号在名为COMMON的section内。
+例子，
+.bss { *(.bss) *(COMMON) }
+这个例子中将所有输入文件的所有通用符号放入输出.bss section内。可以看到COMMOM section的使用方法跟其他section的使用方法是一样的。
+有些目标文件格式把通用符号分成几类。例如，在MIPS elf目标文件格式中，把通用符号分成standard common symbols(标准通用符号)和small common symbols(微通用符号，不知道这么译对不对？)，此时连接器认为所有standard common symbols在COMMON section内，而small common symbols在.scommon section内。
+在一些以前的连接脚本内可以看见[COMMON]，相当于*(COMMON)，不建议继续使用这种陈旧的方式。
+输入section和垃圾回收：
+在连接命令行内使用了选项--gc-sections后，连接器可能将某些它认为没用的section过滤掉，此时就有必要强制连接器保留一些特定的 section，可用KEEP()关键字达此目的。如KEEP(*(.text))或KEEP(SORT(*)(.text))
+最后看个简单的输入section相关例子：
+SECTIONS {
+outputa 0x10000 :
+{
+all.o
+foo.o (.input1)
+}
+outputb :
+{
+foo.o (.input2)
+foo1.o (.input1)
+}
+outputc :
+{
+*(.input1)
+*(.input2)
+}
+}
+本例中，将all.o文件的所有section和foo.o文件的所有(一个文件内可以有多个同名section).input1 section依次放入输出outputa section内，该section的VMA是0x10000；将foo.o文件的所有.input2 section和foo1.o文件的所有.input1 section依次放入输出outputb section内，该section的VMA是当前定位器符号的修调值(对齐后)；将其他文件(非all.o、foo.o、foo1.o)文件的. input1 section和.input2 section放入输出outputc section内。
+
+在输出section存放数据命令：
+能够显示地在输出section内填入你想要填入的信息(这样是不是可以自己通过连接脚本写程序？当然是简单的程序)。
+BYTE(EXPRESSION) 1 字节
+SHORT(EXPRESSION) 2 字节
+LOGN(EXPRESSION) 4 字节
+QUAD(EXPRESSION) 8 字节
+SQUAD(EXPRESSION) 64位处理器的代码时，8 字节
+输出文件的字节顺序big endianness 或little endianness，可以由输出目标文件的格式决定；如果输出目标文件的格式不能决定字节顺序，那么字节顺序与第一个输入文件的字节顺序相同。
+如：BYTE(1)、LANG(addr)。
+注意，这些命令只能放在输出section描述内，其他地方不行。
+错误：SECTIONS { .text : { *(.text) } LONG(1) .data : { *(.data) } }
+正确：SECTIONS { .text : { *(.text) LONG(1) } .data : { *(.data) } }
+在当前输出section内可能存在未描述的存储区域(比如由于对齐造成的空隙)，可以用FILL(EXPRESSION)命令决定这些存储区域的内容， EXPRESSION的前两字节有效，这两字节在必要时可以重复被使用以填充这类存储区域。如FILE(0x9090)。在输出section描述中可以有=FILEEXP属性，它的作用如同FILE()命令，但是FILE命令只作用于该FILE指令之后的section区域，而=FILEEXP属性作用于整个输出section区域，且FILE命令的优先级更高！！！
+
+输出section内命令的关键字：
+CREATE_OBJECT_SYMBOLS ：为每个输入文件建立一个符号，符号名为输入文件的名字。每个符号所在的section是出现该关键字的section。
+CONSTRUCTORS ：与c++内的(全局对象的)构造函数和(全局对像的)析构函数相关，下面将它们简称为全局构造和全局析构。
+对于a.out目标文件格式，连接器用一些不寻常的方法实现c++的全局构造和全局析构。当连接器生成的目标文件格式不支持任意section名字时，比如说ECOFF、XCOFF格式，连接器将通过名字来识别全局构造和全局析构，对于这些文件格式，连接器把与全局构造和全局析构的相关信息放入出现 CONSTRUCTORS关键字的输出section内。
+符号__CTORS_LIST__表示全局构造信息的的开始处，__CTORS_END__表示全局构造信息的结束处。
+符号__DTORS_LIST__表示全局构造信息的的开始处，__DTORS_END__表示全局构造信息的结束处。
+这两块信息的开始处是一字长的信息，表示该块信息有多少项数据，然后以值为零的一字长数据结束。
+一般来说，GNU C++在函数__main内安排全局构造代码的运行，而__main函数被初始化代码(在main函数调用之前执行)调用。是不是对于某些目标文件格式才这样？？？
+对于支持任意section名的目标文件格式，比如COFF、ELF格式，GNU C++将全局构造和全局析构信息分别放入.ctors section和.dtors section内，然后在连接脚本内加入如下，
+__CTOR_LIST__ = .;
+LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)
+*(.ctors)
+LONG(0)
+__CTOR_END__ = .;
+__DTOR_LIST__ = .;
+LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)
+*(.dtors)
+LONG(0)
+__DTOR_END__ = .;
+如果使用GNU C++提供的初始化优先级支持(它能控制每个全局构造函数调用的先后顺序)，那么请在连接脚本内把CONSTRUCTORS替换成SORT (CONSTRUCTS)，把*(.ctors)换成*(SORT(.ctors))，把*(.dtors)换成*(SORT(.dtors))。一般来说，默认的连接脚本已作好的这些工作。
+
+输出section的丢弃：
+例子，.foo { *(.foo) }，如果没有任何一个输入文件包含.foo section，那么连接器将不会创建.foo输出section。但是如果在这些输出section描述内包含了非输入section描述命令(如符号赋值语句)，那么连接器将总是创建该输出section。
+有一个特殊的输出section，名为/DISCARD/，被该section引用的任何输入section将不会出现在输出文件内，这就是DISCARD的意思吧。如果/DISCARD/ section被它自己引用呢？想想看。
+
+输出section属性：
+终于讲到这里了，呵呵。
+我们再回顾以下输出section描述的文法：
+SECTION [ADDRESS] [(TYPE)] : [AT(LMA)]
+{
+OUTPUT-SECTION-COMMAND
+OUTPUT-SECTION-COMMAND
+...
+} [>REGION] [AT>LMA_REGION] [:PHDR :PHDR ...] [=FILLEXP]
+前面我们浏览了SECTION、ADDRESS、OUTPUT-SECTION-COMMAND相关信息，下面我们将浏览其他属性。
+
+TYPE ：每个输出section都有一个类型，如果没有指定TYPE类型，那么连接器根据输出section引用的输入section的类型设置该输出section的类型。它可以为以下五种值，
+NOLOAD ：该section在程序运行时，不被载入内存。
+DSECT,COPY,INFO,OVERLAY ：这些类型很少被使用，为了向后兼容才被保留下来。这种类型的section必须被标记为“不可加载的”，以便在程序运行不为它们分配内存。
+
+输出section的LMA ：默认情况下，LMA等于VMA，但可以通过关键字AT()指定LMA。
+用关键字AT()指定，括号内包含表达式，表达式的值用于设置LMA。如果不用AT()关键字，那么可用AT>LMA_REGION表达式设置指定该section加载地址的范围。
+这个属性主要用于构件ROM境象。
+例子，
+SECTIONS
+{
+.text 0x1000 : { *(.text) _etext = . ; }
+.mdata 0x2000 :
+AT ( ADDR (.text) + SIZEOF (.text) )
+{ _data = . ; *(.data); _edata = . ; }
+.bss 0x3000 :
+{ _bstart = . ; *(.bss) *(COMMON) ; _bend = . ;}
+}
+程序如下，
+extern char _etext, _data, _edata, _bstart, _bend;
+char *src = &_etext;
+char *dst = &_data;
+
+/* ROM has data at end of text; copy it. */
+while (dst < &_edata) {
+*dst++ = *src++;
+}
+
+/* Zero bss */
+for (dst = &_bstart; dst< &_bend; dst++)
+*dst = 0;
+
+此程序将处于ROM内的已初始化数据拷贝到该数据应在的位置(VMA地址)，并将为初始化数据置零。
+读者应该认真的自己分析以上连接脚本和程序的作用。
+
+输出section区域：可以将输出section放入预先定义的内存区域内，例子，
+MEMORY { rom : ORIGIN = 0x1000, LENGTH = 0x1000 }
+SECTIONS { ROM : { *(.text) } >rom }
+
+输出section所在的程序段：可以将输出section放入预先定义的程序段(program segment)内。如果某个输出section设置了它所在的一个或多个程序段，那么接下来定义的输出section的默认程序段与该输出 section的相同。除非再次显示地指定。例子，
+PHDRS { text PT_LOAD ; }
+SECTIONS { .text : { *(.text) } :text }
+可以通过:NONE指定连接器不把该section放入任何程序段内。详情请查看PHDRS命令
+
+输出section的填充模版：这个在前面提到过，任何输出section描述内的未指定的内存区域，连接器用该模版填充该区域。用法：=FILEEXP，前两字节有效，当区域大于两字节时，重复使用这两字节以将其填满。例子，
+SECTIONS { .text : { *(.text) } =0x9090 }
+
+覆盖图(overlay)描述：
+覆盖图描述使两个或多个不同的section占用同一块程序地址空间。覆盖图管理代码负责将section的拷入和拷出。考虑这种情况，当某存储块的访问速度比其他存储块要快时，那么如果将section拷到该存储块来执行或访问，那么速度将会有所提高，覆盖图描述就很适合这种情形。文法如下，
+SECTIONS {
+...
+
+OVERLAY [START] : [NOCROSSREFS] [AT ( LDADDR )]
+{
+SECNAME1
+{
+OUTPUT-SECTION-COMMAND
+OUTPUT-SECTION-COMMAND
+...
+} [:PHDR...] [=FILL]
+SECNAME2
+{
+OUTPUT-SECTION-COMMAND
+OUTPUT-SECTION-COMMAND
+...
+} [:PHDR...] [=FILL]
+...
+} [>REGION] [:PHDR...] [=FILL]
+
+...
+}
+由以上文法可以看出，同一覆盖图内的section具有相同的VMA。SECNAME2的LMA为SECTNAME1的LMA加上SECNAME1的大小，同理计算SECNAME2,3,4...的LMA。SECNAME1的LMA由LDADDR决定，如果它没有被指定，那么由START决定，如果它也没有被指定，那么由当前定位符号的值决定。
+NOCROSSREFS关键字指定各section之间不能交叉引用，否则报错。
+对于OVERLAY描述的每个section，连接器将定义两个符号__load_start_SECNAME和__load_stop_SECNAME，这两个符号的值分别代表SECNAME section的LMA地址的开始和结束。
+连接器处理完OVERLAY描述语句后，将定位符号的值加上所有覆盖图内section大小的最大值。
+看个例子吧，
+SECTIONS{
+...
+
+OVERLAY 0x1000 : AT (0x4000)
+{
+.text0 { o1/*.o(.text) }
+.text1 { o2/*.o(.text) }
+}
+...
+}
+.text0 section和.text1 section的VMA地址是0x1000，.text0 section加载于地址0x4000，.text1 section紧跟在其后。
+程序代码，拷贝.text1 section代码，
+extern char __load_start_text1, __load_stop_text1;
+memcpy ((char *) 0x1000, &__load_start_text1,
+&__load_stop_text1 - &__load_start_text1);
+
+
+8. 内存区域命令
+---------------
+
+注意：以下存储区域指的是在程序地址空间内的。
+在默认情形下，连接器可以为section分配任意位置的存储区域。你也可以用MEMORY命令定义存储区域，并通过输出section描述的> REGION属性显示地将该输出section限定于某块存储区域，当存储区域大小不能满足要求时，连接器会报告该错误。
+MEMORY命令的文法如下，
+MEMORY {
+NAME1 [(ATTR)] : ORIGIN = ORIGIN1, LENGTH = LEN2
+NAME2 [(ATTR)] : ORIGIN = ORIGIN2, LENGTH = LEN2
+...
+}
+NAME ：存储区域的名字，这个名字可以与符号名、文件名、section名重复，因为它处于一个独立的名字空间。
+ATTR ：定义该存储区域的属性，在讲述SECTIONS命令时提到，当某输入section没有在SECTIONS命令内引用时，连接器会把该输入 section直接拷贝成输出section，然后将该输出section放入内存区域内。如果设置了内存区域设置了ATTR属性，那么该区域只接受满足该属性的section(怎么判断该section是否满足？输出section描述内好象没有记录该section的读写执行属性)。ATTR属性内可以出现以下7个字符，
+R 只读section
+W 读/写section
+X 可执行section
+A ‘可分配的’section
+I 初始化了的section
+L 同I
+! 不满足该字符之后的任何一个属性的section
+ORIGIN ：关键字，区域的开始地址，可简写成org或o
+LENGTH ：关键字，区域的大小，可简写成len或l
+
+例子，
+MEMORY
+{
+rom (rx) : ORIGIN = 0, LENGTH = 256K
+ram (!rx) : org = 0x40000000, l = 4M
+}
+此例中，把在SECTIONS命令内*未*引用的且具有读属性或写属性的输入section放入rom区域内，把其他未引用的输入section放入 ram。如果某输出section要被放入某内存区域内，而该输出section又没有指明ADDRESS属性，那么连接器将该输出section放在该区域内下一个能使用位置。
+
+
+9. PHDRS命令
+------------
+
+该命令仅在产生ELF目标文件时有效。
+ELF目标文件格式用program headers程序头(程序头内包含一个或多个segment程序段描述)来描述程序如何被载入内存。可以用objdump -p命令查看。
+当在本地ELF系统运行ELF目标文件格式的程序时，系统加载器通过读取程序头信息以知道如何将程序加载到内存。要了解系统加载器如何解析程序头，请参考ELF ABI文档。
+在连接脚本内不指定PHDRS命令时，连接器能够很好的创建程序头，但是有时需要更精确的描述程序头，那么PAHDRS命令就派上用场了。
+注意：一旦在连接脚本内使用了PHDRS命令，那么连接器**仅会**创建PHDRS命令指定的信息，所以使用时须谨慎。
+PHDRS命令文法如下，
+PHDRS
+{
+NAME TYPE [ FILEHDR ] [ PHDRS ] [ AT ( ADDRESS ) ]
+[ FLAGS ( FLAGS ) ] ;
+}
+其中FILEHDR、PHDRS、AT、FLAGS为关键字。
+NAME ：为程序段名，此名字可以与符号名、section名、文件名重复，因为它在一个独立的名字空间内。此名字只能在SECTIONS命令内使用。
+一个程序段可以由多个‘可加载’的section组成。通过输出section描述的属性:PHDRS可以将输出section加入一个程序段，: PHDRS中的PHDRS为程序段名。在一个输出section描述内可以多次使用:PHDRS命令，也即可以将一个section加入多个程序段。
+如果在一个输出section描述内指定了:PHDRS属性，那么其后的输出section描述将默认使用该属性，除非它也定义了:PHDRS属性。显然当多个输出section属于同一程序段时可简化书写。
+在TYPE属性后存在FILEHDR关键字，表示该段包含ELF文件头信息；存在PHDRS关键字，表示该段包含ELF程序头信息。
+TYPE可以是以下八种形式，
+PT_NULL 0
+表示未被使用的程序段
+PT_LOAD 1
+表示该程序段在程序运行时应该被加载
+PT_DYNAMIC 2
+表示该程序段包含动态连接信息
+PT_INTERP 3
+表示该程序段内包含程序加载器的名字，在linux下常见的程序加载器是ld-linux.so.2
+PT_NOTE 4
+表示该程序段内包含程序的说明信息
+PT_SHLIB 5
+一个保留的程序头类型，没有在ELF ABI文档内定义
+PT_PHDR 6
+表示该程序段包含程序头信息。
+EXPRESSION 表达式值
+以上每个类型都对应一个数字，该表达式定义一个用户自定的程序头。
+AT(ADDRESS)属性定义该程序段的加载位置(LMA)，该属性将**覆盖**该程序段内的section的AT()属性。
+默认情况下，连接器会根据该程序段包含的section的属性(什么属性？好象在输出section描述内没有看到)设置FLAGS标志，该标志用于设置程序段描述的p_flags域。
+下面看一个典型的PHDRS设置，
+PHDRS
+{
+headers PT_PHDR PHDRS ;
+interp PT_INTERP ;
+text PT_LOAD FILEHDR PHDRS ;
+data PT_LOAD ;
+dynamic PT_DYNAMIC ;
+}
+SECTIONS
+{
+. = SIZEOF_HEADERS;
+.interp : { *(.interp) } :text :interp
+.text : { *(.text) } :text
+.rodata : { *(.rodata) } /* defaults to :text */
+...
+. = . + 0x1000; /* move to a new page in memory */
+.data : { *(.data) } :data
+.dynamic : { *(.dynamic) } :data :dynamic
+...
+}
+
+
+10. 版本号命令
+--------------
+
+当使用ELF目标文件格式时，连接器支持带版本号的符号。
+读者可以发现仅仅在共享库中，符号的版本号属性才有意义。
+动态加载器使用符号的版本号为应用程序选择共享库内的一个函数的特定实现版本。
+可以在连接脚本内直接使用版本号命令，也可以将版本号命令实现于一个特定版本号描述文件(用连接选项--version-script指定该文件)。
+该命令的文法如下，
+VERSION { version-script-commands }
+以下内容直接拷贝于以前的文档，
+===================== 开始 ==================================
+内容简介
+---------
+0 前提
+1 带版本号的符号的定义
+2 连接到带版本的符号
+3 GNU扩充
+4 我的疑问
+5 英文搜索关键字
+6 我的参考
+
+
+0. 前提
+
+-- 只限于ELF文件格式
+-- 以下讨论用gcc
+
+1. 带版本号的符号的定义(共享库内)
+
+文件b.c内容如下，
+int old_true()
+{
+return 1;
+}
+
+int new_true()
+{
+return 2;
+}
+
+写连接器的版本控制脚本，本例中为b.lds，内容如下
+VER1.0{
+new_true;
+};
+VER2.0{
+};
+
+$gcc -c b.c
+$gcc -shared -Wl,--version-script=b.lds -o libb.so b.o
+
+可以在{}内填入要绑定的符号，本例中new_true符号就与VER1.0绑定了。
+那么如果有一个应用程序连接到该库的new_true符号，那么它连接的就是VER1.0版本的new_true符号
+
+如果把b.lds更改为，
+VER1.0{
+};
+VER2.0{
+new_true;
+};
+
+然后在生成libb.so文件，在运行那个连接到VER1.0版本的new_true符号的应用程序，可以发现该应用程序不能运行了，
+因为库内没有VER1.0版本的new_true，只有VER2.0版本的new_true。
+
+
+2. 连接到带版本的符号
+写一个简单的应用(名为app)连接到libb.so，应用符号new_true
+假设libb.so的版本控制文件为，
+VER1.0{
+};
+VER2.0{
+new_true;
+};
+
+$ nm app | grep new_true
+U new_true@@VER1.0
+$
+用nm命令发现app连接到VER1.0版本的new_true
+
+3. GNU的扩充
+它允许在程序文件内绑定 *符号* 到 *带版本号的别名符号*
+
+文件b.c内容如下，
+int old_true()
+{
+return 1;
+}
+
+int new_true()
+{
+return 2;
+}
+__asm__( ".symver old_true,true@VER1.0" );
+__asm__( ".symver new_true,true@@VER2.0" );
+
+
+其中，带版本号的别名符号是true，其默认的版本号为VER2.0
+
+供连接器用的版本控制脚本b.lds内容如下，
+VER1.0{
+};
+VER2.0{
+};
+
+版本控制文件内必须包含版本VER1.0和版本VER2.0的定义，因为在b.c文件内有对他们的引用
+
+****** 假定libb.so与app.c在同一目录下 ********
+
+以下应用程序app.c连接到该库，
+int true();
+int main()
+{
+printf( "%d ", true );
+}
+
+$ gcc app.c libb.so
+$ LD_LIBRARY_PATH=. ./app
+2
+$ nm app | grep true
+U true@@VER2.0
+$
+
+很明显，程序app使用的是VER2.0版本的别名符号true，如果在b.c内没有指明别名符号true的默认版本，
+那么gcc app.c libb.so将出现连接错误，提示true没有定义。
+
+也可以在程序内指定特定版本的别名符号true，程序如下，
+__asm__( ".symver true,true@VER1.0" );
+int true();
+int main()
+{
+printf( "%d ", true );
+}
+
+$ gcc app.c libb.so
+$ LD_LIBRARY_PATH=. ./app
+1
+$ nm app | grep true
+U true@VER1.0
+$
+
+显然，连接到了版本号为VER1.0的别名符号true。其中只有一个@表示，该版本不是默认的版本
+
+
+
+
+我的疑问：
+版本控制脚本文件中，各版本号节点之间的依赖关系
+
+
+英文搜索关键字：
+.symver
+versioned symbol
+version a shared library
+
+参考：
+info ld, Scripts node
+===================== 结束 ==================================
+
+
+11. 表达式
+----------
+
+表达式的文法与C语言的表达式文法一致，表达式的值都是整型，如果ld的运行主机和生成文件的目标机都是32位，则表达式是32位数据，否则是64位数据。
+能够在表达式内使用符号的值，设置符号的值。
+下面看六项表达式相关内容，
+
+常表达式：
+_fourk_1 = 4K; /* K、M单位 */
+_fourk_2 = 4096; /* 整数 */
+_fourk_3 = 0x1000; /* 16 进位 */
+_fourk_4 = 01000; /* 8 进位 */
+1K=1024 1M=1024*1024
+符号名：
+没有被引号""包围的符号，以字母、下划线或'.'开头，可包含字母、下划线、'.'和'-'。当符号名被引号包围时，符号名可以与关键字相同。如，
+"SECTION"=9
+"with a space" = "also with a space" + 10;
+定位符号'.'：
+只在SECTIONS命令内有效，代表一个程序地址空间内的地址。
+注意：当定位符用在SECTIONS命令的输出section描述内时，它代表的是该section的当前**偏移**，而不是程序地址空间的绝对地址。
+先看个例子，
+SECTIONS
+{
+output :
+{
+file1(.text)
+. = . + 1000;
+file2(.text)
+. += 1000;
+file3(.text)
+} = 0x1234;
+}
+其中由于对定位符的赋值而产生的空隙由0x1234填充。其他的内容应该容易理解吧。
+再看个例子，
+SECTIONS
+{
+. = 0x100
+.text: {
+*(.text)
+. = 0x200
+}
+. = 0x500
+.data: {
+*(.data)
+. += 0x600
+}
+} .text section在程序地址空间的开始位置是0x
+表达式的操作符：
+与C语言一致。
+优先级 结合顺序 操作符
+1 left ! - ~ (1)
+2 left * / %
+3 left + -
+4 left >> <<
+5 left == != > < <= >=
+6 left &
+7 left |
+8 left &&
+9 left ||
+10 right ? :
+11 right &= += -= *= /= (2)
+(1)表示前缀符，(2)表示赋值符。
+表达式的计算：
+连接器延迟计算大部分表达式的值。
+但是，对待与连接过程紧密相关的表达式，连接器会立即计算表达式，如果不能计算则报错。比如，对于section的VMA地址、内存区域块的开始地址和大小，与其相关的表达式应该立即被计算。
+例子，
+SECTIONS
+{
+.text 9+this_isnt_constant :
+{ *(.text) }
+}
+这个例子中，9+this_isnt_constant表达式的值用于设置.text section的VMA地址，因此需要立即运算，但是由于this_isnt_constant变量的值不确定，所以此时连接器无法确立表达式的值，此时连接器会报错。
+相对值与绝对值：
+在输出section描述内的表达式，连接器取其相对值，相对与该section的开始位置的偏移
+在SECTIONS命令内且非输出section描述内的表达式，连接器取其绝对值
+通过ABSOLUTE关键字可以将相对值转化成绝对值，即在原来值的基础上加上表达式所在section的VMA值。
+例子，
+SECTIONS
+{
+.data : { *(.data) _edata = ABSOLUTE(.); }
+}
+该例子中，_edata符号的值是.data section的末尾位置(绝对值，在程序地址空间内)。
+内建函数：
+ABSOLUTE(EXP) ：转换成绝对值
+ADDR(SECTION) ：返回某section的VMA值。
+ALIGN(EXP) ：返回定位符'.'的修调值，对齐后的值，(. + EXP - 1) & ~(EXP - 1)
+BLOCK(EXP) ：如同ALIGN(EXP)，为了向前兼容。
+DEFINED(SYMBOL) ：如果符号SYMBOL在全局符号表内，且被定义了，那么返回1，否则返回0。例子，
+SECTIONS { ...
+.text : {
+begin = DEFINED(begin) ? begin : . ;
+...
+}
+...
+}
+LOADADDR(SECTION) ：返回三SECTION的LMA
+MAX(EXP1,EXP2) ：返回大者
+MIN(EXP1,EXP2) ：返回小者
+NEXT(EXP) ：返回下一个能被使用的地址，该地址是EXP的倍数，类似于ALIGN(EXP)。除非使用了MEMORY命令定义了一些非连续的内存块，否则NEXT(EXP)与ALIGH(EXP)一定相同。
+SIZEOF(SECTION) ：返回SECTION的大小。当SECTION没有被分配时，即此时SECTION的大小还不能确定时，连接器会报错。
+SIZEOF_HEADERS ：
+sizeof_headers ：返回输出文件的文件头大小(还是程序头大小)，用以确定第一个section的开始地址(在文件内)。？？？
+
+
+12. 暗含的连接脚本
+
+输入文件可以是目标文件，也可以是连接脚本，此时的连接脚本被称为 暗含的连接脚本
+如果连接器不认识某个输入文件，那么该文件被当作连接脚本被解析。更进一步，如果发现它的格式又不是连接脚本的格式，那么连接器报错。
+一个暗含的连接脚本不会替换默认的连接脚本，仅仅是增加新的连接而已。
+一般来说，暗含的连接脚本符号分配命令，或INPUT、GROUP、VERSION命令。
+在连接命令行中，每个输入文件的顺序都被固定好了，暗含的连接脚本在连接命令行内占住一个位置，这个位置决定了由该连接脚本指定的输入文件在连接过程中的顺序。
+典型的暗含的连接脚本是libc.so文件，在GNU/linux内一般存在/usr/lib目录下。
+
+
+References
+
+1, gnu ld在线手册
+http://www.gnu.org/software/binutils/manual/ld-2.9.1
+2, 程序的链接和装入及Linux下动态链接的实现
+http://www-128.ibm.com/developerworks/cn/linux/l-dynlink/
+3, UNIX/Linux平台可执行文件格式分析
+http://www-128.ibm.com/developerworks/cn/linux/l-excutff/
+4, John R. Levine.《Linkers & Loaders》
+
+
+
+
+
+
+
+
+
+
+
+
+http://gcc.gnu.org/onlinedocs/gcc-3.4.4/gcc/Optimize-Options.html

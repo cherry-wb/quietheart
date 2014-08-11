@@ -1,0 +1,121 @@
+本文目的：
+这里介绍制作arm平台下面交叉编译工具链的方法以及实践步骤。
+
+目前，据我所知，制作交叉编译工具链的方法有三种,从易到难依次为：
+一、直接下载别人已经制做好的交叉编译工具链。
+二、使用crosstool脚本工具半自动地制作交叉编译工具链。
+三、自己下载源代码，手动编译并制作交叉编译工具链。
+很惭愧，我只把最简单的方法做出来了，其他方法都没弄出来，以后有时间再弄。
+
+一、直接到指定网站上面下载人家已经制作好的交叉编译工具链。
+这个是最简单的方法。通常下载的有rpm包或者tar包等。
+前者使用rpm命令可以直接将交叉编译工具链安装到指定的路径。
+如果是tar包，那么的具体安装位置还需要参考其中的文档，或者也可以使用包中的arm-linux-gcc -v来得到安装位置。
+把解压后的包拷贝到相应的位置，然后添加环境变量就行了。
+
+(1)提供编译好的可用的交叉编译工具链的常用的网站有：
+http://www.kernel.org/pub/tools/crosstool/
+说明查看：
+http://www.kernel.org/pub/tools/crosstool/index_old.shtml
+但是，这个网站提供的都没有glibc.
+
+(2)另外做的很好的可以下载的交叉编译工具链的网站：
+http://www.codesourcery.com
+其中的:http://www.codesourcery.com/sgpp/lite/arm/portal/release1600
+下面可以下载(其中的lite的是免费的)。
+这里面的把glibc也添加进去了。
+下载之后，直接解压，然后把其中的bin目录添加到环境量就可以直接编译内核和app了。
+
+(3)实验工具链使用的过程：
+3.1)下载工具链
+$wget http://www.codesourcery.com/public/gnu_toolchain/arm-none-linux-gnueabi/arm-2010.09-50-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
+
+3.2)安装工具链
+#tar -xjvf arm-2010.09-50-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2 -C /usr/local
+#export PATH=/usr/local/arm-2010.09/bin/:$PATH
+
+3.3)使用工具链编译内核
+#cd <kernel path in sony release svn>/Kernel
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- mrproper
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- avp13_defconfig
+#make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi-
+这样编译的内核,使用编译生成的elf格式的二进制烧写即可启动。
+
+3.4)制做对应的文件系统
+想要测试是否能够正常运行app，首先需要制作一个简易的文件系统，如下：
+#wget http://www.busybox.net/downloads/busybox-1.17.3.tar.bz2
+#tar -xjvf busybox-1.17.3.tar.bz2
+#mkdir {build,target}
+#cd busybox-1.17.3
+#make O=$(pwd)/../build defconfig
+#cd $(pwd)/../build
+#make menuconfig
+	Build Options  ---> 
+	[*] Build BusyBox as a static binary (no shared libs) 
+	...
+	(arm-none-linux-gnueabi-) Cross Compiler prefix
+	...
+#make
+#make CONFIG_PREFIX=../target install
+这样，在../target中有基本的busybox工具了，在其中建立好proc,sys,以及dev等目录，并建立好init后即可成为最简单的文件系统,经过测试这样做出来的文件系统是好用的。
+最后，将编译好的文件系统挂载成nfs文件系统，准备从开发板启动它。
+
+3.5)编辑并编译一个小型的"hello world"程序：
+$vi main.c
+	内容如下：
+	/*! @file main.c */
+	#include <stdio.h>
+	int main(int argc, char *argv[])
+	{
+		printf("hello!\n");
+		return 0;
+	}
+$make CC=arm-none-linux-gnueabi-gcc CFLAGS+=-static main
+将生成的"main"程序拷贝到nfs文件系统上面即可正常运行。
+
+!!有一个需要注意的地方：
+编译出来的程序，用file可以看出它是否是eabi的(一种新的特性，在内核里面也有支持这个特性的配置选项)。
+如果是则输出类似如下：
+$file vmlinux
+vmlinux: ELF 32-bit LSB executable, ARM, version 1 (SYSV), statically linked, stripped
+
+如果不是,则输出中(SYSV)->(ARM)(即SYSV变成ARM)。
+
+内核以及编译出来的应用程序必须都支持eabi或者都不支持，才能运行起来，否则不行。
+即使都支持eabi,版本不同，也有可能无法运行。
+支持eabi的交叉工具链名称一般类似：arm-none-linux-gnueabi-***
+不支持的一般类似:arm-linux-***
+
+二、使用crosstool脚本工具半自动地制作交叉编译工具链。
+使用这个脚本制作交叉编译工具链，实际就是将手动制作交叉编译工具链的过程半自动化了.
+如果能够用这个方法制作，那么也几乎能够用手动的方法制作了。并且这个脚本工具的开发者，好象已经不再对它进行维护了。
+crosstool相关信息可以参考如下网站：
+http://www.kegel.com/crosstool/
+
+三、自己下载源代码，手动编译并制作交叉编译工具链。
+1、下载相关的依赖：
+linux-2.6.xx.tar.bz2
+binutils-2.xx.tar.gz
+gcc-4.x.x.tar.gz
+glibc-2.xx.tar.gz
+glibc-linuxthreads-2.x.x.tar.gz
+gmp-4.x.x.tar.bz2
+mpfr-2.x.x.tar.bz2
+(另外可能需要下载一些相关的patch)
+
+2、大致过程：
+1),配置并编译安装Binutils(约30分钟)
+2),配置并编译gcc的辅助编译器(约60分钟)
+3),配置并准备相应的内核头文件
+4),配置并编译glibc(约90-120分钟)
+5),配置并编译，生成完整版本的gcc交叉编译工具(约120分钟)
+
+注：
+这个方法，相当于完全自己定制交叉编译工具链接。
+根据查到的资料，总结起来最关键的地方是：
+1）可能需要确定能够相互匹配版本的源代码以及头文件，才能进行编译.
+2）需要编译的过程中，必须确定需要打开哪些特定的配置选项.
+3）如果源代码本身存在一些bug（可能是由于某些版本不匹配原因导致的），需要相应的patch.
+以上是保证编译继续进行下去的比较关键的地方。
+
+这个方法我目前做了几遍，每次总是有一些地方无法成功通过，以后有时间再弄。

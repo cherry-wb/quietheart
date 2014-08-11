@@ -1,0 +1,37 @@
+介绍使用过程中的一些经验：
+*主题：
+http://themes.wopus.org/cms/page/9
+
+*安装插件：
+
+*好用的插件：
+下载搜索各种插件的比较正式网址：
+http://wordpress.org/extend/plugins/
+这个网址可以搜索插件，下载，以及显示插件效果，不错的资源。
+
+可以折叠显示层次分类的插件：
+安装一个显示层次分类的插件。
+名称:Collapsing Categories
+下载地址：
+http://wordpress.org/extend/plugins/collapsing-categories/installation/
+下载之后，解压到plugins目录，激活，然后在widgets将相应的插件添加到相应的地方。
+
+
+
+
+
+
+
+============
+我的配置：
+1,插件：
+可以折叠显示层次分类的插件：
+安装一个显示层次分类的插件。
+名称:Collapsing Categories
+下载地址：
+http://wordpress.org/extend/plugins/collapsing-categories/installation/
+
+2,主题：
+silver-dreams.1.4
+下载地址：http://wordpress.org/extend/themes/silver-dreams
+关键是左侧边栏。

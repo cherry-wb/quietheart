@@ -1,0 +1,12 @@
+DEBUG:root:default level.
+INFO:root:default level.
+ERROR:root:default level.
+DEBUG:root:debug level.
+INFO:root:debug level.
+ERROR:root:debug level.
+DEBUG:root:info level.
+INFO:root:info level.
+ERROR:root:info level.
+DEBUG:root:error level.
+INFO:root:error level.
+ERROR:root:error level.

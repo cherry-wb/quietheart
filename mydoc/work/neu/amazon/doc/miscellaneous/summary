@@ -1,0 +1,33 @@
+
+web socket:
+http://baike.baidu.com/view/3623887.htm
+一个可以支持双向通信的web协议。
+
+ws4py: 
+http://www.defuze.org/oss/ws4py/docs/index.html
+一个web socket客户和服务端的python库实现。
+
+wsgi:
+是Python应用程序或框架和Web服务器之间的一种接口规范。
+http://ivory.idyll.org/articles/wsgi-intro/what-is-wsgi.html
+The PEP specifies three roles: the role of a server, the role of a framework/app, and the role of a middleware object.
+http://webpython.codepoint.net/wsgi_tutorial
+If an application (or framework or toolkit) is written to the WSGI spec then it will run on any server written to that spec.
+==========
+gevent:
+http://sdiehl.github.com/gevent-tutorial/
+http://www.cnblogs.com/huazi/archive/2012/07/23/2605037.html
+首先，gevent是一个网络库：libevent是一个事件分发引擎，greenlet提供了轻量级线程的支持。所以它不适合处理有长时间阻塞IO的情况。gevent就是基于这两个东西的一个专门处理网络逻辑的并行库。 
+1. gevent.spawn启动的所有协程，都是运行在同一个线程之中，所以协程不能跨线程同步数据。 
+2. gevent.queue.Queue 是协程安全的。 
+3. gevent启动的并发协程，具体到task function，不能有长时间阻塞的IO操作。因为gevent的协程的特点是，当前协程阻塞了才会切换到别的协程。如果当前协程长时间阻塞，则不能显示（gevent.sleep(0)，或隐式，由gevent来做）切换到别的协程。导致程序出问题。 
+4. 如果有长时间阻塞的IO操作，还是用传统的线程模型比较好。 
+5. 因为gevent的特点总结是：事件驱动+协程+非阻塞IO，事件驱动值得是libvent对epool的封装，来基于事件的方式处理IO。协程指的是greenlet，非阻塞IO指的是gevent已经patch过的各种库，例如socket和select等等。 
+6. 使用gevent的协程，最好要用gevent自身的非阻塞的库。如httplib, socket, select等等。 
+7. gevent适合处理大量无阻塞的任务，如果有实在不能把阻塞的部分变为非阻塞再交给gevent处理，就把阻塞的部分改为异步吧。
+
+gunicorn:
+一种webserver。
+
+django:
+一种web开发框架。

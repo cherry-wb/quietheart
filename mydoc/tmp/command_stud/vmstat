@@ -1,0 +1,5 @@
+*显示虚拟内存的统计信息：
+procs -----------memory---------- ---swap-- -----io---- -system-- ----cpu----
+r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa
+3  0 125600  15768  19608  89428    4    8   292    40  122  528 10  3 84  3
+

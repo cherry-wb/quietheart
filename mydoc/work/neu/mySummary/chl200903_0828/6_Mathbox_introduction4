@@ -1,0 +1,69 @@
+how its done, describing the creation of a matchbox window manager theme.xml file and configuration syntax for the themeing of the panel, desktop and icons. 
+
+Matchbox must be compiled *without* the --enable-standalone for themeing. 
+
+The first thing todo is to decide on a name for you new theme and create one of the following directory's;
+
+$HOME/.themes/[theme_name]/matchbox/
+$PREFIX/share/themes/[theme_name]/matchbox/
+ start matchbox like
+matchbox -theme [theme_name] 
+you can also use 'matchbox-remote -t [theme_name]' to switch themes on the fly 
+If enabled enabled both GConf and XSettings can also be used to change the matchbox theme.
+
+If matchbox fails to parse a theme file, it will switch to its default theme and print basic error information on why it failed to stdout. 
+open up the theme.xml file and create the top level <theme> element.
+
+<?xml version="1.0"?>
+<theme name="An Example theme" 
+     author="Matthew Allum - mallum@handhelds.org"
+       desc="A simple demonstartion theme" 
+    version="1.0" engine_version="1" >
+
+ <!-- this is where the actual theme definition is defined -->
+
+</theme>
+
+
+The theme.xml file is then split into 2 major sections. The first listing the actual resources ( such as fonts and images ) required by the theme and then the next listing how these resources are used for the decoration of each type of window frame. 
+
+
+Matchbox supports 4 main window types for which decorations can be defined.For each window type, one or more <frame> tags are defined. The window types are; 
+Main window frames
+Dialog window frames
+Toolbar/Input window frames
+Menu window
+
+Each window type <frame> will then have a possible number of <layer> tag children
+
+A layer can be of various types and have various attributes, these types include;
+
+plain
+
+    A rectangle of solid color. The 'color' attribute references a previously defined color id. 
+pixmap
+
+    A pixmap stretched to its defined area. The 'pixmap' attribute references a previously defined pixmap id. 
+.....
+Each <frame> may also have <button> tag children. These define valid buttons with an 'action' attribute specifying what action should be taken by the window manager when it is activated. Buttons are painted above any layers. Valid button actions include; 
+close
+
+    Closes the window.
+
+    Valid for all non border ( eg *-east, *-west, *-south ) frame types. 
+maximise
+
+    Used by a minimized toolbar window frame type. 
+minimise
+
+    used by a maximized toolbar window frame type. Also works for app windows in matchbox 0.9 
+.....
+
+5.
+......
+
+6.1. The panel and Menus
+'mbdock' and the menu's used by apps lile mbmenu can also be themed. Rather than use the theme.xml file, they use a theme.desktop file which exists in the same directory as the theme.xml file.
+......
+6.2. Icons
+

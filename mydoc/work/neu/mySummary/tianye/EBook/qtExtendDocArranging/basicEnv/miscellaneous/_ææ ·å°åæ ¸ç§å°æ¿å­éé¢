@@ -1,0 +1,33 @@
+(具体可以参见文档Android/WW30_avengers_aspen-av10-android/)
+1,首先机器上面要搭载好tftp服务。
+...待整理...
+2,设置板子
+2.1,ip地址：
+1)setenv ipaddr 50.1.1.10
+2)setenv serverip 50.1.1.1
+必须是这个ip
+
+2.2,下载内核：
+1)先插上usb线，
+2)tftp 0x500000 zImage
+必须先下载，否则在你的本机上面运行ipconfig -a看不到usb。
+
+3,设置机器相关地址：
+ifconfig usb0 50.1.1.1 netmask 255.255.255.0
+这样就板子就可以下载kernel了。
+如果不手动设置，可以：
+vi /etc/network/interfaces里面的文件，加上：
+iface usb0 inet static
+address 10.1.14.122
+netmask 255.255.255.0
+auto usb0
+(实际就是把eth0变成usb0,然后没有gatewayip)
+
+5,烧内核：
+在板子上面：
+1)nand device 0
+这里是选择设备。
+2)tftp 0x500000 zImage
+这里是下载内核
+3)nand erase 0x100000 0x300000
+4)nand write 0x500000 0x100000 0x300000

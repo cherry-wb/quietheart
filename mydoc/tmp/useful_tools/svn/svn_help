@@ -1,0 +1,308 @@
+本文大致介绍svn版本库帮助命令的输出。
+
+以下是svn help命令的帮助输出：
+==================
+Available subcommands:
+   add
+   blame (praise, annotate, ann)
+   cat
+   checkout (co)
+   cleanup
+   commit (ci)
+   copy (cp)
+   delete (del, remove, rm)
+   diff (di)
+   export
+   help (?, h)
+   import
+   info
+   list (ls)
+   lock
+   log
+   merge
+   mkdir
+   move (mv, rename, ren)
+   propdel (pdel, pd)
+   propedit (pedit, pe)
+   propget (pget, pg)
+   proplist (plist, pl)
+   propset (pset, ps)
+   resolved
+   revert
+   status (stat, st)
+   switch (sw)
+   unlock
+   update (up)
+
+Subversion 是个版本控制系统的工具。
+
+每个命令大致解释如下：
+==================
+add:
+将一个未纳入版本库的目录或者文件添加到svn版本管理库中，add之后需要用commit才能体现在svn版本库中。
+例如：
+$svn add testfile
+这样，svn 会将testfile纳入版本控制。
+
+blame (praise, annotate, ann):
+这个命令显示某个文件每一行的版本号以及修改者。
+例如：
+$svn blame testfile
+输出大致如下：
+   158       lv-k #!/bin/bash
+   901       lv-k ########Notation for development#########
+   901       lv-k #This script is made by Neusoft.
+   901       lv-k #1, Comment with "#XXX" needs to be improved in the future.
+   901       lv-k #2, If you "cd" to some path in sub_function, you must "cd OLDPWD" before return.
+   901       lv-k #########################################
+   158       lv-k
+   158       lv-k ########Global Variables#########
+   901       lv-k #This value can be "develop" or "release" now.
+......剩下的省略......
+
+cat:
+这个命令的功能类似shell的cat,用于查看文件的内容。
+例如：
+$svn cat testfile
+之后会输出当前版本文件的内容。
+
+checkout (co)
+这个命令用于从版本库中取出指定版本的代码，默认为指定目录中当前版本库中最新代码。
+例如：
+$svn checkout -r 900 testfile
+之后会从版本库中取出一个工作拷贝testfile，存放在本地目录中。取出的版本号是900，取出的内容是目录的话，会包含版本控制信息，可以在相应目录中运行特定svn命令。
+
+cleanup
+这个命令在本地文件被锁定的使用，用于清楚锁。
+SVN 本地更新时，由于一些操作中断更新，如磁盘空间不够，用户取消。可能会造成本地文件被锁定的情况。一般出现这种情况可以使用cleanup来清除锁定。如果在根目录下都无法clean的话，一般采取的方法是另外找一个目录重新CHECKOUT,但有时有时SVN目录下可能有一些自己本地修改的文件，还未提交到SVN服务器，这时重新CHECKOUT需要注意本地文件的备份.
+例如：
+$svn cleanup
+这样会清除当前锁定。
+
+commit (ci)
+这个命令用于将当前目录中本地所做修改提交到版本库中，同时生成一个新的版本。
+例如:
+$svn commit -m "<some information>"
+这里，使用-m来指定提交的日志。
+
+copy (cp)
+这个命令用于将版本库中某个子目录进行拷贝，经常用于创建分支。这里的拷贝是廉价的拷贝，仅在版本库中保存每个分支拷贝中相应的变化而非全部，但检出的时候却可以将拷贝当做独立的工作拷贝来对待。copy动作需要commit才能提交到版本库中。
+例如：
+$svn copy trunk branches/tmp
+
+delete (del, remove, rm)
+这个命令类似linux的rm命令，用于将版本库中的某个文件或者目录删除。
+例如：
+$svn delete branches/tmp
+
+diff (di)
+这个命令查看某两个工作拷贝之间的修改。
+例如：
+$svn diff -r 901:902
+输出内容类似如下：
+Index: init.initrd
+===================================================================
+--- init.initrd （修订版 901）
++++ init.initrd （修订版 902）
+@@ -5,7 +5,7 @@
+ mount -o rw -t proc proc /proc
+ 
+ #lvkai+{ XXX print time
+-cat /proc/uptime
++#cat /proc/uptime
+ #lvkai+}
+ 
+ mount -t sysfs none /sys
+@@ -23,7 +23,7 @@
+ mount -t vfat -o shortname=winnt /dev/sxs_blk0 /SlotA\:
+ 
+ #XXX print time
+-cat /proc/uptime
++#cat /proc/uptime
+ 
+ #XXX startup appliation
+ #/diablo/diabloMainCpu/diablo.bin&
+这里，会比较901和902两个版本之间的不同，并把相应的修改输出到标准输出。
+
+export
+这个命令用于从版本库中取出指定版本的代码，默认为指定目录中当前版本库中最新代码,取出的信息不包含svn信息。
+例如:
+$svn export -r 900 testfile
+这个命令之后会从版本库中取出testfile，存放在本地目录中。取出的版本号是900，取出的内容是目录的话，就如同一个没有纳入版本控制的目录一样不包含版本控制信息，不能在相应目录中运行特定svn命令。
+
+help (?, h)
+这个命令用于获取svn命令的帮助信息,默认列出所有命令的列表。
+例如：
+$svn help commit
+这样会输出commit命令的帮助信息。
+
+import
+这个命令用于将指定的目录或者文件纳入版本控制，通常在最初建立svn库的时候使用。
+例如：
+$svn import svn_study file:///home/quietheart/svn_repos/test_repos/mystudy/test -m "Initial import"
+这样，会将svn_study这个目录下的内容纳入到file:///home/quietheart/svn_repos/test_repos/mystudy/test中。这里，svn库的名称是test_repos,同时提交的日志用-m指定。
+
+info
+这个命令用于显示指定路径的版本控制信息。
+例如：
+$svn info test
+会输出如下：
+路径：test
+地址(URL)：file:///home/quietheart/svn_repos/test_repos/mystudy/test
+Repository Root: file:///home/quietheart/svn_repos/test_repos
+档案库 UUID：4ee27b8d-b954-4796-92c7-e0d337941423
+修订版：9
+节点种类：目录
+调度：正常
+最后修改的作者：quietheart
+最后修改的修订版：9
+最后修改的时间: 2011-01-20 17:46:35 +0800 (四, 20  1月 2011)
+
+list (ls)
+这个命令用于查看指定目录中，已经纳入版本控制的所有文件，类似linux中的ls命令。
+例如：
+$svn ls
+这个命令输出的内容，不一定是当前目录所有文件，而是当前目录中纳入版本控制的文件。
+
+lock
+这个命令用于某个用户将某个文件进行锁定.
+例如：
+$svn lock test
+这里，锁定动作会从当前工作拷贝中自动传播出去，不用通知别人了.锁定之前，这个文件必须是版本库中最新版本的，否则锁定失败。锁定之后，其他用户工作拷贝中无法对此文件加锁，无法提交修改，也无法解锁（即使是同一用户名）.除非加锁的工作拷贝处解锁(可用unlock命令),或者别人使用--force选项的unlock强制解锁.实践发现加锁处提交修改之后自动解锁,锁定动作不能针对目录只能单个文件。
+注意，可以使用"svn lock test --force"强制把锁抢过来。
+
+log
+这个命令查看某个工作拷贝的日志信息。
+例如:
+$svn log test
+输入之后输出类似如下：
+------------------------------------------------------------------------
+r17 | quietheart | 2011-01-21 16:49:53 +0800 (五, 21  1月 2011) | 1 line
+
+
+------------------------------------------------------------------------
+r7 | quietheart | 2011-01-20 17:36:10 +0800 (四, 20  1月 2011) | 1 line
+
+add test
+------------------------------------------------------------------------
+
+这里，每个日志中有一个log说明，就是commit 命令中的-m选项指定的。
+
+merge
+这个命令用于将某个分支在某个阶段的修改应用到指定的目标上。命令翻译为合并，实际是应用修改的意思，类似打补丁。
+例如：
+$svn merge -r 6:7 file:///home/quietheart/svn_repos/test_repos/mystudy/test/trunk /home/quietheart/test/svn_study/test/branches/quietheart_branch/
+这样，会把主干上版本6:7上面的修改应用到分支上面。然后可以用svn commit将合并的结果提交。注意，这里目标是/home/quietheart/test/svn_study/test/branches/quietheart_branch/，它是本地工作拷贝的目录。
+
+mkdir
+这个命令用于为版本控制系统中增加一个目录,类似linux中的mkdir命令。
+例如：
+$svn mkdir test1
+这里，添加的目录必须用commit提交，通知到版本库。
+
+move (mv, rename, ren)
+这个命令用于在版本库中移动文件，或者给某个文件命名，类似linux中的mv命令。
+例如：
+$ svn move good test2
+输入之后，输出如下：
+A         test2
+D         good
+这里，类似用add添加一个目录test2，然后把原来的目录用delete删除。必须用commit提交到版本库别人才能够看到你的动作。
+
+propdel (pdel, pd)
+这条命令???
+
+propedit (pedit, pe)
+这条命令???
+
+propget (pget, pg)
+这条命令???
+
+proplist (plist, pl)
+这条命令???
+
+propset (pset, ps)
+这条命令???
+
+resolved
+这个命令用在解决冲突之后。
+例如：
+$svn resolved test
+这里，发生冲突的文件就是test.当你提交时候，svn会自动update一下将版本库最新版本合并到你的工作拷贝，如果有人修改了和你同样文件的同样行，那么就产生冲突，解决冲突之后(如果不删除冲突备份文件)，使用这个命令就可以继续提交了，如果删除冲突备份文件，那么不用这个命令也行。
+
+revert
+这条命令会撤消当前没有提交的本地工作拷贝的修改，假设修改了一个文件，再用这个命令，就可以把修改撤消。
+例如：
+$svn revert test
+这里，可以结合status命令进行合适的撤消操作。
+注意：本子命令不会存取网络，并且会解除冲突的状况。但是它不会自动恢复被删除的目录，除非你指定了那个被删除的当前看不见的文件名称。
+
+status (stat, st)
+这条命令用于在提交之前查看当前当前工作拷贝中哪些文件被修改，添加或者删除了，哪些没有在版本控制之下。
+例如：
+$svn status
+会输出类似如下：
+?      test4
+D      test1/testtest
+M      test3
+A      test5
+这里，?表示test4不在版本控制之下，D表示提交时会再版本控制库中删除testtest文件，M表示test3做了修改，A表示test5是将要被添加的文件。
+如果在上述命令继续运行,输出如下：
+$ svn revert *
+已恢复“test3”
+跳过“test4”
+已恢复“test5”
+$svn status
+?      test4
+?      test5
+D      test1/testtest
+$svn revert test1/testtest
+$ svn revert test1/testtest
+已恢复“test1/testtest”
+$svn status
+?      test4
+?      test5
+可见revert不是智能地恢复被删除的文件。
+
+switch (sw)
+这条命令用于在主干工作拷贝，各个分支工作拷贝之间自由切换（节省了checkout一个独立的分支或者trunk的时间和空间）；以及在svn服务器改变了之后，将本地工作拷贝的服务器地址更新。
+例如：
+$ svn info
+路径：.
+地址(URL)：file:///home/quietheart/svn_repos/test_repos/mystudy/test/branches/quietheart_branch
+Repository Root: file:///home/quietheart/svn_repos/test_repos
+档案库 UUID：4ee27b8d-b954-4796-92c7-e0d337941423
+修订版：19
+节点种类：目录
+调度：正常
+最后修改的作者：quietheart
+最后修改的修订版：10
+最后修改的时间: 2011-01-20 17:49:19 +0800 (四, 20  1月 2011)
+$svn switch file:///home/quietheart/svn_repos/test_repos/mystudy/test/trunk
+D    test
+A    test1/testtest
+A    test2
+U    test3
+$ svn info
+路径：.
+地址(URL)：file:///home/quietheart/svn_repos/test_repos/mystudy/test/trunk
+Repository Root: file:///home/quietheart/svn_repos/test_repos
+档案库 UUID：4ee27b8d-b954-4796-92c7-e0d337941423
+修订版：19
+节点种类：目录
+调度：正常
+最后修改的作者：quietheart
+最后修改的修订版：19
+最后修改的时间: 2011-01-21 17:12:25 +0800 (五, 21  1月 2011)
+
+上面，原来我在工作分支中工作，现在想要切换到trunk主线上面，那么使用switch可以很快地将当前工作拷贝变成trunk，而不用另外checkout整个trunk主线了。
+
+unlock
+这条命令用于解锁lock命令锁住的文件。
+例如：
+$svn unlock test
+
+update (up)
+这条命令用于更新工作拷贝，将当前路径工作拷贝更新为svn库中相应路径最新版本。
+例如：
+$svn update

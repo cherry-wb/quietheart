@@ -1,0 +1,48 @@
+%%%%%文档类(documentclass)有三种:article、report、book%%%%%
+%\documentclass[options]{class} %文档类声明
+
+%\usepackage[options]{package}  %引入宏包
+
+%%%%%文档正文部分的开头通常有标题、作者、摘要等信息,之后是章%%%%
+%%%%%节等层次结构,内容则散布于层次结构之间%%%%
+%\begin{document}               %正文
+%\title{标题}
+%\author{作者}
+%\today
+%\maketitle
+
+%\begin{abstract}
+%...摘要部分...
+%\end{abstract}
+
+%%%%%常用的层次结构%%%%%
+%\chapter{...}
+%\section{...}
+%\subsection*{...}%不让此章节显示在目录中加*
+%\subsubsection{...}
+
+%%article 中没有 chapter,而report 和 book 则支持上面所有层次。
+
+
+%\end{document}
+
+
+\documentclass[10pt,titlepage]{report} %文档类声明
+\begin{document}               %正文
+%LATEX中的段落缺省两端对齐(fully justified),我们也可以让段落居左、右或中对齐。
+
+\begin{flushleft}
+this paragraph\\
+aliment left
+\end{flushleft}
+\begin{flushright}%居右，这里面没有空行，也是在右面另起一段了
+this paragraph\\
+aliment right
+\end{flushright}
+
+\begin{center}
+this paragraph\\
+aliment center
+\end{center}
+
+\end{document}

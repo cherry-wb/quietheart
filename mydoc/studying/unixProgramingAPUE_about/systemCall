@@ -1,0 +1,522 @@
+这里是学习系统调用的总结。
+*整理
+*未整理
+
+abort
+system
+sleep
+
+*整理
+==============
+*内存管理
+#include <unistd.h>
+int brk(void *addr);
+void *sbrk(intptr_t increment);
+
+[描述]
+brk和sbrk用来改变程序数据段的结尾地址。如果地址增加了表示为这个进程分配内存了，如果地址减少了表示给这个进程释放内存了。
+brk把程序结尾地址设置为addr(要保证那个地址是合法的地址).设置成功返回0，设置失败返回-1,同时errno被设置为ENOMEM.
+sbrk把程序的结尾地址增加increment,如果increment的值为0会返回当前程序的结尾地址。返回先前的程序结尾，如果之前已经增加过那么返回上次的新的程序结尾(不是设置完了之后的)，失败了就返回-1,同时errno被设置为ENOMEM.
+[举例]
+代码如下：
+{
+	void *cur = sbrk(0);
+	printf("current break is:%d\n",(int)cur);//
+
+	void *newadd1 = sbrk(10);
+	printf("after add break is:%d\n",(int)newadd1);//
+	void *newsub1 = sbrk(-10);
+	printf("after sub break is:%d\n",(int)newsub1);//
+
+	cur = sbrk(0);
+	printf("current break is:%d\n",(int)cur);//
+}
+上面的代码输出是:
+current break is:153415680
+after add break is:153415680
+after sub break is:153415690
+current break is:153415680
+
+*内存映射：
+#include <sys/mman.h>
+void *mmap(void *addr, size_t length, int prot, int flags,
+		int fd, off_t offset);
+int munmap(void *addr, size_t length);
+[描述]
+mmap
+把文件或者设备映射到内存。这个函数在调用进程的虚拟地址空间中创建一块映射区域。映射区域的首地址在addr中指定，length指定映射区域的长度。如果addr是NULL，那么由内核来选择一个地址来创建映射的区域,否则创建的时候会尽可能地使用addr的地址。在linux系统中，创建映射的时候应该是在下一个页面的边界创建,addr是NULL的时候，程序的可移植性最好。
+length指定文件被映射的长度，offset指定从文件的哪个偏移位置开始映射，offset必须是页面大小的整数倍页面的大小可以由sysconf(_SC_PAGE_SIZE)来返回.
+prot指定内存的保护模式（具体参见man）.
+flags指定区域在不同进程之间的共享方式，以及区域是否同步到相应的文件等等（具体参见man）.
+这个函数返回新创建的页面的地址。
+munmap
+取消address指定地址范围的映射。以后再引用取消的映射的时候就会导致非法内存的访问。这里address应该是页面的整数倍。
+成功的时候这个函数返回0。
+
+失败的时候，两者都返回-1.
+[举例]
+
+
+未整理
+==============
+
+进程相关
+-------------
+#include <unistd.h>
+pid_t getpid(void);
+返回:调用进程的PID.
+
+pid_t getppid(void);
+返回：调用进程的父进程PID.
+
+uid_t getuid(void);
+返回：调用进程的真实用户ID。
+
+uid_t geteuid(void);
+返回：调用进程的有效用户ID.
+
+gid_t getgid(void);
+返回：调用进程的真实ID组。
+
+gid_t getegid(void);
+返回：调用进程的有效ID组。
+
+注意:这些函数都不会返回错误。
+clone
+
+#include <unistd.h>
+pid_t fork(void);
+返回：在子进程中返回为0；父进程中返回为子进程PID,如果出错返回1。
+通过fork创建的新进程叫做子进程。这个fork函数调用了一次（在父进程中），但是返回了两次（在父进程中，以及新出现的子进程中）。通过返回值可知是父还是子进程。因为没有获得一个进程子进程PID的函数，所以在父进程的fork返回中会返回子进程PID,以做记录和判断等用。因为所有子进程只可能有一个父进程，所以在子进程中fork返回0，子进程可以通过getppid来获得父进程的进程ID.(进程PID为0的进程是内核中的swapper所以它不可能是某个进程的子进程).
+在调用fork之后，产生的子进程和父进程会继续在代码中fork调用的后面继续执行。子进程是父进程的一个拷贝，它拷贝了父进程的数据空间，堆和栈空间，一定要注意这是一份拷贝，父子进程不会共享这部分内存的内容。父子进程共享的部分是代码段部分。
+由于fork一般会接着一个exec函数,当前的系统实现一般不会立即执行父进程数据，堆，栈的拷贝。一般会使用一种copy-on-write(COW)的技术，也就是说，这些区域起初是父子进程共享的，一旦有进程进行了修改这些区域的操作，内核才会创建相应区域内存的一份拷贝（一般是虚拟内存的页）。
+
+vfork
+vfork和fork一样，不同的是在有些情况下它的行为没有被定义.例如修改数据（除了vfork的返回值）,或者从调用vfork的函数中返回，或者在调用_exit之前调用其他函数，或者调用exec族的函数。
+
+在linux中:
+vfork是一个特殊的clone.它用于在不拷贝parent的page tables的情况下创建新的进程。在一些执行敏感的程序的时候很有用，这时候child会被创建同时立即用execve执行。
+vfork和fork不同的地方是parent会被suspended直到child调用execve或者_exit.child和它的parent共享所有的内存，包括stack,这样直到调用execve.child一定不能从当前的函数返回，或者调用exit,但是可能调用_exit.
+signal handlers会被继承，但是不会被共享。发送到parent的信号会在child释放parent的内存的时候到达parent.
+
+apue上面的解释：
+函数vfork和fork一样，返回值也一样，但是这两个函数有所不同。
+vfork函数一般用于创建一个子进程，并且这个子进程的目的是进行exec(关于exec参见后面).
+vfork和fork一样，创建新的进程，并且它不会复制父进程的地址空间的内容到子进程中，因为子进程是将要调用exec的而不是引用父进程地址空间的数据。子进程会一直在父进程的地址空间运行，直到它调用了exit或者exec.这样的优化是为了提高一些用虚拟内存页实现的unix系统的效率。（通过前面对fork的解释我们可以发现，实际上fork现在已经使用了copy-on-write技术来提高效率，但是没有拷贝始终是要比有一些拷贝的快一些）
+fork和vfork另一个不同的地方是vfork保证了子进程先运行，直至子进程调用了exec或者exit.当子进程调用了exec或者exit的时候，父进程才重开始执行（如果子进程在调用这两个函数之前需要父进程的一些操作的话，这里可能会导致死锁）。
+总之，就两点不同：
+a)vfork的子进程不拷贝父进程空间数据而是直接运行在父进程空间内（直到调用了exec或exit）。fork的子进程拷贝一份父进程的数据。
+b）vfork之后，子进程会先继续运行，直到子进程调用exec或者exit父进程才开始运行。fork的子进程不能确定谁先继续运行。
+
+关于timer
+-------------
+#include <sys/time.h>
+int getitimer(int which, struct itimerval *value);
+int setitimer(int which, const struct itimerval *value,	struct itimerval *ovalue);
+[描述]
+系统为每一个进程提供三种计时器，如果超时了会给这个进程发送一个信号,然后把这个timer重启。
+三种类型的timer:
+ITIMER_REAL 
+真实时钟，超时就发送 sigalarm。
+ITIMER_VIRTUAL 
+进程运行在用户空间的计数时钟，超时就发送SIGVTALRM.这个时钟只记录该进程在用户空间占用的时间。
+ITIMER_PROF  
+进程运行在用户和内核空间的时钟，超时就发送SIGPROF.这个时钟只记录该进程在内核空间占用的时间。
+
+struct itimerval {
+	struct timeval it_interval; /* next value */
+	struct timeval it_value;    /* current value */
+};
+
+struct timeval {
+	long tv_sec;                /* seconds */
+	long tv_usec;               /* microseconds */
+};
+函数getitimer会把value表示的结构填充为当前用which设置(前面描述的三种类型)的时间。元素it_value被设置成timer剩余的时间,如果设置成0那么这个timer就会被禁止。类似，it_value被设置成重启的值.函数setitimer设置计时器的值为value.如果ovalue是非空的，那么原来的value将会被保存在那里。
+(如果把signalaction的flag设置成restart的，就默认超时就启动一次，然后就停止了。)
+
+计时器的时间从it_value开始递减到0,然后发送一个信号，再设置为it_interval的值。计时器如果被设置为0（it_value 为0或者timer时间到了并且it_interval为0）将会停止。
+tv_sec和tvusec都可以用来决定一个timer的持续。
+timer在被请求的时间之前不会被终止，但是可能会在后面一个较短的时间终止，这取决于系统时钟的精度和系统的负载。当时间到达的时候，会发送一个信号，然后timer被重置。如果timer的时间在进程还active的时候到了（对于ITIMER_VIRTUAL总是成立的），那么产生的信号将会被立即发送。否则，信号的发送将会被延迟一小段时间，这取决于系统的负载。
+
+[举例]
+struct itimerval    new_timer, old_timer;
+new_timer.it_value.tv_sec = new_timer.it_interval.tv_sec = 0;
+new_timer.it_value.tv_usec = new_timer.it_interval.tv_usec = TIMER_INTERVAL_MICRO_SECOND; 
+ret = setitimer(ITIMER_REAL, &new_timer, &old_timer);
+这样，每隔一段时间就会发送一个SIGALARM事件。
+
+
+lseek
+#include <unistd.h>
+int fsync(int fd);
+int fdatasync(int fd);
+
+获取当前主机和操作系统信息的函数：
+#include <sys/utsname.h>
+int uname(struct utsname *name);
+这个函数会返回一个结构，我们也可以通过命令uname来获得这个结构的信息。成功返回0，失败返回1。
+
+获取主机名称的信息，由于历史原因在BSD系列中有所提供，现在被放入了POSIX.1中:
+#include <unistd.h>
+int gethostname(char *name, int namelen);
+成功返回0，失败返回1。
+namelen指定name缓存的长度，如果长度足够，那么字符串以NULL结束，否则字符串是否以NULL结束是没有定义的。
+有一个hostname命令，用来设置和获取主机名称信息(主机名称的设置需要用超级用户，函数是类似sethostname之类的),主机名称一般是在系统启动脚本中被设置的。
+
+关于时间：
+#include <time.h>
+time_t time(time_t *calptr);
+
+#include <sys/time.h>
+int gettimeofday(struct timeval *restrict tp, void *restrict tzp);
+
+
+#include <sys/wait.h>
+pid_t wait(int *statloc);
+pid_t waitpid(pid_t pid, int *statloc, int options);
+两者在成功的时候都会返回进程ID,0或者在错误的时候返回1。
+两者的区别是：
+a)wait函数会导致阻塞直到有一个子进程结束，waitpid有一个选项可以防止阻塞。
+b)waitpid函数不是等待第一个结束的进程，它有一系列的选项可以指定等待哪些进程。
+如果子进程已经结束并且成为了僵尸进程，那么wait函数会立即以那个子进程的状态返回。否则它会阻塞，直到一个子进程终止。 如果调用者阻塞了并且它有多个子进程，那么wait会在一个子进程终止的时候返回。我们是能够判断那个子进程结束的，因为wait函数的返回值就是结束进程的进程pid。
+对于这两个函数，statloc参数是一个指向整数类型的参数，这个参数不是空，那么会返回结束进程的进程状态；如果我们不关心结束进程的状态，那么可以设置这个参数是空。
+
+以前我们使用wait来等待一个指定的进程的时候，需要根据wait的返回来判断是否是目标pid，如果不是那么我们就把这个返回的pid保存起来然后继续wait，这样重复直到指定的进程结束；然后我们再次等待指定的进程结束之前需要首先遍历之前wait的时候保存的已经结束的pid列表。这很麻烦，而且缺点很多。现在我们可以利用POSIX.1中的waitpid来实现这个功能。
+waitpid中pid参数的含义如下:
+pid==1	:等待任何子进程，这时候waitpid和wait的含义是一样的。
+pid>0	:等待pid值为参数pid的子进程。
+pid==0	:等待进程组id和调用进程一样的任何子进程。
+pid<0	:等待进程组id和参数pid的绝对值一样的任何子进程。
+waitpid返回结束的子进程的pid并且将子进程结束状态存放在参数statloc所指的地址中。对于wait来说，出现错误的情况是调用进程没有子进程（也可能这个wait函数调用被信号所打断）。对于waitpid来说，可能出现错误的情况是指定的进程pid或者指定组id不存在，或者相应的进程pid不是调用进程的子进程。
+options参数可以额外控制watipid的行为,这个参数的值要么是0要么是以下这些值的按位或：
+
+WCONTINUED
+如果实现支持作业控制，那么pid指定的任何子进程（这个子进程在stop之后被continue但是它的状态没有被报告）的状态会被返回。
+
+WNOHANG
+如果指定的pid的子进程不是立即可用的，那么waitpid函数不会阻塞，这时候，返回值是0。
+
+WUNTRACED
+如果实现支持作业控制,那么任何指定pid的子进程（这个子进程被stopped了，并且它的状态在它被stopped的时候没有被报告）的状态被返回。WIFSTOPPED宏可以确定返回值是否和一个停止的子进程相关。
+
+另外，Solaris 支持一个额外的不是很标准的选项常量。WNOWAIT会使得系统进程（这个进程的终止状态通过waitpid被返回）进入一个wait的状态，这样这个进程可以再次被waited.
+
+The waitpid function provides three features that aren't provided by the wait function.
+函数waitpid提供了三个wait没有的特性：
+a)waitpid函数使我们等待一个特定的进程，而wait却返回任何终止进程的终止状态。
+b)waitpid函数提供了一个非阻塞的wait版本，有时候我们想要获取一个子进程的状态，但是我们不需要阻塞。
+c)waitpid函数提供了对作业控制的支持，这是通过WUNTRACED和WCONTINUED选项来做到的。
+
+#include <sys/wait.h>
+int waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options);
+
+类似waitpid,waitid允许进程指定等待那个子进程。但是waitid不是把指定的信息（例如子进程id，id组）都集中到一个参数里而是利用两个参数来进行指定。参数id的解释方式取决于idtype的值。如下列出了idtype各种取值时候id的解释方式：
+P_PID	idtype取这个值的时候，id表示等待一个指定的子进程id。
+P_PGID	idtype取这个值的时候,表示等待任何在指定进程组的子进程，而id就包含了要等待的子进程的进程组id。
+P_ALL	idtype取这个值的时候，表示等待任何子进程，此时id参数被忽略。
+
+options参数是一些标志的比特位，表示调用者关心哪些状态的变化。如下所示：
+WCONTINUED	表示等待一个进程，这个进程之前被stopped了并且被continued了，并且它的status没有被报告。
+WEXITED	表示等待已经exited的进程。
+WNOHANG	表示如果没有可用的子进程退出状态，那么就立即返回而不是阻塞。
+WNOWAIT	表示不会破坏子进程的退出状态码。子进程的退出状态可以在后来的wait,waitid,或者waitpid调用中取到.
+WSTOPPED	表示等待一个被stopped的子进程，这个子进程的状态没有被报告。
+
+参数infop是个结构指针。这个结构包含导致子进程变化的发生的信号的详细信息，后面会讨论这个结构。
+在本书讨论的四个系统中，只有solaris支持这个waitid。
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+pid_t wait3(int *statloc, int options, struct rusage *rusage);
+pid_t wait4(pid_t pid, int *statloc, int options, struct rusage *rusage);
+The resource information includes such statistics as the amount of user CPU time, the amount of system CPU time, number of page faults, number of signals received, and the like. Refer to the geTRusage(2) manual page for additional details. (This resource information differs from the resource limits we described in Section 7.11.) Figure 8.11 details the various arguments supported by the wait functions.
+大多数unix系统的实现提供了wait3和wait4函数，这两个函数本来是从Unix中的BSD分支中继承过来的。这两个函数提供的wait,waitid,waitpid所没有的特性是它多了一个额外的参数允许内核返回结束进程和它所有的子进程所消耗的资源统计。
+所谓资源信息，包含了诸如用户CPU时间数量的统计，系统CPU时间数量的统计，接受的信号数量，页相关的统计信息等等。可以参照geTRusage的man手册来获取更多的信息。
+wait3函数是在早期的Single UNIX Specification版本中包含的，在第2个版本中wait3就被归类为遗留类的函数了在版本3中wait3就被去掉了。
+
+----------------
+我们可以使用如下函数设置用户的real user ID和effective user ID:
+#include <unistd.h>
+int setuid(uid_t uid);
+int setgid(gid_t gid);
+
+修改这些ID有一套规则，我们以 UID为例(GID是一样的):
+a)如果进程有superuser特权，那么setuid函数会设置real user ID,effective user ID和saved set-user-ID为uid.
+b)如果进程没有superuser特权，但是设置的uid和real user ID或者saved set-user-ID相等，那么setuid仅仅将effective user ID设置为uid,real user ID和saved set-user-ID不变.
+c)如果以上两个条件都不满足，那么会返回1，并设置errno为EPERM.
+(这里设置的是进程的相应uid不是文件的，进程的三种uid:real uid, effective uid,saved set-user-id.核心是进程的effective uid)
+这里，我们假设_POSIX_SAVED_IDS是true.如果这个特性没有被提供，那么就删除前面所有和saved set-user-ID相关的内容。
+saved IDs是2001版本POSIX.1的必有特性。以前版本的POSIX它们是可选的。如果想要查看当前系统实现是否支持这个特性，我们可以在编译的时候测试_POSIX_SAVED_IDS宏开关，或者在运行的时候调用传递了_SC_SAVED_IDS的sysconf函数。
+
+我们简单描述一下内核是如何来维护这三种UID的：
+a)只有superuser进程可以改变real user ID.一般来说，real user ID是由login程序在我们登陆之时来设置，之后就不会改变了。因为login是一个superuser process,当它调用setuid的时候，它会设置所有三种user ID.
+b)effective user ID是exec函数在程序文件的set-user-ID位被置位的时候设置的(设置成程序文件的UID)。如果set-user-ID位没有被设置，那么exec函数保持当前的effective user ID值不变。我们可以在任何时候调用setuid设置effective user ID为real user ID或者saved set-user-ID.一般来说，我们不能把effective user ID设置成任何值。
+c)saved set-user-ID是exec从effective user ID拷贝来的。如果文件的set-user-ID位被设置，那么这个拷贝(saved set-user-ID)会在exec从文件的user ID存储到effective user ID之后被保存。
+这个参考资料中有个表格简单列出了这三种进程ID改变的情况。
+注意，我们通过getuid和geteuid只能获得当前的real user ID和effective user ID.
+
+*关于setreuid和setregid函数
+----------------
+以前,BSD支持用seteuid进行real user ID和effective user ID的切换。
+#include <unistd.h>
+int setreuid(uid_t ruid, uid_t euid);
+int setregid(gid_t rgid, gid_t egid);
+两个函数如果成功则返回0,如果错误则返回1.
+如果任何一个参数设置为1，那么表示相应得ID保持不变。
+这个函数执行的规则很简单：未授权的用户可以切换real user ID和effective user ID.这允许一个set-user-ID程序切换到普通用户权限，然后又切换回set-user-ID权限。当saved set-user-ID特性从POSIX.1中引入的时候，这条规则变成了也允许一个非授权用户把它的effective user ID设置成saved set-user-ID.
+/*seteuid和setregid都是Single UNIX Specification中的XSI扩展。这样，所有UNIX系统都应该支持它们。*/
+4.3BSD没有saved set-user-ID特性，它使用setreuid和setregid来替代。这允许一个非授权用户在两个值之间来回切换。然而，当程序启动一个shell的时候，它需要在exec之前把real user ID设置成为normal user ID.如果不这样作，那么real user ID将会被授权了（从setreuid）,然后shell进程可以调用seteuid来切换到更高用户权限。为了防止这种情况发生，需要在子进程中调用exec之前把real user ID和effective user ID设置成normal user ID.
+
+*关于seteuid 和 setegid函数
+POSIX.1包含两个函数：seteuid和setegid.这些函数和setuid与setgid类似，但是只有effective user ID或者effective group ID被改变了。
+#include <unistd.h>
+int seteuid(uid_t uid);
+int setegid(gid_t gid);
+如果成功返回0,如果出错返回1.
+一个非授权用户可以设置它的effective user ID为real user ID或者它的saved set-user-ID.对于授权用户，只有effective user ID被设置成为了uid(这一点和setuid函数不同,setuid会把所有三个user ID改变).
+参考资料最后有个图，给出了这些修改user ID函数的动作情况。
+大致是，
+对于superuser,
+setreuid会修改real user ID和effective user ID为其参数所指定的。
+setuid会修改real user ID和effective user ID以及saved set-user-ID三者为其指定的参数。
+seteuid仅修改effective user ID为其参数所指定的。
+对于非特权用户，
+setreuid
+setuid会修改effective user ID的值，这个值可以为real userID或者saved set-user-ID.
+seteuid会修改effective user ID的值，这个值可以为real userID或者saved set-user-ID.
+另外，如果文件具有set-uid设置(也就是ls文件时候的rwx权限中的x变成s)，那么exec的时候会把effectived user ID变成设置为文件属主,否则effectived user ID保持不变;saved set-user-ID是被exec从effectived user ID拷贝过来的，如果文件的set-user-ID被设置，那么在exec把effectived user ID设置成文件属主之后，再将effectived user ID拷贝一份存到saved set-user-ID中去。
+
+对于组gid来说，遵循的规则和上面用户uid的规则一样，但是"额外组"不受这些组id函数设置的影响。
+
+-------------
+system函数是一个POSIX接口，它可以从程序中启动一个系统的命令。
+如下：
+#include <stdlib.h>
+int system(const char *cmdstring);
+这里，如果cmdstring参数为空，那么当命令支持处理则system返回非0，根据这一点，我们可以确定在一个操作系统上面是否支持这个system函数。
+system函数会调用fork,exec,和waitpid函数，它的返回值如下：
+a)如果fork失败或者waitpid返回错误但是错误不是EINTR,那么system返回1，并且设置errno。
+b)如果exec失败，以表示shell无法执行，那么返回就像shell执行了exit(127).
+c)如果fork,exec,waitpid成功执行，那么会返回shell的终止状态（waitpid的格式）.
+原来system返回errno(EINTR)表示收到信号中断了,因为无法从这样的状态恢复。后来POSIX添加了这样不会返回错误码的特性。
+
+-------------
+#include <unistd.h>
+char *getlogin(void);
+正确返回指向登陆名称的字符串指针，错误返回NULL.
+如果用户登陆的终端没有和进程相关联，那么这个函数会返回错误。我们把这样得进程称为daemon,后面会有所涉及。
+给定login name我们就可以通过搜索password文件来确定登陆的shell了(例如使用getpwnam)。
+不同系统获取loginname有不同的方式，例如unix以前使用ttyname搜索utmp文件，FreeBSD和Mac Os在进程表中存放相关信息，更多的其他系统不多说了。
+另外需要注意的是：环境变量LOGNAME一般会被login程序初始化成用户登陆的名称，然后被登陆shell所继承。但是由于环境变量是可以修改的所以我们不使用LOGNAME而是使用getlogin函数。
+
+-------------
+#include <sys/times.h>
+clock_t times(struct tms *buf);
+函数填充参数中tms结构体，并且返回clocktime。
+结构体定义如下：
+struct tms
+{
+  clock_t  tms_utime;  /* user CPU time */
+  clock_t  tms_stime;  /* system CPU time */
+  clock_t  tms_cutime; /* user CPU time, terminated children */
+  clock_t  tms_cstime; /* system CPU time, terminated children */
+};
+这些值是从一个从前的某个起点开始计算的，所以一般我们用不上它们的绝对值，我们需要使用相对值来计算时间的长短。例如计时开始记录当前时间，计时结束记录一个时间，然后两者相减计算时间消耗。
+这里，用于子进程的两个成员的时间值只是我们调用wait,waitid,或者waitpid等到的子进程时间。
+函数返回的clock_t值使用clock tick per second转换成秒，这个clock tick per sceond由sysconf返回的_SC_CLK_TCK 来决定。
+
+-------------
+函数getpgrp返回调用进程的进程组id。如下：
+#include <unistd.h>
+pid_t getpgrp(void);
+
+原来BSD体系的系统getpgrd函数有一个pid参数，会返回对应那个pid进程id的进程所在的组。Single UNIX Specification定义了getpgid函数作为extension,用来模拟这个函数。
+#include <unistd.h>
+pid_t getpgid(pid_t pid);
+如果传入的参数是0,那么返回调用进程的组id.(这和没有参数的getpgid调用一样)
+
+-------------
+通过调用如下函数创建或者加入一个已经存在的进程组：
+#include <unistd.h>
+int setpgid(pid_t pid, pid_t pgid);
+函数正确运行的时候，返回0；错误的时候返回1。
+函数会将进程id等于pid的进程的进程组id设置成pgid.如果两个参数相等，那么进程pid就变成了一个进程组leader.如果pid等于0，那么进程id假设就是调用该函数进程的进程id.当然，如果pgid为0，那么就使用pid进程的的进程组id。
+一个进程只能设置它自己或者它的子进程的进程组id。另外，如果它的子进程调用了exec，那么这个进程就不能够改变它这个子进程的进程组id了。
+在大多数的作业控制shell中，这个函数在执行fork之后会被调用，一般都是在父进程中设置一下子进程的进程组id，然后再在子进程中设置一下它自己的进程组id；这里实际上有一个调用是冗余的，但是通过这样做（也就是在父子进程中都调用setpgid）我们可以保证子进程被放在了它自己的进程组中（在父子两进程做这样的假设之前），如果我们没有这样做，那么我们可能会碰到一些竞争条件，这个竞争条件会导致子进程的进程组成员关系取决于哪个进程被首先执行。
+
+-------------
+获取session id的函数:
+#include <unistd.h>
+pid_t getsid(pid_t pid);
+如果正确会返回session leader的process group ID,错误的时候返回1.
+如果pid是0，那么getsid返回调用进程的session的进程组id。由于某些安全性的因素，有些实现可能会在pid参数和进程id不属于同一个session的情况下限制调用进程获取相应的"session id".
+
+-------------
+#include <unistd.h>
+pid_t setsid(void);
+这个函数正确的时候返回进程组id，错误的时候返回1.
+如果调用这个函数的进程不是一个进程组leader,那么这个函数创建一个新的session,这时候有如下三个事情发生：
+1.进程变成这个新session的session leader(一个session leader就是创建这个session的进程)，并且这个进程成为这个新的session中的唯一的进程。
+2.进程变成一个新的进程组的leader。这个新的进程组id就是这个调用setsid函数的进程的进程id。
+3.进程没有controlling terminal(控制终端)。我们将在下一节讨论控制终端。如果再进程调用setsid函数之前这个进程具有了一个控制终端，那么和那个控制终端的联系会被断开。
+如果调用进程已经是一个进程组的leader了，那么这个函数这个函数会返回一个错误。为了确保不会发生这种情况，一般的方法是调用fork创建一个子进程，然后让父进程终止，子进程继续；这样我们可以保证子进程不是一个进程组leader，因为子进程会自动继承父进程的进程组id，但是子进程的进程号却是新产生的（和父进程不同）(所以子进程的pid就不等于父进程的pid，所以也不等于其进程组的组id了，因为组id和组leader的pid相等).
+
+------------
+#include <signal.h>
+typedef void (*sighandler_t)(int);
+sighandler_t signal(int signum, sighandler_t handler);
+
+#include <signal.h>
+int kill(pid_t pid, int signo);
+int raise(int signo);
+两个函数在成功的时候返回0，在错误的时候返回1.
+
+kill用来给一个进程或者一组进程发送信号，raise函数允许进程给它自己发送信号。
+raise原来是由ISO C定义的.POSIX.1把它包含进来，并且让它自己(指的谁？)符合ISO C的标准，但是POSIX.1扩展了raise让它可以支持多线程情况(后面我们会讨论多线程下面如何进行信号的交互)。因为ISO C不能处理多进程，所以它不能定义像kill这样需要一个进程ID参数这样的函数。
+
+调用raise(signo);等价于kill(getpid(),signo);
+对于kill的参数，有以下四种不同的情况：
+a)pid > 0 表示信号发送给进程ID值为pid的进程。
+b)pid == 0 表示信号发送给所有进程组ID和发送者进程组ID一样的，并且当前发送进程有相应权限发送的所有的进程。注意，这里提到的“ 所有的进程”指的是排除了基于系统实现定义的系统进程。对于大多数UNIX系统，这样的系统进程几何包括内核进程init(它的pid为1).
+c)pid < 0 信号发送给所有进程组id等于pid的绝对值的，并且当前发送进程有相应权限发送的所有的进程。这里提到的“ 所有的进程”也排除了基于系统实现定义的系统进程。
+pid == 1  信号发送给系统中sender有相应权限发送的所有的进程。同样，这里提到的“ 所有的进程”也排除了基于系统实现定义的系统进程。
+一个进程发送信号给另外一个进程，需要一定的权限。超级用户可以发送信号给任何进程，对于其他用户，一个基本得原则就是，发送进程的real或者effective用户ID 与接收进程的real或者effective用户ID一样;如果实现支持_POSIX_SAVED_IDS(现在POSIX.1要求这样)，那么就会把检测effective用户ID的部分替换成检测saved set-user-ID的部分。当然，对于权限检测这里也有例外的情况：如果被发送的信号是SIGCONT，那么进程可以把它发送给任何与它在同一个会话中的其他进程。
+
+#include <unistd.h>
+unsigned int alarm(unsigned int seconds);
+返回0或者返回前面设置的alarm的剩余到期秒。
+
+alarm函数允许我们设置一个计时器，这个计时器可以在一个指定的时间内到期。当计时器到期的时候，SIGALRM信号就会产生。如果我们忽略或者不捕获这个信号，那么这个信号的默认处理动作就是把进程结束。
+
+秒值是信号将要发生的时钟的秒值。需要注意的是，如果时间到了，那么内核中发送信号，但是在进程真正处理这个信号之前，还会有一点延迟，这是处理器调度产生的延时。
+早期的UNIX系统实现，会警告信号信号早一秒发送。POSIX.1不允许这样。
+每一个进程只有一个这样的时钟。如果我们调用alarm，同时之前注册的alarm时钟没有到期，那么剩下的秒会被做为alarm函数的返回值，然后之前的注册的alarm始终被新的所替代。
+如果进程之前注册的alarm时钟没有到期，并且alarm的seconds参数是0，那么之前的alarm时钟会被取消，同时返回之前时钟距到期剩余的秒数。
+虽然SIGALRM信号的默认动作是终止进程，大多数进程使用alarm时钟来捕获信号。如果进程想要终止，那么它可以在终止之前进行需要的清理工作。如果我们想要捕获SIGALRM信号，我们需要注意在调用alarm之前来安装它的信号处理函数。因为如果我们先调用alarm，然后再我们安装信号处理函数之前发送SIGALRM信号了，那么我们的进程将会被终止。
+
+#include <unistd.h>
+int pause(void);
+返回1，同时设置errno为EINTR.
+pause函数会挂起调用它的进程，直到发起了一个信号。
+pause只能在信号处理函数被执行并且返回的时候才能返回。这个时候，pause返回的是1，同时设置errno为EINTR.
+
+#include <signal.h>
+int sigemptyset(sigset_t *set);
+int sigfillset(sigset_t *set);
+int sigaddset(sigset_t *set, int signo);
+int sigdelset(sigset_t *set, int signo);
+以上四个函数成功的时候返回0，错误的时候返回1。
+int sigismember(const sigset_t *set, int signo);
+这个函数如果返回1表示真，返回0表示假，有错误返回1。
+
+我们需要一种数据类型来表示包含多个信号的信号集合，我们使用诸如sigprocmask这样的函数来告诉内核不让信号集合中的信号发生。信号的数量可能会超过整数的位数，所以我们不使用整数来表示信号集合（其中每个位代表一个信号）。POSIX.1定义了数据类型sigset_t来包含信号集合，使用如上5个函数来操作信号集合。
+
+函数sigemptyset初始化set参数指向的信号集合，这样所有的信号都被排除。函数sigfillset初始化信号集合，这样所有的信号都被包含进来。所有的应用程序在使用信号集合(signal set)之前，都应该调用sigemptyset或者sigfillset对信号集合操作一次，因为我们不能假设C对外部变量或者静态变量的初始化（为0）是和相应系统的信号实现相对应的。
+当我们初始化一个信号集合之后，我们可以为这个信号集合添加或者删除指定的信号。函数sigaddset添加一个信号到已经存在的信号集合(set参数)，sigdelset从信号集合(set参数)中删除一个信号。所有这些需要一个信号集合(set)做为参数的函数，我们一般都将信号集合set的地址作为参数传递。
+
+#include <signal.h>
+int sigprocmask(int how, const sigset_t *restrict set, sigset_t *restrict oset);
+这个函数在成功的时候返回0，错误的时候返回1。
+一个进程的signal mask是一个信号集合，这个信号集合中的信号是将要发送给这个进程的但是被阻塞了的信号的集合。进程可以检测它的signal mask,也可以修改它的signal mask或者通过下面的sigprocmask函数来一步达到上述两个目的。
+首先，如果参数oset是非空指针，那么当前进程的signal mask会被返回到这个oset上面。
+第二，如果set参数非空，那么就通过how参数来指定怎样修改当前的信号。关于how参数的可能取值下面已经列出，
+SIG_BLOCK 使进程的signal mask变成set参数和oset参数的合并。也就是说set指定要增加的signal mask集合。
+SIG_UNBLOCK 使进程的signal mask变成当前signal mask和set参数指定的signal mask的补集的交集.也就是说，set包含的是我们想要取消阻塞的signal mask。
+SIG_SETMASK 使进程的当前signal mask被set参数所指的signal mask替换。也就是说set包含的就是新设置的signal mask.
+这里，SIG_BLOCK是一个"或"操作，SIG_SETMASK是一个赋值操作。同时注意，SIGKILL和SIGSTOP不能被阻塞。
+如果set参数为空，进程的signal mask不会变化，并且how参数也会被忽略。
+调用sigprocmask之后，如果有任何非阻塞的信号处于提交状态，那么这些信号中至少有一个会在sigprocmask返回的时候被发送给进程。
+sigprocmask只是为单线程的进程所定义的，如果操作多线程进程中线程的signal mask,那么有别的函数。
+
+#include <signal.h>
+int sigpending(sigset_t *set);
+函数如果成功返回0，失败返回1。
+sigpending函数返回发送给进程的被阻塞的信号的集合以及处于提交给当前进程的信号的集合。通过函数的参数返回这个信号的集合。
+
+#include <signal.h>
+int sigaction(int signo, const struct sigaction  *restrict act, struct sigaction *restrict oact);
+如果成功，这个函数返回0,如果错误，这个函数返回1.
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec14.html
+sigaction允许我们检查或修改，或者检查并修改和一个特定信号相关联的动作。这个函数取代了早期Unix发行版本中的signal函数,实际后面我们将给出使用这个函数实现的signal函数。
+参数signo是我们要修改或者检测的动作相关联的信号号。如果act参数非空，那么我们修改这个动作;如果oact参数非空，那么系统通过这个参数返回之前的动作。这个函数使用的结构如下：
+struct sigaction
+{
+  void      (*sa_handler)(int);   /* 信号处理函数的地址,可以是SIG_IGN或者SIG_DFL */
+  sigset_t sa_mask;               /* 需要阻塞的额外的信号*/
+  int      sa_flags;              /* 信号选项，后面会说 */
+  /*备选的信号处理函数,sigaction使用SA_SIGINFO时候会用到，参见后面解释*/
+  void     (*sa_sigaction)(int, siginfo_t *, void *);
+};
+当我们修改一个信号的处理动作的时候，如果sa_handler包含了信号处理动作的地址(而不是SIG_IGN或者SIG_DFL)，那么sa_mask会指定在调用信号处理函数之前添加到进程的一系列signal mask中的信号的集合，当信号处理函数返回的时候，进程的signal mask再被恢复成原来的样子。这样，我们就可以在调用信号处理函数的时候指定我们想要阻塞的信号.操作系统会包含调用信号处理函数是发送的signal mask中的信号。这样我们可以保证，无论何时当我们处理一个信号的时候，另一次同样的信号的产生会被阻塞，直到我们处理完这个信号的第一次发生。回忆前面所讲的，一个信号发生多次的时候，一般不会被排队,也就是说，假设一个信号在它被阻塞期间被发送了5次，那么当取消它的阻塞的时候，这个信号的信号处理函数一般只会被调用一次。
+一旦我们给一个指定的信号添加了动作，这个信号的动作会一直保持安装的状态，直到我们调用sigaction显示地改变它。这和早期unix系统的非可靠信号机制有所不同，POSIX.1要求，一个信号的信号处理函数会一直保持被安装的状态，直到我们显示地去改变它们。
+action结构的sa_flags域指定了信号的处理函数的各种处理方式选项,后面的表中就列出了这些选项的意义。
+一定注意！！！这些选项有的系统支持，有的系统不支持，这里只是大致说一下它们的含义，详细的请参见参考资料。
+SA_INTERRUPT :被这个信号所打断的系统调用不会被自动重启。（可以参见前面相关内容）
+SA_NOCLDSTOP :如果信号是SIGCHLD,那么当子进程停止（作业控制中）的时候不会发送信号。当然，当子进程终止的时候，还是会发送这个信号的(但是请参考后面的SA_NOCLDWAIT选项),作为XSI的扩展，当这个标记被设置的时候，子进程从停止到继续的时候不会发送SIGCHLD信号。
+SA_NOCLDWAIT :如果信号是SIGCHLD的时候，这个选项会在调用进程的子结束的时候，阻止系统创建僵尸进程。如果进程后来调用wait，那么调用进程会阻塞，直至所有的子进程终止，然后返回1并且设置errno为ECHILD.
+SA_NODEFER :当捕获信号的时候，在信号捕捉函数执行的时候，信号不会被系统自动的阻塞(除非信号在sa_mask中).需要注意的是这样的操作符合早期的非可靠信号的特点。
+SA_ONSTACK :如果一个可选的堆栈使用sigaltstack声明了，那么信号会在可选的堆栈上被发送给进程。
+SA_RESETHAND :这个特性使得信号被恢复成默认的值，并且在进入信号处理函数的时候清除SA_SIGINFO标记.需要注意的是，这种操作符合早期的非可靠信号.然而，SIGILL和SIGTRAP不能被自动地重置。设置这个标记，会使得sigaction的行为好似设置了SA_NODEFER标记。
+SA_RESTART :被信号打断的系统调用会被自动重启。
+SA_SIGINFO :这个标记为信号处理函数提供了一个额外的信息:一个指向siginfo结构的指针，以及一个指向进程上下文标记的指针。
+sa_sigaction域是一个可选的信号处理函数，sigaction当使用SA_SIGINFO标记的时候，会使用它。在实现中，有可能对sa_sigaction域和sa_handler域使用了同一个存储区域，所以应用程序每次只能使用其中的一个域。
+一般来说，信号处理函数的调用如下：
+void handler(int signo);
+但是,如果设置了SA_SIGINFO标记，那么信号处理函数的调用如下：
+void handler(int signo,siginfo_t *info,void *context);
+siginfo_t结构的信息包含信号产生的原因。下面给出了它定义的一个常用形式，所有遵守POSIX.1的实现都必须至少包含si_signo和si_code成员。
+struct siginfo {
+int    si_signo;  /* 信号号码 */
+int    si_errno;  /* 如果非0表示<errno.h>中的errno */
+int    si_code;   /* 一些依赖于信号的额外的信息 */
+pid_t  si_pid;    /* 发送信号的进程ID */
+uid_t  si_uid;    /* 发送进程的real user ID */
+void  *si_addr;   /* 导致错误的地址 */
+int    si_status; /* 退出码或者信号号 */
+long   si_band;   /* SIGPOLL的标志数 */
+/* 这里，可以增加其它可能的域 */
+};
+再后面，给出了许多信号的si_code信息含义，这些是Single UNIX Specification定义的，不同的实现可能会增加一些其他的si_code.这里，限于篇幅就不一一列出了。具体请参考参考资料。
+
+如果信号是SIGCHLD，那么si_pid,si_status,和si_uid域会将被设置。如果信号是SIGILL或者SIGSEGV，那么si_addr包含相应的错误地址（尽管地址可能不是非常精确）.如果信号是SIGPOLL，那么si_band域将会包含一些流消息的优先标志，这些流消息会产生POLL_IN, POLL_OUT,或者POLL_MSG事件。si_errno域包含导致信号被产生的条件的错误号码(尽管它的作用已经被实现定义了)。
+信号处理函数的context参数是一个无类型的指针，它可以被强制转换成ucontext_t结构，这个结构标志发送信号时候的进程的上下文。
+当实现支持实时信号扩展的时候，信号处理函数使用SA_SIGINFO来建立的话，会导致信号被“可靠地”排队。为了实时应用程序的使用，有一个独立的保留的信号范围。如果信号是被sigqueue来发起的，那么siginfo结构可以包含应用程序相关的数据。这里，我们不会过于深入地讨论实时扩展。
+
+#include <setjmp.h>
+int sigsetjmp(sigjmp_buf env, int savemask);
+返回：调用的时候会返回0，如果是由于siglongjmp导致的返回，那么返回非0。
+void siglongjmp(sigjmp_buf env, int val);
+在FreeBSD5.2.1和Mac OS X 10.3，setjmp和longjmp会保存和恢复signal mask. Linux 2.4.22和Solaris 9却不这样。FreeBSD和Mac OS X提供了_setjmp和_longjmp函数，这个函数不会保存和恢复signal mask.
+为了能够支持两种行为，POSIX.1没有指定setjmp和longjmp对signal masks的影响。相应地，两个新的函数：sigsetjmp和siglongjmp被POSIX.1定义了，如果是从一个信号处理函数中跳转，那么应该使用这两个函数。
+这些函数和setjmp与longjmp函数的区别就是，sigsetjmp有一个额外的参数。如果savemask参数非0，那么sigsetjmp也会把当前进程的signal mask保存到env参数中。当siglongjmp被调用的时候，如果evn参数存放了sigsetjmp指定的非0的savemask，那么，siglongjmp会将保存的signal mask恢复。
+
+#include <signal.h>
+int sigsuspend(const sigset_t *sigmask);
+返回：返回1并且将errno设置成EINTR.
+这个方法，可以把重新设置信号，以及将进程设置到sleep状态这两步操作变成一个单一的原子性质的操作。
+进程的signal mask被设置成参数sigmask指向的值，然后进程被suspend，直到信号被捕获，或者直到一个信号发生导致进程被终止。如果一个信号被捕获，并且如果信号处理函数返回了，那么sigsuspend会返回，然后进程的signal mask被设置成调用sigsuspend之前的值。
+注意，这个sigsuspend没有成功的返回值，如果它从调用中返回了，那么它一定会返回一个1，并且同时将errno设置成EINTR(表征一个被打断的系统调用).
+
+#include <signal.h>
+void psignal(int signo, const char *msg);
+字符串msg(一般是程序的名称)会被输出到标准错误输出，然后跟着一个冒号和空格，再跟着信号的描述，和一个换行符号。这个函数和perror非常类似。
+
+#include <string.h>
+char *strsignal(int signo);
+返回：一个指向描述信号的字符串指针。
+给定一个信号号码，strsignal将会返回一个描述这个信号的字符串，这个字符串可以被应用程序使用，来打印关于接到的信号的错误消息。
+psignal和strsignal函数，在每个平台有所不同。Solaris 9中，如果信号号码是非法的话，strsignal将会返回一个空指针；FreeBSD 5.2.1，Linux 2.4.22,和Mac OS X 10.3在信号号码未知的时候会返回一个表示信号号码未知的字符串。为了有一个psignal函数的声明，你需要包含<siginfo.h>文件。
+
+#include <signal.h>
+int sig2str(int signo, char *str);
+int str2sig(const char *str, int *signop);
+两者返回：如果成功返回0，如果错误返回1。
+Solaris提供了这一对用来在信号号码和信号名称之间映射的函数。
+这些函数在写打印和接收信号名称和信号号码的交互程序的时候，很有用。
+sig2str函数把指定的信号号码变成一个字符串，并且把结果存放在str指向的内存中。调用这必须保证内存足够大（包含null）.Solaris在<signal.h>里面提供了常量SIG2STR_MAX，用来定义最大字符串长度。字符串将会包含信号的名称（没有SIG前缀）。例如SIGKILL会被映射成"KILL".
+str2sig函数会把指定的名字转换成信号号码。信号号码被存放在一个signop指向的整数指针中。名字可以是没有SIG前缀的字符串，也可以是代表十进制信号值的字符串(例如"9")。
+注意sig2str和str2sig和一般的函数不一样，它门不会设置errno.
+

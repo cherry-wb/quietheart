@@ -1,0 +1,15 @@
+最简单的支持中文的方法：
+1）安装的时候装下面两个包。
+texlive-xetex_2007.dfsg.1-2_i386.deb
+lmodern_1.010x-4_all.deb
+可能装lmodern_1.010x-4_all.deb的时候不行，因为需要依赖于装：
+$sudo apt-get install dvipdfmx
+
+2)将xelatex命令替换latex命令，就行了。
+最简单的文档内容如下：
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{AR PL UMing CN}
+\begin{document}
+世界,你好!
+\end{document}

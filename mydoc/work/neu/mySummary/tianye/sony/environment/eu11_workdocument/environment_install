@@ -1,0 +1,154 @@
+题目：EU11环境构建手册
+简介：本文讲述，新的编译框架下的工作过程，包含编译环境的搭建以及运行和启动。在EU11创建了可用的新编译框架之后，将采用这里的步骤进行编译与测试。
+
+主要内容：
+一、安装编译环境
+二、编译与启动
+三、其它
+
+以上，
+2011年9月26日
+
+具体内容：
+一、安装编译环境
+=======================
+这里讲述将编译环境从5.0.4.1升级到8.0.1.4的具体过程。
+
+1,安装至8.0.1.2：
+下载相应的升级包的位置：
+smb://10.1.2.228/PFX/Document/Architecture/KernelUpgrade/Sony CE-Linux 8.0.1.1, 8.0.1.2 for ARMv5
+1)安装8.0.1.1
+#cd $(SONY_CE)
+#mount -o loop SONY-CE-Linux-8.0.1.1-ARMv5.iso tmp_mount/
+######参照$(SONY_CE)/tmp_mount/doc/install_en.txt
+#cd tmp_mount/
+#rpm -e `rpm -qa 'arm-sony-linux-gnueabi-*'`
+#cd /usr/local
+#rm -rf arm-sony-linux-gnueabi scel8.0
+#cd -
+#yes | cp Scripts/scel-cmds.sh /usr/bin/
+#cd Tools_Userland/arm/
+#scel-cmds.sh --install *.rpm arm/*.rpm
+(注意，这里一定要使用一步命令操作，不要分别安装*.rpm和arm/*.rpm，否则安装路径就是"usr/local/scel"而不是"/usr/local/scel8.0"了)
+#cd optional/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+至此，将8.0.1.1安装完毕，这里需要注意的是安装之前将以前的版本都删除了。
+
+2)升级到8.0.1.2
+#cd $(SONY_CE)
+#tar -xzvf CE-Linux-8.0.1.2.tgz
+######参照$(SONY_CE)/CE-Linux-8.0.1.2/doc/install_en.txt
+#cd CE-Linux-8.0.1.2/Tools_Userland/arm/
+#scel-cmds.sh --install arm/*.rpm
+(这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/)
+#scel-cmds.sh --install armv7a/*.rpm
+(这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/)
+至此，将8.0.1.1升级至8.0.1.2。
+
+2,升级至8.0.1.4
+下载相应的升级包的位置：
+smb://10.1.2.228/PFX/Document/Architecture/KernelUpgrade/Release8.0.1.0-8.0.1.4.zip
+1)升级到8.0.1.3
+#cd Release8.0.1.0-8.0.1.4/
+#cd 8.0.1.3/
+#tar -xzvf CE-Linux-8.0.1.3.tgz
+#cd CE-Linux-8.0.1.3
+#cd Tools_Userland/arm
+#cd arm
+#scel-cmds.sh --install *.rpm
+(这里会提示安装路径，直接回车则采取的默认路径为/usr/local/scel8.0/)
+注意此时会有错误如下：
+        package arm-sony-linux-gnueabi-arm-dev-libpng-1.4.5-08000102.arm (which is newer than arm-sony-linux-gnueabi-arm-dev-libpng-1.2.44-08000101.arm) is already installed
+        package arm-sony-linux-gnueabi-arm-srel-libpng-1.4.5-08000102.arm (which is newer than arm-sony-linux-gnueabi-arm-srel-libpng-1.2.44-08000101.arm) is already installed
+不用管它。
+
+#cd optional
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+#cd ..
+# cd extra_options/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+(这里报告了一大堆错误,不用管它)
+#cd ../../
+#cd armv7a/
+#scel-cmds.sh --install *.rpm
+#cd optional/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+#cd ..
+#cd extra_options/
+#scel-cmds.sh --top /usr/local/scel8.0 --install *.rpm
+(这里报告了一大堆错误,不用管它)
+#cd ../../../../../../
+至此，升级到8.0.1.3完毕。
+
+2)升级到8.0.1.4
+#cd 8.0.1.4/
+#tar -xzvf CE-Linux-8.0.1.4.tgz
+#cd CE-Linux-8.0.1.4
+#cd Tools_Userland/arm
+#cd arm
+#scel-cmds.sh --install *.rpm
+#cd ..
+#cd armv7a
+#scel-cmds.sh --install *.rpm
+至此，升级到8.0.1.4完毕。
+
+二、编译与启动
+=======================
+这里讲述使用前面的编译环境进行编译运行的大致过程。具体可能会随今后分支的变化而变化，目前采用的是处于开发阶段的c08分支，对应svn路径为：http://10.1.2.228/svn/EST81002_PFX/software/branches/c08/software/trunk/Operatingsystems
+
+1,编译
+*)清除之前的编译结果：
+#cd Operatingsystems
+#make all-clean
+
+*)编译用于烧写的版本
+#cd Operatingsystems
+#make __diablo_build_mode=avp13_release
+这里，编译出来的内核用于avp13板子，若采用avp17板子，那么使用命令为："#make __diablo_build_mode=avp17_release"。
+
+*)编译nfs开发的版本
+#cd Operatingsystems
+#make __diablo_build_mode=avp13_develop
+这里，编译出来的内核用于avp13板子，若采用avp17板子，那么使用命令为："#make __diablo_build_mode=avp17_develop"。
+
+对与这几个编译命令，需要注意如下几种情况:
+1）对于第一次编译的情况。
+这里“第一次”表示以前没有进行编译过，或者之前进行过"make all-clean"动作。
+a）如果编译时候不指定"__diablo_build_mode"，那么会使用默认的模式，究竟默认模式是什么，需要自己查看"Operatingsystems/CELinux/Diablo/"中的编译脚本来确定（目前默认是avp17_release）。
+b）如果编译时候指定"__diablo_build_mode"，那么将采用"__diablo_build_mode"所指定的模式进行编译。
+2）对于非第一次编译情况。
+这里“非第一次”表示以前进行编译过，并且编译之后没有执行过"make all-clean"动作。
+a）如果编译时不指定"__diablo_build_mode"，那么目前的动作是：对内核部分进行上次采用的模式的差分编译；对文件系统部分直接采用上次生成的文件系统。
+b）如果编译时候指定"__diablo_build_mode"，和编译时没有指定"__diablo_build_mode"的情况一样；但是内核部分如果指定的"__diablo_build_mode"板子（avp13或avp17）和上次的不一样，并且相应板子类型的内核以前没有编译过那么相应内核部分视作"第一次编译的情况"。
+
+另外，
+1)生成的内核以及文件系统所在路径在：Operatingsystems/output/diablo/，其中内核名称默认为vmlinux.elf，文件系统在rootfs子目录中。
+2)为确保起见，建议编译的时候指定"__diablo_build_mode"，如果想要采用与上次编译不一样的"__diablo_build_mode"，应当先"make all-clean"。
+3)建议使用"make all-clean"而不是"make clean"清除之前编译结果。
+
+2)启动
+*)烧写版本的启动
+NBL> cp net:tftp:vmlinux.elf sdmd::
+NBL> cp net:tftp:ramdisk.img sdme::
+NBL> boot -t elf -c "mem=252MB console=ttyS0,115200n8 initrd=0x42000000,1800212 rdinit=/sbin/init ip=10.1.0.185::10.1.0.1:255.255.252.0" -initrd sdme:raw:ramdisk.img sdmd:raw:vmlinux.elf
+注意这里需要将NBL中的servip和myip设置好，这个例子里的"1800212"是ramdisk.img的大小。
+
+*)nfs版本的启动
+NBL> boot -t elf -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.0.213:/home/nfs_test ip=10.1.0.185::10.1.0.1:255.255.252.0" net:tftp:vmlinux.elf
+注意这里需要将NBL中的servip和myip设置好。
+
+三、其它
+=======================
+安装：
+*编译并生成rpm包：
+#make rpm
+这里，生成的rpm包，名称类似"output/diablo/rpm/RPMS/i386/diablo-basic-2.6-29.i386.rpm"，只包含vmlinux.elf和基本的文件系统目录结构，可以使用"rpm -qpl diablo-basic-2.6-29.i386.rpm"查询其中内容。另外，这里也可以类似前面编译的过程，用"__diablo_build_mode"指定制做哪个板子的rpm包（默认avp17板子）。
+注意，安装的时候使用"rpm --nodeps -ivh ***"否则会有依赖问题。
+
+*编译生成用于烧写的tar包：
+#make tftp
+这里，生成的tar包，名称类似"output/diablo/tftp/tftpboot.tar"，内容包含vmlinux.elf以及ramdisk.img，可以使用"tar -tvf tftpboot.tar"来查看其中的内容。
+额外补充的内容有待添加。
+
+环境注意：
+采用本手册前面的步骤建立的环境，只能编译代码中diablo部分的内容，emma部分的内容编译环境和diablo不同，所以目前不能编译emma部分。

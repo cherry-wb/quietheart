@@ -1,0 +1,57 @@
+这里自己就是在excel中执行一个宏，这个宏的功能：
+分割字符串，结束内层，查找字符串，截取字符串
+
+实践过程：
+1)首先给excel录制一个宏：
+*依次点击："视图->宏->录制宏"
+这样开始录制一个宏。
+*随便做一些操作之后，点击"视图->宏->停止录制"
+
+2)编辑自己的宏:
+*点击"视图->宏->察看宏"
+从列表中选择自己刚才录制的宏，然后点击"编辑"。
+
+*填入自己的宏代码
+在打开的窗口中，依次存放着当前文件所有的宏.在最后面行追加一个宏代码如下：
+Sub MyStr_op()
+'
+' mytest Macro
+'
+    '定义动态数组
+    Dim str,tokens() As String
+    str = "a:b:c:d:e"
+
+    '字符串查找，实际最开始的位置是1，没有则返回0
+    msgbox InStr(str,"LANG") '字符串查找，此处返回0。
+    msgbox InStr(str,"a") '字符串查找，此处返回1。
+
+    '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+    msgbox Mid(str,1,3) '返回a:b
+
+    '分割字符串为数组
+    tokens=split(str,":")
+
+    msgbox "The total string is:" & chr(34) & str &chr(34)
+    Dim start As Integer
+    start = 0
+    '判断数组是否越界,判断字符串相等，退出内层循环。
+    Do While start <= UBound(tokens)
+      msgbox tokens(start)
+      If tokens(start) = "c" Then
+      Exit do '退出循环
+      End If
+      start=start+1
+    Loop
+End Sub
+之后保存,这时候"察看宏"列表中会多一个"MyStr_op"宏。
+
+3)执行自己编辑的宏：
+点击"视图->宏->察看宏"
+选择刚才写入的"MyStr_op"宏，点击"执行".
+
+
+注意：
+*目前我还不知道如何直接独立编写excel宏的vba脚本，所以先录制了一个宏，然后才开始编辑。
+*我使用的是excel 2007
+
+其他：

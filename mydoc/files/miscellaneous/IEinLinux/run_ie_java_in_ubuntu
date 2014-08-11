@@ -1,0 +1,264 @@
+http://www.linuxidc.com/Linux/2007-12/10077.htm
+在Ubuntu Linux下上网有时要登陆股票理财等网站, 免不了要回到Windows下用IE浏览, ies4linux 固然能轻鬆的帮你将IE+Flash装上Linux, 但可惜它没有内建java支援, 而很不幸的, 网络世界里java也是不可或缺的。
+
+如果我们能将ies4linux装上java runtime, 那就可以解决这个问题, 下面要与大家分享的就是如何将java装上ies4linux, 希望能帮助大家减低回到Windows上网的麻烦。
+
+
+1. 安装wine & cabextract
+
+ies4linux需要wine & cabextract
+
+如果还没装wine和cabextract, 请依照下列步骤先装上:
+
+(如果已经装好的人请略过此步骤)
+
+a) 进应用程式=>附属应用程式=>终端机
+
+b) 编辑套件来源:
+
+sudo gedit /etc/apt/sources.list
+
+将这行前面的"#"号删掉:
+
+(如果本来就没有#, 那就略过这个步骤)
+
+# deb http://tw.archive.Ubuntu.com/ubuntu/ feisty universe
+
+最后面加入此行:
+
+deb http://wine.budgetdedicated.com/apt/ feisty main
+
+储存并关闭
+
+c) 下载并加入wine套件库的金钥
+
+wget -q http://wine.budgetdedicated.com/apt/387EE263.gpg -O- | sudo apt-key add -
+
+d) 更新套件库
+
+sudo apt-get update
+
+e) 安装wine和cabextract
+
+sudo apt-get install wine cabextract
+
+(Wine加入套件来源的正规步骤也可以参考这裡)
+
+===
+
+2. 安装ies4linux
+
+(很久之前装过的的不妨再装一次最新版本的)
+
+a) 下载ies4linux:
+
+http://www.tatanka.com.br/ies4linux/downloads/ies4linux-latest.tar.gz
+
+b) 下载完按右键, 解压缩至桌面
+
+c) 开终端机
+
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.11)
+
+d) 进入"桌面/解压缩好的资料夹":
+
+cd ~/Desktop/ies4linux-*
+
+e) 执行安装
+
+./ies4linux
+
+安装时看你要不要装IE 5.0 or 5.5 如果不要就都按N (建议是不需要)
+
+f) 到了语言选择时请手动打:
+
+TW
+
+安装完毕桌面会多出一个IE6的图示, 点两下测试看看是否正常, 然后关闭它。
+
+
+===
+3. 开始安装Java Run Time Environment
+
+a) 到这裡下载Java Run Time Environment:
+
+JRE 5.0 Update 11 includes the JVM technology: Download:
+
+http://java.sun.com/products/archive/j2se/5.0_11/index.html
+
+选择这个版本
+
+Windows Offline Installation, Multi-language
+
+jre-1_5_0_11-windows-i586-p.exe (15.80 MB)
+
+b) 下载成功后, 贴至这个资料夹 (这是隐藏资料夹, 请显示隐藏档)
+
+/home/你的帐号/.ies4linux/ie6/drive_c/
+
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.11)
+
+c) 执行安装
+
+开啟 "应用程式=>附属应用程式=>终端机"
+
+进入"偽"C:\槽 :
+
+cd /home/你的帐号/.ies4linux/ie6/drive_c/
+
+d)用wine执行jre安装档
+
+註: 以下都使用"WINEPREFIX=~/.ies4linux/ "当开头,
+
+这是要告诉WINE使用这个地方的"偽Windows",而不要去乱动到我们预设的~/.wine资料夹。
+
+WINEPREFIX=/home/你的帐号 /.ies4linux/ie6 wine jre-1_5_0_11-windows-i586-p.exe
+===
+如果跑得起来, 会出现以下画面:
+
+按"Custom Setup"把所有可以选的选项都安装至硬盘
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.
+
+4. 设定Java
+
+a) 设定java前準备:
+
+先执行javacpl.exe, 第一次执行画面会碎掉, 就给它碎没关係, 开啟后再马上按X关掉就是, 这个步骤是必须的, 如果不先执行那Java2D的键值就不会写进登录档
+
+cd /home/你的帐号/.ies4linux/ie6/drive_c/Program\ Files/Java/jre1.5.0_11/bin
+
+WINEPREFIX=/home/你的帐号/.ies4linux/ie6 LC_ALL=en_US wine javacpl.exe
+
+因为wine对於Java 2D的Direct-X加速的支援还不完全, 所以我们需要更动registry把它Disable掉, 以后Java 2D的画面就不会碎掉了:
+
+WINEPREFIX=/home/你的帐号/.ies4linux/ie6 wine regedit
+
+找到这个键值:
+
+HKEY_CURRENT_USER\Software\JavaSoft\Java2D\1.5.0_11
+
+"DXAcceleration" 点两下, 数值改成 "0", 如下图:
+===b) 正式开始设定Java
+
+进入偽C槽的Program Files\Java, 并再一次执行javacpl.exe,
+
+cd /home/你的帐号/.ies4linux/ie6/drive_c/Program\ Files/Java/jre1.5.0_11/bin
+
+註: 这裡如果不加LC_ALL=en_US的话, 选项就会变成方块酥
+
+WINEPREFIX=/home/你的帐号/.ies4linux/ie6 LC_ALL=en_US wine javacpl.exe
+
+这次画面应该完全正常, 不会碎掉了, 成功开启后, 至: "Advanced" 标签 =>
+
+"APPLET tag support"
+
+树状选项 "Internet Explorer":
+
+不要打勾, 按 "APPLY", "OK", 退出。
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.
+
+再搞一次:
+
+WINEPREFIX=/home/你的帐号/.ies4linux/ie6 LC_ALL=en_US wine javacpl.exe
+
+这次同样的地方: "Advanced" 标签 =>
+
+" APPLET tag support"
+
+树状选项 "Internet Explorer":
+
+这次请打勾!, 按 "APPLY", "OK" ,退出。
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.
+
+c) 测试java是否成功
+
+现在到 http://www.yuanta.com.tw (元大京华证券)会发现Java Applets成功的出现了:
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.
+
+但你会发现无法显示中文, 全都成了方块酥。 解决方法是安装新细明体:
+
+===
+
+5. 安装中文字型
+
+a) 下载新细明体
+
+到这裡: http://blog.chweng.idv.tw/archives/221
+
+下载点: http://mingliu.myweb.hinet.net/MingLiu/MingLiU.zip
+
+下载完成后, 解压缩至桌面, MingLiu.ttc 复製、贴上 "/home/你的帐号/.fonts"
+
+b) 安装新细明体
+
+开应用程式=>附属应用程式=>终端机:
+
+sudo fc-cache -f -v
+
+Contol+Alt+Backspace 重新登入
+
+c) 编辑 "偽Windows" 的user.reg加入字型 (这步其实可以省略, 但为了安心起见, 还是做一次吧)
+
+开应用程式=>附属应用程式=>终端机:
+
+gedit /home/你的帐号/.ies4linux/ie6/user.reg
+
+最底部贴上以下内容:
+
+[Software\\Wine\\X11 Driver]
+
+"MingLiU"="MingLiu"
+
+"PMingLiU"="PMingLiu"
+
+d) 让java也能用新细明体: (这步绝对不能省)
+
+将刚刚下载回来的新细明体"MingLiu.ttc"贴至:
+
+"/home/你的帐号/.ies4linux/ie6/drive_c/Program Files/Java/jre1.5.0_11/lib/fonts"
+
+重开IE6, 再回去 http://www.yuanta.com.tw
+
+哗啦~ 现在Java Applets裡头的中文字型就会显示无误了!
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.
+
+wine+ies4linux+jre 全部安装完毕!!
+
+以上
+
+==============================
+
+附录 : 如何使ies4linux的Active X生效
+
+==============================
+(未实测过)
+
+参考网页: http://www.gagme.com/greg/linux/activex-linux.php
+
+如果你遇到了这样的讯息:
+
+(您目前的安全性设定禁用ActiveX, 所以blablabla....)
+
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.11)
+
+Windows的IE只要中安全性就有ActiveX了, 但在ies4linux只能调最低安全性:
+
+开啟IE的工具=>选项=>安全性 => 网际网路 : 调到最低:
+
+在Ubuntu Linux下安装使用IE + Java (ies4linux + JRE1.5.0.11)
+
+有时候ActiveX会用到mfc42.dll 这个档案, 所以请至你的Windows硬碟如 C:\WINDOWS\SYSTEM32\, 将mfc42.dll 拷贝一份至:
+
+/home/你的帐户/.ies4linux/ie6/drive_c/windows/system32
+
+然后建立一个设定档, 叫ies4linux遇到不明dll时一律使用native,builtin (原生, 内建) :
+
+gedit /home/你的帐户/.ies4linux/ie6/config
+
+贴入以下内容并存档离开:
+
+; default for all other dlls
+
+"*" = "builtin, native"
+
+ies4linux + ActiveX设定完毕 (我还没实测过, 有错误欢迎指正)

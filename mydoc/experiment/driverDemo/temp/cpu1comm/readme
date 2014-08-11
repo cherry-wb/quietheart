@@ -1,0 +1,41 @@
+目录结构：
+app:
+	一个简易的测试程序。
+lib:
+	库以及接口。
+drv:
+	内核驱动。
+
+使用方法：
+1)编译：
+依次在各个目录中运行make，最后编译app。如果清除之前的编译结果，那么运行make clean。
+
+2)编译选项：
+app:
+main.c中，
+含有log信息的开关： #define DBG_LOG_ON 1
+不含log信息的开关： #define DBG_LOG_ON 0
+
+lib:
+cpucomm_api.c中，
+含有log信息的开关： #define CPU1COMM_API_DBG 1
+不含log信息的开关： #define CPU1COMM_API_DBG 0
+
+使用内存映射的开关： #define __MEM_MAP 1
+不用内存映射的开关： #define __MEM_MAP 0
+使用内存映射会导致内核内部减少一次拷贝。
+
+drv:
+cpu1comm_drv.c中，
+含有log信息的开关： #define CPU1COMM_DBG 1
+不含log信息的开关： #define CPU1COMM_DBG 0
+
+动态注册设备(默认CPU1COMM_DBG为1的时候设置有效)： #define CPU1COMMDRV_DBG_DYNREG
+静态注册设备：（默认）
+
+
+问题：
+1) 加锁问题，有待考虑(目前只在send之前加锁，send之后解锁)。
+2）wkram有8K，但是只用其中的4K，其它部分不知道是否能够使用。
+3) volatile修饰哪些变量的问题。
+尽管初期测试没有问题，但是这个驱动后来测试有问题，多个人发送，的时候共享数据的访问有问题，许多地方可以不用共享方式避免竞争的。

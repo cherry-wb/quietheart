@@ -1,0 +1,1370 @@
+启动diablo之后，运行nvmcurrentshow
+这里描述decksim的运行流程。
+实际主要描述的就是rec中的流程
+处理过程如下：
+(1-4步骤都是各个模式之前的一些公共的操作)
+1，设置一些默认配置变量(参考'.\Sub\DefaultSet.ttl')
+这里需要定义一些和这个脚本文件中对应的变量.
+
+2，启动sc2psim, 和终端交互发送字符序列如下：
+sendln "sc2psim"  /*发送"sc2psim"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sendln "print" /*发送"print"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sc2psimStatus = 1
+
+3，初始化启动(参考:'.\Sub\SystemStart.ttl'), 和终端交互发送字符序列如下：
+sendln '# mediaSyLogTimeSet' /*发送"# mediaSyLogTimeSet"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '13 00 9F F5 45 08 13 01 0A 00 00 00'  /*非常复杂处理后的结果，不确定是否与时间等因素有关,先这样用看看行不行具体参见（'.\Sub\GetTime.ttl'）。*/
+wait #10'>' #10'->'
+sendln ';' ;!!!这里仔细看看，这个分号前面有没有'#'。
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaSyOutputLevelSet'
+wait #10'>' #10'->'
+sendln '# packet'
+wait #10'>' #10'->'
+sendln '# 0F 00 0F 00 00 00 00 80'
+wait #10'>' #10'->'
+sendln '# ;'
+wait #10'>' #10'->'
+sendln '# run'
+wait #10'>' #10'->'
+
+sendln '# mediaFrValidFrameTimingSet'
+wait #10'>' #10'->'
+sendln '# packet'
+wait #10'>' #10'->'
+sendln '# 91 01 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '# ;'
+wait #10'>' #10'->'
+sendln '# run'
+wait #10'>' #10'->'
+
+sendln '# mediaSyLocaleSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '12 00 ' localeModeParam /*字符串的拼接,这里，localeModeParam = '01000000' 在1中的默认配置变量DefaultSet.ttl中设置*/
+wait #10'>' #10'->'
+sendln  ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+4，一些待机模式相关的信息（参考'.\Sub\DeckIdle.ttl'）
+sendln '# mediaDkDeckModeSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '2D 01 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+5，经过前面的步骤之后，开始进入和用户交互输入的地方。
+5.1)以如下脚本(Auto\rec.txt)作为运行范例：
+mnt     <------进入maintenance模式
+format  <------执行format命令
+1       <------指定format的slot，这里为1
+2       <------指定format时候的文件系统,这里为UDF2.5
+0       <------指定format命令的选项,0表示quick format
+exit    <------结束maintenance模式
+
+rec     <------进入rec模式
+locale  <------执行locale设置制式命令
+0       <------设置制式为NTSC_UC
+cformat <------设置录画时的clip格式
+2       <------设置录画的clip格式为MXF_HD422
+amode   <------设置录画时候的audio格式
+1       <------设置为LPCM24
+8       <------设置channel数为8
+mode    <------选择录画模式
+1       <------设置录画模式为1（通常录画）
+60p     <------设置祯频为60p
+imgsize <------设置录画的画框
+4       <------设置画框为1280*720
+frate   <------设置祯频
+60p     <------设置祯频为60p
+brate   <------设置位率
+2       <------设置位率种类为CBR
+4       <------设置CBR的位率为50Mbps
+record  <------开始录画
+wait 10 <------等待10秒
+stop    <------停止录画
+
+这样处理过程如下：
+
+a)进入mnt模式的处理
+mnt总处理流程
+{/*参考DeckSim.ttl中的subMntMain函数*/
+  status = 'OFF'
+  while(不退出mnt模式)
+  {
+    mntCommand=用户输入;
+    if(mntCommand != "send" && sc2psimStatus == 0)
+    {
+      执行步骤2;
+    }
+    /*检查并处理各个子命令*/
+  } /*while(不退出mnt模式)*/
+  
+  /*以下参考'.\Sub\DeckIdle.ttl'*/
+  sendln '# mediaDkDeckModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2D 01 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+/*下面描述上面mnt总处理流程中本例子中体现的各个mnt子过程*/
+mnt中的format处理过程
+{/*参考:'.\Sub\MediaFormat.ttl'*/
+  formatflag = 1
+  do
+  {
+    inputvar=用户输入选择的槽号;/*int整数,这里的例子使用的是槽1*/
+  }while(inputvar不属于区间[1,4])
+  formatMediaSlotParam=inputvar转换的16进制字符串;
+  
+  do
+  {
+    inputvar=用户输入选择的文件系统类型;/*int整数,这里的例子输入的是2*/
+  }while(inputvar不属于区间[1,2])
+  formatFileSystemParam=inputvar转换的16进制字符串;
+  
+  do
+  {
+    inputvar=用户输入选择的格式化选项;/*int整数,这里的例子输入的是0*/
+  }while(inputvar不属于区间[0,2])
+  formatMediaParam=inputvar转换的16进制字符串;
+  
+  sendln '# mediaMdInitializeMedia'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*字符串拼接,就是前面处理得到的结果*/
+  sendln '6A 00 ' formatMediaSlotParam formatFileSystemParam formatMediaParam
+  wait #10'>' #10'->'
+  
+  sendln '01 00 00 00 ' '38 00 00 00;'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  if(formatflag==0)
+  {/*参考:'.\Sub\WaitCompAcMedia.ttl'*/
+    do
+    {
+      读取终端输出的每一行
+      设置deckStatusResult变量为读出的行 /*这个deckStatusResult变量的作用是什么?*/
+    }while(读出的行不包含'Call>31 09')
+  }
+}
+mnt中的exit退出
+{
+  在这里直接退出mnt主流程中的循环即可;/*余下的处理在mnt主流程中指明了*/
+}
+
+b)进入rec模式的处理
+/*参考DeckSim.ttl中的subRecordMain*/
+/*依次执行如下过程：*/
+
+b.1)录画初始化
+{/*参考'.\Sub\RecordInit.ttl'*/
+  sendln '# mediaSyVideoFilterSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*字符串拼接，videoFilterFlagParam    = '00000000' 在DefaultSet.ttl中设置了*/
+  sendln '1E 00 ' videoFilterFlagParam
+  
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkDeckModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2D 01 00 00 00 00 01 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkDeckStatusGet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2E 01 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkRecordingPropertySet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2F 01 00 00 00 00 00 00 00 00 00 00 00 00 3C 00'
+  wait #10'>' #10'->'
+  
+  /*字符串拼接，keyFrameOffsetParam = 'FFFFFFFF',在DefaultSet.ttl中设置了*/
+  sendln '00 00 0A 00 00 00 ' keyFrameOffsetParam
+  wait #10'>' #10'->'
+  
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  
+  sendln '# mediaDkRecordingModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*字符串拼接，recModeParam = '01000000 ',vFormatFRateParam = '02000000',在DefaultSet.ttl中设置了*/
+  sendln '31 01 00 00 00 00 ' recModeParam ' ' vFormatFRateParam
+  wait #10'>' #10'->'
+  
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  
+  /*字符串拼接，vFormatImgSizeParam = '02000000',vEncodeFormatFRateParam = '02000000',
+  vFormatBRateParam  = '01000000',vFormatBRateModeParam   = '01000000'在DefaultSet.ttl中设置了*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' ' vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  '# mediaMdMediaStatusGet'
+  wait #10'>' #10'->'
+  'packet'
+  wait #10'>' #10'->'
+  
+  
+  /*字符串拼接，slotNo = '01'在DefaultSet.ttl中设置了*/
+  '6F 00 ' slotNo ' 00 00 00'
+  wait #10'>' #10'->'
+  
+  ';'
+  wait #10'>' #10'->'
+  'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  
+  sendln '# mediaDkDeviceInfoSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '41 01'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '08 00 00 00'
+  wait #10'>' #10'->'
+  sendln '01 00 00 00'
+  wait #10'>' #10'->'
+  sendln '01 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln '00 00'
+  wait #10'>' #10'->'
+  sendln '74 65 73 74 00 80 C0 00 B8 80 74 E0 28 80 C0 60'
+  wait #10'>' #10'->'
+  sendln 'B8 80 C4 7B B7 80 C0 00 B8 80 40 33 BB 80'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkClipFormatSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '34 01 00 00 00 00 '
+  wait #10'>' #10'->'
+  
+  /*clipFormatParam = '00000000' 在DefaultSet.ttl中设置*/
+  sendln clipFormatParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  sendln '# mediaDkAudioModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '44 01 00 00 00 00 '
+  wait #10'>' #10'->'
+  
+  /*audioTypeParam = '00000000',audioChNumberParam = '02000000' 在DefaultSet.ttl中设置*/
+  sendln audioTypeParam
+  wait #10'>' #10'->'
+  sendln audioChNumberParam
+  wait #10'>' #10'->'
+  
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+  if(slotNo != '00')
+  {
+    sendln '# mediaDkActiveSlotSet'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    sendln '30 01 00 00 00 00'
+    wait #10'>' #10'->'
+    
+    /*字符串拼接，slotNo = '01'在DefaultSet.ttl中设置了*/
+    sendln slotNo
+    wait #10'>' #10'->'
+    
+    sendln '00 00 00'
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run'
+    然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+    然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  }
+  
+  CacheRecLastFrameNotifyFlag = 0
+  
+  /*参考:'.\Sub\CacheOff.ttl'*/
+  if(CacheRecAutoFlag == 1)
+  {/*CacheRecAutoFlag = 1,在DefaultSet.ttl中设定*/
+    if(ilinkOut == 'OFF')
+    {/*ilinkOut = 'OFF',在DefaultSet.ttl中设定*/
+      if(CacheRecLastFrameNotifyFlag == 1)
+      {
+        /*参考：'.\Sub\LastFrameNotify.ttl'*/
+        sendln '# mediaFrLastFrameOutputNotify'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '93 09 00 00 00 00'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        
+        sendln 'run'
+        /*以下参考'.\Sub\WaitDeckStatus.ttl'*/
+        do{
+          deckStatusResult=每次读取的终端输出的每一行;
+        }while(读出的行不包含'Call>33 09')
+        sendln '# mediaDkDeckStatusGet'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '2E 01 00 00 00 00'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run'
+        然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+        然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+      }
+    }
+  }
+  CacheRecModeFlag = 0
+  CacheRecModeFlagParam = CacheRecModeFlag的16进制字符串(长度为4?)
+  
+  sendln '# mediaDkCacheRecModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*字符串拼接，CacheRecModeFlagParam就是刚才设置的0的16进值字符串,CacheRecSecondsParam    = '00000000',在DefaultSet.ttl中设置*/
+  sendln '45 01 00 00 00 00 ' CacheRecModeFlagParam ' ' CacheRecSecondsParam
+  wait #10'>' #10'->'
+  
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+  CacheRecLastFrameNotifyFlag = 1
+}
+
+b.2) 开始接受用户录制之前的输入设置:
+status = 'STP'
+save_status = status
+rec中接收用户输入部分的总流程
+{
+  while(没有退出rec模式)
+  {
+    mainCommand=用户输入;
+    if(mainCommand != "send" && sc2psimStatus ==0)
+    {
+      执行步骤2;
+    }
+    检查并处理各个子命令;
+  }
+  /*以下参考'.\Sub\DeckIdle.ttl'*/
+  sendln '# mediaDkDeckModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2D 01 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+/*在rec接收用户输入的总流程中,依次读取并处理用户输入的子指令如下(根据前面的例子,这里输入的第一个是'locale');*/
+处理用户输入的locale命令
+{/*参考:'.\Sub\LocaleSet.ttl'*/
+/*如果没有输入则localeMode = 1,这个是在DefaultSet.ttl中设置的*/
+
+
+  while(读取用户设置的制式)
+  {/*这个例子里，用户输入的就是0*/
+    if(用户没有输入制式信息)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的 localeMode = 1
+      break;
+    }
+    else
+    {
+      if(输入合法,即 输入值属于区间:[0,2])
+      {
+        localeMode=用户输入的int值(这里为0)
+        break;
+      }
+    }/*if(用户没有输入制式信息)*/
+  }
+  localeModeParam = 长度为4的localeMode的16进制字符串
+  sendln '# mediaSyLocaleSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*前面设置好的localeModeParam*/
+  sendln '12 00 ' localeModeParam
+  
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的cformat命令
+{'.\Sub\ClipFormatSet.ttl'
+  while(读取用户设置的clip格式)
+  {/*这个例子里，用户输入的就是2*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的 clipFormat=0
+      break;
+    }
+    else
+    {
+      if(输入合法,即 输入值属于区间:[0,6])
+      {
+        clipFormat=用户输入的int值(这里为0)
+        break;
+      }
+    }/*if(用户没有输入)*/
+  }
+  clipFormatParam = 长度为4的clipFormat的16进制字符串
+  sendln '# mediaDkClipFormatSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '34 01 00 00 00 00 '
+  wait #10'>' #10'->'
+
+  /*前面设定了*/
+  sendln clipFormatParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+  if(clipFormat == 1)
+  {
+    vFormatBRateParam     = '02000000 '
+    vFormatBRateModeParam = '02000000 '
+  }
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+
+  /*字符串拼接，相应的变量都设置好了*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' ' vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的amode命令
+{/*参考：'.\Sub\AudioModeSet.ttl'*/
+  while(读取用户设置的audio type)
+  {/*这个例子里，用户输入的就是1*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的audioType = 0
+      break;
+    }
+    else
+    {
+      audioType=用户输入的int值(这里为1)
+      if(输入合法,即 输入值属于区间:[0,1])
+      {
+        break;
+      }
+    }/*if(用户没有输入)*/
+  }
+  audioTypeParam = 长度为4的audioType的16进制字符串
+
+  while(读取用户设置的audio channel)
+  {/*这个例子里，用户输入的就是8*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的audioChNumber = 2
+      break;
+    }
+    else
+    {
+      audioChNumber=用户输入的int值(这里为8)
+      if(输入合法,即 输入值属于区间:[0,8])
+      {
+        break;
+      }
+    }/*if(用户没有输入)*/
+  }
+  audioChNumberParam = 长度为4的audioChNumber的16进制字符串
+
+  sendln '# mediaDkAudioModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '44 01 00 00 00 00 '
+  wait #10'>' #10'->'
+  sendln audioTypeParam /*前面设置过*/
+  wait #10'>' #10'->'
+  sendln audioChNumberParam /*前面设置过*/
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+
+  /*字符串的拼接，前面设置好了*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' ' vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的mode命令
+{/*参考：'.\Sub\RecModeSet.ttl'*/
+  while(读取用户输入的录画模式)
+  {
+    recMode=用户输入的int值;
+    if(recMode属于区间[1,3])
+    {
+      /*右侧的变量前面设置过*/
+      vFormatFRate = vEncodeFormatFRate;
+      vFormatFRateParam = vEncodeFormatFRateParam;
+    }
+    if(recMode == 1)
+    {
+      while(读取用户的输入)
+      {
+        vFormatFRate = -1
+        if(用户输入='24p')
+        {
+          vFormatFRate = 8
+        }
+        if(用户输入='25p')
+        {
+          vFormatFRate = 7
+        }
+        if(用户输入='30p')
+        {
+          vFormatFRate = 6
+        }
+        if(用户输入='50p')
+        {
+          vFormatFRate = 5
+        }
+        if(用户输入='60p')
+        {
+          vFormatFRate = 4
+        }
+        if(用户输入='50i')
+        {
+          vFormatFRate = 3
+        }
+        if(用户输入='60i')
+        {
+          vFormatFRate = 2
+        }
+        if(vFormatFRate != -1)
+        {
+          vFormatFRateParam = vFormatFRate的长度为4的16进制字符串形式
+          break;
+        }
+      }
+    }
+    else if(recMode == 2)
+    {
+      while(读取用户的输入)
+      {
+        vFormatFRate = -1
+        if(用户输入='60p')
+        {
+          vFormatFRate = 9
+        }
+        if(用户输入='59p')
+        {
+          vFormatFRate = 10
+        }
+        if(用户输入='58p')
+        {
+          vFormatFRate = 11
+        }
+        if(用户输入='57p')
+        {
+          vFormatFRate = 12
+        }
+        if(用户输入='56p')
+        {
+          vFormatFRate = 13
+        }
+        if(用户输入='55p')
+        {
+          vFormatFRate = 14
+        }
+        if(用户输入='54p')
+        {
+          vFormatFRate = 15
+        }
+        if(用户输入='53p')
+        {
+          vFormatFRate = 16
+        }
+        if(用户输入='52p')
+        {
+          vFormatFRate = 17
+        }
+        if(用户输入='51p')
+        {
+          vFormatFRate = 18
+        }
+        if(用户输入='50p')
+        {
+          vFormatFRate = 19
+        }
+        if(用户输入='49p')
+        {
+          vFormatFRate = 20
+        }
+        if(用户输入='48p')
+        {
+          vFormatFRate = 21
+        }
+        if(用户输入='47p')
+        {
+          vFormatFRate = 22
+        }
+        if(用户输入='46p')
+        {
+          vFormatFRate = 23
+        }
+        if(用户输入='45p')
+        {
+          vFormatFRate = 24
+        }
+        if(用户输入='44p')
+        {
+          vFormatFRate = 25
+        }
+        ......中间省略很多，类似的if(判断)......
+        if(用户输入='1p')
+        {
+          vFormatFRate = 68
+        }
+        if(vFormatFRate != -1)
+        {
+          vFormatFRateParam = 长度为4的vFormatFRate的16进制形式的字符串;
+          break;
+        }
+      }
+    }
+  }
+  recModeParam = recMode的长度为4的16进制字符串
+  sendln '# mediaDkRecordingModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  /*字符串拼接*/
+  senldn '31 01 00 00 00 00 ' recModeParam ' ' vFormatFRateParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的imgsize命令
+{/*参考：'.\Sub\VideoFormatSet.ttl'
+  while(读取用户设置的image size)
+  {/*这个例子里，用户输入的就是4*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的vFormatImgSize = 2;
+      break;
+    }
+    else
+    {
+      if(用户输入=='exit')
+      {
+        退出当前函数;
+      }
+      vFormatImgSize=用户输入的int值(这里为4)
+      if(输入合法,即 输入值属于区间:[2,13])
+      {
+        break;
+      }
+    }/*if(用户没有输入)*/
+  }
+  vFormatImgSizeParam = 长度为4的转化为16进制字符串的vFormatImgSize;
+
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  /*字符串拼接*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' '  vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的frate命令
+{/*参考：'.\Sub\VideoFormatSet.ttl'
+  while(读取用户设置的frate)
+  {/*这个例子里，用户输入的就是60p*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的vEncodeFormatFRate = 2;
+      break;
+    }
+    else
+    {
+      if(用户输入=='exit')
+      {
+        退出当前函数;
+      }
+      vEncodeFormatFRate = -1
+      if(用户输入='60i')
+      {
+        vEncodeFormatFRate = 2;
+      }
+      if(用户输入='50i')
+      {
+        vEncodeFormatFRate = 3
+      }
+      if(用户输入='60p')
+      {
+        vEncodeFormatFRate = 4
+      }
+      if(用户输入='50p')
+      {
+        vEncodeFormatFRate = 5
+      }
+      if(用户输入='30p')
+      {
+        vEncodeFormatFRate = 6
+      }
+      if(用户输入='25p')
+      {
+        vEncodeFormatFRate = 7
+      }
+      if(用户输入='24p')
+      {
+        vEncodeFormatFRate = 8
+      }
+      if(vEncodeFormatFRate != -1)
+      {/*这里的意思是如果输入合法就退出循环*/
+        break;
+      }
+    }/*if(用户没有输入)*/
+  }
+  vEncodeFormatFRateParam = 长度为4的转化为16进制字符串的vEncodeFormatFRate;
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  /*字符串拼接*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' '  vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的brate命令
+{/*参考：'.\Sub\VideoFormatSet.ttl'
+  while(读取用户设置的位率种类)
+  {/*这个例子里，用户输入的就是2*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的vFormatBRateMode=1;
+      break;
+    }
+    else
+    {
+      if(用户输入=='exit')
+      {
+        退出当前函数;
+      }
+      wkBRate =用户输入的int值(这里为2)
+      if(输入合法,即 输入值属于区间:[1,2])
+      {
+        vFormatBRateMode = wkBRate;
+        break;
+      }
+    }
+  }
+  vFormatBRateModeParam= 长度为4的转化为16进制字符串的vFormatBRateMode;
+
+  while(读取用户设置的位率)
+  {/*这个例子里，用户输入的就是4*/
+    if(用户没有输入)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的vFormatBRate=1;
+      break;
+    }
+    else
+    {
+      if(用户输入=='exit')
+      {
+        退出当前函数;
+      }
+      wkBRate =用户输入的int值(这里为4)
+      if(输入合法,即 输入值属于区间:[1,6])
+      {
+        vFormatBRate = wkBRate;
+        break;
+      }
+    }
+  }
+  vFormatBRateParam= 长度为4的转化为16进制字符串的vFormatBRate;
+  sendln '# mediaDkEncodeModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  /*字符串拼接*/
+  sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' '  vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+处理用户输入的record命令
+{
+  if(ilinkOut == 'ON')
+  {
+    {/*ilinkOut = 'OFF',在DefaultSet.ttl中设定*/
+    if(ilinkStreamFormat == 0)
+    {
+      if(CacheRecModeFlag == 0)
+      {
+        include '.\Sub\LastFrameNotify.ttl'
+        ilinkStatusCheck = 0
+        include '.\Sub\WaitDetectIlink.ttl'
+      }
+    }
+  }
+  status = 'REC'
+
+  /*以下内容参考：'.\Sub\RecordStart.ttl' */
+  '.\Sub\RecordStart.ttl'
+ {
+  if ilinkStreamFormat=1 
+  {
+   if (modeCommand != 'rec')   
+   {
+    sendln '# mediaDkEncodeModeSet'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    sendln '32 01 00 00 00 00 'vFormatImgSizeParam' 'vEncodeFormatFRateParam' 'vFormatBRateParam' 'vFormatBRateModeParam
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+   }
+  }
+
+	if (modeCommand == 'rec') // in rec mode
+ {
+	if (slotNo != '00')
+   {
+		/*以下内容参考： '.\Sub\ThItmListGet.ttl' */
+    {
+    apiResultStr = 'API Result>C9 0C'
+
+    setsync 1
+
+    sendln '# mediaCpClipThumbnailItemListGet'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    sendln 'C9 00 'slotNo' 00 00 00'searchKeyTypeParam' 'sortOrderParam' 'formatSearchKeyTypeParam' 'localeLimitedParam' 'resolutionSearchKeyParam' 'fpsSearchKeyParam
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run' // sendln
+
+	  然后循环从终端输出中读取每一行，直到该行包含'API Result>C9 0C',并将该行赋值给thumbnailApiResult.
+    
+    setsync 0
+
+    thumbnailItemListID = hex2int(inputstr,30,1) * 16
+    thumbnailItemListID = thumbnailItemListID + hex2int(inputstr,31,1)
+
+    thumbnailItemListIDParam = int2hex(p_int = thumbnailItemListID, p_len = 1)
+
+    startThumbnailItemID = hex2int(inputstr,42,1) * 16
+    startThumbnailItemID = startThumbnailItemID + hex2int(inputstr,43,1)
+
+    thumbnailItemListCount = hex2int(inputstr,54,1) * 16
+    thumbnailItemListCount = thumbnailItemListCount + hex2int(inputstr,55,1)
+    thumbnailItemListCount = thumbnailItemListCount + hex2int(inputstr,57,1) * 16 * 256
+    thumbnailItemListCount = thumbnailItemListCount + hex2int(inputstr,58,1)      * 256
+
+    endThumbnailItemID = startThumbnailItemID + thumbnailItemListCount - 1
+
+    if endThumbnailItemID < 0 
+     {
+    endThumbnailItemID = 0
+     }
+
+    startClip = int2hex(startThumbnailItemID, 3)
+
+    endClip = int2hex(endThumbnailItemID, 3)
+
+    exit
+    }
+   }
+
+	if( continuousRecModeFlag < 2 )
+   {
+        sendln '# mediaDkDeviceInfoSet'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '41 01'
+        wait #10'>' #10'->'
+        sendln '00 00 00 00' 
+        wait #10'>' #10'->'
+        sendln '08 00 00 00' 
+        wait #10'>' #10'->'
+        for（ loopCounter; [1...8]; ++)
+    {
+        	if loopCounter <= audioChNumber 
+        		sendData = '01 00 00 00'  
+        	else
+        		sendData = '00 00 00 00'  ; Nothing
+
+        	sendln sendData
+         wait #10'>' #10'->'
+    }
+        sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+        wait #10'>' #10'->'
+        ...  // totle number: 58 lines.
+        sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+        wait #10'>' #10'->'
+        sendln '00 00'
+        wait #10'>' #10'->'
+        sendln '74 65 73 74 00 80 C0 00 B8 80 74 E0 28 80 C0 60'
+        wait #10'>' #10'->'
+        sendln 'B8 80 C4 7B B7 80 C0 00 B8 80 40 33 BB 80'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+        sendln '# mediaDkRecord'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '35 01 00 00 00 00'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run' // sendln
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+        
+		/*下面参考 '.\Sub\WaitDeckStatus.ttl'*/ 
+	{
+		/* 由于前面已有记述，此处不再重复。 */
+	}
+    }
+
+	if continuousRecModeFlag = 1 
+	{
+		continuousRecModeFlag = 2
+	}
+	
+	if ilinkStreamFormat=0 
+	{
+		if CacheRecModeFlag = 0 
+		{
+        sendln '# mediaFrFirstFrameOutputNotify'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '92 09'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run' // sendln
+
+		/*下面参考'.\Sub\WaitDeckStatus.ttl'*/ 
+		{
+			/* 由于前面已有记述，此处不再重复。 */
+		}
+
+		}
+	}
+
+    sendln '# mediaMdDurationGet'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    sendln '67 00 'slotNo' 00 00 00'
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run'
+        然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+        然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+else // in play mode 
+{
+	if(ilinkIn == 'OFF') 
+	{
+    	  sendln '# mediaDkSetDeckMode'
+    	  wait #10'>' #10'->'
+        sendln 'packet'
+    	  wait #10'>' #10'->'
+        sendln '2D 01 00 00 00 00 02 00 00 00'
+    	  wait #10'>' #10'->'
+        sendln ';'
+    	  wait #10'>' #10'->'
+        sendln 'run'
+        然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+        然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+	}
+
+	if (slotNo != '00') 
+	{
+		/*下面参考'.\Sub\ThItmListGet.ttl'*/ 
+		{
+		/* 由于前面已有记述，此处不再重复。 */
+		}
+	}
+
+	 sendln '# mediaDkRecord'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    sendln '35 01 00 00 00 00'
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run' // sendln
+
+	if(ilinkIn == 'OFF') 
+	{
+		/*下面参考'.\Sub\WaitDeckStatus.ttl'*/ 
+		{
+			/* 由于前面已有记述，此处不再重复。 */
+		}
+
+	}
+
+	/*下面参考'.\Sub\WaitDeckStatus.ttl'*/ 
+	{
+		/* 由于前面已有记述，此处不再重复。 */
+	}
+}
+
+exit
+ }
+}
+
+处理用户输入的stop命令
+{
+			status = 'STP'
+			/* 以下内容参考 '.\Sub\RecordStop.ttl' */
+{
+if (ilinkOut=='OFF')
+{
+	if (ilinkIn=='OFF') 
+	{
+	    if CacheRecModeFlag = 0
+		{
+		  sendln 'ID=SYSCON'
+        wait #10'>' #10'->'
+		  sendln '# mediaFrLastFrameOutputNotify'
+        wait #10'>' #10'->'
+		  sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '93 09 00 00 00 00'
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run' // sendln
+
+        /*下面参考'.\Sub\WaitDeckStatus.ttl'*/ 
+        {
+		/* 由于前面已有记述，此处不再重复。 */
+        }
+
+		}
+	}
+}
+
+if continuousRecModeFlag = 0 
+{
+	sendln '# mediaDkRecordingStop'
+	wait #10'>' #10'->'
+	sendln 'packet'
+	wait #10'>' #10'->'
+	sendln '36 01 00 00 00 00 00 00 00 00'
+	wait #10'>' #10'->'
+	sendln ';'
+	wait #10'>' #10'->'
+	sendln 'run' // sendln
+
+        /*下面参考'.\Sub\WaitDeckStatus.ttl'*/ 
+        {
+		/* 由于前面已有记述，此处不再重复。 */
+        }
+}
+
+exit
+}			
+
+}

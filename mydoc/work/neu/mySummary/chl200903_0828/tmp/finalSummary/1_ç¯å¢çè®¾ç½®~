@@ -1,0 +1,216 @@
+包含内容：
+1）安装maemo_scratchbox
+2）设置开发板的环境
+
+安装maemo_scratchbox环境
+=============================
+1. Scratchbox
+$ su   
+$ cd 
+$ mkidir marvell_mid; cd marvell_mid    
+$ wget http://repository.maemo.org/stable/diablo/maemo-scratchbox-install_4.1.2.sh     
+$ chmod 755 maemo-scratchbox-install_4.1.2.sh      
+$ echo 0 > /proc/sys/vm/vdso_enabled   
+$ mkdir scratchbox   
+$ ln -s /root/marvell_mid/scratchbox /scratchbox      
+$ ./maemo-scratchbox-install_4.1.2.sh -s /root/marvell_mid/scratchbox
+  
+$ /root/marvell_mid/scratchbox/sbin/sbox_adduser xieyan yes 
+  
+$ /root/marvell_mid/scratchbox/sbin/sbox_ctl start  
+$ /scratchbox/ login  
+> exit 
+
+2. maemo
+
+$ wget http://repository.maemo.org/stable/diablo/maemo-sdk-install_4.1.2.sh  
+$ chmod 755 maemo-sdk-install_4.1.2.sh  
+$ echo 4096 > /proc/sys/vm/mmap_min_addr       
+$ su xieyan              
+$ ./maemo-sdk-install_4.1.2.sh   
+$ /scratchbox/login   
+> sb-conf select DIABLO_ARMEL  
+> sb-conf select DIABLO_X86               
+
+3.nokia
+$ wget http://repository.maemo.org/stable/diablo/maemo-sdk-nokia-binaries_4.1.2.sh    
+$ chmod 755 maemo-sdk-nokia-binaries_4.1.2.sh     
+$ su xieyan              
+$ ./ maemo-sdk-nokia-binaries_4.1.2.sh -s /root/marvell_mid/scratchbox/   
+$ /scratchbox/login   
+> apt-get update       
+> fakeroot apt-get install maemo-explicit       
+#########################3
+4. xephyr 
+
+1)在本地机器安装xephyr
+apt-get install xephyr
+
+2)在本地机器运行xephyr
+$ Xephyr :2 -host-cursor -screen 800x480x16 -dpi 96 -ac -extension Composite
+
+5.在scratchbox环境中启动
+> export DISPLAY=:2 
+> af-sb-init.sh start   
+###########################
+6.  
+1)/etc/sysctl.conf
+vm.vdso_enabled = 0
+vm.mmap_min_addr = 4096
+net.ipv4.ip_local_port_range = 1024 65535 
+2)root
+$ /root/marvell_mid/scratchbox/sbin/sbox_ctl start 
+3)xieyans sratchbox
+/scratchbox/login 
+
+###########################################
+卸载scratchbox
+由于scratchbox将本机系统的某些目录挂载(运行mount命令看看挂载信息), 所以不能直接通过删除目录来卸载scratchbox. 应该按下面的方法:
+1, 停止scratchbox:
+$ sudo /scratchbox/sbin/sbox_ctl stop
+2,再使用mount命令确定没有目录被挂载到scratchbox后再删除目录:
+$ rm -r /scratchbox
+在你删除全部目录之前, 最好将scratchbox的usrs目录中有用的资料拷贝到别处备份.
+
+
+
+
+
+
+
+开发板子环境的设置过程：
+=========================
+一、准备：
+1，nfs文件系统的备份，在10.1.14.90中有相应的压缩包。
+
+2，cutecom工具，用于和板子进行串口通信的工具。
+
+3，开发板子。
+
+4，连接板子（注意，板子不同，连接可能也不一样）：
+1）串口线，红色部分对准j11
+2）电源处，头部蓝色部分朝上
+3) 电源处，j2接j10,j1接j9
+4)显示器：宽线都是蓝的朝上，窄线白的朝下。
+
+5，nfs服务器建立：
+1）.安装nfs服务器端和客户端
+sudo apt-get install portmap nfs-kernel-server
+sudo apt-get install portmap nfs-common
+2）.配置共享文件
+编辑/etc/exports，在其中增加要共享的目录
+如 
+/home/quietheart/nfs 10.1.14.0/24(rw,sync,no_root_squash,no_subtree_check)
+其中 /home/quietheart/nfs，10.1.14.0/24代表共享给哪个子网，rw是可读写权限
+然后
+sudo exportfs -ra
+3）.重启服务
+sudo /etc/init.d/portmap restart
+sudo /etc/init.d/nfs-kernel-server restart
+4）.客户就可以加载了
+sudo mount 10.1.14.58:/home/quietheart/nfs /home/xxx
+
+------------------------------------------------
+二、设置：
+连接好板子和电源之后：
+1.启动cutecom：
+$cutecom&
+2,设置相关：
+--------
+常用命令：
+*打印所有变量：
+printenv
+
+*打印某个变量(如:ip)：
+printenv ip
+
+*设置某一个变量（如ip=10.1.1.1）：
+setenv ip 10.1.1.1
+或者setenv ip '10.1.1.1'
+注意这里面变量后面没有等号。如果有‘；’等特殊字符，而字符又不再''中，则需要转义。
+
+*保存设置的变量：
+saveenv
+--------
+为清晰起见，这里只列出了设置的变量值，后面说详细的设置过程。
+dnsip=210.83.210.155
+serverip=10.1.14.90
+gatewayip=10.1.14.1
+ipaddr=10.1.14.81
+bootargs=console=ttyS0,115200n8 root=/dev/nfs rw nfsroot=10.1.14.122:/quietheart/nfs/ ip=10.1.14.81
+bootcmd=cp.b 0xf80a0000 0x200000 250000;bootm 0x200000
+bootcmd=tftpboot 0x2000000 uImage_avenger_with_usb; bootm 0x2000000 
+--------
+--------
+设置变量：
+1，点击cutecom上面的“Open device”.
+2，Device:选择‘/dev/ttyS0’,表示使用第0个串口。
+3，baud rate:选择'115200'
+4，databits：选择‘8’
+5，stopbits：选择‘1’
+6，给板子上电，然后在提示的时间（一般3秒内）按回车进入设置：
+
+*设置板子上网的dns：
+setenv dnsip 210.83.210.155
+
+*设置tftp服务器的地址：
+setenv serverip 10.1.14.90
+这个地址是下载内核启动需要的内核所在的服务器的地址。
+
+*设置网关：
+setenv gatewayip 10.1.14.1
+
+*设置板子ip地址：
+setenv ipaddr 10.1.14.81
+
+*设置uboot启动参数：
+setenv bootargs console=ttyS0,115200n8 root=/dev/nfs rw nfsroot=10.1.14.122:/home/quietheart/nfs/ ip=10.1.14.81
+这里，nfsroot=10.1.14.122:/home/quietheart/nfs/ 是指定我电脑上nfs的服务目录。ip=10.1.14.81指定板子的ip地址。
+
+*设置uboot启动执行命令：
+setenv bootcmd cp.b 0xf80a0000 0x200000 250000\;bootm 0x200000
+注意，这里我设置的是从板子自身的内核启动了(不需要从服务起下载内核了)。
+
+*如果从服务器的tftp下载内核并启动，需要这样设置：
+setenv bootcmd tftpboot 0x2000000 uImage_avenger_with_usb\; bootm 0x2000000 
+这里,uImage_avenger_with_usb是要下载的内核名称，另外需要注意‘；’需要用‘\’来转义,如果不用这个来转义那么就把所有的内容放到单引号中。
+(实际可以利用1,tftp 0x2000000 uImage_** 2,bootm这两步来启动系统。)
+
+*保存设置的变量：
+saveenv
+
+*启动板子：
+boot
+------------------------------------------------
+开发板没有LCD的的情况下，如何在虚拟机中显示启动桌面:
+1)修改新文件系统下的脚本文件（etc/osso-af-init/af-defines.sh）中，第59行:
+             原有 export DISPLAY=:0.0
+        －－》修改为   export DISPLAY=自己pc机的IP地址:2    
+
+2）虚拟机下启动Xephyr(虚拟显示)的命令修改为
+        －－》Xephyr :2 -host-cursor -screen 1024x600x16 -dpi 96 -ac-extension Composite
+
+这样系统启动后，桌面自动显示在虚拟窗口中。除了触摸屏不好用，其他和真正的
+LCD一样。
+
+其他杂技
+========
+--------------------------------------
+uboot里面的serverip里面下载内核，然后启动：
+1）tftp 0x2000000 uImage_support_backlight_suspend
+2）bootm
+
+从板子启动：
+1)setenv bootcmd 'cp.b 0xf80a0000 0x2000000 250000;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x2000000'
+
+2)boot
+
+----------------------------------------------
+
+从板子flash启动
+bootcmd=cp.b 0xf80a0000 0x200000 250000;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x200000
+这里实际setenv bootargs的部分可以在botargs里面进行设置，如果这样设置那么bootargs里面的设置就不起作用了。
+
+设置板子自动从tftp启动：
+bootcmd=tftp 0x2000000 uImage_wifi_fixed;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x2000000
+类似上面，这里需要注意的是，这样虽然可以从tftp服务器中（在serverip里面指明了）下载内核，但是启动系统之后内核网络不通的话，在进入系统之后一样连接不上网络。

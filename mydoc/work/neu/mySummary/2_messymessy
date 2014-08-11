@@ -1,0 +1,8 @@
+启动一个程序的/usr/bin实际是：
+hildon-input-method -> maemo-invoker
+maemo-invoker实际启动了hildon-input-method.launch
+
+关于Qtopia
+出自QtopiaApplication的源文件：
+qtopiaApplication代替程序中的QApplication这样程序就具有了qt exteneded风格了。例如可以响应back等等。
+

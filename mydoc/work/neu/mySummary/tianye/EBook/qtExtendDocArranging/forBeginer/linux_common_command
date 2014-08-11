@@ -1,0 +1,312 @@
+这里是经常使用的linux命令：
+分类信息:
+*文件管理
+*磁盘管理
+*权限管理
+*其他操作
+*未整理内容
+
+*文件管理
+======================
+*创建名字为1的目录：
+$mkdir 1
+
+*创建名字为1的文件：
+$touch 1
+
+*删除名字为1的文件：
+$rm 1
+
+*查看文件1的内容：
+$cat 1
+
+*删除一个空目录dirname:
+$rmdir dirname
+这里,dirname必须是空的。
+
+*删除一个目录：
+$rm -r dirname
+这里，rm -r dirname是递归删除的意思，如果加上-i选项，表示删除之前提示是否删除。
+
+*强制删除目录dirname：
+$rm -f dirname
+
+*重命名/移动文件：
+$mv ./origin ./newname
+这里，Linux中没有专门的重命名命令，这里实际是使用了移动命令来进行的。原来的文件名origin,新文件名newname.
+
+*把文件file1拷贝一份到file2
+$cp file1 file2
+这里，操作都是在当前目录下面进行的,如果拷贝到别的目录，可以指定路径，例如cp file1 /anotherdir/file2.
+
+*把目录dir1考到另一个地方为dir2：
+$cp -r dir1 dir2
+这里，-r表示递归拷贝所有子目录。
+
+*进入到一个目录中：
+$cd dirname
+
+*查看目录dirname中所包含的文件：
+$ls dirname
+
+*查看目录dirname中所包含的文件的详细信息：
+$ls -l
+这样，会显示相应文件的详细信息，包括属主，大小，权限等信息。
+
+*查看当前的目录：
+$pwd
+这样，会输出当前所在目录的路径。
+
+*创建文件file的硬链接:
+$ln file lnfile
+这里，使用链接的目录格式类似cp。建立硬链接之后，如果删除源，还可以通过这个硬链接访问到这个文件的内容，除非所有的硬链接都被删除了，否则文件内容就一直存在的。硬链接不能够跨越文件系统，不能够建立目录的硬链接。
+
+*创建文件file的软链接:
+ln -s file lnfile
+这里，创建软链接，文件名里面有'$'就用了转义'\$'表示'$',尽量用绝对路径防止出错。软链接可以跨越文件系统，可以为目录创建软链接，但是软链接的文件，如果删除源，链接会失效，类似windows中的快捷方式。
+
+*权限管理
+======================
+*修改文件的权限为所有人可读可写可执行：
+$chmod 777 filename
+这里，文件属主必须是当前用户，否则就只能进入超级用户才能执行这个命令了。
+
+*修改文件filename的权限,为other用户添加写权限：
+$chmod o+w filename
+
+*修改目录以及所有子目录的权限为777：
+$chmod 777 -R dir
+
+*查看在线登陆用户：
+$who
+
+*将一个用户添加到用户组中:
+#usermod -a -G groupA user
+这里，不要忘记-a选项。如果用："usermod -G groupA",这做会使user用户离开其他用户组，仅仅做为这个用户组 groupA 的成员。
+
+*更改用户user的组为groupA
+#usermod -G groupA user
+
+*磁盘管理
+======================
+*查看分区信息：
+fdisk -l
+这里，会显示你的电脑上面的所有磁盘的信息，例如分区，文件系统等。当前必须是root用户，否则没有权限。
+
+**挂载磁盘相关：
+你的linux系统必须将其他硬盘的其他分区(例如windows分区)挂载到根目录树中，才能访问相应的分区。
+*挂载分区/dev/sda7到/mnt/win：
+#mount -t vfat /dev/sda7 /mnt/win
+这样的挂载有可能会出现显示中文的时候有乱码,因为可能没有指定解码的字符集。必须是超级用户才能执行。
+
+*指定gb2312字符集的挂载：
+#mount -t vfat -o iocharset=gb2312 /dev/sda7 /mnt/win
+这样的挂载的时候，指定使用gb2312字符集，这样就可能没有乱码了。其他常用的字符包括cp936,utf8等等(ntfs的一般用utf8挂载)。必须是超级用户才能执行。
+
+
+*查看已经挂载的分区：
+#mount
+
+*卸载已经挂载的分区：
+#umount /mnt/win
+或#umount /dev/sda7
+这里，是把/dev/sda7分区挂载到了/mnt/win上面。
+
+*重新挂载:
+#mount -o rw,remount /mnt/data
+这里，有时候文件系统变为只读了，试试这个命令.
+
+*设置系统启动自动挂载某个分区：
+方法之一是：在/etc/fstab中加入如下内容：
+/dev/sda8 /mnt/winG vfat defaults,rw,exec,iocharset=utf8,umask=0000 0 0
+（必须有umask=0000,否则只有root可以写，并且root也不能更改chmod 777 -R ...这是自己尝试出来的）
+**
+
+*其他操作
+======================
+*清屏：
+$clear
+这样，当前用户的屏幕会被“清理”,并被重新刷新，原来输入的命令和命令的输出都被清理掉了，也可以使用[Ctrl]l来达到相同的效果。
+
+*查看系统的编码：
+$locale
+输入之后，例如我的机器输出如下：
+LANG=zh_CN.UTF-8
+LC_CTYPE="zh_CN.UTF-8"
+LC_NUMERIC="zh_CN.UTF-8"
+LC_TIME="zh_CN.UTF-8"
+LC_COLLATE="zh_CN.UTF-8"
+LC_MONETARY="zh_CN.UTF-8"
+LC_MESSAGES="zh_CN.UTF-8"
+LC_PAPER="zh_CN.UTF-8"
+LC_NAME="zh_CN.UTF-8"
+LC_ADDRESS="zh_CN.UTF-8"
+LC_TELEPHONE="zh_CN.UTF-8"
+LC_MEASUREMENT="zh_CN.UTF-8"
+LC_IDENTIFICATION="zh_CN.UTF-8"
+LC_ALL=
+
+*未整理内容
+======================
+
+*查看所有的用户:组：
+$cat /etc/passwd 
+这里，用户都保存在了passwd文件中，所以查看这个文件的内容就可以看到所有的用户了。
+成功创建一个新用户以后，在/etc/passwd文件中就会增加一行该用户的信息，其格式如下：
+〔用户名〕：〔密码〕：〔UID〕：〔GID〕：〔身份描述〕：〔主目录〕：〔登陆Shell〕
+其中个字段被冒号“：”分成7各部分。
+由于小于500的UID和GID一般都是系统自己保留，不用做普通用户和组的标志，所以新增加的用户和组一般都是UID和GID大于500的。
+
+*查看所有的组：
+$cat etc/group
+这里，用户都保存在了group文件中，所以查看这个文件的内容就可以看到所有的用户了。
+
+2.添加一个用户testusr:
+1)useradd testusr
+(注意在超级用户模式才能用,刚建立没有密码，没有自己的home）其他选项可以参见man
+2)useradd -m testusr
+(或者useradd testusr -m,添加一个用户并且自动建立该用户的子目录)
+3.设置更改一个用户testusr的密码为123456:passwd testusr
+(必须切换到超级用户模式，然后会提示输入，按照提示做即可）
+更改自己的密码只需输入passwd 不用切换到超级用户下。
+4.切换到用户testusr下：su testusr
+会提示输入密码等。
+5.修改用户信息:usermod〔选项〕〔用户名〕
+具体选项可以参见帮助
+1)usermod –d/home/testusr –s/bin/bash testusr
+用户名testusr的主目录路径设置在/home/testusr,登陆的Shell设置为/usr/bin/gcc(-d更新使用者新的登陆目录,-s指定新用户Shell)
+空格有无均可
+2)usermod -l test testusr
+把用户名testusr改成test(-l变更用户登陆时的名称，同时使用者目录名也会跟着更动成新的名称(实践了没变目录呀))
+usermod不允许改变正在线上的使用者帐号名称
+6.删除用户test:
+1）userdel test
+不会把主目录删除
+2）userdel -r test
+把用户test的主目录和邮箱缓存一并都删除。
+
+修改用户密码
+切换到超级用户
+
+==========
+三、用户管理：
+1.查看所有的用户和组：cat /etc/passwd 和 cat etc/group
+成功创建一个新用户以后，在/etc/passwd文件中就会增加一行该用户的信息，其格式如下：
+〔用户名〕：〔密码〕：〔UID〕：〔GID〕：〔身份描述〕：〔主目录〕：〔登陆Shell〕
+其中个字段被冒号“：”分成7各部分。
+由于小于500的UID和GID一般都是系统自己保留，不用做普通用户和组的标志，所以新增加的用户和组一般都是UID和GID大于500的。
+2.添加一个用户testusr:
+1)useradd testusr
+(注意在超级用户模式才能用,刚建立没有密码，没有自己的home）其他选项可以参见man
+2)useradd -m testusr
+(或者useradd testusr -m,添加一个用户并且自动建立该用户的子目录)
+3.设置更改一个用户testusr的密码为123456:passwd testusr
+(必须切换到超级用户模式，然后会提示输入，按照提示做即可）
+更改自己的密码只需输入passwd 不用切换到超级用户下。
+4.切换到用户testusr下：su testusr
+会提示输入密码等。
+5.修改用户信息:usermod〔选项〕〔用户名〕
+具体选项可以参见帮助
+1)usermod –d/home/testusr –s/bin/bash testusr
+用户名testusr的主目录路径设置在/home/testusr,登陆的Shell设置为/usr/bin/gcc(-d更新使用者新的登陆目录,-s指定新用户Shell)
+空格有无均可
+2)usermod -l test testusr
+把用户名testusr改成test(-l变更用户登陆时的名称，同时使用者目录名也会跟着更动成新的名称(实践了没变目录呀))
+usermod不允许改变正在线上的使用者帐号名称
+6.删除用户test:
+1）userdel test
+不会把主目录删除
+2）userdel -r test
+把用户test的主目录和邮箱缓存一并都删除。
+3）查看用户密码？
+四、其它：
+1.启动xwindow图形界面：startx
+ctrl+alt+F7(F7,F8..)
+2.进入文本模式：ctrl+alt+F1(F1..F6)
+3.离开图形界面：
+1）注销(不会umount)
+2）ctrl+alt+backspace（不会umount）
+4.更改开机背景
+1)如果是指支持gfxboot的grub所用的message文件，
+用cpio来解：
+在/boot中，
+mkdir 1
+cd 1
+cpio -i < ../message
+这样会把message的文件导到目录1中。
+更新了图片后，
+find -type f | cpio -o > ../message
+2)第二个方法：suse修改GRUB的背景图为企鹅动画主题
+2.1). 先备份（请养成这个好习惯）
+$ cp /boot/message ~/message.old
+
+2.2). 建立一个目录，例如cpio
+$ mkdir cpio
+
+2.3). 复制一份来准备修改
+$ cd cpio
+$ cp /boot/message .
+
+2.4).开始了
+$ cpio -idv < message
+
+2.5). 删除message
+$ rm message
+
+2.6). 修改 gfxboot.cfg
+# penguin theme likelihood in percent; -1 = auto
+penguin=100
+将原先预设的-1改成100 or 0(100是永远用企鹅画面，0是用远不用企鹅画面)
+
+2.7). 重新生成message
+$ ls | cpio -ov > ../message
+请注意不要有任何错误讯息
+
+2.Cool. 将生成的档案复制回原位
+$ su
+Password:
+# cp ../message /boot/message
+－－－－－－－－－－－－－
+注：1、不要忘了 $ cp /boot/message .其中的.。
+2、把两个－1都改成100
+3、如果可能，则修改相应的图片，如back.jpg和pback.jpg
+－－－－－－－－－－－－－－
+4、查看内核版本号：uname -r
+
+
+
+
+－－－－－这里开始使用fedora8－－－－－------------------------------------------------------------------------
+1.fedora8快速回到桌面的快捷键：gnome方面的快捷键是ctrl+alt+d
+2.查看文件大小:du -sh 文件名
+3.linux中的bg和fg管理(适用与vi编程)
+当我们打ctrl+z的时候一个任务就被挂起(就是暂停),同时屏幕上返回一个数字,这时候可以用 "bg %数字" 来把这个进程放到后台执行...这个很适合在你忘了加&的时候进行补救...同样 " fg %数字 "就能让这个进程放到前台来执行了...（实际上，“fg 数字”就可以了）
+job命令用来查看当前的被bg的进程...
+4.fedora8切换桌面工作区快捷键：ctrl+alt+左右方向键
+5.fedora8锁定屏幕快捷键：ctrl+alt+L
+6.切换不同任务快捷键：alt+TAB
+7.查看当前时间：date
+8.快速输入历史中的命令（部分匹配）：先ctrl+r，然后输入命令即可部分匹配。
+.........待更新...........
+20090219ubuntu
+1.查看 Ubuntu 的版本号，可以采用以下两种方法之一
+方法一
+在终端中执行下列指令：
+cat /etc/issue
+可以查看当前正在运行的 Ubuntu 的版本号。其输出结果类似下面的内容：
+Ubuntu 7.04 \n \l
+方法二
+使用 lsb_release 命令也可以查看 Ubuntu 的版本号，与方法一相比，内容更为详细。执行指令如下：
+sudo lsb_release -a
+将输出结果：
+Distributor ID: Ubuntu
+Description: Ubuntu 7.04
+Release: 7.04
+Codename: feisty
+
+==========
+*查看当前用户属于的组：
+$groups
+
+*查看某个用户(username)属于哪个组：
+$groups username

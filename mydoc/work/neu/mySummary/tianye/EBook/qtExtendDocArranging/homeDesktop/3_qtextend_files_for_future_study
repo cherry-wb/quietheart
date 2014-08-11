@@ -1,0 +1,968 @@
+这里的东西一个包含深入研究的资料，以及一些有用的资料简介，还有工作时候一些无法分类的小经验总结。
+*有用的资料
+*整理的资料
+*杂乱的技巧
+
+*有用的资料
+=====================
+这里给出一些重要的资料链接以供参考。可能会整理之后放到“整理的资料”里面。
+最重要的资料当然是官方文档：
+http://qtextended.org/doc/qtextended4.4/index.html
+
+1)关于界面的大体样子参见：
+http://qtextended.org/doc/qtextended4.4/qtopiaserver-phoneui.html
+这个地方列出了qtExtend桌面环境中的各种界面部分的图以及名称举例,给大家一个直观的认识。
+
+2)在源代码src/server/phone/samples/里面，有许多的例子，每个例子里面有不同的桌面外观。
+这里整体桌面包含常用的三个部分是顶部statusbar,中间的主窗口，底部的softmenubar.
+可以在ServerWidgets中配置：
+Default=
+BrowserScreen=
+ContextLabel=
+使用方法举例如下：
+2.1)查看其中的e1/e1_launcher.h，发现如下定义：
+class E1ServerInterface : public QAbstractServerInterface
+2.2)于是修改$HOME/.../ServerWidgets.conf如下：
+Default=E1
+2.3)运行：
+.../runqtopia
+这样又启动了一个桌面。
+
+3)关于如何创建一个简单的qtopia应用程序参见：
+http://qtextended.org/doc/qtextended4.4/application.html
+实际参考代码qtex/examples/application就行了。
+
+4)关于通信
+Qt Extended IPC Layer
+*参考文档：http://qtextended.org/doc/qtextended4.4/qtextendedipc.html
+这篇文章主要介绍了qtextend平台下面的一些通信方法。主要是
+QtopiaIpcAdaptor QtopiaChannel 和 QtopiaIpcEnvelope.
+其中对QtopiaIpcAdaptor用举例进行了介绍。并且介绍了如何定义将要发送的自定义的类消息，以及如何将它们串行化以便可以发送和使用。最后还介绍了一个小工具的链接qcop，可以像dbus-send一样在命令行下面发送QCopChannel消息。具体就参考文档吧。
+举几个例子：
+a)旋转的信息通道：
+代码：
+QtopiaServiceRequest svreq("RotationManager","setCurrentRotation(int)");
+svreq << 270;
+svreq.send();
+实际上是：
+qcop service send RotationManager "setCurrentRotation(int)" 90
+
+b)声音报警：
+qcop service send Alert "soundAlert()"
+qcop service send Ringtone "startMessageRingtone()"
+c)在命令行中启动程序：
+qcop send QPE/Application/calculator 'raise()'
+这样实际是给calculator发送一个raise消息。
+d)在命令行中关闭当前程序：
+qcop send QPE/System 'close()'
+这样会把当前的程序关闭。
+e)在命令行中发送程序，并且调用指定的setDocument中指定的"文件"参数??????：
+qcop send QPE/Application/ereader 'setDocument(QString)' 'filename'
+这样会启动ereader,并且给其中的setDocument函数传递filename参数.
+
+
+*参考文档：
+http://qtextended.org/doc/qtextended4.4/qcop-tool.html
+说了一个qcop工具，类似dbus-send，可以在不写代码的情况下直接敲命令行来给应用程序发送消息。
+例如：
+例如对于旋转,代码中是：
+QtopiaServiceRequest svreq("RotationManager","setCurrentRotation(int)");
+svreq << 270;
+svreq.send();
+实际在命令行中使用：
+qcop service send RotationManager "setCurrentRotation(int)" 270就行了。
+另外：
+qcop
+执行这个会查看帮助。
+qcop list
+会列出所有具有的服务
+
+*参考文档:
+http://qtextended.org/doc/qtextended4.4/services.html
+这里面给出了qt extended里面支持的服务。
+
+5)关于屏幕驱动
+关于旋转可以参考
+http://qt.nokia.com/doc/qtextended4.4/syscust-rotation.html
+这里说明了如何使整个环境显示旋转，给出了一个小例子。
+QTransformedScreen
+参考：
+http://qt.nokia.com/doc/4.1/qtransformedscreen.html
+可能用到的有用的代码片段：
+
+*旋转：
+QtopiaServiceRequest svreq("RotationManager", "setCurrentRotation(int)");
+svreq << 270;
+svreq.send();
+代码含义是将当前显示旋转270度（逆时针）。可以旋转的角度有0,90,180,270.
+
+*侦听旋转事件：
+当发生旋转事件之后，应用程序需要根据旋转的角度来进行相应的处理，添加如下代码就可以侦听旋转的发生：
+#include <QValueSpaceItem>
+YourClass::YourClass()
+{
+	//...前面是构造函数中的其他代码...
+	QValueSpaceItem *rotation;
+	rotation = new QValueSpaceItem("/UI/Rotation", this);
+	connect(rotation, SIGNAL(contentsChanged()), this, SLOT(rotationChanged()));
+	//...后面是构造函数中的其他代码...
+}
+注意，这里rotationChanged必须是在自己类中定义的槽。
+
+*处理旋转：
+处理过程大致是：首先，获得当前的旋转角度；其次，根据当前角度调整程序各构件的大小位置等布局。
+void YourClass::rotationChanged()
+{
+	QValueSpaceItem *currentRotation = new QValueSpaceItem("/UI/Rotation/Current");
+	int currentRot = currentRotation->value().toUInt();
+	delete currentRotation;
+	//...在后面添加各自的调整构件布局的相关代码...
+}
+
+
+设置环境变量QWS_DISPLAY可以选择相应的屏幕驱动。具体参见：
+http://qt.nokia.com/doc/qtextended4.4/qt-embedded-displaymanagement.html
+
+关于QWS_DISPLAY变量在这里有一些解释：
+http://qt.nokia.com/doc/qtextended4.4/qt-embedded-envvars.html
+
+
+
+
+7)qtex/examples里面的每个小例子都是一个小知识点非常有用。这里qtex是Qt Extended安装目录。
+
+8)关于程序的执行行为，参照：
+http://qtextended.org/doc/qtextended4.4/fd-applicationexecution.html
+主要大致说了系统启动时候的提供服务的守护程序(tasks),预先加载和假关闭的程序，以及quicklaunch程序。
+http://qtextended.org/doc/qtextended4.4/qtopia-startup.html
+这里大致说了qt server程序启动的大致行为。
+
+9)关于服务，参见：
+http://qtextended.org/doc/qtextended4.4/services.html
+这里介绍了具有哪些服务，如何请求服务（例如利用通道），如何添加服务等等。
+
+10)关于如何使用gdb调试qt extended下面的程序，可以参考：
+http://qtextended.org/doc/qtextended4.4/debug-qtextended.html
+这里大致介绍了如何调试程序，以及使用qlog()的方法。
+关于调试，这里简单介绍如下：
+(1)开发主机上面，编译源代码之前修改qbuild.pro，添加如下代码：
+CONFIG += debug
+这样和给configure传递-debug选项是一样的。
+(2)编译源代码，可以用../../../.../qbuild
+(3)在目标机器上面运行gdb服务：
+#gdbserver :22222 qpe
+这里，在开发板子上面将会侦听22222端口
+(4)在开发主机上面，运行对应的qpe程序。
+/opt/toolchains/.../bin/arm-linux-gdbtui /opt/Qtopia/bin/qpe
+这里的qpe程序在开发主机上面，不一定是板子上面的那个qpe，但是两者应该是同一个版本的。
+(5)连接开发板子上面的gdb服务：
+(gdb) target remote REMOTE_IP_ADDRESS:22222
+这里，REMOTE_IP_ADDRESS是开发板子的ip地址，例如192.168.100.200
+(6）正常运行gdb命令，就可以调试了。
+
+11)关于使用qLog来规范打印log：
+参考：
+http://qtextended.org/doc/qtextended4.4/debug-qtextended.html
+这里只说使用的方法：
+(1)在类似/usr/local/qtex/etc/default/Trolltech目录中的Log.conf文件中，添加如下：
+[EB306Desktop]
+Enabled = 1        
+Name[] = EB306 Home Desktop        
+Help[] = Logging related to the eb306 home desktop application. 
+如果是在源代码中，路径是：
+./src/libraries/qtopia/etc/default/Trolltech/Log.conf
+(2)在程序的源代码中添加：
+#include <qtopialog.h>
+QTOPIA_LOG_OPTION(EB306Desktop)
+qLog(EB306Desktop)<<"print log!";
+这里，QTOPIA_LOG_OPTION是声明log由配置文件来决定其特征。还有其他的方式就请参见文档。
+(3)启动log打印：
+将前面Log.conf中相应的Enabled设置为1就能打印log了，例子中的log信息如下：
+EB306Desktop :  print log!
+(4)关闭log打印：
+将前面Log.conf中相应的Enabled设置为0就能禁止打印log了.
+(5)自定义log打印的格式：
+修改类似/usr/local/qtex/etc/default/Trolltech目录中的Log.conf文件,添加如下代码：
+[MessageHandler]
+Format = %t %p %n: %s
+这里，
+%s:你的log字符串。
+%t:一个时间啜，以微妙计算。所有的进程使用同一个起点，以便于进程之间进行时间的比较。
+%p:当前进程的PID.
+%n:当前进程名，同QCoreApplication::applicationName()返回,无QCoreApplication就是可执行文件名。
+这样定制之后，前面的打印信息变成这样：
+45909 511 qpe: EB306Desktop :  print log!
+另外，
+实践发现，用qDebug打印的东西在声明了QTOPIA_LOG_OPTION(CategoryIdentifier)之后好像也打印和qlog一样的信息了。
+
+
+*整理的资料
+=====================
+---------
+关于qtopia程序：
+---------
+参考QtopiaApplication的文档：
+http://qtextended.org/doc/qtextended4.4/qtopiaapplication.html#QTOPIA_ADD_APPLICATION
+
+QtopiaApplication实现了对所有qtextend程序都可以使用的系统服务。
+使用QtopiaApplication替代QApplication，可以使普通的qt程序变成一个qtextend程序。 
+QtopiaApplication类控制qt extended程序的生存周期。程序在一个QCop 消息到达它们的程序通道的时候可以被qt extended自动的启动。 
+qt extended程序在如下的情况下不会终止：
+1）有发向这个进程的QCop消息请求。
+2)程序的UI界面是可以看见的。
+3)程序具有"running tasks".
+程序的界面定义为toplevel，即使被其它的窗口挡住了，QWidget::isHidden() 也不是标记为hide.大多数基于UI的程序通过这个"hide"标记来表示它仍旧有工作需要做。关闭窗口程序结束，似乎是窗口一旦隐藏就导致程序关闭。
+qt extended使用tasks来告诉Qtopia程序它仍然有工作需要做。它用于在用户UI不可见的时候，程序仍旧需要保持运行状态的情况。这时候，程序需要使用registerRunningTask() 和 unregisterRunningTask() 来注册和注销task.
+
+在这样的程序生存周期模型中，有两种优化方案：
+预先加载程序，和假关闭程序。修改的配置文件：$HOME/Settings/Trolltech/Launcher.
+
+预先加载程序，在系统启动的时候被加载并且一直保持运行状态。它们不会被关闭，只能被隐藏。
+通过把程序的名字放到Trolltech/Launcher配置文件的AppLoading\PreloadApps列表中， 可以指明它们是预先加载的。例如：
+[AppLoading]
+PreloadApps=addressbook,qtmail
+
+假关闭程序，类似也是系统范围内的优化。当被启动之后，即使它被隐藏或者没有工作要做了程序也会一直保持运行状态,直到当系统负载过高或者过多这样的程序运行的时候qtextended系统服务才会关闭它们。
+预先加载程序可以配置系统提高一些预先选定的程序的性能，而假关闭是通过让系统动态调整自己来提高经常运行的程序的性能。例如，如果一个用户经常在"地址本"和"待办事项"之间切换，那么这将提高切换的响应。为了使用假关闭功能，需要把Trolltech/Launcher配置文件的AppLoading/LazyShutdown键设置为true.例如：
+[AppLoading]
+LazyShutdown=true
+
+---------
+关于Qt Extended Value Space
+---------
+Qt-Extended提供了"Value Space"模块，类似于windows的注册表和
+GNome平台gconf的功能：
+1）读取配置
+2）设置配置
+3）可监听配置值是否有变化（可用于进程间通信）
+
+参考文件：
+整体：
+http://qt.nokia.com/doc/qtextended4.4/qtopiavaluespace.html
+关于QValueSpaceItem:
+http://qt.nokia.com/doc/qtextended4.4/qvaluespaceitem.html
+关于QValueSpaceObject:
+http://qt.nokia.com/doc/qtextended4.4/qvaluespaceobject.html
+
+关键点：
+1）通过QValueSpaceItem 访问Value Space.Value Space有两个内部的层：Application Object层和INI层；通过 QValueSpaceObject访问 ApplicationObject层，也可添加自定义的新层，但是一般不建议这么做。
+
+2）当下层的改变，那么上层的也会被通知。
+
+3）QValueSpaceObject 是临时的，当程序结束或者对象被释放的时候或者item被移出的时候就没了。
+
+4）QValueSpaceItem 不是线程安全的，它一般只用在程序的主线程中。
+
+5）QValueSpaceObject文档中说如果多个地方同时设置一个值，那么会将其第一个的采用，之后如果第一个被释放了才会采用下一个。
+
+6）如果Application Object 层和INI layer层同时具有一个item那么INI的将会被覆盖，注意这里面是值的覆盖而不是路径的覆盖。也就是说：假设App层有/device/button/1而只有ini有/device/button，那么这时候，/device/button将会是ini的而不是app的。
+
+7）有两个部分：服务部分和与之对应的0个或者多个客户部分，两者区别不是很大例如在Application Object层。服务端在使用Value Space之前必须先调用QValueSpace::initValuespaceManager()进行初始化。客户端在使用Value Space功能之前会被自动地初始化。
+
+8)Application Object使用10M的共享内存但是是lazily commit的，防止没有必要的消耗。只有server写，而客户是通过一个socket请求server写的。
+
+9)更新在内部会批量处理并且在下次进入qt事件循环的时候被发送。可以通过sync强制通知,但是这样影响性能。
+
+10)INI层把INI配置文件映射到Value Space中。有一个INI层的配置文件指定从哪里加载这些INI配置文件。
+
+11)配置文件的形式大致如下：
+[General]
+Translations=<Directory to INI translations>
+LanguageItem=<Value Space Item for current language>
+Mappings=<这里指定后面Mapping的数目>
+[Mapping<x>]
+ValueSpacePath=(Required)
+FileSystemPath=(One of FileSystemPath or FileSystemPaths required)
+FileSystemPaths=(One of FileSystemPath or FileSystemPaths required)
+FileSystemPath<x>=(Required if FileSystemPaths specified)
+FileSystemExtension=(Optional.  Required if DirectoryDepth is specified)
+DirectoryDepth=(Optional.  Only allowed if FileSystemExtension specified)
+这里[Mapping<x>]应该就是第x个Mapping,总共的Mapping数目由[General]/Mappings指定。每一个Mapping组包含一个单一的ValueSpacePath键值域，然后就是一些可选的内部依赖的键。{ValueSpacePath} 指定了在Value Space中的映射点，这个点是一个“终端”点，它必须是唯一的，但是"/Device"和"/Device/Button"可以同时存在。终端的映射可以是"depth mapping"或者"file mapping".
+12)配置文件Mapping的举例：
+===如果没有FileSystemExtension 和DirectoryDepth 键那么就使用"file mapping".(意思应该就是，如果你不指定文件的扩展名称和相应的目录层，那么你就直接指定是哪个文件来实现映射)例如:
+[Mapping0]
+ValueSpacePath=/Device/Buttons
+FileSystemPath=/opt/Qtopia/etc/defaultbuttons.conf
+这里，如果/opt/Qtopia/etc/defaultbuttons.conf 包含一个Mode/Type 关键字，那么相应的Value Space item "/Device/Buttons/Mode/Type "就存在。
+
+使用FileSystemPaths 可以指定候选文件路径。例如：
+[Mapping0]
+ValueSpacePath=/Device/Buttons
+FileSystemPaths=2
+FileSystemPath0=/tmp/qtembedded-0/defaultbuttons.conf
+FileSystemPath1=/opt/Qtopia/etc/defaultbuttons.conf
+这里，将首先尝试/tmp/qtembedded-0/defaultbuttons.conf,如果这个文件不存在那么就尝试/opt/Qtopia/etc/defaultbuttons.conf候选的路径会被监视，所以如果/tmp/qtembedded-0/defaultbuttons.conf 后来被创建了，那么INI层会做相应的更新。
+
+===如果指定了FileExtension 关键字，那么就会使用"depth mapping",depth mapping 允许动态地把一组ini文件映射到Value Space空间。这时候，ValueSpacePath 指定mapping的开始,下一个DirectoryDepth子路径指定目录，下面的子路径指定一个文件，文件的扩展明是FileSystemExtension指定的。例如：
+[Mapping0]
+ValueSpacePath=/Applications
+FileSystemPath=/opt/Qtopia/apps
+FileSystemExtension=desktop
+DirectoryDepth=1
+
+[Mapping1]
+ValueSpacePath=/GamesApplications
+FileSystemPath=/opt/Qtopia/apps/Games
+FileSystemExtension=desktop
+DirectoryDepth=0
+这里，会创建两个映射，有两个Value Space Items,"/Applications/Games/parashoot"和"/GamesApplications/parashoot"被映射到文件/opt/Qtopia/apps/Games/parashoot.desktop 上面。如果这个文件包含"Desktop Entry/Name"，那么会有相应的Value Space路径：/Applications/Games/parashoot/Desktop Entry/Name 和 /GamesApplications/parashoot/Desktop Entry/Name 存在。
+和file mappings类似，depth mapping也可以有候选路径。例如:
+[Mapping0]
+ValueSpacePath=/Settings
+FileSystemPaths=2
+FileSystemPath0=/home/username/.config
+FileSystemPath1=/etc/
+FileSystemExtension=conf
+DirectoryDepth=1
+将会首先把/Settings/Trolltech/qpe 映射到 /home/username/.config/Trolltech/qpe.conf，然后映射到 /etc/Trolltech/qpe.conf.和file mappings一样，候选路径也是被监视的，这样可以监视文件后来被创建的情况。
+
+===在INI文件中的键值可以通过追加一个'[]'被标记为translatable(可以翻译的)。例如：
+[Translation]
+File=ExampleTranslation
+Context=ExampleContext
+[Example]
+Translatable[]=Translatable Value
+NonTranslatable=Non-Translatable Value
+这里包含的/Example/Translatable 是可以翻译的，non-translatable 是不可以翻译的。在QValueSpaceItem中，会自动地将'[]'标记给去掉。
+
+INI的翻译文件必须存放在INI 层配置文件的关键字General/Translations所指定的目录中，否则没有翻译的功能了。为了提供精确的翻译，INI层配置文件通过指定General/LanguageItem来确定系统语言。当前系统语言和翻译的目录一起形成INI层寻找翻译文件的根路径。
+如果一个INI配置文件包含translatable标记关键字，那么它必须要有一个Translation 组,来指定INI层如何定位key值的翻译。Translation/File指定上面说的translates根目录中需要打开的文件，Translation/Context 指定Qt在那个文件中翻译的context.INI曾也支持语言变化的通知。
+
+12)当前INI层部分变化的通知。INI文件中的key将会发生变化的通知,但是这些变化通知不会在Value Space中向上层广播。
+如下：
+//发送QValueSpaceItem::contentsChanged()信号
+QValueSpaceItem item("/Settings/Trolltech/qpe/Desktop Entry/Name");
+
+//发送QValueSpaceItem::contentsChanged()信号
+QValueSpaceItem item2("/Settings/Trolltech/qpe");
+
+//不发送QValueSpaceItem::contentsChanged()信号
+QValueSpaceItem item3("/Settings/Trolltech");
+这个限制可能会在将来的版本中被移除。
+
+---------
+关于Task
+---------
+参考文档:
+http://qt.nokia.com/doc/qtextended4.4/qtopiaserverapplication.html#details
+tasks是提供一些后台功能的东西。qt Extended　server程序是由一些server tasks集合而成的，可以把每一个task看作是一个小的功能模块，开发者可以自由定制这些模块（例如从server中删除或者添加一些模块），仅需要对qt Extended server程序做很小的改动，或者几乎不做改动。这些通过device profiles 还有 $QPEDIR/etc/Tasks.cfg 进行配置。关于device profiles 参见如下网址：
+http://qt.nokia.com/doc/qtextended4.4/integration-guide.html#device-specific-configuration
+
+1)$QPEDIR/etc/Tasks.cfg这个文件指定了相应的tasks.
+文档简单说明了这个文件的语法。
+2)Tasks.cfg中一些保留组名含义如下：
+prestartup：这个组包含的任务在Qt Extended执行之后会被立即执行。
+startup：这个组包含的任务会在startup时被执行。
+idle：这个组包含的任务在界面显示出来之后并且系统是空闲的时候会被执行。
+exclude：这个组包含的任务，在出现在server中的时候，不会被创建。如果把一个任务添加到exclude组，就等价于把它从server中移出。
+All：这个组中任务的startup属性没有被特别地指定。
+3)任务被创建的类型有两种：
+Preemptive Tasks:这样的任务在无论是否有其他任务请求，在系统启动的时候都会被启动。有一些Preemptive任务可以让他们的创建延迟，需要把它们放在idle组中。
+On-demand Tasks：这样的任务它们的创建会被延迟直至另一个任务请求它被执行。仅仅在Tasks.cfg中的startup组创建的任务是Preemptively的。所有其他的任务（除了exclude组）都是on demand.
+不建议使用名字来实例化On-demand Tasks,因为它可能会导致在系统内的耦合。请求者应该要求系统返回一个支持指定接口的任务，这样请求者不用修改代码就可以实现功能的切换。
+4)标记任务类型：
+4.1)把Preemptive任务标记为延迟启动：
+默认来说preemptive是在显示ui之间被创建的，如果一个preemptive很耗时间，那么ui显示的也会很慢，这时候可以把它标记为延迟创建的，也就是说把它放到idle组中。这样在显示ui之后，空闲的时候会创建这个任务，如果有用户交互那么创建会再延迟一些。
+4.2)把任务标记为On-demand的：
+在Tasks.cfg中的任务(或者组)通过在它们的名字后面追加上一个":demand"把它们标记为按需启动的。Demands任务不会在All...??
+......后面的待更新......
+在往后说了如何请求一个task接口,以及返回所有task，次序又Task.cfg决定。task启动的次序等可以通过特殊的Value Space来读取到。
+文档
+http://qt.nokia.com/doc/qtextended4.4/integration-guide.html#server-tasks
+给出了如何开发一个server task的例子，将源代码放到devices/server中，就行了。
+这样在devices中，可以编写基于特定设备的代码，而和qtExtended代码相互独立了。
+
+当然不要忘记编译的时候加入类似如下指定设备的配置选项。
+$QTOPIA_DEPOT_PATH/configure -device greenphone
+往后又较为详细地介绍了Server Widgets（即启动程序的主界面是如何通过配置来进行选取的）.
+
+总之，如果自己写一个task,
+主要是定义一个类，基类是QObject,然后在这个类的cpp文件中使用宏QTOPIA_TASK(ExampleServerTask, ExampleServerTask);等，可能需要包含头文件#include "qtopiaserverapplication.h",这样就可以在Task.cfg中配置task了，然后在task相应的类里面可以做任何你想要做的事情，例如启动一个程序。(这个我还没有实践过)
+然后写一个server.pri文件，可以参考：/home/quietheart/buildTmp/eb306_build/qtex/src/server/media/servercontrol/server.pri
+
+另外，我猜测好像device目录下面的子目录的内容，如果和qtex主目录内容有一样的话会优先采用device下的（当然是根据编译时候的config），如果没有才使用qtex/src等进行编译。这样可以编写设备无关的内容到qtex/device/下面。
+
+---------
+关于quick launch：
+---------
+1)大致的全局信息
+参考文档：
+http://qt.nokia.com/doc/qtextended4.4/quicklaunch.html
+主要说了影响程序启动慢的因素和quicklauncher大致怎样优化这些因素的。
+(1)影响程序启动主要有四个因素：
+*加载动态链接库
+*构造QtopiaApplication类
+*构造widgets
+*加载数据文件
+quick launch主要是为了消除前两个因素和第三个因素的一些情况。
+(2)quicklauncher减少程序启动时间的方法：
+为了去掉加载动态链接库和构造QtopiaApplication所消耗的时间，在请求执行应用程序之前启动了一个quicklauncher程序，启动这个程序做了如下工作：
+*链接了最常用的库
+*构造了QtopiaApplication类
+*预先加载了默认的字体和尽可能多的数据
+*执行一个事件循环，等待启动应用程序的请求
+当请求执行一个应用程序的时候，quicklauncher会：
+*释放当前的LIDS/SXE认证(什么意思？)
+*加载应用程序插件
+*改变标识为请求的应用程序
+*运行应用程序初始化函数（这样会构造应用程序的widgets）
+*返回到事件循环
+这时候，quicklauncher的行为就和正常启动了那个应用程序一样。
+（总之，就好像正常启动的应用程序是作为quicklauncher的插件一样）
+(3)启动过程：
+QuickExeApplicationLauncher server task保证有足够的quicklauncher实例在运行，当请求启动一个应用程序的时候：
+*QuickExeApplicationLauncher检测自己是否能够启动这个应用程序。
+*如果存在运行的quicklauncher那么就给它发送一个QCop消息让这个quicklauncher变成那个应用程序。
+*如果不存在运行的quicklauncher那么手动启动这个程序（首先启动quicklauncher然后这个quicklauncher变成那个应用程序）
+*如果需要，则启动一个新的quicklauncher进程(什么时候需要？)
+当server以根用户运行的时候，它会把quicklauncher的优先级降低，这样防止quicklauncher占用过多前台进程的消息循环。当启动一个应用程序的时候，再把这个quicklauncher的优先级设置为正常的，然后加载入那个应用程序。
+想要一个应用程序可以被quicklauncher加载，需要使用特殊的宏定义。
+（这些宏定义在：http://qt.nokia.com/doc/qtextended4.4/buildsystem/over-applications-1.html）
+
+2)较为详细的信息
+2.1)QuickExeApplicationLauncher
+http://qt.nokia.com/doc/qtextended4.4/quickexeapplicationlauncher.html#details
+主要说启动程序的时候，不用先将一些和程序关系不大的任务启动了。因为程序将被编译成.so库，而启动程序之前早已经有一个quicklauncher在运行，做好了和程序关系不大的工作（例如链接一些qtopia的库）。启动程序的时候，只需要将so库加载进来，进入到程序的相应入口函数就行了。详细如下：
+QuickExeApplicationLauncher支持Qt Extended程序的quicklaunch(快速启动).QuickExeApplicationLauncher提供了一个Qt Extended server Task(关于详细的相关内容查看：http://qt.nokia.com/doc/qtextended4.4/qtopiaserverapplication.html).
+类QuickExeApplicationLauncher提供了ApplicationTypeLauncher的实现，和quicklauncher的执行一起来优化qt extended程序的启动优化。当一个qt extended程序启动的时候需要做许多和程序关系不大的工作，例如连接动态库，实例化QtopiaApplication对象等等，quicklauncher进程在执行程序之前尽可能多的去做这些和程序无关的工作，增加程序的启动速度。这个体系主要包含两个大的部分：quicklauncher的二进制执行和该类提供的启动程序接口。
+当类QuickExeApplicationLauncher第一次被实例化的时候，它启动了一个可执行的quicklauncher副本，这个可执行的quicklauncher和其他的qt extended一样会做一些例如连接到qt extended库、实例化qtopiaApplication对象、以及其他的一些和具体程序无关的比较共通的工作，当做完了这些工作之后，quicklauncher就会进入一个事件循环，等待QuickExeApplicationLauncher的进一步指示。当用户尝试用quicklauncher启动一个应用程序的时候，QuickExeApplicationLauncher会先检查这个应用程序是否支持quicklaunch启动，如果支持的话，就会给当前等待的quicklauncher发送一个消息，然后quicklauncher就会加载对应于应用程序的动态链接库，直接执行应用程序的代码，这样就节省了执行正常应用程序之前的一些初始化工作。当一个quicklauncher把它自己变成一个应用程序之后，QuickExeApplicationLauncher会启动另外一个quicklauncher实例，系统关闭的时候QuickExeApplicationLauncher需要确保所有运行的quicklauncher实例都被停止了。
+支持quicklauncher的应用程序都是被编译成一个共享库的，而不是一个可执行程序，共享库提供了一个公共的接口用来运行具体的应用程序代码（这类似于插件机制，应用程序就像插件一样使调用这个共享库的程序具有这个插件的功能实现了“扩展”），如何将一个应用程序编译成为支持quicklaunch的应用程序，具体可以参考关于qtextended编译系统相关的文档(http://qt.nokia.com/doc/qtextended4.4/buildsystem/over-applications-1.html)。
+QuickExeApplicationLauncher和quicklauncher搜索Qtopia::installPaths()方法返回的路径，以加载相应的plugins/application/lib<application name>.so应用程序插件。需要注意的是quicklauncher可能无法正确地搜索安装的应用程序路径，这将在以后的qt extended版本中进行改善。
+
+2.2)ApplicationTypeLauncher
+参考文档：http://qt.nokia.com/doc/qtextended4.4/applicationtypelauncher.html#details
+主要说了ApplicationTypeLauncher提供了控制系统中特定程序的接口。接口就是Qt Extended Server Task接口。该类被ApplicationLauncher实现，以控制特定类型的程序。
+
+2.3)ApplicationLauncher
+参考：http://qt.nokia.com/doc/qtextended4.4/applicationlauncher.html
+ApplicationLauncher负责基本的应用程序管理和Qtopia中的IPC消息路由。它提供了一个Qt Extended Server Task。
+对于这个类，不多说了，具体参见文档，下面只点出一些关键的地方：
+*在比ApplicationLauncher高的层次中Qt extended内部并不知道应用程序的启动，它只是把应用程序当作一个消息通道的末端，为系统和其他应用程序调用。
+*ApplicationLauncher的主要功能就是管理一个组件能够接受和相应一个请求。只要能够接受服务请求，那么ApplicationLauncher就认为程序是“运行”的。关于程序的一些其他特性（如UI的显示隐藏等）由其他部分控制。
+*默认ApplicationLauncher只支持最基本的程序模型：可以启动、停止和接收消息。更多的进程特性控制可由实现ApplicationTypeLauncher插件接口来做到。这样通过分离特殊的特性控制可以更多的适应不同平台的程序。
+*关于IPC类ApplicationIpcRouter有相应的细节说明。当系统通过发送消息到应用程序通道使程序启动的时候，ApplicationIpcRouter 会检测消息并且告诉ApplicationLauncher调用ApplicationLauncher::launch方法启动程序这样使得ApplicationLauncher知道程序处于一个可以接收消息的状态。
+如果程序没运行，那么ApplicationLauncher检查执行ApplicationTypeLauncher接口的task顺序表，询问每个可以执行程序的任务来执行程序。ApplicationLauncher通过Qt信号来监测ApplicationTypeLauncher的过程，（信号？）会被联合和发送到剩下的Qt Extended server。
+
+---------
+关于使用prelink优化qpe程序的启动
+---------
+可以参考网址：http://qtextended.org/doc/qtextended4.4/tut-prelink.html
+主要说了如何是用prelink工具优化程序的启动。一般程序加载一些共享库等的时候，每次启动的时候都要重新计算共享库里面标号在程序中的地址，占用了大量的时间，使用prelink可以把这些计算的结果给缓存起来。更深入的信息参见：http://people.redhat.com/jakub/prelink/prelink.pdf
+在qtextended中prelink优化，文档上面介绍的方法大致如下：
+前提假设：
+*你可以成功地在你的设备上面编译运行Qt Extended.
+*你有一个为你的设备编译好了的prelink二进制工具。
+*所有包含Qt Extended和系统库的文件系统都是可写的。
+过程：
+*. 使用'-fPIC'选项编译Qt Extended.
+这里，文档中没有说在哪里添加这个选项，我搜索了一下，包含"-fPIC"的文件有:
+qtextended/devices/ebook/mkspecs/common/g++.conf
+*. 把Qt Extended安装到你的设备上面。
+*. 拷贝prelink和prelink-rtld二进制文件到你设备中的/usr/bin/目录中。
+这里的prelink和prelink-rtld二进制文件应该是个编译好的用于你的设备的独立工具。
+*. 拷贝prelink.conf到你设备中的/etc目录中。
+这里，prelink.conf的内容我看了一下在官方网站:
+http://qtextended.org/doc/qtextended4.4/tut-prelink.html的最后给出了一个适用于大多数的例子。
+*. 在你的设备上面运行如下的命令：
+export LD_LIBRARY_PATH=/opt/Qtopia/lib:/lib:/usr/lib
+prelink -amR
+这样为所有的程序和库预先建立了链接。这可能会花费一些时间，但是这样之后程序就启动快了。运行完毕之后，应该会生成一个/etc/prelink.cache文件。
+每当一个程序，或者共享库（包括插件）更新的时候，就需要重新运行一下上面的prelink命令。
+撤销prelink命令，运行如下：
+prelink -au
+
+---------
+关于qt Extended 的文档系统：
+---------
+6.1)概述
+参考网址：http://qtextended.org/doc/qtextended4.4/docsys-overview.html
+文档管理系统提供了文档和应用程序管理的功能，同时支持SXE和DRM.（它所有的数据存放在一个数据库文件中，然后对数据库的操作都被封装成了一些特殊的类似文件的操作的东西，就像是以一个数据库文件做为后台存储的文件系统）
+一些特性包括：
+1）以友好的图标，名称缩略图方式显示内容。
+2）用户驱动和隐饰指定类型（什么意思？）。
+3）可以通过限定名称／类型／行为／位置分类等等等等属性来显示所有的存储内容。
+4）集成了DRM和SXE的相关支持。
+5)可以在移动介质上面处理很大的(好几个G)内容（contents）
+6)从应用程序的.desktop文件生成启动菜单。
+关于文档的选择：
+QtExtended提供了两个选择Widgets在QtExtended应用程序中选择文档：QDocumentSelector(Dialog) 和 QImageDocumentSelector(Dialog).对于一个在文件系统中具有有限的权限的应用程序QDocumentSelectorService会请求server显示一个文档选择widget根据应用程序的行为来打开文档。应用程序也可以关联到指定类型的文档，这样执行一个文档将会启动这个应用程序。
+http://qtextended.org/doc/qtextended4.4/content-notesdemo.html这个例子给出了选择文档,读取和写qContent的内容。
+源代码在：qtex/examples/content/notesdemo/*中。
+
+6.2)关于文件和应用程序关联
+参考网址：http://qtextended.org/doc/qtextended4.4/docwidget.html
+这里是关于将应用程序和指定类型的文件相关联的信息.
+用来查看和编辑文件等的应用程序，是面向文档的应用程序。Qt Extended提供了一种框架机制，可以支持启动应用程序，打开指定的文档。这需要在面向文档的应用程序的顶级Widget中声明继承一个void setDocument( const QString& filename )槽。当Qt Extended执行特定文档的时候，这个槽就会被执行到。
+将应用程序和指定类型的文档相关联，需要给应用程序注册一定的MIME类型。
+这里也简单写了在desktop文件中指定MIME类型的格式的方法。
+（指定的时候如果不用','而是用';'分割的话，需要把mime字符串放到一对引号中防止';'被解释成注释）
+注册MIME类型的两种方法：
+1）可以在应用程序的desktop文件中添加指定。
+(关于desktop文件信息参见http://qtextended.org/doc/qtextended4.4/desktopfiles.html)
+2）在程序运行的时候动态的注册／反注册。QMimeType::addAssociation(),QMimeType::removeAssociation().
+在一个特定的应用程序中打开文档，那么就使用QContent::execute()来执行这个文档。这样就会确定特定的应用程序来打开文档，启动应用程序，并且执行应用程序顶级widget的setDocument()槽。
+
+6.3)关于文档中的"文件"过滤：
+其中一个比较实用的小例子：
+参考：http://qtextended.org/doc/qtextended4.4/content-filtering.html
+讲述如何过滤并显示文档系统中指定类型的content.其关键代码都在函数bool FilterDemo::nextFilter()中。
+这个例子在qtex/examples/content/filtering/filterdemo.cpp也能看到。(qtex是qt extended源码目录)
+一般用例如QListView显示QContent内容的时候，大致如下：
+(参考：http://qtextended.org/doc/qtextended4.4/qcontentsetmodel.html#details)
+使用QContentSetModel类定义一种mode，被QListView::setMode设置为列表的mode，这样才能在列表显示。
+这个类可以的数据模型可以表示QContentSet中的条目，它还提供qcontent系统信息的访问，提取以及设置相应权限等功能.
+QListView等使用QContentSetModel::ItemDataRole告诉QContentSetModel它需要什么类型的数据。
+
+6.4)关于文档中的数据更新
+参考：http://qtextended.org/doc/qtextended4.4/qcontentset.html#details
+QContentSet 提供了在对设备上面所有content指定了某种过滤条件之后的显示。
+当有content被从后台存储中删除，添加或者修改的时候，QContentSets可以和后台存储之间进行同步,以反映出其中的变化。QContentSets可以同步或者异步的更新它的content.无论是外部事件，还是过滤、排序条件导致的变化，content都一样地被更新。
+对于异步更新，当content发生变化的时候，会从事件循环中启动一个后台线程维护异步更新，这样保证在一个事件中content数目不会发生变化。
+对于同步更新，仅仅在发生变化的时候更新set中的content.改变过滤或者排序条件，会导致对contentset中的content的更新被延迟，延迟到返回到事件循环或者count()被调用；这样可以允许在更新set之间进行变化的累积。
+除了被过滤的content,contentset还有一个用来显式维护的内部的content列表.添加到显式集合中的content会被包含在可见集合中（不管这个集合设置了什么样的过滤条件），并且不会被提交到后台存储当中。
+
+参考：http://qtextended.org/doc/qtextended4.4/content-changelistener.html
+这个文章讲述了当添加新的content的时候，contentset如何通过changed信号侦听这样的事件，好像也简单说了一些设置分类以及安装、卸载content到文档中。
+qtex/examples/content/changelistener/changelistener.cpp里面也是相应的代码。
+其中，ChangeListener::ChangeListener构造函数里使用QCategoryManager来创建分类,以及侦听文档内相应分类的变化，void ChangeListener::timeout里面用来在文档系统中创建和卸载QContent.ChangeListener::changed读取文档系统中QContent中的数据。
+
+下面是使用Async QContentSet 统计contents数据量的示例代码：
+
+ContentsCounter::ContentsCounter()
+{
+    QContentSet *cs = new QContentSet(filter, QContentSet::Asynchronous, this );
+    connect( cs,   SIGNAL(contentAboutToBeInserted(int, int)), 
+             this, SLOT  (contentAboutToBeInserted(int, int)));
+    connect( cs,   SIGNAL(contentAboutToBeRemoved( int, int)), 
+             this, SLOT  (contentAboutToBeRemoved( int, int)));
+}
+
+void ContentsCounter::contentAboutToBeInserted ( int start, int end )
+{
+    int changed = end - start + 1
+    m_counter +=changed;
+}
+
+void ContentsCounter::contentAboutToBeRemoved ( int start, int end )
+{
+    int changed = end - start + 1
+    m_counter -=changed;
+}
+
+6.5)一个比较有参考价值的例子代码片段：
+{
+QContentFilter audioFilter(QContentFilter::MimeType, "audio/*" );//filter
+m_audioSet = new QContentSet(audioFilter, QContentSet::Synchronous, this);
+m_audioSet->setCriteria(QContentFilter( QContentFilter::Name, '*'+keyWord+'*' ));//for search
+m_audioSet->setCriteria(QContentFilter( QContentFilter::MimeType, "audio/mpegurl" )
+| QContentFilter::mimeType(  "audio/x-mpegurl"  )
+| QContentFilter::mimeType( "audio/x-wav" )
+| QContentFilter::mimeType( "audio/mpeg" )
+| QContentFilter::mimeType(  "audio/mpeg3"  )
+| QContentFilter::mimeType(  "audio/mp3"  )
+| QContentFilter::mimeType(  "audio/x-mp3"  )
+| QContentFilter::mimeType(  "audio/amr"  )
+| QContentFilter::mimeType(  "audio/mp4"  )
+| QContentFilter::mimeType(  "audio/midi"  )
+| QContentFilter::mimeType(  "audio/3gpp"  )
+| QContentFilter::mimeType( "audio/x-scpls"));//replace the previous filter
+// this QContentSetModel is used to watch updateFinished() signal.
+QContentFilter totalFilter = bookFilter | paperFilter | audioFilter;//merge man filter
+m_totalModel = new QContentSetModel(new QContentSet(totalFilter, 
+QContentSet::Asynchronous, this), this);//model,show and watch signal
+connect(m_totalModel, SIGNAL(updateFinished()),
+this, SLOT(contentsUpdateFinished()));
+}
+
+---------
+关于UIFactory:
+---------
+参考：
+http://qtextended.org/doc/qtextended4.4/uifactory.html#details
+uifactory提供了一种可以在qt extended server处创建各种不同类型的widgets的方法。如果一种widget在定义之后通过UIFACTORY_REGISTER_WIDGET() 进行注册过了，那么就可以在其他的地方，使用Uifactory提供的方法，来创建这个类的实例，而不用包含这个类的头文件声明和定义了.只通过把类名告诉uifactory就可以创建相应类的实例，这样可以减少server中不同的widgets构件之间的依赖。
+使用UIFactory创建的对象，返回QWidget和QDialog,所以只能够使用QWidget和QDialog提供的接口。UIFactory提供了和ServerWidgets类似的机制，但是两者又有所不同。
+两者之间对比可以参见前面的参考网址。
+12.1)关于使用UIFactory，简单的例子：
+//in examplelabel.cpp
+class ExampleLabel : public QWidget
+{
+	Q_OBJECT
+	public:
+		ExampleLabel( QWidget *parent = 0, Qt::WFlags fl = 0) {}
+};
+UIFACTORY_REGISTER_WIDGET( ExampleLabel );
+在这里，定义了一个ExampleLabel类，并且将它注册到UIFactory里面。
+注意，一个widget必须使用Q_OBJECT宏，这样才能够使用UIFactory进行访问。
+
+//in exampleuser.cpp
+void ExampleUser::showExampleLabel()
+{
+	QWidget *label = UIFactory::createWidget( "ExampleLabel", this, 0 );
+	if ( label ) {
+		label->show();
+	}
+}
+这里，使用UIFactory创建了一个ExampleLabel的实例，但是这个实例只能够通过QWidget的接口进行访问。注意如果ExampleLabel不是server的部署范围之内，那么会返回一个空指针。所以创建之后最好要检测一下。
+12.2)关于UIFactory稍微复杂的例子：
+一般UIFactory创建的对象，只能访问QWidget或者QDialog提供的接口函数，如果我们想要访问其他的接口函数，那么需要使用一些特殊的方法。
+例如：
+//in sampledialog.cpp
+class SampleDialog : public QDialog
+{
+	Q_OBJECT
+	public:
+		SampleDialog( QWidget *parent = 0, Qt::WFlags fl = 0) {}
+
+		QString notCallableMethod;
+		Q_INVOKABLE QString errorCode();
+
+		public slots:
+			void setParamter( bool param1, int param2 );
+};
+//class definition for SampleDialog
+...
+UIFACTORY_REGISTER_WIDGET( SampleDialog );
+这里，假设我们要使用其中的errorCode()接口，和setParamter接口，使用了QMetaObject系统进行访问,如下：
+//in dialoguser.cpp
+void DialogUser::showSampleDialog()
+{
+	QDialog *dlg = UIFactory::createDialog( "SampleDialog" );
+	if ( dlg ) {
+		QMetaObject::invokeMethod( dlg, "setParameter",
+				Qt::DirectConnection, Q_ARG(bool,true), Q_ARG(int,10) )
+			QtopiaApplication::execDialog( dlg );
+
+		QSlotInvoker returnCode( dlg, SLOT(errorCode()), 0 );
+		QList<QVariant> args;
+		QString returnString = returnCode->invoke( args ).toString();
+		...
+	} else {
+		qWarning("SampleDialog not available");
+	}
+}
+meta系统允许通过QMetaObject::invokeMethod启动 slots或者可以启动的相应的函数（在声明之前具有Q_INVOKABLE宏标记的函数），通过QSlotInvoker 也可以达到同样的目的，区别是使用它可以不用知道函数参数的详细类型信息了。一般使用QMetaObject::invokeMethod的情况居多。
+qt的meta system 只能够调用slot或者有Q_INVOKABLE标记的函数，例如前面例子中的returnCode和setParameter函数。
+注意：好像需要包含#include "qtopiaserverapplication.h"
+
+
+*杂乱的技巧
+=====================
+1)qtExtendinvoking.png列出了qtextend的部分调用关系图。
+
+2)build/image/etc/defaultbuttons.conf
+这个文件好像定义了主界面菜单方面的东西,源代码中的devices里面有。例如点击Menu之后，显示的许多网格图标是4行3列,则由以下决定：
+[Menu]
+Rows=4
+Columns=3
+...
+在目标机器上面可以这样改，但是在本地机器上面的qvfb环境下光改这里不会有效果，通过build/bin/runqtopia脚本搜索defaultbuttons.conf可以看出来这里没有用上面的配置而是用了这个：
+build/sdk/src/tools/qt/qvfb/Greenphone.skin/defaultbuttons.conf。
+另外注意：
+[SoftKeys]
+这里是显示softmenubar中的menu按钮，只能最多显示三个。
+即Key0,Key1,Key2
+
+3)softmenubar上面的按钮的文字是如何修改的？点击和抬起事件在那里处理?
+思路是想要跟踪button的widget,下面跟踪一下修改softmenubar上面文字的过程，修改图标类似：
+3.1)在文件src/libraries/qtopia/qsoftmenubar.cpp中
+void QSoftMenuBar::setLabel函数中的：
+类似ContextKeyManager::instance()->setContextText调用做了实际的工作。
+3.2)在文件src/libraries/qtopia/contextkeymanager.cpp
+ContextKeyManager::setContextStandardLabel函数调用了updateContextLabels();
+updateContextLabels()又启用timer调用了void ContextKeyManager::updateLabelsForFocused;
+updateLabelsForFocused又调用了ContextKeyManager::updateContextLabel;
+updateContextLabel又调用了void ContextKeyManager::setText;
+setText中建立了QtopiaIpcEnvelope e( "QPE/QSoftMenuBar", "setLabelText(int,int,QString)");
+在QtopiaIpcEnvelope的析构函数中发送了通道消息。
+3.3)在文件src/server/infrastructure/softmenubar/qsoftmenubarprovider.cpp接收前面的消息，如下：
+函数QSoftMenuBarProvider::message处理接收的消息,调用emit keyChanged(key(idx));发送了信号.
+3.4)在有前面信号的槽处理：src/server/phone/contextlabel/base/contextlabel.cpp
+函数BaseContextLabel::keyChanged处理接收的信号，它调用了emit buttonsChanged();
+!!!!!!注意：softmenubar上按钮的抬起和压下查看在这个文件中!!!!!!!
+BaseContextLabel::buttonPressed等定义了softmenubar上按钮的点击和抬起等事件。
+修改之后，只需要在src/server/下运行../..../qbuild即可.
+
+3.5)在src/server/phone/contextlabel/themed/themedcontextlabel.cpp处理buttonsChanged信号:
+这里的类继承了前面的BaseContextLabel.
+ThemedContextLabel::updateLabels()处理buttonsChanged信号，
+调用了themedButtons[idx].txtItem->setText;实际上是：
+ThemeTextItem::setText
+3.6)在src/libraries/qtopiatheming/qthemetextitem.cpp中,
+QThemeTextItem::setText设置显示的文字。
+它调用了update,QThemeTextItem::paint会处理update,绘制字符串;之后绘制字符串，这里可能可以设置颜色。
+!!!!!!注意：在这里，修改d->displayText = text;会在“很底层”的程度上改变label.显然不好!!!!!!
+例如d->displayText = "hello"会导致所有softmenubar上面的button显示"hello".
+修改之后编译的时候只需要在src/libraries/qtopiatheming中运行../../...../qbuild即可。
+
+4)softmenubar上面的按钮的文字颜色以及背景色如何修改？
+4.1)文字颜色：
+4.1.1)在src/libraries/qtopiatheming/qthemetextitem.cpp中,
+QThemeTextItem::paint函数中可以设置，例如将语句：
+QColor color = QThemeItem::colorFromString(d->color.value().toString());
+改成：
+color = QColor(0,0,255);
+!!!!!!注意,这样不光底部softmenubar,连上面的titlebar，以及顶部的time等字都成了蓝色!!!!!!
+这是通过硬编码方式做的,这样做不太好。
+4.1.2)实际是在src/libraries/qtopiatheming/qthemetextitem.cpp中,
+用QThemeTextItem::loadAttributes函数通过配置设置颜色的。
+如果修改配置文件，可以这样：
+例如修改softmenubar上面的第1个按钮：
+方法1)修改文件：image/etc/themes/qtopia/context.xml
+把其中的<text expanding="yes" name="tbutton1" color="Text" rect="0,2,0x0" size="5" bold="yes" align="vcenter,hcenter" interactive="yes"/>
+修改成<text expanding="yes" name="tbutton1" color="#000000" rect="0,2,0x0" size="5" bold="yes" align="vcenter,hcenter" interactive="yes"/>
+方法2）前面的方法中"Text"实际是在另外一个配置文件中定义的，所以可以修改
+build/home/Settings/Trolltech/qpe.conf
+将Text=#FFFFFF修改成Text=#000000
+方法3）前面的qpe.conf实际是在qpe启动的时候生成的，当qpe程序启动的时候选择另外一个主题，qpe读取那个被选择的主题文件，然后就会写这个qpe.conf文件了,以前的修改也就被覆盖了。所以说，应该修改那个主题文件,如果这个主题文件中没有内容，那么可能就是启动的default的。也即：
+image/etc/themes/
+和image/etc/colors/
+这里，build/home/Settings/Trolltech/qpe.conf是编译的目录，到目标机器上面应该就是$HOME目录。
+在qpe程序设置主题之后，还能设置颜色，
+所以应该设置的主题对应文件：image/etc/themes/ 中的每个目录。
+设置的外观对应文件：image/etc/colors/
+
+4.2)文字背景颜色：
+softmenubar上面的背景是一个图片，在image/pics/themes/qtopia/contextbar.png中。
+指定该图片的配置文件是：image/etc/themes/qtopia/context.xml
+将softmenubar背景改成白色如下修改这个文件：
+将<image rect="0,0,0x0" src="contextbar.png" scale="yes" color="#000000" alpha="125"/>
+改成<image rect="0,0,0x0" src="contextbar.png" scale="yes" color="#FFFFFF" alpha="255">
+
+5)softmenubar上面的按钮的压下效果如何改？(应该没有压下效果)
+QThemeTextItem::paint首先调用其父类的 QThemeItem::paint.
+
+6)更改标题栏字体的颜色：
+修改文件：
+build/image/etc/themes/qtopia/title.xml
+在源代码中文件应该是：
+etc/themes/qtopia/
+其中有一句：
+<text name="caption" outline="#000000" bold="yes" color="#FFFFFF" align="hcenter,vcenter"     transient="yes" elided="right">
+另外这里可以修改顶部状态栏时间颜色等等。
+ <text name="operator" align="hcenter,vcenter" bold="yes" transient="yes" color="#ffffff" o    utline="#000000" active="expr:!@/UI/ActiveWindow/Caption">这个改变初始标题栏字颜色。
+
+ 7)更改softMenubar上面的菜单内容
+ 原来在启动qpe桌面之后，点menu会切换到grid图标界面，最左面的菜单按钮是Options,弹出菜单的内容只有一项Help,假设我给softmenubar最左面的菜单按钮的弹出菜单添加一项"Terminal".
+ 那么如下修改文件src/server/phone/browserscreen/gridbrowser/gridbrowser.cpp:
+ 7.1)前面加上
+#include <QMenu>
+#include <qsoftmenubar.h>
+ 7.2)给函数PhoneLauncherView::PhoneLauncherView的最后添加如下语句：
+ QMenu *m_contextMenu = QSoftMenuBar::menuFor(this);//获取当前softmenubar菜单指针没有则新建
+ QAction *actionTerminal = new QAction(QIcon(), tr("Terminal"), this);//待添加的菜单项
+ m_contextMenu->addAction(actionTerminal);//这样就把最左面的菜单添加了一项
+ QSoftMenuBar::setLabel(this, Qt::Key_Context1, "", tr("Setting"));//给指定的的菜单改标签字
+注意，这里不知道为什么，直接就获得了最左面的菜单,没有指定是那个菜单。
+使用QApplication::focusWidget();可以查看当前获得焦点的程序，把它hide掉就没有焦点了。如果设置softmenubar标签不管用的话可能就是没有获取到焦点，使用setFocus可以把其父窗口的焦点抢过来（如果父窗口有焦点的话）.
+
+8)启动qpe之后，点击底部的"menu"菜单才会进入程序选择的界面，
+8.1)如果想要去掉这时候的响应，那么：
+打开文件：src/server/phone/serverinterface/phonelauncher/phonelauncher.cpp
+修改函数：PhoneLauncher::PhoneLauncher()
+注释掉如下语句：
+QObject::connect(m_homeScreen, SIGNAL(showPhoneBrowser()),
+                 this, SLOT(showPhoneLauncher()));
+8.2)如果想要启动的时候就显示点击"menu"菜单相应的界面，那么：
+打开文件：src/server/phone/serverinterface/phonelauncher/phonelauncher.cpp
+修改函数：PhoneLauncher::showEvent()
+将语句：QTimer::singleShot(0, m_homeScreen, SLOT(show()));修改成：
+QTimer::singleShot(0, this, SLOT(showPhoneLauncher()));
+
+9)改变softmenu bar弹出菜单背景的方法：
+9.1)打开文件：src/libraries/qtopia/qsoftmenubar.cpp
+修改函数MenuManager::menuFor
+最后面加上m->setStyleSheet("background-color: #00ff00;");
+这样大部分的菜单背景都变成了绿色，但是唯独document的菜单背景没有改变颜色。
+9.2)打开文件：src/libraries/qtopia/qsoftmenubar.cpp
+修改函数MenuManager::addMenuTo
+在第一个return后面加上一句：menu->setStyleSheet("background-color: #0000ff;");
+这样，包括document以内的菜单都改变了背景颜色。
+9.3)修改配置文件：
+home/Settings/Trolltech/qpe.conf
+这里面的内容是根据用户选择的主题和颜色配色方案，读取themes和colors文件目录之后自动生成的。
+修改这里面的Button=#777777就可以设置菜单背景颜色。如果删除这个文件就会读取qtex/etc/default下的相应文件了。
+
+10)设置光标闪烁的时间间隔：
+在server/main/main.cpp的initApplication开始加上这句话：
+qApp->setCursorFlashTime( 0 );
+
+11)设置dockedwindow在softmenubar的上面：
+src/server/core_server/windowmanagement.cpp文件中的:
+ServerLayoutManager::addDocked()函数中修改类似如下：
+把docked[screen].append(i);修改成如下语句：
+if(docked[screen].count() == 3)
+{//lvkaiadd,for dockedwindow
+	docked[screen].insert(docked[screen].count() - 2, i);
+	qDebug()<<"*****the docked window is:"<<docked[screen].count();
+}
+else
+{
+	docked[screen].append(i);//lvkaidelete
+	qDebug()<<"*****the docked window is:"<<docked[screen].count();
+}
+11)设置不让板子自动suspend：
+需要修改配置文件/root/.../Trolltech/qpe.conf，其中有一个地方设置不让suspend以及suspend时间。
+
+12)设置顶部header statusbar的高度：
+修改配置文件:image/etc/themes/qtopia.conf中的HeaderSize可以调整相应的高度比例。
+如果没有这个关键字，那么从src/server/phone/header/themed/phoneheader.cpp的
+PhoneHeader::reservedSize函数中自动设置一个默认值，例如0.15.
+
+13) 去掉启动程序时候的小闹钟：
+有两种方法：
+13.1）修改配置
+配置文件是image/etc/Tasks.cfg 
+将其中的[startup]中的
+WaitIndicator注释掉就行了。这种方法在虚拟环境下好用，不知道为什么在目标机器上面不好用。
+后来尝试过了，把这个WaitIndicator放到[exclude]组中就好用了。
+13.2)修改代码
+修改文件：
+src/server/ui/waitindicator/waitindicator.cpp
+将最后一行的QTOPIA_TASK( WaitIndicator, WaitIndicator );注释掉。
+
+14)在文件src/server/main/main.cpp
+**在int initApplication( int argc, char ** argv )函数：
+QtopiaServerApplication::startup(argc, argv, QList<QByteArray>() << "prestartup")
+这句话应该是读取并启动/etc/Tasks.cfg的prestartup组的程序。(没有实践，但是应该是)
+
+
+**在int initApplication( int argc, char ** argv )函数：
+调用:QAbstractServerInterface *interface = qtopiaWidget<QAbstractServerInterface>(0, Qt::FramelessWindowHint);
+
+**在static bool firstUse()函数：
+QSettings config("Trolltech","qpe");中应该是配置etc/default/Trolltech/qpe.conf（猜测？？）
+
+**在int initApplication用到了一个QValueSpaceItem
+它是一个类似gconf的数状数据结构，当某个值变化的时候会被通知到，但是它只在主线程使用，其他不安全，可以参考相关的文档。
+
+**对BootCharger()这个函数进行跟踪，可以知道是qpe是怎么读取主题配置文件的。
+这里Qtopia::qtopiaDir();返回qtextend的安装路径，例如/usr/local/qtex
+主要内容可以查看/usr/local/qtex/themes
+另外通过find发现有一个/usr/local/qtex/pics/qpe/splash.png,好象是启动画面。
+
+**在main函数中应该可以用
+qApp->setStyleSheet设置整个程序的显示风格。
+
+**通过阅读QAbstractServerInterface的文档知道，程序的主UI好像在配置文件：
+etc/default/Trolltech/ServerWidgets.conf中
+
+**UIFactory提供了一种类似于ServerWidget的机制，它可以不用包含一个类的头文件，只要把这个类注册到UIFactory就可以创建这个类的实例并且使用了。这样减少了各种控件之间的依赖。
+具体可以参见：
+http://qtextended.org/doc/qtextended4.4/uifactory.html#details
+
+15)在文件：
+src/server/phone/themecontrol/themecontrol.cpp
+中的构造函数中，有一个链接 ThemeControl::sysMessage的调用，这里有一个
+QWaitWidget用于显示等待的画面，值得一看。
+
+16)启动程序的时候，会给QPE/Application/qpe通道发送一个：
+ "Launcher::execute(QString)"消息，参数是启动的程序名称。关于这个通道，可以参见
+ http://qtextended.org/doc/qtextended4.4/qtopiaapplication.html#details
+ 中的QtopiaApplication::appMessage
+
+17)控制statusbar上面的图标：
+如何控制图标显示以及响应点击图标，这里用两个例子做一个说明，具体实现还要看各个应用程序。
+
+1，在程序中让statusbar显示／隐藏图标举例：
+(1)编辑qtex/etc/themes/qtopia/title.xml
+添加如下内容：
+<status rect="0%,8%,40x40" imageon="main_menu_status_bar_signal_nor.png" on="expr:@/UI/Search/SearchIcon" active="true"/>
+这里，添加的位置要满足xml的语法结构，不可随意添加，xml语法和html语法类似，可以参考title.xml中其他的item来确定应该在哪里添加。"<!--"和"-->"标记对儿之间的内容是被注释的内容。
+内容的含义是，
+rect属性所指定的分别是图标相对于statusbar的x,y,w,h（位置是x,y;宽高是w,h)大小比例，x取值正数是从左边算，负数从右面算。
+imageon属性指定图标文件。
+对于on,如果存在这个属性，那么将和active一起配合控制图标显示与否，在这里，
+on="expr:@/UI/Search/SearchIcon" active="true".含义是在on所指定的valuespace中，如果属性SearchIcon设置为true就显示图标，false就不显示。 
+
+(2)在程序中加入控制图标显示的代码：
+m_SearchIcon = new QValueSpaceObject("/UI/Search",this);
+m_SearchIcon->setAttribute("SearchIcon", true);//显示图标
+这样,会在statusbar上title.xml所指定的相应位置上显示指定的图标（设置为false就隐藏图标）。
+综上，每个程序想要显示图标的时候，只需要在title.xml中指定图标的位置和控制显示与否的valuespace字符串；然后在程序中设置相应的valuespace值就行了。退出程序的时候不要忘记将设置的图标隐藏起来。
+
+2，添加点击statusbar上面的图标时程序的响应动作：
+可以点击图标进行响应，方法暂时没有做，可以参考title.xml中的东西。
+步骤举例如下: 
+(1)编辑qtex/etc/themes/qtopia/title.xml
+添加如下内容：
+......
+<status imageon="play.svg" on="expr:@/Media/Player/Content &amp;&amp; (@/Media/Player/State == 0)" active="expr:@/Media/Player/Content &amp;&amp; (@/Media/Player/State == 0)" onclick="message=QPE/Application/mediaplayer,raise()"/>
+......
+这里，&amp是&&的意思，相当于逻辑与，onclick指定点击时候发送什么消息。
+在本例子中，
+a）指定设置/Media/Player/Content并且/Media/Player/State == 0的时候才显示图标，具体我没有实践过，如果程序中用到这个&amp语法了的话需要自己确认一下。
+b）当点击图标的时候，给QPE/Application/mediaplayer（也就是）mediaplayer发送了一个"raise()"字符串消息。
+
+(2)添加接收点击消息的代码：
+
+(2.1)侦听消息：
+connect(QtopiaApplication::instance(),SIGNAL(appMessage(const QString&, const QByteArray&)),this,SLOT(receive(const QString&, const QByteArray&)));
+这里，需要自己给程序类中添加一个消息处理函数槽receive。
+
+(2.2)响应消息处理：
+void MyWidget::receive( const QString& msg, const QByteArray& data )
+{
+        //QDataStream stream( data );
+        if ( msg == "raise()" )
+	  {
+            //int a,b,c;
+            //stream >> a >> b >> c;
+            ..."raise()"消息的处理代码...
+          }	  
+}
+
+需要注意的是，
+图标的位置是固定的，在title.xml中指定了这个位置那么这个位置就是留给图标用的，不显示的话就是一个空白了。程序中无法动态控制图标在statusbar中的位置。
+实践发现，如果在同一个位置上面设置两个图标，那么添加onclicked的时候，会导致响应问题。所以如果响应点击图标事件的话最好不要在同一个位置添加图标。
+可能在同一个位置添加图标的响应，需要参考有exclusive字段的部分。没有实践过。
+
+这样，就能够处理点击statusbar上面的点击事件了，其它功能需要参考title.xml文件。
+
+
+18)
+Q_UNUSED(e);这个宏的作用就是使用一下e,防止出现没有使用的变量e的warning。
+
+19)多语言支持的大致步骤：
+这里以德语为例子
+19.1)程序中所有需要进行翻译的固定字符串，需要利用tr("")进行定义。如：
+/////////////////////////////////////
+audioLabel = new QLabel(tr("Audio"));
+/////////////////////////////////////
+19.2)在app目录下运行lupdate命令，生成德语ts文件（英语不需要），
+格式为：app名 ＋ “-de_DE.ts”。
+这里以MoreMenu为例，在qtex/src/applications/moremenu目录下运行：
+../../../../build/bin/qbuild lupdate
+会生成MoreMenu-de_DE.ts文件，内容如下：
+<message>
+<location filename="MoreMenu.cpp" line="73"/>
+<source>Audio</source>
+<translation type="unfinished"></translation>
+</message>
+
+19.3)编辑ts文件，在每一项<translation type="unfinished">后面加入
+<source>的对应德语，并将"unfinished"改为"finished"。对于上面的
+ts文件，修改完可以得到：
+<message>
+<location filename="MoreMenu.cpp" line="73"/>
+<source>Audio</source>
+<translation type="finished">Audio</translation>
+</message>
+这里,各种语言初始的ts文件都是一样的.如果某些选项不需要德语，可以部进行编辑。
+这里，ts文件会在源代码中的相应位置生成，而不是build目录。
+
+19.4）在build/image目录中生成相应的qm文件：
+../../../../build/bin/qbuild image
+这样，文件*.qm路径为
+build/image/i18n/de_DE，
+再拷贝到/usr/local/qtex/i18n/de_DE中。没有这个目录就新建一个.
+
+20)在qtex/etc下面运行../../build/bin/qbuild image可以把相应的文件安装到image中。
+
+21)如果在ereader中的booklist中无法显示图片，那么修改：
+vi /usr/local/qtex/etc/default/Trolltech/Storage.conf
+把
+[HOME]
+Name[] = HOME
+Documents = 0
+Applications = 0
+中的Documents修改成1，然后向/root/Documents中添加文件就可以显示了。

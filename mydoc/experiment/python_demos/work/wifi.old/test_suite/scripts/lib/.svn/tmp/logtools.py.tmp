@@ -1,0 +1,136 @@
+#!/usr/bin/python
+from logging import Logger
+import logging
+import scripts.db.dbmanager as dbtools
+
+logger = None
+__log_level = 'info'
+
+class CaseDBLog(object):
+    def __init__(self):
+        self.time = ""
+        self.module = ""
+        self.message = ""
+
+        self.name = ""
+        self.apModel = ""
+        self.apMac = ""
+        self.dutModel = ""
+        self.dutMac = ""
+        self.status = ""
+
+class DBLogHandler(logging.Handler):
+    def __init__(self,dbName,level=0):
+        logging.Handler.__init__(self,level)
+        self.db = dbName
+
+    def emit(self,record):
+        dbLog = self.format(record)
+        if dbLog.has_key("caseDbLog"):
+            caseDbLog = dbLog["caseDbLog"]
+            dbtools.database.connect()
+            dbtools.database.logCase(caseDbLog)
+            dbtools.database.disconnect()
+
+    def format(self,record):
+        dbLog = {}
+        if hasattr(record,"caseDbLog"):
+            caseDbLog = record.caseDbLog
+            caseDbLog.time = record.asctime
+            caseDbLog.module = record.module
+            caseDbLog.funcName = record.funcName
+            caseDbLog.message = record.message
+            dbLog["caseDbLog"]=caseDbLog
+        return dbLog
+
+class CaseHtmlLog(object):
+    def __init__(self):
+        self.time = ""
+        self.module = ""
+        self.message = ""
+
+        self.name = ""
+        self.apModel = ""
+        self.apMac = ""
+        self.dutModel = ""
+        self.dutMac = ""
+        self.status = ""
+
+class HtmlLogHandler(logging.Handler):
+    def __init__(self,htmlName,level=0):
+        logging.Handler.__init__(self,level)
+        self.html = htmlName
+
+    def emit(self,record):
+        htmlLog = self.format(record)
+        if htmlLog.has_key("caseDbLog"):
+            caseHtmlLog = htmlLog["caseDbLog"]
+
+    def format(self,record):
+        htmlLog = {}
+        if hasattr(record,"caseDbLog"):
+            caseHtmlLog = record.caseDbLog
+            caseHtmlLog.time = record.asctime
+            caseHtmlLog.module = record.module
+            caseHtmlLog.funcName = record.funcName
+            caseHtmlLog.message = record.message
+            htmlLog["caseDbLog"]=caseHtmlLog
+        return htmlLog
+
+def _initLogger(name, prefix = None):
+    global logger
+    logger = logging.getLogger(name)
+    console = logging.StreamHandler()
+    dbHandler = DBLogHandler(dbtools.database.myDb)
+    if prefix is not None:
+        formatter = logging.Formatter('%(name)-6s %(asctime)s %(levelname)-8s %(module)s %(funcName)s %(lineno)d:%s %(message)s', prefix)
+    else:
+        formatter = logging.Formatter('%(name)-6s %(asctime)s %(levelname)-8s %(module)s %(funcName)s %(lineno)d: %(message)s')
+    console.setFormatter(formatter)
+    logger.addHandler(console)
+
+    dbHandler.setFormatter(formatter)
+    logger.addHandler(dbHandler)
+    if __log_level == 'warning':
+        logger.setLevel(logging.WARNING)
+    elif __log_level == 'debug':
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    return logger
+
+def getLogger(name = None,prefix = None):
+    global logger
+    if None == logger:
+        logger = _initLogger(name,prefix)
+    return logger
+
+def setLevel(level):
+    global __log_level
+    if level == 'warning':
+        logger.setLevel(logging.WARNING)
+    elif level == 'debug':
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    __log_level = level
+
+def getLevel():
+    return __log_level
+
+
+logger = getLogger("WirelessTest")
+
+if "__main__" == __name__:
+    mylog = getLogger(__name__)
+    mylog.info("test log info")
+    mylog.info("test log info2")
+
+    mylog = getLogger()
+    mylog.info("test log info3")
+
+    mylog = getLogger()
+    mylog.info("test log info4")
+
+    mylog = getLogger()
+    mylog.info("test log info5")

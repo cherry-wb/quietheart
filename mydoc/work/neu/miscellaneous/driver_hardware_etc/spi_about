@@ -1,0 +1,21 @@
+目前20111026正要做spi flash的驱动，这是期间搜集的一些资料。
+参考：http://www.eet-china.com/SEARCH/ART/SPI+Flash.HTM?jumpto=view_welcomead_1319593792004
+	"SPI，是英语Serial Peripheral interface的缩写，顾名思义就是串行外围设备接口。是Motorola首先在其MC68HCXX系列处理器上定义的。SPI接口主要应用在 EEPROM，FLASH，实时时钟，AD转换器，还有数字信号处理器和数字信号解码器之间。SPI，是一种高速的，全双工，同步的通信总线，并且在芯片的管脚上只占用四根线，节约了芯片的管脚，同时为PCB的布局上节省空间，提供方便，正是出于这种简单易用的特性，现在越来越多的芯片集成了这种通信协议，比如AT91RM9200. SPI总线系统是一种同步串行外设接口，它可以使MCU与各种外围设备以串行方式进行通信以交换信息。外围设置FLASHRAM、网络控制器、LCD显示驱动器、A/D转换器和MCU等。SPI总线系统可直接与各个厂家生产的多种标准外围器件直接接口，该接口一般使用4条线：串行时钟线（SCK）、主机输入/从机输出数据线MISO、主机输出/从机输入数据线MOST和低电平有效的从机选择线SS(有的 SPI接口芯片带有中断信号线INT或INT、有的SPI接口芯片没有主机输出/从机输入数据线MOSI)。" 
+
+这里，涉及的名词：
+1)PCB（PrintedCircuitBoard），
+中文名称为印制电路板，又称印刷电路板、印刷线路板，是重要的电子部件，是电子元器件的支撑体，是电子元器件电气连接的提供者。由于它是采用电子印刷术制作的，故被称为“印刷”电路板。
+参考:http://baike.baidu.com/view/3672.htm
+
+2)AT91RM9200,
+H9200F - AT91RM9200工程评估板，基于ARM920T内核的AT91RM9200，180MHz，32/64M SDRAM，4M NOR Flash 10/100Mbps以太网，Linux和uc/OSII操作系统。 
+应用场合
+数据采集传输，自动控制，工业应用，微型嵌入式终端等。
+
+H9200E - AT91RM9200开发板，基于ARM920T内核的AT91RM9200，180MHz，32/64M SDRAM，4M NOR Flash 10/100Mbps以太网，Linux和uc/OSII操作系统。 
+应用场合
+工业控制，智能仪器仪表、以及其他移动智能计算终端等。
+参考：http://zhidao.baidu.com/question/9002470.html
+
+3)MCU，
+MCU(Micro Control Unit)中文名称为微控制单元，又称单片微型计算机(Single Chip Microcomputer)或者单片机，是指随着大规模集成电路的出现及其发展，将计算机的CPU、RAM、ROM、定时计数器和多种I/O接口集成在一片芯片上，形成芯片级的计算机，为不同的应用场合做不同组合控制。 

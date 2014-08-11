@@ -1,0 +1,4 @@
+
+*弹出一个对话框：
+zenity  --info --text "good"
+

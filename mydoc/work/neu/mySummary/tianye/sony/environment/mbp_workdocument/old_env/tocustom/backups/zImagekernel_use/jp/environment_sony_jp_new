@@ -1,0 +1,274 @@
+=========================
+ビルド環境とビルド
+=========================
+1、環境構築
+1.1)centerosインストール（略）
+1.2)クロスインストール用ツールチェーンのインストール(SONY-CE-Linux-5.0.4.1-ARM.iso)
+#cd SONY-CE-Linux-5.0.4.1-ARM/Tools_Userland/arm
+#rpm -e $(rpm -qa "arm-sony-linux-gnueabi-*")
+#rm -rf /usr/local/arm-sony-linux-gnueabi/
+#rpm -Uvh --ignorearch *.rpm
+SONY-CE-Linux-5.0.4.1-ARM/doc/install_en.txtには関連文書がある。
+1.3)カーネルヘッドファイルのインストール
+#cd <latest kernel path>
+#export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+#make avp13_defconfig
+#make
+#make kernel_headers_install
+
+2、ソースコードコンパイル
+2.1)リリース時
+2.1.1)カーネルコンパイル
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel\/bin:/}
+$cd <latest kernel path>
+$ make avp13_defconfig
+$ make
+生成されるカーネルはavp13Build/arch/arm/boot/zImageとなる。
+
+2.1.2)アプリをコンパイルしファイルシステムのイメージを作成する。
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh clean
+#./makerootfs.sh all
+[注意事項]
+生成されるイメージはtarget/*.imgとなる。
+スクリプトの詳細情報についてはmakerootfs/readmeをご参照ください。
+
+2.2)開発時
+ソースコードを変更した際、以下のようにコンパイルする。
+#cd <latest rootfs path>
+#cd makerootfs
+#./makerootfs.sh all
+タイムスタンプによって最新の内容がコンパイルされることになる。
+
+=========================
+実行環境と実行 
+=========================
+一、PC側設定
+1、nfsサービス設定
+nfsサービス設定はネットを介してnfsのディレクトリをボード環境のルートディレクトリにすることを目的とする。
+ (1)/etc/exports編集
+下記のようなラインを追加する。
+<your nfs directory> *(rw,sync,no_root_squash)
+nfs設定前に、「rpm -q nfs-utils portmap」この2つのソフトバッケージがインストール済みかを確認する必要がある。
+デフォルトの場合、インストール済みのはずである。
+ここの「<your nfs directory>」はローカルのnfsディレクトリとなり、任意に設定できる。詳細は「info exports」を参照のこと。
+(2)サービス再起動
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3) ファイアーウォールを無効にする。
+この手順をしなくてもいい場合がある。
+詳細は「システム→管理→セキュリティーレベルとファイアーウォール」のほうを参照のこと。
+nfsサービスの構築が完了になり、以下の方法でテストする。
+その他のPCで以下のように実行する。
+#mkdir nfstest
+#mount -t nfs <あなたのip>:<あなたのnfsディレクトリ> nfstest
+成功したら、構築完了のことを表す。
+
+2、tftpサービス設定
+tftpサービス設定は、ボードがtftpによってカーネルをダウンロードし起動することを実現することを目的とする。
+(1)tftpクライアントをインストールする。
+#yum install tftp.i386
+#yum install tftp-server.i386
+ここでもし失敗したら、「#yum makecache」を実行してみてください。
+(2)/etc/xinetd.d/tftp編集
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+ここのdisableはtftpサービスを有効にするか無効にするかという意味である。値がyes/noとなる。
+server_argsでtftpサービスのローカルPCへのエクスポート用ディレクトリを指定する。
+その他の引数については「info xinetd.conf」を参照のこと。
+(3)サービス再起動
+#/etc/init.d/xinetd restart
+tftpサービスの構築が完了になり、以下の方法でテストする。
+ローカルPCで以下の内容を実行する。
+#>>/tftpboot/mytest
+その他のPCで以下の内容を実行する。
+#tftp <あなたのipアドレス>
+#get mytest
+そして、「[Ctrl]D」で終了する。その他PCの現在ディレクトリからmytestが見えるなら、成功したことを表す。
+
+3、minicom設定
+minicom設定はminicom経由でPCを開発ボードと接続することを目的とする。
+(1)#minicom -s
+(2)「Serial port setup」を選択する。
+そのうちの以下の内容を設定する。
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4、カーネル準備
+コンパイルしたカーネルをtftpのエクスポート用ディレクトリに格納する。
+上記の設定により、エクスポート用ディレクトリは次になる：/tftpboot
+#cp zImage /tftpboot/vmlinux.bin
+
+5、ファイルシステム準備
+ファイルシステムイメージ(ramdisk.img)をtftpエクスポートディレクトリ(/tftpboot)にコピーする。
+ファイルシステム中の内容をすべてnfsエクスポートディレクトリ(<your nfs directory>)にコピーする。
+ビルド時生成したファイルシステムとイメージは"Rootfs/makerootfs/target/"にある。
+
+二、開発ボード設定
+PC側設定完了後、minicomを起動してから開発ボードを起動すると、自動的にboot loaderに遷移する。
+それから　起動方式によって開発ボード配置方式は二つある。
+1,flashからカーネルを起動し、flashからファイルシステムをMountする： 
+先にファイルシステムとカーネルをflash romに書き込む必要がある。配置は下記の通り。
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv myip 10.1.29.180
+NBL> setenv servip 10.1.29.44
+NBL> sdm init
+NBL> sdm create -n -l 0x600000 kernel
+NBL> sdm create -n -l 0x600000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+NBL> bootprof init
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "mem=252MB console=ttyS0,115200n8
+rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i
+sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "mem=252MB console=ttyS0,115200n8
+rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i
+sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux0
+開発ボードの電源を落とした後、s1902ジャンパーピンセットの1番目のスイッチをonに設定する。
+ここで、10.1.29.xx1は開発ボートipとなる。設定に問題がなければ、電源ONにした後自動起動を実現できる。
+
+2,tftp下からカーネルをダウンロードし、nfsからファイルシステムを起動する：
+nfsファイルシステムに基づき、tftpからカーネルをダウンロードする。配置は下記の通り。
+NBL> setenv myip 10.1.29.180
+NBL> setenv console on
+NBL> setenv servip 10.1.29.44
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv gateip 10.1.29.1
+下記を注意してください。
+ここでservipはtftpサーバーアドレス、myipはボードip、ethaddrはボードのmacとなる。
+状況によって設定してください。gateipは保留用のものなので、設定しなくてはよい。
+
+最後に、電源OFFにしてからONにした後、開発ボートを起動する。 
+NBL> boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+ここでの「nfsroot=10.1.29.44:<your nfs directory>」は自PCのnfsサービスディレクトリに該当し、「ip=10.1.29.180::10.1.29.1:255.255.255.0」はボードのIPアドレスに該当する。実際の状況に応じて変更する。こうして、開発ボードを起動可能になる。nfsディレクトリ経由で開発ボードとPCを関連付けているなら、このディレクトリを通じて開発ボードとPCの間でデータを渡すことができる。
+
+三、実行
+電源入れても自動起動しない場合、電源OFFしてs1902の1番目のスイッチをoffにして、
+電源を投入し、下記のコマンドを実行：
+NBL> aboot -n
+起動に成功したら、電源をoffして、s1902の1番目のスイッチをonに戻して、電源を入れれば正常に起動できる。
+
+=========================
+補足
+=========================
+1、カーネルコンパイル完了後、3種のフォーマットのカーネルが作成される。
+それぞれのパスは以下の通り。
+a)bin書式：avp13Build/arch/arm/boot/Image
+b)圧縮書式：avp13Build/arch/arm/boot/zImage
+c)elf書式：avp13Build/vmlinux
+注意：.binまたは圧縮書式のカーネルを利用する場合、NBLが自動的に識別できるように、
+焼き込む時の拡張子は必ず「*.bin」でなければならない。
+
+2、NBLのコンパイル
+$export
+PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin:${PATH//\/usr\/local\/arm-sony-linux-gnueabi\/devel
+\/bin:/}
+$ cd ${RELDIR}/loader
+$ ./setup diablo avp13 rom
+$ make
+ここの${RELDIR}はコンパイルしたいBootLoaderのソースコードの格納パスである。
+下記ファイルが作成される。
+${RELDIR}/loader/arch/arm/diablo/nbl-avp13.raw
+${RELDIR}/loader/arch/arm/diablo/nbl-avp13.nui
+また、norにnblを書き込む時にrawのファイルを使用し、nblを更新する時にnuiのファイルを使用する。
+
+3、NBLの焼き込み
+NBLの焼き込みには2方法がある。
+3.1)JTAGでNBLを書き込む
+JTAGでNor FlashにNBLを書き込む時に、NBLのrawファイルがNor flashの開始アドレスから
+ダウンロードされる。
+詳細は「ICEによるROM焼き手順/AVP-13基板とadvicePro.ppt」をご参照ください。
+ここでは実践したことがないため、説明を省略とする。
+
+3.2)元NBLの上に更新
+NBL> update -f net:tftp:/nbl.nui
+tftp転送のもとに行われるため、予めnbl.nuiファイルをpcのtftpのエクスポートディレクトリに
+コピーしておく必要がある。
+
+
+4、カーネルを焼き込む時によく発生する問題
+カーネルを焼き込む時、正しく動作できる場合もあるが、正しく動作できない場合もある。
+原因：
+3つのカーネルがビルドされ、それぞれ3つのフォーマットに対応する。
+bootloaderがabootを起動する時、あるタイプは正しくマウントするためにファイルの拡張子によってそのタイ
+プを判断する必要がある。（拡張子必要なしのタイプもある。）
+それらを組み合わせると、正しく動作したり、正しく動作できなくなったりして、間違えやすくなる。
+その状況を以下にまとめて、焼き込む時に問題が発生した場合お役に立てば幸いである。
+
+4.1)カーネルビルド時、以下3つのファイルが作成される。
+-------
+Kernel/avp13Build/vmlinux
+Kernel/avp13Build/arch/arm/boot/Image
+Kernel/avp13Build/arch/arm/boot/zImage
+
+それぞれの区別は以下のとおり、
+vmlinuxはelf書式のカーネルであり、起動速度が一番速く、サイズが一番大きい。
+（現在のカーネル焼き込み用パーティションは６M、つまり6291456バイトとなるが、vmlinuxサイズは6265885バ
+イトとなり、パーティション全体よりただ30K弱小さい。）
+Imageはbin書式のカーネルであり、起動速度が速く、サイズが約5Mである。
+zImageは圧縮bin書式のカーネルであり、起動速度が一番遅く(elfより少なくとも２s遅い)、サイズが約2.2Mで
+ある。
+
+4.2)よくある不正な焼き込みコマンド
+-------
+下記はよくある不正な焼き込みコマンドである。ご注意ください。
+4.2.1)名称がvmlinuxのカーネル：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.bin
+
+4.2.2)名称がImageのカーネル：
+NBL> cp net:tftp:Image sdmd:raw:Image
+又は
+NBL> cp net:tftp:Image sdmd::
+又は
+NBL> cp net:tftp:Image sdmd:raw:vmlinux
+
+4.2.3)名称がzImageのカーネル：
+NBL> cp net:tftp:zImage sdmd:raw:zImage
+又は
+NBL> cp net:tftp:zImage sdmd::
+又は
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux
+又は
+NBL> cp net:tftp:zImage sdmd:raw:zImage.gz
+
+4.3）正しい焼き込みコマンド：
+-------
+焼き込む時に下記コマンドをご利用ください。
+4.3.1)名称がvmlinuxのカーネル：
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux.elf
+又は
+NBL> cp net:tftp:vmlinux sdmd:raw:vmlinux
+又は
+NBL> cp net:tftp:vmlinux sdmd::
+つまり、vmlinuxは拡張子がなくてもよい、又は「.elf」の拡張子で焼き込む。
+
+4.3.2)名称がImageのカーネル：
+NBL> cp net:tftp:Image sdmd:raw:vmlinux.bin
+つまり、Imageは「.bin」の拡張子でなければならない。
+
+4.3.3)名称がzImageのカーネル：
+NBL> cp net:tftp:zImage sdmd:raw:vmlinux.bin
+つまり、zImageは「.bin」の拡張子でなければならない。
+
+以上は正しく動作できる場合のコマンドである。
+
+焼き込み完了後、「bootprof」で引数を設定することになる。その後、「aboot -n」によって起動できる。
+

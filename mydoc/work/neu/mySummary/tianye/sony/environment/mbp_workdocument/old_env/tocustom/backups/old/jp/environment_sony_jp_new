@@ -1,0 +1,177 @@
+=========================
+ビルド環境とビルド
+=========================
+1、環境構築
+1.1)centerosインストール（略）
+1.2)クロスインストール用ツールチェーンのインストール(SONY-CE-Linux-5.0.4.1-ARM.iso)
+#cd SONY-CE-Linux-5.0.4.1-ARM/Tools_Userland/arm
+#rpm -e $(rpm -qa "arm-sony-linux-gnueabi-*")
+#rm -rf /usr/local/arm-sony-linux-gnueabi/
+#rpm -Uvh --ignorearch *.rpm
+SONY-CE-Linux-5.0.4.1-ARM/doc/install_en.txtには関連文書がある。
+1.3)カーネルヘッドファイルのインストール
+#cd <latest kernel path>
+#export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+#make avp13_defconfig
+#make
+#make kernel_headers_install
+
+2、ソースコードコンパイル
+2.1)リリース時
+2.1.1)カーネルコンパイル
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+$cd <latest kernel path>
+$ make avp13_defconfig
+$ make
+生成されるカーネルはavp13Build/arch/arm/boot/Imageとなる。
+
+2.1.2)アプリをコンパイルしファイルシステムのイメージを作成する。
+$export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH
+$cd <latest rootfs path>
+$cd makerootfs
+$./makerootfs.sh all
+[注意事項]
+生成されるイメージはtarget/*.imgとなる。
+スクリプトの詳細情報についてはmakerootfs/readmeをご参照ください。
+
+2.2)開発時
+ソースコードを変更した際、以下のようにコンパイルする。
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+$cd <latest rootfs path>
+$cd diablo/diabloMainCpu
+$cd build
+$./build.sh
+タイムスタンプによって最新の内容がコンパイルされることになる。
+はじめてコンパイルする時またはファイルを追加、削除する場合、./build.sh dependを実行する必要がある。
+コンパイル時に生成されたログ情報は全部「build_Diablo.log」に保存される。
+コンパイルエラーの場合、エラー情報が「error.log」に保存される。
+前回コンパイル時のログとエラー情報はそれぞれれ「build_Diablo.old.log」と「error.old.log」に保存される。
+また、./build.sh cleanによってこの前のコンパイル時の中間ファイルを削除する。
+
+=========================
+実行環境と実行 
+=========================
+一、PC側設定
+1、nfsサービス設定
+nfsサービス設定はネットを介してnfsのディレクトリをボード環境のルートディレクトリにすることを目的とする。
+ (1)/etc/exports編集
+下記のようなラインを追加する。
+<your nfs directory> *(rw,sync,no_root_squash)
+nfs設定前に、「rpm -q nfs-utils portmap」この2つのソフトバッケージがインストール済みかを確認する必要がある。
+デフォルトの場合、インストール済みのはずである。
+ここの「<your nfs directory>」はローカルのnfsディレクトリとなり、任意に設定できる。詳細は「info exports」を参照のこと。
+(2)サービス再起動
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3) ファイアーウォールを無効にする。
+この手順をしなくてもいい場合がある。
+詳細は「システム→管理→セキュリティーレベルとファイアーウォール」のほうを参照のこと。
+nfsサービスの構築が完了になり、以下の方法でテストする。
+その他のPCで以下のように実行する。
+#mkdir nfstest
+#mount -t nfs <あなたのip>:<あなたのnfsディレクトリ> nfstest
+成功したら、構築完了のことを表す。
+
+2、tftpサービス設定
+tftpサービス設定は、ボードがtftpによってカーネルをダウンロードし起動することを実現することを目的とする。
+(1)tftpクライアントをインストールする。
+#yum install tftp.i386
+#yum install tftp-server.i386
+ここでもし失敗したら、「#yum makecache」を実行してみてください。
+(2)/etc/xinetd.d/tftp編集
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+ここのdisableはtftpサービスを有効にするか無効にするかという意味である。値がyes/noとなる。
+server_argsでtftpサービスのローカルPCへのエクスポート用ディレクトリを指定する。
+その他の引数については「info xinetd.conf」を参照のこと。
+(3)サービス再起動
+#/etc/init.d/xinetd restart
+tftpサービスの構築が完了になり、以下の方法でテストする。
+ローカルPCで以下の内容を実行する。
+#>>/tftpboot/mytest
+その他のPCで以下の内容を実行する。
+#tftp <あなたのipアドレス>
+#get mytest
+そして、「[Ctrl]D」で終了する。その他PCの現在ディレクトリからmytestが見えるなら、成功したことを表す。
+
+3、minicom設定
+minicom設定はminicom経由でPCを開発ボードと接続することを目的とする。
+(1)#minicom -s
+(2)「Serial port setup」を選択する。
+そのうちの以下の内容を設定する。
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4、カーネル準備
+コンパイルしたカーネル(arch/arm/boot/Image)をtftpのエクスポート用ディレクトリに格納する。
+上記の設定により、エクスポート用ディレクトリは次になる：/tftpboot
+#cp arch/arm/boot/Image /tftpboot/vmlinux.bin
+
+5、ファイルシステム準備
+リリースのために、ファイルシステムイメージ(ramdisk.img)をtftpエクスポートディレクトリ(/tftpboot)にコピーする。
+開発のために、ファイルシステム中の内容をすべてnfsエクスポートディレクトリ(/mynfs)にコピーする。
+ビルド時生成したファイルシステムとイメージは"Rootfs/makerootfs/target/"にある。
+
+二、開発ボード設定
+PC側設定完了後、minicomを起動してから開発ボードを起動すると、自動的にboot loaderに遷移する。
+1、リリース時
+先にファイルシステムとカーネルをflash romに書き込む必要がある。配置は下記の通り。
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv myip 10.1.29.180
+NBL> setenv servip 10.1.29.44
+NBL> sdm init
+NBL> sdm create -n -l 0x600000 kernel
+NBL> sdm create -n -l 0x600000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+NBL> bootprof init
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8
+rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i
+sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8
+rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i
+sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux0
+開発ボードの電源を落とした後、s1902ジャンパーピンセットの1番目のスイッチをonに設定する。
+ここで、10.1.29.xx1は開発ボートipとなる。設定に問題がなければ、電源ONにした後自動起動を実現できる。
+注：上記命令中のvmlinux.binのファイル名は変更できるが、必ず"*.bin"でなければならない。
+
+2、開発時，
+nfsファイルシステムに基づき、tftpからカーネルをダウンロードする。配置は下記の通り。
+NBL> setenv myip 10.1.29.180
+NBL> setenv console on
+NBL> setenv servip 10.1.29.44
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv gateip 10.1.29.1
+下記を注意してください。
+ここでservipはtftpサーバーアドレス、myipはボードip、ethaddrはボードのmacとなる。
+状況によって設定してください。gateipは保留用のものなので、設定しなくてはよい。
+
+最後に、電源OFFにしてからONにした後、開発ボートを起動する。 
+NBL> boot -r -t binary -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+ここでの「nfsroot=10.1.29.44:<your nfs directory>」は自PCのnfsサービスディレクトリに該当し、「ip=10.1.29.180::10.1.29.1:255.255.255.0」はボードのIPアドレスに該当する。実際の状況に応じて変更する。こうして、開発ボードを起動可能になる。nfsディレクトリ経由で開発ボードとPCを関連付けているなら、このディレクトリを通じて開発ボードとPCの間でデータを渡すことができる。
+
+=========================
+実行
+=========================
+/diablo/diabloMainCpu/diablo.bin
+注：電源入れても自動起動しない場合、電源OFFしてs1902の1番目のスイッチをoffにして、
+電源を投入し、下記のコマンドを実行：
+NBL> aboot -n
+起動に成功したら、電源をoffして、s1902の1番目のスイッチをonに戻して、電源を入れれば正常に起動できる。

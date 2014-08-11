@@ -1,0 +1,16 @@
+Log for qt3to4 on 周三 10月 28 14:41:50 2009. Number of log entries: 14
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/testPinYin.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/neuInterface.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/PinyinEngine.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/public.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/phrase/PinyinPhrase.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/scim/scim_pinyin.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/pinYinEngine/neuInterface.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/neuInterface.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/PinyinEngine.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/public.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/phrase/PinyinPhrase.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/test/pinYinEngine/scim/scim_pinyin.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/myInputMethod/pinYinEngine/neuInterface.h
+In file test.pro: Added entry QT +=  qt3support 
+

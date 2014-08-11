@@ -1,0 +1,115 @@
+1去掉菜单的方法：
+ 方法1，把ui.h中有关菜单的地方去掉。
+但是这样有警告错误。
+方法2，修改browser.c中的new函数。
+在gtk_widget_show(browser->menubar);的后面加上一句：
+gtk_widget_hide(browser->menubar);//lvkaiadd
+
+2修改edit->preference对话框中的toolbar位置选项为可选，以及默认为bottom:
+prefs.c中的dialog_new
+
+3把工具条变到底下的方法：
+修改browser.c中的new函数，如下：
+//gtk_box_pack_start(GTK_BOX(vbox), browser->navibar, FALSE, FALSE, 0);//lvk     aidel
+gtk_box_pack_end(GTK_BOX(vbox), browser->navibar, FALSE, FALSE, 0);//lvkaiad     d
+
+4,更改工具条布局的方法(把输入地址的框放到最左面)：
+
+其他：
+通过实验发现，main中建立配置文件的语句：
+g_get_user_config_dir建立的目录是:~/.config
+
+5.去掉状态栏和搜索栏的方法：
+修改browser.c中的new函数，如下：
+去掉状态栏,注释掉如下的语句：
+gtk_box_pack_start(GTK_BOX(vbox), browser->statusbar, FALSE, FALSE, 0);
+去掉搜索栏则把如下这句话注释掉：
+gtk_toolbar_insert(GTK_TOOLBAR(browser->navibar), toolitem, -1);
+
+6,添加一个书签按钮到工具栏的方法：
+修改browser.c中的new函数，如下：
+在sokoke_container_show_children(GTK_CONTAINER(browser->navibar));的前面找个位置添加如下代码：
+toolitem = gtk_tool_button_new_from_stock (GTK_STOCK_EDIT);
+g_signal_connect(G_OBJECT(toolitem), "clicked",
+	             G_CALLBACK(my_pop_menu), browser->menu_bookmarks);
+gtk_toolbar_insert(GTK_TOOLBAR(browser->navibar), toolitem, -1);
+其中my_pop_menu是回调函数，用于弹出菜单，如下：
+void my_pop_menu(GtkWidget *button, gpointer data)
+{
+	    GtkMenu *menu = GTK_MENU(data);
+	    g_print("pop\n");
+	    gtk_menu_popup(menu, NULL, NULL, NULL, NULL,
+		            0, gtk_get_current_event_time());
+}
+
+7,添加书签菜单的另外一个方法：
+1)browser.h中添加如下：
+void
+my_bookmark_pop_menu(GtkAction*, CBrowser*);//lvkaiadd
+2)browser.h中entries[]添加如下一个元素：
+ { "MyBookMark", MY_STOCK_BOOKMARK//lvkaiadd,for bookmark
+	  , NULL, ""
+		   , "popup my bookmark", G_CALLBACK(my_bookmark_pop_menu) },
+3)ui.h中的ui_markup中的"<toolbar name='toolbar_navigation'>"部分添加如下：
+"<toolitem action='MyBookMark'/>"//lvkaiadd
+4)browser.c中实现一个如下的回调函数：
+void my_bookmark_pop_menu(GtkAction* action, CBrowser* browser)
+{
+	GtkMenu *menu = browser->menu_bookmarks;
+	g_print("pop\n");
+	gtk_menu_popup(menu, NULL, NULL, NULL, NULL,
+			0, gtk_get_current_event_time());
+}
+
+8,更改工具栏背景图片：
+修改browser.c中的new函数，如下：
+添加这句话：
+gtk_rc_parse("myrc");
+
+然后在当前目录下建立相应的资源文件，定义资源风格，最重要的是资源文件中这句话:
+widget_class "GtkWindow" style "toolbar"
+
+9,更改工具栏上面按钮的图标：
+方法比较复杂，需要使用自定义的图标，自定义一个初始化函数等，涉及到的文件和函数分别如下：
+1)main.c
+定义初始化相关的信息
+定义my_custom_icon初始化自定义图标的函数并 在main函数中添加,my_custom_icon();
+2)global.h
+在这里面定义自己定义的图标的id如下：
+/*lvkaiadd{*/
+#define MY_STOCK_BACK "qgn_browser_back.png"
+#define MY_STOCK_FORWARD "qgn_browser_next.png"
+#define MY_STOCK_REFRESH "qgn_browser_refresh.png"
+#define MY_STOCK_DELETETAB "qgn_browser_delete.png"
+#define MY_STOCK_STOP "qgn_browser_stop.png"
+#define MY_STOCK_BOOKMARK "qgn_browser_bookmark.png"
+/*lvkaiadd}*/
+
+3)browser.h
+如下的数组中定义了在哪里使用这些图标，只需要在相应的地方做修改即可。
+static const GtkActionEntry entries[]
+需要注意的是refresh改了之后也不管用，改的方法见后面。
+4)helpers.c
+如果想要修改refresh/stop的图标，那么应该相应修改这个文件中的函数：
+void update_gui_state(CBrowser* browser)
+{
+	...
+	g_object_set(action, "stock-id", GTK_STOCK_REFRESH, NULL);
+		...
+	g_object_set(action, "stock-id", GTK_STOCK_STOP, NULL);
+	...
+}
+这个函数调用在：
+browser.c中的：
+on_notebook_switch_page
+而这个on_notebook_switch_page函数在：
+browser_new中如下的方式被调用了：
+g_signal_connect_after(browser->webViews, "switch-page"
+			     , G_CALLBACK(on_notebook_switch_page), browser);
+
+
+============
+20090819
+去掉home后面的abc按钮。
+在ui.h中去掉：
+"<toolitem action='FormFill'/>"

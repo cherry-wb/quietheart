@@ -1,0 +1,186 @@
+http://blog.csdn.net/shuhuai007/article/details/7276195
+
+==============================
+#查看当前的git配置:
+git config --list
+
+lv-k@P-D2-LvKai:~/temp/git_test$ git config --list
+user.name=lv-k
+user.email=lv-k@neusoft.com
+url.git://gerrit2/android/tools.insteadof=https://android.googlesource.com/tools
+url.git://gerrit2/android/tools/repo.insteadof=https://code.google.com/p/git-repo
+url.git://gerrit2/.insteadof=git://reference.labcollab.net/
+url.ssh://lv-k@gerrit.labcollab.net:9418/.pushinsteadof=git://gerrit/
+url.ssh://lv-k@gerrit2.labcollab.net:9418/.pushinsteadof=git://gerrit2/
+url.ssh://lv-k@gerrit4.labcollab.net:9418/.pushinsteadof=git://gerrit4/
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+
+信息分别来自/etc/gitconfig,~/.gitconfig/,./.git/config，后者同值覆盖前者。
+这里.git/config内容如下：
+lv-k@P-D2-LvKai:~/temp/git_test$ cat .git/config 
+[core]
+        repositoryformatversion = 0
+        filemode = true
+        bare = false
+        logallrefupdates = true
+
+~/.gitconfig如下：
+lv-k@P-D2-LvKai:~/temp/git_test$ cat ~/.gitconfig 
+[user]
+        name = lv-k
+        email = lv-k@neusoft.com
+[url "git://gerrit2/android/tools"]
+        insteadof = https://android.googlesource.com/tools
+[url "git://gerrit2/android/tools/repo"]
+        insteadof = https://code.google.com/p/git-repo
+[url "git://gerrit2/"]
+        insteadOf = git://reference.labcollab.net/
+[url "ssh://lv-k@gerrit.labcollab.net:9418/"]
+        pushInsteadOf = git://gerrit/
+[url "ssh://lv-k@gerrit2.labcollab.net:9418/"]
+        pushInsteadOf = git://gerrit2/
+[url "ssh://lv-k@gerrit4.labcollab.net:9418/"]
+        pushInsteadOf = git://gerrit4/
+
+
+以下三行：
+$ git config --global url.'git://gerrit/'.insteadOf ssh://<username>@gerrit.labcollab.net:9418/
+$ git config --global url.'ssh://<username>@gerrit.labcollab.net:9418/'.pushInsteadOf git://gerrit/
+$ git config --global url.'ssh://<username>@gerrit.labcollab.net:9418/'.pushInsteadOf ssh://<username>@gerrit.labcollab.net:9418/
+当使用ssh://<username>@gerrit.labcollab.net:9418/进行fetch的时候，自动替换成git://gerrit/'。
+当使用git://gerrit/或者ssh://<username>@gerrit.labcollab.net:9418/来push的时候会自动使用ssh://<username>@gerrit.labcollab.net:9418/。
+实际，不好用，如下：
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git config --list
+user.name=lv-k
+user.email=lv-k@neusoft.com
+url.git://gerrit2/android/tools.insteadof=https://android.googlesource.com/tools
+url.git://gerrit2/android/tools/repo.insteadof=https://code.google.com/p/git-repo
+url.git://gerrit2/.insteadof=ssh://lv-k@gerrit2.labcollab.net:9418/
+url.ssh://lv-k@gerrit.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit.labcollab.net:9418/
+url.ssh://lv-k@gerrit2.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit2.labcollab.net:9418/
+url.ssh://lv-k@gerrit4.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit4.labcollab.net:9418/
+url.git://gerrit/.insteadof=ssh://lv-k@gerrit.labcollab.net:9418/
+url.git://gerrit4/.insteadof=ssh://lv-k@gerrit4.labcollab.net:9418/
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+remote.origin.url=git://gerrit2/lab126/tools/diag.git
+branch.master.remote=origin
+branch.master.merge=refs/heads/master
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git remote -v
+origin  git://gerrit2/lab126/tools/diag.git (fetch)
+origin  git://gerrit2/lab126/tools/diag.git (push)
+
+$ cat .gitconfig.bak 
+[user]
+        name = lv-k
+        email = lv-k@neusoft.com
+[url "git://gerrit2/android/tools"]
+        insteadof = https://android.googlesource.com/tools
+[url "git://gerrit2/android/tools/repo"]
+        insteadof = https://code.google.com/p/git-repo
+[url "git://gerrit2/"]
+        insteadOf = ssh://lv-k@gerrit2.labcollab.net:9418/
+[url "ssh://lv-k@gerrit.labcollab.net:9418/"]
+        pushInsteadOf = ssh://lv-k@gerrit.labcollab.net:9418/
+[url "ssh://lv-k@gerrit2.labcollab.net:9418/"]
+        pushInsteadOf = ssh://lv-k@gerrit2.labcollab.net:9418/
+[url "ssh://lv-k@gerrit4.labcollab.net:9418/"]
+        pushInsteadOf = ssh://lv-k@gerrit4.labcollab.net:9418/
+[url "git://gerrit/"]
+        insteadOf = ssh://lv-k@gerrit.labcollab.net:9418/
+[url "git://gerrit4/"]
+        insteadOf = ssh://lv-k@gerrit4.labcollab.net:9418/
+
+
+
+应该：
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git config --global --replace-all url.'ssh://lv-k@gerrit.labcollab.net:9418/'.pushInsteadOf git://gerrit/
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git config --global --add url.'ssh://lv-k@gerrit.labcollab.net:9418/'.pushInsteadOf ssh://lv-k@gerrit.labcollab.net:9418/
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git config --global --replace-all url.'ssh://lv-k@gerrit2.labcollab.net:9418/'.pushInsteadOf git://gerrit2/
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git config --global --add url.'ssh://lv-k@gerrit2.labcollab.net:9418/'.pushInsteadOf ssh://lv-k@gerrit2.labcollab.net:9418/
+lv-k@P-D2-LvKai:~/work/git_dir/temp/diag/wifi_interop$ git remote -v
+origin  git://gerrit2/lab126/tools/diag.git (fetch)
+origin  ssh://lv-k@gerrit2.labcollab.net:9418/lab126/tools/diag.git (push)
+
+$ git config --list
+user.name=lv-k
+user.email=lv-k@neusoft.com
+url.git://gerrit2/android/tools.insteadof=https://android.googlesource.com/tools
+url.git://gerrit2/android/tools/repo.insteadof=https://code.google.com/p/git-repo
+url.git://gerrit2/.insteadof=ssh://lv-k@gerrit2.labcollab.net:9418/
+url.ssh://lv-k@gerrit.labcollab.net:9418/.pushinsteadof=git://gerrit/
+url.ssh://lv-k@gerrit.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit.labcollab.net:9418/
+url.ssh://lv-k@gerrit2.labcollab.net:9418/.pushinsteadof=git://gerrit2/
+url.ssh://lv-k@gerrit2.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit2.labcollab.net:9418/
+url.ssh://lv-k@gerrit4.labcollab.net:9418/.pushinsteadof=ssh://lv-k@gerrit4.labcollab.net:9418/
+url.git://gerrit/.insteadof=ssh://lv-k@gerrit.labcollab.net:9418/
+url.git://gerrit4/.insteadof=ssh://lv-k@gerrit4.labcollab.net:9418/
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+remote.origin.url=git://gerrit2/lab126/tools/diag.git
+branch.master.remote=origin
+branch.master.merge=refs/heads/master
+
+$ cat .gitconfig
+[user]
+        name = lv-k
+        email = lv-k@neusoft.com
+[url "git://gerrit2/android/tools"]
+        insteadof = https://android.googlesource.com/tools
+[url "git://gerrit2/android/tools/repo"]
+        insteadof = https://code.google.com/p/git-repo
+[url "git://gerrit2/"]
+        insteadOf = ssh://lv-k@gerrit2.labcollab.net:9418/
+[url "ssh://lv-k@gerrit.labcollab.net:9418/"]
+        pushInsteadOf = git://gerrit/
+        pushInsteadOf = ssh://lv-k@gerrit.labcollab.net:9418/
+[url "ssh://lv-k@gerrit2.labcollab.net:9418/"]
+        pushInsteadOf = git://gerrit2/
+        pushInsteadOf = ssh://lv-k@gerrit2.labcollab.net:9418/
+[url "ssh://lv-k@gerrit4.labcollab.net:9418/"]
+        pushInsteadOf = ssh://lv-k@gerrit4.labcollab.net:9418/
+[url "git://gerrit/"]
+        insteadOf = ssh://lv-k@gerrit.labcollab.net:9418/
+[url "git://gerrit4/"]
+        insteadOf = ssh://lv-k@gerrit4.labcollab.net:9418/
+
+
+
+根据上述可知：
+运行
+$git config --list 
+查看所有配置
+
+
+$ git config --global url.'http://aaa'.pushInsteadOf git://bbb
+则会将在~/.gitconfig生成：
+[url "http://aaa"]
+    pushInsteadOf = git://bbb
+会覆盖已有的，表示将要把push到"bbb"的内容push到"http://aaa"。
+
+$ git config --global --add url.'http://aaa'.pushInsteadOf git://bbb2
+则会将在~/.gitconfig生成：
+[url "http://aaa"]
+    pushInsteadOf = git://bbb
+    pushInsteadOf = git://bbb2
+含义类似。
+通过
+$git remote -v
+可以查看当前的push和pull会用哪个服务器。
+
+
+移除无用的配置：
+$ git config --global –-remove-section url.'git://10.1.10.100/android'
+
+
+具体参考：
+man git-config

@@ -1,0 +1,5 @@
+介绍一些预处理的东西。
+#error
+ #pragma pack(1)
+
+ __LINE__

@@ -1,0 +1,683 @@
+http://q.yesky.com/group/review-17818821.html
+dbus基础
+这是以前学习dbus时候写的使用dbus api来接收消息的一个比较全的例子，目的是熟悉dbus的c api的功能。今天又温习了一下，贴出来永久保留：）， 有时间把原理写下，kde4都用它了，应该很重要。
+/**
+* the demo is to demonstrate the whole process of setting up
+* a dbus message loop manually. for simplicity, we connect to
+* session bus instead of coding a server from the grand up.
+* the best of dbus is that we can register our own callbacks in
+* all most every step of message process. by using notify functions
+* the main loop of application awares of the changes, including coming
+* of raw message data from the transport, new outgoing message, incoming
+* message queue is empty and so on.
+*/
+#include dbus/dbus.h>
+#include stdbool.h>
+#include unistd.h>
+#include stdio.h>
+#include stdlib.h>
+#include stdarg.h>
+#include string.h>
+#include sys/select.h>
+/**
+* for every connection, there is a transport mechanism ( here
+* maybe is unix domain socket ). data come and go from the connection,
+* a watch is used to monitor incoming or outgoing data flow or exception.
+* a watch bind with a fd (i know here fd is owned by the socket),
+* when fd is ready to read data or write from transport, a notify
+* event occurs.
+*/
+struct watchlist_t {
+   dbuswatch *watch;
+   struct watchlist_t *next;
+};
+static struct watchlist_t *watchlist = null;
+/**
+* when you send a message typed method_call with a reply, you
+* may need to set up a timeout handler. when a reply available,
+* a timeout event ocurrs.
+*/
+static struct timeoutlist_t {
+   dbustimeout *timeout;
+   struct timeoutlist_t *next;
+} *timeoutlist = null;
+/**
+* you can register any path you like, just follow the dbus specification,
+* such as "/org", "/org/redflag", "/com" etc. i think dbus internally
+* splits all path into components ("org", "redflag", "com") and arranges
+* them into a tree, every node bind a handler. if one node has no
+* handler registered, it processed by dbus( use
+* dbus_handler_result_not_yet_handled to notify dbus).
+*/
+char *objectpaths[] = {
+   "/org/freedesktop",
+   "/com",
+   "/com/redflag",
+   "/org/freedesktop/dbus",
+   "/org/freedesktop/csy",
+   "/com/redflag/csy"
+};
+/** object handlers and object path handlers */
+dbushandlerresult object_dbus_handler(dbusconnection*, dbusmessage*, void*);
+dbushandlerresult object_csy_handler(dbusconnection*, dbusmessage*, void*);
+dbushandlerresult subsection_com_redflag_handler(dbusconnection*,
+       dbusmessage*, void*);
+dbushandlerresult subsection_com_handler(dbusconnection*,
+       dbusmessage*, void*);
+dbushandlerresult subsection_org_freedesktop_handler(dbusconnection*,
+       dbusmessage*, void*);
+void object_unregister_handler(dbusconnection*, void*);
+dbusobjectpathvtable objectpathvtable[] = {
+   {
+       .unregister_function = null,
+       .message_function = subsection_org_freedesktop_handler
+   },
+   {    
+       .unregister_function = null,
+       .message_function = subsection_com_handler
+   },
+   {
+       .unregister_function = null,
+       .message_function = subsection_com_redflag_handler
+   },
+   {
+       .unregister_function = null,
+       .message_function = object_dbus_handler
+   },
+   {
+       .unregister_function = object_unregister_handler,
+       .message_function = object_csy_handler
+   },
+   {
+       .unregister_function = object_unregister_handler,
+       .message_function = object_csy_handler
+   }
+};
+static struct seriallist_t {
+   dbus_uint32_t serial;
+   struct seriallist_t *next;
+} *seriallist = null;
+/**------------- debug facilities --------------------------------*/
+void err_quit(const char *fmt, ...) {
+   va_list args;
+   va_start(args, fmt);
+   fprintf(stderr, fmt, args);
+   va_end(args);
+   exit(1);    
+}
+/**
+* for debug purpose
+*/
+char* _verbose_watch(dbuswatch *watch) {
+   char *s_flags[] = {
+       "readable",
+       "writable"
+   };
+   char p[1024] = "", ret[1024] = "";
+   if (dbus_watch_get_flags(watch) & dbus_watch_readable )
+       strncpy(p, s_flags[0], strlen(s_flags[0]));
+   else if (dbus_watch_get_flags(watch) & dbus_watch_writable ) {
+       if ( p[0] )
+           strncat(p, "&", strlen("&"));
+       strncat(p, s_flags[1], strlen(s_flags[1]));
+   }
+   sprintf(ret, ":%s", dbus_watch_get_fd(watch), p);
+   return ret;
+}
+char* _verbose_message(dbusmessage *msg) {
+   char s_msg[1024] = "", ret[1024] = "";
+   int bc = sprintf(s_msg, "\ttype: %s\n\tpath: %s\n"
+           "\tmember: %s\n\t",
+           dbus_message_type_to_string(dbus_message_get_type(msg)),
+           dbus_message_get_path(msg),
+           dbus_message_get_member(msg));
+   strncpy(ret, s_msg, bc+1);
+   
+   if (dbus_message_get_serial(msg)) {
+       bc = sprintf(s_msg, "serial: %ud\n\t",
+               dbus_message_get_serial(msg));
+       strncat(ret, s_msg, bc+1);
+   }
+   if (dbus_message_get_reply_serial(msg)) {
+       bc = sprintf(s_msg, "reply_serial: %ud\n\t",
+               dbus_message_get_reply_serial(msg));
+       strncat(ret, s_msg, bc+1);
+   }
+   dbusmessageiter args, subargs;
+   char *s;
+   int i;
+   dbus_message_iter_init(msg, &args);
+   bc = sprintf(s_msg, "args: ");
+   strncat(ret, s_msg, bc+1);
+   /** here is not the best way to parse the params, i just want to test some of
+    * nested situations and different types of params. */
+   while (dbus_type_invalid != dbus_message_iter_get_arg_type(&args)) {
+       // demo here: only care about int and string, igore other types
+       switch (dbus_message_iter_get_arg_type(&args)) {
+       case dbus_type_string:
+           dbus_message_iter_get_basic(&args, &s);
+           bc = sprintf(s_msg, " %s", s);
+           strncat(ret, s_msg, bc+1);
+           break;
+       case dbus_type_int32:
+           dbus_message_iter_get_basic(&args, &i);
+           bc = sprintf(s_msg, " %d", i);
+           strncat(ret, s_msg, bc+1);
+           break;
+       case dbus_type_array:
+           dbus_message_iter_recurse(&args, &subargs);
+           strcat(ret, " [ ");
+           while (dbus_message_iter_get_arg_type(&subargs)
+                   != dbus_type_invalid) {
+               switch (dbus_message_iter_get_arg_type(&subargs)) {
+               case dbus_type_string:
+                   dbus_message_iter_get_basic(&subargs, &s);
+                   bc = sprintf(s_msg, " %s", s);
+                   strncat(ret, s_msg, bc+1);
+                   break;
+               case dbus_type_int32:
+                   dbus_message_iter_get_basic(&subargs, &i);
+                   bc = sprintf(s_msg, " %d", i);
+                   strncat(ret, s_msg, bc+1);
+                   break;
+               }
+               dbus_message_iter_next(&subargs);
+           }
+           strcat(ret, " ] ");
+       }
+       dbus_message_iter_next(&args);
+   }
+   return ret;
+}
+char* _verbose_timeout(dbustimeout *timeout) {
+   char ret[1024] = "";
+   sprintf(ret, "timeout: \n",
+           (unsigned int)timeout, dbus_timeout_get_interval(timeout));
+   return ret;        
+}
+/** -------------------------------------------------------*/
+dbushandlerresult handle_method_return(dbusconnection *conn,
+       dbusmessage *reply) {
+   struct seriallist_t *l = seriallist;
+   while (l != null) {
+       if (l->serial == dbus_message_get_reply_serial(reply)) {        
+           printf("reply_msg:\t%s\n", _verbose_message(reply));
+           return dbus_handler_result_handled;
+       }
+       l = l->next;
+   }
+   return dbus_handler_result_handled;
+}
+int reply_to_method_call(dbusmessage *msg, dbusconnection *conn) {
+   dbusmessage *reply;
+   dbusmessageiter args;
+   dbuserror err;
+   // suppose we expect two argument, one is id, and second is
+   // a string.
+   if (!dbus_message_iter_init(msg, &args))
+       err_quit("arg init error.\n");
+   dbus_int32_t id;
+   char *content;
+   dbus_error_init( &err );
+   dbus_message_get_args( msg, &err,
+           dbus_type_int32, &id,
+           dbus_type_string, &content,
+           dbus_type_invalid );
+   if (dbus_error_is_set(&err))
+       err_quit("get arg error.\n");
+   reply = dbus_message_new_method_return(msg);
+   if (null == reply)
+       err_quit("memory is not enough.\n");
+   printf("received call args: %d: %s\n", id, content);
+   const char *comment = "reply to method call from com.redflag.csy.";
+   dbus_message_iter_init_append( reply, &args );
+   dbus_message_append_args ( reply,
+           dbus_type_string, &comment,
+           dbus_type_invalid );
+   dbus_uint32_t serial;
+   dbus_connection_send( conn, reply, &serial );
+   dbus_connection_flush( conn );
+   
+   printf( "build reply msg and send: \n\t%s\n", _verbose_message(reply) );
+   dbus_message_unref( reply );
+}
+dbus_bool_t watchaddnotify(dbuswatch *watch, void *data) {
+   struct watchlist_t *l;
+   for (l = watchlist; l != null; l = l->next) {
+       if (l->watch == watch)
+           return true;
+   }
+   printf("watchadd: %s\n", _verbose_watch(watch));    
+   l = dbus_new(struct watchlist_t, 1);
+   if ( null == l )
+       return false;
+   l->watch = watch;
+   l->next = watchlist;
+   watchlist = l;
+   return true;
+}
+void watchremovenotify(dbuswatch *watch, void *data) {
+   struct watchlist_t *l, *pre;
+   for ( pre = l = watchlist; l != null; pre = l, l = l->next ) {
+       if (l->watch == watch) {
+           printf("watchremove: \n", dbus_watch_get_fd(watch));
+           if ( l == watchlist ) {
+               watchlist = l->next;
+               dbus_free(l);
+           } else {
+               pre->next = l->next;
+               dbus_free(l);
+           }
+           break;
+       }
+   }        
+}
+void watchtogglenotify(dbuswatch *watch, void *data) {
+   if (watch == null)
+       err_quit("line %d: watch should not be null.", __line__);
+   printf( "togglenotify: watch %d toogled %s",
+           dbus_watch_get_fd(watch),
+           dbus_watch_get_enabled(watch)?"enable":"disabled" );
+}
+/**
+* process any watches added to connection
+*/
+dbus_bool_t watchhandler() {
+   struct watchlist_t *l;
+   fd_set rfds, wfds, efds;
+   int maxid = -1, fd;
+   fd_zero(&rfds);
+   fd_zero(&wfds);
+   fd_zero(&efds);
+   // prepare all readble and writable fds
+   for (l = watchlist; l != null; l = l->next) {
+       if (!dbus_watch_get_enabled(l->watch))
+           continue;
+       fd = dbus_watch_get_fd(l->watch);
+       if ( fd & dbus_watch_readable ) {
+           fd_set(fd, &rfds);
+           maxid = (maxid  fd? fd: maxid);
+       }
+       if ( fd & dbus_watch_writable ) {
+           fd_set(fd, &wfds);
+           maxid = (maxid  fd? fd: maxid);
+       }
+       if ( fd & dbus_watch_error ) {
+           fd_set(fd, &efds);
+           maxid = (maxid  fd? fd: maxid);
+       }
+   }
+   int ret = select(maxid+1, &rfds, &wfds, &efds, null);
+   if (ret = 0)
+       return;
+   
+   // call dbus_watch_handle is a must, it uses internal predefined
+   // watch handler to do some thing, but i am not  quite sure what
+   // it is right now.
+   for (l = watchlist; l != null; l = l->next) {
+       fd = dbus_watch_get_fd(l->watch);
+   
+       if (fd_isset(fd, &rfds))
+           dbus_watch_handle(l->watch, dbus_watch_readable);
+       
+       if (fd_isset(fd, &wfds))
+           dbus_watch_handle(l->watch, dbus_watch_writable);
+       
+       if (fd_isset(fd, &efds))
+           dbus_watch_handle(l->watch, dbus_watch_error);    
+   }
+}
+/**---- timeout process functions ------------------------------*/
+dbus_bool_t timeoutaddnotify(dbustimeout *timeout, void *data) {
+   struct timeoutlist_t *l;
+   for (l = timeoutlist; l != null; l = l->next) {
+       if (l->timeout == timeout)
+           return true;
+   }
+   l = dbus_new(struct timeoutlist_t, 1);
+   if (null == l)
+       return false;
+   l->timeout = timeout;
+   fprintf(stdout, "timeoutadd:%s\n", _verbose_timeout(timeout));
+   l->next = timeoutlist;
+   timeoutlist = l;
+   return true;
+}
+void timeoutremovenotify(dbustimeout *timeout, void *data) {
+   struct timeoutlist_t *pre = null, *l = timeoutlist;
+   while( l != null ) {
+       if (l->timeout == timeout) {
+           if (pre == null)
+               timeoutlist = l->next;
+           else
+               pre->next = l->next;
+           fprintf(stdout, "timeoutremove:%s\n",
+                   _verbose_timeout(timeout));
+           break;
+       }
+       pre = l;
+       l = l->next;
+   }
+}
+void timeouttogglenotify(dbustimeout *timeout, void *data) {
+   fprintf(stdout, "timeouttoggle: %s\n", _verbose_timeout(timeout));
+}
+/**
+* in this function, we call dbus_timeout_handle to handle all timeout
+* events, it will call internal predefined handler to process.
+*/
+void timeouthandle() {
+   struct timeoutlist_t *l = timeoutlist;
+   for (; l != null; l = l->next) {
+       if (dbus_timeout_get_enabled(l->timeout)) {
+           printf("timeouthandle: %s\n", _verbose_timeout(l->timeout));
+           dbus_timeout_handle(l->timeout);
+       }
+   }
+}
+/**----------- all handlers -------------------------------------*/
+/**
+* filter messages that already stayed in the incoming queue,
+* decide whether a further process is needed.
+*/
+dbushandlerresult msgfilter(dbusconnection *conn,
+       dbusmessage *msg, void *data) {
+   printf("incoming msg: %s\n", _verbose_message(msg));
+   switch (dbus_message_get_type(msg)) {
+   case dbus_message_type_method_call:
+       if (!strcmp(dbus_message_get_member(msg), "ignore")) {
+           dbusmessage *errmsg;
+           errmsg = dbus_message_new_error(msg,
+                   "com.redflag.csy.ignoreservice",
+                   "this demonstrate the filter.");
+           dbus_connection_send(conn, errmsg, null);
+           return dbus_handler_result_handled;
+       } else
+           break;
+   case dbus_message_type_method_return:
+       // never reach here.
+       break;
+   case dbus_message_type_signal:
+       break;
+   case dbus_message_type_error:
+       break;
+   }
+   // set this flag is very important, if not, dbus may not
+   // process messages for you. it pass the control to dbus
+   // default filter.
+   return dbus_handler_result_not_yet_handled;
+}
+dbushandlerresult subsection_com_handler(dbusconnection* conn,
+       dbusmessage* msg, void* data) {
+   if ( strncmp(dbus_message_get_path(msg), objectpaths[1],
+               strlen(objectpaths[1])) != 0 ) {
+       printf("subsection_com_handler: something wrong.\n");
+       return dbus_handler_result_not_yet_handled;
+   }
+   if ( strncmp(dbus_message_get_member(msg), "pseudo", 6) == 0 ) {
+       reply_to_method_call(msg, conn);
+       printf("subsection_com_handler: handled.\n");
+       return dbus_handler_result_handled;
+   } else
+       return dbus_handler_result_not_yet_handled;
+}
+dbushandlerresult subsection_org_freedesktop_handler(
+       dbusconnection* conn, dbusmessage* msg, void* data) {
+   if ( strncmp(dbus_message_get_path(msg), objectpaths[0],
+               strlen(objectpaths[0])) != 0 ) {
+       printf("subsection_org_freedesktop__handler: something wrong.\n");
+       return dbus_handler_result_not_yet_handled;
+   }
+   
+   if ( strncmp(dbus_message_get_member(msg), "error", 5) == 0 ) {
+       printf("subsection_org_freedesktop_handler(error): handled.\n");
+       return dbus_handler_result_handled;
+   } else
+       return dbus_handler_result_not_yet_handled;
+}
+dbushandlerresult subsection_com_redflag_handler(dbusconnection* conn,
+       dbusmessage* msg, void* data) {
+   if ( strncmp(dbus_message_get_path(msg), objectpaths[2],
+               strlen(objectpaths[2])) != 0 ) {
+       printf("subsection_com_redflag_handler: something wrong.\n");
+       return dbus_handler_result_not_yet_handled;
+   }
+   
+   if ( strncmp(dbus_message_get_member(msg), "pseudo", 6) == 0 ) {
+       reply_to_method_call(msg, conn);
+       printf("subsection_com_redflag_handler: handled.\n");
+       return dbus_handler_result_handled;
+   } else
+       return dbus_handler_result_not_yet_handled;
+}
+dbushandlerresult object_dbus_handler(dbusconnection* conn,
+       dbusmessage* msg, void* data) {
+   if (dbus_message_get_type(msg) == dbus_message_type_method_return) {
+       printf("object_dbus_handler: method_return.\n");
+       int ret = handle_method_return( conn, msg );
+       printf("object_dbus_handler: handled.\n");
+       return ret;
+   }
+   fprintf(stdout, "object_dbus_handler: cannot handle.\n");
+   fprintf(stdout, "\t%s\n", _verbose_message(msg));
+   return dbus_handler_result_not_yet_handled;
+}
+dbushandlerresult object_csy_handler(dbusconnection* conn,
+       dbusmessage* msg, void* data) {
+   switch (dbus_message_get_type(msg)) {
+   case dbus_message_type_signal:
+   case dbus_message_type_error:
+       fprintf(stdout, "object_csy_handler(error/signal):\n\t%s\n",
+               _verbose_message(msg));
+       return dbus_handler_result_not_yet_handled;
+   case dbus_message_type_method_return:
+           return handle_method_return(conn, msg);
+   case dbus_message_type_method_call:
+       if ( strstr(dbus_message_get_path(msg), "sycao") != null ) {
+           printf("object_csy_handler(call): "
+                   "cannot handle, through to tree.");
+           return dbus_handler_result_not_yet_handled;
+       }
+       if ( !strcmp(dbus_message_get_member(msg), "pseudo") ) {
+           reply_to_method_call(msg, conn);
+           printf("object_csy_handler(call): handled.\n");
+           return dbus_handler_result_handled;
+       } else {
+           fprintf(stdout, "object_csy_handler(call): cannot handle.\n");
+           return dbus_handler_result_not_yet_handled;
+       }
+   }
+}
+void object_unregister_handler(dbusconnection* conn, void* data) {
+   printf("object_unregister_handler:\n");
+}
+/**----------------testing routines ----------------------------------*/
+/**
+* test send signal method call, send certain signal randomly
+*/
+void send_random_signal(dbusconnection *conn) {
+   dbusmessage *msg;
+   char *msg_args[] = {
+       "/org/freedesktop/dbus\0org.freedesktop.dbus\0notexist",
+       "/org/freedesktop/hal\0org.freedesktop.hal\0device",
+       "/com/redflag/csy\0com.redflag.csy\0newsignal",
+       "\0", "\0"
+   };
+   char *pargs = msg_args[rand()%(sizeof(msg_args)/sizeof(msg_args[0]))];
+   if (!*pargs)
+       return;
+   
+   long chance = 0x0fffffff;
+   if ((rand() % chance) > 100)
+       return;
+   char *path = pargs;
+   char *intf, *member;
+   while( *pargs++ );
+       intf = pargs;
+   while( *pargs++ );
+       member = pargs;
+//    printf("%s,%s,%s\n", path, intf, member);
+   dbus_uint32_t serial;
+   msg = dbus_message_new_signal(path, intf, member);
+   if (null == msg)
+       err_quit("no enough memory.\n");
+   if ( !dbus_connection_send(conn, msg, &serial) )
+       fprintf( stderr, "no enough memory to send signal.\n" );
+   fprintf(stdout, "sendsignal(%d): %s\n", serial, _verbose_message(msg));
+}
+void pendingcallnotify(dbuspendingcall *pending, void *data) {
+   // one can process the pending and then read the reply message
+   // alternatively, one can leave it to message handlers
+   dbusmessage *msg = dbus_pending_call_steal_reply(pending);    
+   printf( "pendingcallnotify: %s\n", _verbose_message(msg) );
+}
+void send_random_method_expecting_reply(dbusconnection *conn) {
+   dbusmessage *msg;
+   char *msg_args[] = {
+       "org.freedesktop.dbus\0/org/freedesktop/dbus\0org.freedesktop.dbus\0listnames",
+       "org.freedesktop.dbus\0/org/freedesktop/dbus\0org.freedesktop.dbus.peer\0ping",
+       "org.freedesktop.dbus\0/org/freedesktop/dbus\0org.freedesktop.dbus.peer\0getmachineid",
+       "\0" // add possibility of not sending any msg this turn
+   };
+   long chance = 0x0fffffff;
+   if ((rand() % chance) > 100)
+       return;
+   char *pargs = msg_args[rand()%(sizeof(msg_args)/sizeof(msg_args[0]))];
+   if (!*pargs)
+       return;    
+   char *dest, *path, *intf, *member;
+   dest = pargs;
+   while( *pargs++ );
+       path = pargs;
+   while( *pargs++ );
+       intf = pargs;
+   while( *pargs++ );
+       member = pargs;
+   
+   msg = dbus_message_new_method_call(dest, path, intf, member);
+   if (null == msg)
+       err_quit("no enough memory.\n");
+   dbuspendingcall *pendingcall;
+   if (!dbus_connection_send_with_reply(conn, msg, &pendingcall, 10000))
+       fprintf( stderr, "no memory to send method_call.\n" );
+   dbus_pending_call_set_notify(pendingcall, pendingcallnotify, null, null);
+   struct seriallist_t *l;
+   l = dbus_new(struct seriallist_t, 1);
+   l->serial = dbus_message_get_serial(msg);
+   l->next = seriallist;
+   seriallist = l;
+   fprintf(stdout, "sendmethod: %s\n", _verbose_message(msg));
+}
+int dbus_process_msg_loop() {
+   dbusconnection *conn;
+   dbuserror *perr;
+   // 1. connection to bus
+   perr = dbus_new(dbuserror, 1);
+   dbus_error_init(perr);
+   conn = dbus_bus_get(dbus_bus_session, perr);
+   if ( dbus_error_is_set(perr) )
+       err_quit("connection failed.\n");
+   // 2. request well-known name
+   int ret = dbus_bus_request_name( conn, "com.redflag.csy",
+           dbus_name_flag_replace_existing, perr );
+   if ( dbus_request_name_reply_primary_owner != ret )
+       err_quit("not primary owner.\n");
+   // 3. register any handler
+   dbus_bus_add_match( conn,
+           "type='method_call',path='/org/freedesktop/csy'"
+           ",interface='com.redflag.sycao',member='faked'"
+           , perr);
+   if (dbus_error_is_set(perr))
+       err_quit("add match failed.\n");
+   dbus_connection_add_filter( conn, msgfilter, null, null);
+   dbus_connection_set_watch_functions( conn,
+           watchaddnotify, watchremovenotify, watchtogglenotify,
+           null, null );
+   dbus_connection_set_timeout_functions( conn,
+           timeoutaddnotify, timeoutremovenotify, timeouttogglenotify,
+           null, null );
+   int i;
+   for (i = 0; i  sizeof(objectpaths)/sizeof(objectpaths[0]); i++) {
+       if (i  3)
+           dbus_connection_register_fallback( conn,
+                   objectpaths, &objectpathvtable, null );
+       else
+           dbus_connection_register_object_path( conn,
+                   objectpaths, &objectpathvtable, null);
+   }
+   printf("main: registered %d objecthandlers.\n", i);
+   // 4. main loop: wait and process incoming msgs
+   // there are several steps :
+   //    a. check if any watch is ready for read (incoming data prepared)
+   //    or write (outgoing data prepared), and process it.
+   //    b. check if any timeout occurred ( i know now method_call that
+   //    needs a reply will set a timeout ), and process it.
+   //    c. call dispatch will do:
+   //        i. parse incoming raw data if has.
+   //        ii. process any pending call ( bind with a reply message );
+   //        ii. call any filter registered.
+   //        iv. call any object path handler registered.
+   //        ps: a single dispatch call processes at most one message.
+   //            
+   while( 1 ) {
+       dbusdispatchstatus status;
+       
+       while( 1 ) {
+           watchhandler();
+           timeouthandle();
+           status = dbus_connection_dispatch( conn );
+           
+           switch( status ) {
+           case dbus_dispatch_data_remains:
+               // there may be more msgs remain, go on
+               printf("dbus_dispatch_data_remains\n");
+               continue;
+           case dbus_dispatch_complete:
+               break;
+           case dbus_dispatch_need_memory:
+               fprintf( stderr, "more memory is needed.\n" );
+           }
+           break;
+       }
+       send_random_signal( conn );
+       send_random_method_expecting_reply( conn );
+}
+   dbus_free(perr);
+   return 0;
+}
+int main(int argc, char **argv) {
+   return dbus_process_msg_loop();
+}
+编译的时候带上：
+cflags=-wall `pkg-config dbus-1 --cflags`
+ldflags=`pkg-config dbus-1 --libs`
+可以用下面的脚本测试下不同的对象路径、接口和方法的影响：
+#!/bin/bash
+if [ $# == 0 ]; then
+       loop=10
+else
+       loop=$1
+fi
+loop2=$loop
+loop3=$loop
+loop4=$loop
+while (( loop > 0 ))
+do
+       dbus-send --session --type="method_call" --print-reply  --dest="com.redflag.csy" "/com/redflag/csy" "com.redflag.csy.pseudo" int32:$loop string:"hello,dbus1"
+       let "loop = loop - 1"
+done
+while (( loop2 > 0 ))
+do
+       dbus-send --session --type="method_call" --print-reply  --dest="com.redflag.csy" "/org/freedesktop/csy" "com.redflag.csy.pseudo" int32:$loop2 string:"hello,dbus2"
+       let "loop2 = loop2 - 1"
+done
+while (( loop3 > 0 ))
+do
+       dbus-send --session --type="method_call" --print-reply  --dest="com.redflag.csy" "/com/redflag/sycao" "com.redflag.sycao.pseudo" int32:$loop3 string:"hello,dbus3"
+       let "loop3 = loop3 - 1"
+done
+while (( loop4 > 0 ))
+do
+       dbus-send --session --type="method_call" --print-reply  --dest="com.redflag.csy" "/org/freedesktop/csy" "com.redflag.csy.ignore" int32:$loop4 string:"hello,dbus4"
+       let "loop4 = loop4 - 1"
+done

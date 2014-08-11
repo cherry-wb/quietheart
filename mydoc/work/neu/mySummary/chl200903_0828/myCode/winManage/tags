@@ -1,0 +1,87 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+MAX_PROPERTY_VALUE_LEN	./goodInUseCom/winManage.h	15;"	d
+MAX_PROPERTY_VALUE_LEN	./winManage.h	18;"	d
+MY_DEBUG_OUTPUT	./goodInUseCom/winManage.h	17;"	d
+MY_DEBUG_OUTPUT	./winManage.h	20;"	d
+__winManage_H	./goodInUseCom/winManage.h	2;"	d
+__winManage_H	./winManage.h	5;"	d
+client_msg	./goodInUseCom/winManage.c	/^static int client_msg(Display *disp, Window win, char *msg, $/;"	f	file:
+client_msg	./winManage.c	/^static int client_msg(Display *disp, Window win, char *msg, \/* {{{ *\/$/;"	f	file:
+close_win_by_title	./goodInUseCom/winManage.c	/^int close_win_by_title(gchar *title)$/;"	f
+close_win_by_title	./winManage.c	/^int close_win_by_title(gchar *title)$/;"	f
+close_window	./goodInUseCom/winManage.c	/^static int close_window (Display *disp, Window win)$/;"	f	file:
+close_window	./winManage.c	/^static int close_window (Display *disp, Window win)$/;"	f	file:
+del_comment	./delComment.sh	/^function del_comment()$/;"	f
+del_comment_file	./delComment.sh	/^function del_comment_file()$/;"	f
+envir_utf8	./goodInUseCom/winManage.c	/^static gboolean envir_utf8;$/;"	v	file:
+envir_utf8	./winManage.c	/^static gboolean envir_utf8;$/;"	v	file:
+force_utf8	./goodInUseCom/winManage.c	/^    int force_utf8;$/;"	m	struct:__anon2	file:
+force_utf8	./winManage.c	/^    int force_utf8;$/;"	m	struct:__anon1	file:
+full_window_title_match	./goodInUseCom/winManage.c	/^    int full_window_title_match;$/;"	m	struct:__anon2	file:
+full_window_title_match	./winManage.c	/^    int full_window_title_match;$/;"	m	struct:__anon1	file:
+getActiveWinTitle	./example_closeActive.c	/^static gchar* getActiveWinTitle(Display *disp)$/;"	f	file:
+getActiveWinTitle	./goodInUseCom/example_closeActive.c	/^static gchar* getActiveWinTitle(Display *disp)$/;"	f	file:
+get_active_window	./goodInUseCom/winManage.c	/^Window get_active_window(Display *disp)$/;"	f
+get_active_window	./winManage.c	/^Window get_active_window(Display *disp)$/;"	f
+get_client_list	./goodInUseCom/winManage.c	/^static Window *get_client_list (Display *disp, unsigned long *size)$/;"	f	file:
+get_client_list	./winManage.c	/^static Window *get_client_list (Display *disp, unsigned long *size)$/;"	f	file:
+get_output_str	./goodInUseCom/winManage.c	/^static gchar *get_output_str (gchar *str, gboolean is_utf8)$/;"	f	file:
+get_output_str	./winManage.c	/^static gchar *get_output_str (gchar *str, gboolean is_utf8)$/;"	f	file:
+get_pid_by_window	./goodInUseCom/winManage.c	/^unsigned long get_pid_by_window(Display *disp, Window win)$/;"	f
+get_pid_by_window	./winManage.c	/^unsigned long get_pid_by_window(Display *disp, Window win)$/;"	f
+get_property	./goodInUseCom/winManage.c	/^static gchar *get_property (Display *disp, Window win, $/;"	f	file:
+get_property	./winManage.c	/^static gchar *get_property (Display *disp, Window win, $/;"	f	file:
+get_title_by_window	./goodInUseCom/winManage.c	/^gchar *get_title_by_window(Display *disp, Window win)$/;"	f
+get_title_by_window	./winManage.c	/^gchar *get_title_by_window(Display *disp, Window win)$/;"	f
+get_window_by_title	./winManage.c	/^Window* get_window_by_title(Display *disp, gchar *title, int *num)$/;"	f
+get_window_class	./goodInUseCom/winManage.c	/^gchar *get_window_class (Display *disp, Window win)$/;"	f
+get_window_class	./winManage.c	/^gchar *get_window_class (Display *disp, Window win)$/;"	f
+get_window_list	./goodInUseCom/winManage.c	/^Window *get_window_list(Display *disp, int *count)$/;"	f
+get_window_list	./winManage.c	/^Window *get_window_list(Display *disp, int *count)$/;"	f
+get_window_title	./goodInUseCom/winManage.c	/^gchar *get_window_title (Display *disp, Window win)$/;"	f
+get_window_title	./winManage.c	/^gchar *get_window_title (Display *disp, Window win)$/;"	f
+init_charset	./goodInUseCom/winManage.c	/^void init_charset (void)$/;"	f
+init_charset	./winManage.c	/^void init_charset (void)$/;"	f
+list_windows	./goodInUseCom/winManage.c	/^int list_windows (Display *disp)$/;"	f
+list_windows	./winManage.c	/^int list_windows (Display *disp)$/;"	f
+main	./example_active.c	/^int main(int argc, char *argv[])$/;"	f
+main	./example_close.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_closeActive.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_getCurWinID.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_getCurWinPID.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_getWinByTitle.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_list.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_printActiveInfo.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./example_printAllWinInfo.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./goodInUseCom/example_close.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./goodInUseCom/example_closeActive.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+main	./neuToggle.c	/^gint main(gint argc, gchar *argv[])$/;"	f
+match_by_cls	./goodInUseCom/winManage.c	/^	int match_by_cls;$/;"	m	struct:__anon2	file:
+match_by_cls	./winManage.c	/^	int match_by_cls;$/;"	m	struct:__anon1	file:
+match_by_id	./goodInUseCom/winManage.c	/^    int match_by_id;$/;"	m	struct:__anon2	file:
+match_by_id	./winManage.c	/^    int match_by_id;$/;"	m	struct:__anon1	file:
+options	./goodInUseCom/winManage.c	/^} options;$/;"	v	typeref:struct:__anon2	file:
+options	./winManage.c	/^} options;$/;"	v	typeref:struct:__anon1	file:
+p_verbose	./goodInUseCom/winManage.c	2;"	d	file:
+p_verbose	./winManage.c	2;"	d	file:
+param	./goodInUseCom/winManage.c	/^    char *param;$/;"	m	struct:__anon2	file:
+param	./winManage.c	/^    char *param;$/;"	m	struct:__anon1	file:
+param_window	./goodInUseCom/winManage.c	/^    char *param_window;$/;"	m	struct:__anon2	file:
+param_window	./winManage.c	/^    char *param_window;$/;"	m	struct:__anon1	file:
+print_active_window_info	./example_printActiveInfo.c	/^void print_active_window_info()$/;"	f
+print_win_info	./winManage.c	/^void print_win_info(Display *disp, Window *win)$/;"	f
+show_class	./goodInUseCom/winManage.c	/^    int show_class;$/;"	m	struct:__anon2	file:
+show_class	./winManage.c	/^    int show_class;$/;"	m	struct:__anon1	file:
+show_geometry	./goodInUseCom/winManage.c	/^    int show_geometry;$/;"	m	struct:__anon2	file:
+show_geometry	./winManage.c	/^    int show_geometry;$/;"	m	struct:__anon1	file:
+show_pid	./goodInUseCom/winManage.c	/^    int show_pid;$/;"	m	struct:__anon2	file:
+show_pid	./winManage.c	/^    int show_pid;$/;"	m	struct:__anon1	file:
+verbose	./goodInUseCom/winManage.c	/^    int verbose;$/;"	m	struct:__anon2	file:
+verbose	./winManage.c	/^    int verbose;$/;"	m	struct:__anon1	file:
+wa_desktop_titles_invalid_utf8	./goodInUseCom/winManage.c	/^    int wa_desktop_titles_invalid_utf8;$/;"	m	struct:__anon2	file:
+wa_desktop_titles_invalid_utf8	./winManage.c	/^    int wa_desktop_titles_invalid_utf8;$/;"	m	struct:__anon1	file:

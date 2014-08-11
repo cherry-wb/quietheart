@@ -1,0 +1,275 @@
+*显示当前接口信息：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ ip link list
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN qlen 1000
+    link/ether f0:de:f1:f0:08:60 brd ff:ff:ff:ff:ff:ff
+3: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP qlen 1000
+    link/ether 44:6d:57:5e:28:6c brd ff:ff:ff:ff:ff:ff
+这里，显示出，有一个eth0网卡，一个无线网卡wlan0和一个回环lo，其中eth0卡处于down的状态（因为使用"ifconfig eth0 down"将其禁用，使用"ifconfig"无法再看见eth0只能用"ifconfig -a"或"ip link list"开查看）。
+
+*启用网口：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ip link set eth0 up
+也可用ifconfig eth0 up，建议用较新的ip命令。
+
+*关闭网口：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ip link set eth0 down
+也可用ifconfig eth0 down。
+
+
+
+*显示neighbor/arp表：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ ip neigh show
+192.168.1.1 dev wlan0 lladdr ec:17:2f:3e:5b:4e STALE
+
+
+*删除eth0的一个ip地址：
+#ip addr del 192.168.1.222 dev eth0
+
+*为eth0添加一个ip地址：
+#ip addr add 192.168.1.111 dev eth0
+添加之后，在原有网址基础上，可以也可访问192.168.1.111到达本机，但是只有第一次添加的addr在ifconfig中显示。
+
+*查看ip地址
+#ip addr show
+查看网卡上的ip地址，相对ifconfig，此命令显示一个网卡上所有的ip，而ifconfig只显示第一个。
+
+*删除所有的ip地址：
+#ip addr flush dev eth0
+
+*显示所有路由表：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ ip rule list
+0:      from all lookup local 
+32766:  from all lookup main 
+32767:  from all lookup default 
+表名和编号对应信息可以查看"/etc/iproute2/rttables"。
+
+*显示路由表信息：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ ip route show
+default via 192.168.1.1 dev wlan0  proto static 
+192.168.1.0/24 dev wlan0  proto kernel  scope link  src 192.168.1.100  metric 2 
+这里，默认显示main的路由表信息。
+
+*显示指定路由表信息：
+quietheart@quietheart-ThinkPad-E420:~/mydoc/tmp/command_stud$ ip route list table local
+broadcast 127.0.0.0 dev lo  proto kernel  scope link  src 127.0.0.1
+local 127.0.0.0/8 dev lo  proto kernel  scope host  src 127.0.0.1
+local 127.0.0.1 dev lo  proto kernel  scope host  src 127.0.0.1
+broadcast 127.255.255.255 dev lo  proto kernel  scope link  src 127.0.0.1
+broadcast 192.168.1.0 dev wlan0  proto kernel  scope link  src 192.168.1.100
+local 192.168.1.100 dev wlan0  proto kernel  scope host  src 192.168.1.100
+broadcast 192.168.1.255 dev wlan0  proto kernel  scope link  src 192.168.1.100
+
+
+一个实践问题：
+==============
+无线网卡：192.168.0.109
+有线网卡：192.168.0.216
+两者在同一网段。
+一般内核默认配置的路由表在route命令下可以操作和查看，但是会有问题。例如，
+#netstat -rn
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+default     192.168.0.1         255.255.255.0   U         0 0          0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 wlan0
+拔网线之后，如果其route显示的路由还有eth0的选项，那么匹配的时候还是选择从eth0口发送数据，这时候将会导致网络不通。
+
+所以采用如下：
+ip rule delete from 192.168.0.216
+ip rule delete from 192.168.0.109
+ip rule delete to 192.168.0.216
+ip rule delete to 192.168.0.109
+ip route flush table main
+ip route flush table 200
+ip route flush table 201
+ip route flush cache
+这里，将所有内容清空。
+
+ip route add 192.168.0.0/24 dev eth0 table 200
+ip route add 192.168.0.0/24 dev ra0 table 201
+ip rule add from 192.168.0.216 table 200
+ip rule add from 192.168.0.109 table 201
+ip route flush cache
+添加路由规则，然后使用"ip route flush cache"使其立即生效。注意这里的from，表示数据发自哪里。
+
+route add -net 192.168.0.0/24 dev ra0
+route add -net 192.168.0.0/24 dev eth0
+route add default gw 192.168.0.1 dev eth0
+这里设置的main路由，实际没有作用。
+
+如上设置之后，当外部
+ping 192.168.0.109
+会使用201的路由。
+
+当外部
+ping 192.168.0.216
+会使用200的路由。
+
+插拔网线不会影响ip rule建立的规则，所以不会影响网络的通畅。
+
+总结一下：
+设置命令：
+# ip rule delete from 192.168.0.216
+# ip rule delete from 192.168.0.109
+# ip route flush table main
+# ip route flush table 200
+# ip route flush table 201
+# ip route flush cache
+# ip route add 192.168.0.0/24 dev eth0 table 200
+# ip route add 192.168.0.0/24 dev ra0 table 201
+# ip rule add from 192.168.0.216 table 200
+# ip rule add from 192.168.0.109 table 201
+# ip route flush cache
+# route add -net 192.168.0.0/24 dev ra0
+# route add -net 192.168.0.0/24 dev eth0
+# route add default gw 192.168.0.1 dev eth0
+查看设置：
+# ip rule list
+0:      from all lookup local 
+32764:  from 192.168.0.109 lookup 201 
+32765:  from 192.168.0.216 lookup 200 
+32766:  from all lookup main 
+32767:  from all lookup default 
+规则的优先级小的靠前，（即由上到下依次进行）， 找到匹配的路由则进入，无论是否可达目的，找不到则找下一条规则对应路由直至匹配。
+
+
+# ip route list table 200
+192.168.0.0/24 dev eth0 
+这里，假设设置了:"ip route add to unreachable 192.168.0.0/24 table 200"，这样根据前面的rule匹配规则，进行"ping 192.168.0.216"也会进入这里，并且返回网络不可达（即便后面的main中有正确的路由项信息也不会使用）。
+
+# ip route list table 201
+192.168.0.0/24 dev ra0 
+
+# ip route list table main
+192.168.0.0/24 dev eth0 
+192.168.0.0/24 dev ra0 
+default via 192.168.0.1 dev eth0 
+对于最后的main默认table，也可用如下命令查看:
+# netstat -rn
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 ra0
+0.0.0.0         192.168.0.1     0.0.0.0         UG        0 0          0 eth0
+# route 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     *               255.255.255.0   U     0      0        0 eth0
+192.168.0.0     *               255.255.255.0   U     0      0        0 ra0
+default         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
+这里，netstat -rn比route要快一些。
+
+注意：ip route add中的src信息不太懂，还有使用ip addr del删除ip会导致所有表里对应内容消失。
+
+未整理
+==============
+*创建两个路由表：
+创建三步：
+（1）建立映射表。
+#echo 200 T1 >>/etc/iproute2/rttables
+#echo 300 T2 >>/etc/iproute2/rttables
+如果不建立映射，则在后面的命令中直接使用table的id而非别名。
+（2）添加路由表。
+#ip rule add from 1.1.1.1 table T1
+#ip rule add to 1.1.1.1 table T2
+这里，需要指定创建时，使用该路由表的包对应的规则，这样符合特定规则的包，就可选择特定的路由表（main路由表无规则，所以没有匹配那个路由表的时候，就用main）此处，来自1.1.1.1的包使用T1路由表，通往1.1.1.1的包使用T2路由表。
+（3）向指定路由表追加表项。
+#
+有待添加
+
+
+ip
+一个网卡是可以有多个ip地址的，ip地址是吊链的结构，ip会返回网卡的所有ip地址，而ifconfig只返回首次设置的，ip使用netlink设置网卡，而ifconfig直接使用ioctl，关于ip和ifconfig的区别，可以参考：
+http://blog.csdn.net/dog250/article/details/5303542/
+
+
+
+
+ip route
+内核路由表
+
+
+ETH0:192.168.27.120
+WLAN0:192.168.1.100
+
+1,main:
+ip route add default via 192.168.27.1 dev eth0
+ip route add 192.168.27.0/24 src 192.168.27.120 dev eth0
+ip route add 192.168.1.0/24 src 192.168.1.100 dev wlan0
+添加默认路由表中，这里用route命令显示的就是main路由表的内容。
+
+# ip route list table main
+default via 192.168.27.1 dev eth0  proto static 
+169.254.0.0/16 dev wlan0  scope link  metric 1000 
+192.168.1.0/24 dev wlan0  proto kernel  scope link  src 192.168.1.100  metric 2 
+192.168.27.0/24 dev eth0  proto kernel  scope link  src 192.168.27.120  metric 1
+
+#echo 300 eth_table >>/etc/iproute2/rttables
+#echo 400 wifi_table >>/etc/iproute2/rttables
+
+2,eth_table
+#ip rule add from $ETH_IP table eth_table
+#ip route add default via $ETHGATE_IP dev eth0 table eth_table
+#ip route add $ETH_NET src $ETH_IP dev eth0 table eth_table
+这里，"ip rule"指定来源于$ETH_IP的包，使用eth_table这个路由。添加之后使用"ip route flush cache"才能立即生效。
+
+# ip route list table eth_table
+default via 192.168.27.1 dev eth0 
+192.168.27.0/24 dev eth0  scope link  src 192.168.27.120 
+
+3,wifi_table
+#ip rule add from $WIFI_IP table wifi_table
+#ip route add default via $WIFIGATE_IP dev wlan0 table wifi_table
+#ip route add 192.168.1.0/24 src 192.168.1.100 dev wlan0 table wifi_table
+# ip route list table wifi_table
+default via 192.168.1.1 dev wlan0 
+192.168.1.0/24 dev wlan0  scope link  src 192.168.1.100 
+
+
+至此，我们看到规则：
+# ip rule list
+0:      from all lookup local 
+32764:  from 192.168.1.100 lookup wifi_table 
+32765:  from 192.168.27.120 lookup eth_table 
+32766:  from all lookup main 
+32767:  from all lookup default 
+
+
+至此，
+PC->192.168.1.102 ok
+经过wifi_table
+
+PC->192.168.3.16 ok
+经过……
+
+192.168.1.102->192.168.1.100 ok
+
+
+192.168.3.16-> 192.168.1.100 ok
+
+ip route add default scope global nexthop via 192.168.27.1 dev eth0 weight 50 nexthop via 192.168.1.1 dev wlan0 weight 50
+
+ip route add default scope global nexthop via 192.168.1.1 dev eth0 weight 50 nexthop via 192.168.1.1 dev ra0 weight 50
+
+更换网段：
+
+删除路由：
+
+清空路由main：
+ip route flush table main
+
+添加一个不可达网络：
+ip route add to unreachable 192.168.0.0/24
+这里，不要指定dev。
+
+
+在运行任何这些命令都需要发送“ip route flush cache"命令来刷新路由缓冲，否则命令在一段时间以后才会生效，这段时间的长短依赖于路由表结构的大小和负载。 
+
+
+
+ip rule add priority 100 xxx
+priority 由高到低，越来越大。
+
+
+
+http://bbs.chinaunix.net/forum.php?mod=viewthread&tid=2151189

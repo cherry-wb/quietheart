@@ -1,0 +1,150 @@
+Ubuntu 12.04上PPPoe服务的搭建和使用
+
+#sudo apt-get install ppp
+
+#vim /etc/ppp/pppoe-server-options
+#使用chap验证协议，如果使用pap验证协议，则此行为 require-pap
+require-chap
+
+#vim /etc/ppp/options
+#(设置验证方式)
+-pap
++chap
+#(允许本地验证)
+local
+这里：
+1、如果使用pap验证方式，windowsxp以上系统自带的pppoe拨号，无法拨通。可能原因是pap使用明文密码验证，而windows保存的密码是加密的，而且是不可恢复的加密，所以windows无法提供密码明文。
+2、/etc/ppp/pppoe-server-options和/etc/ppp/options，配置无论写在哪个文件中，都能够起到作用
+
+#vim /etc/ppp/chap-secrets
+#添加用户名和密码
+# client  server  secret    IP addresses
+myuser    *        mypassword           *
+
+#pppoe-server -I eth0 -L 192.168.27.1 -R 192.168.27.210 -N 20
+-I eth0 指定pppoe服务器在那个网卡接口监听连接请求
+-L 192.168.0.1 指定pppoe服务器的ip地址。（注意：此IP地址不是网卡的IP地址，而是PPPOE服务器的虚拟IP）
+-R 192.168.0.5 pppoe服务器分配给客户端的IP地址，从192.168.0.5开始，递增
+-N 10 指定最多可以连接pppoe服务器的客户端数量
+
+
+
+6、关闭PPPOE服务器
+killall pppoe-server
+
+
+
+
+
+
+拓扑：ubuntu系统的eth0口和测试板AR9331的WAN口相连，本例中AR9331的WAN口要通过pppoe获取IP地址，即AR9331作为pppoe的客户端，ubuntu系统作为pppoe的server端。
+
+客户端：
+#pppoe-setup eth0 myuser mypassword
+. Connected!
+也可"pppoe-setup"交互操作。
+
+
+
+连接之后，客户端有一个ppp0的设备。
+#ifconfig
+eth0      Link encap:Ethernet  HWaddr 74:37:2F:00:00:02  
+          inet addr:192.168.27.217  Bcast:192.168.27.255  Mask:255.255.255.0
+          inet6 addr: fe80::7637:2fff:fe20:2014/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:269 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:496 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:18483 (18.0 KiB)  TX bytes:53105 (51.8 KiB)
+          Interrupt:52 Base address:0x7000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:12 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:1672 (1.6 KiB)  TX bytes:1672 (1.6 KiB)
+
+ppp0      Link encap:Point-to-Point Protocol  
+          inet addr:192.168.27.111  P-t-P:192.168.27.1  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1492  Metric:1
+          RX packets:6 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:6 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:3 
+          RX bytes:45 (45.0 B)  TX bytes:45 (45.0 B)
+
+
+服务端也是：
+quietheart@quietheart-ThinkPad-E420:~$ ifconfig
+eth0      Link encap:以太网  硬件地址 f0:de:f1:f0:08:60  
+          inet 地址:192.168.27.116  广播:192.168.27.255  掩码:255.255.255.0
+          inet6 地址: fe80::f2de:f1ff:fef0:860/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:79879 错误:0 丢弃:3 过载:0 帧数:0
+          发送数据包:81278 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:6819392 (6.8 MB)  发送字节:42103831 (42.1 MB)
+          中断:40 基本地址:0x2000 
+
+lo        Link encap:本地环回  
+          inet 地址:127.0.0.1  掩码:255.0.0.0
+          inet6 地址: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  跃点数:1
+          接收数据包:16214 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:16214 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:0 
+          接收字节:1435756 (1.4 MB)  发送字节:1435756 (1.4 MB)
+
+ppp1      Link encap:点对点协议  
+          inet 地址:192.168.27.1  点对点:192.168.27.111  掩码:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1492  跃点数:1
+          接收数据包:6 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:6 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:3 
+          接收字节:45 (45.0 B)  发送字节:45 (45.0 B)
+
+wlan0     Link encap:以太网  硬件地址 44:6d:57:5e:28:6c  
+          inet 地址:192.168.26.116  广播:192.168.26.255  掩码:255.255.255.0
+          inet6 地址: fe80::466d:57ff:fe5e:286c/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:33311 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:31386 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:23177171 (23.1 MB)  发送字节:6984424 (6.9 MB)
+
+                  
+两者的ppp*设备互相有对方的网址。
+#pppoe-stop
+
+
+
+
+
+
+
+
+利用pppoe链接共享上网：
+假设以上中，ppp服务器和客户端（板子）通过eth0直连，另外服务器有wlan0无线网卡可以上网，那么，如下可以使得pppoe客户端也能通过服务器的无线网卡链接上网。
+
+首先给pppoe服务添加默认网关：
+route add default gw 192.168.26.1
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+0.0.0.0         192.168.26.1    0.0.0.0         UG        0 0          0 wlan0
+......
+这里，192.168.26.1是无线网卡所使用的网关。
+
+其次，打开pc的ip转发：
+root@quietheart-ThinkPad-E420:/home/quietheart# echo "1">/proc/sys/net/ipv4/ip_forward
+
+最后，转发pppoe上的数据到无线网卡上：
+iptables -t nat -A POSTROUTING -s 192.168.27.0/24 -o wlan0 -j MASQUERADE
+至此，可以同板子链接上外网了。
+
+
+参考：
+http://blog.sina.com.cn/s/blog_a481de5701015gdo.html
+http://blog.csdn.net/linweig/article/details/5481355
+http://blog.csdn.net/liangyamin/article/details/7092358
+http://www.enet.com.cn/article/2004/0930/A20040930348997.shtml

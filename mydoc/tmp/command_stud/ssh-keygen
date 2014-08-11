@@ -1,0 +1,26 @@
+
+
+
+[others]
+lv-k@P-D2-LvKai:~/work/svn_dir/work_team/wifi/wifi_interop$ ssh-keygen -t rsa -C "lv-k@neusoft.com"
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/lv-k/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/lv-k/.ssh/id_rsa.
+Your public key has been saved in /home/lv-k/.ssh/id_rsa.pub.
+The key fingerprint is:
+3b:93:c8:90:e0:c7:77:55:ab:45:57:9b:1b:0b:9f:c5 lv-k@neusoft.com
+The key's randomart image is:
++--[ RSA 2048]----+
+|            o ...|
+|           o o .o|
+|  .       . o. +E|
+| . o .   . o  o *|
+|  . = . S .    = |
+|   . + o o       |
+|      o =        |
+|         o       |
+|                 |
++-----------------+
+

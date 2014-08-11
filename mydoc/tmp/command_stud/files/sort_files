@@ -1,0 +1,375 @@
+http://www.91linux.com/html/article/cmd/20090511/16781.html
+linux下sort命令的用法
+
+sort命令排列文本行，并把文件打印输出到屏幕上。sort命令提供了一种以字母或者数字顺序快速组织数据的方法。默认方式下，sort命令使用white space来分割文件中的不同域。
+命令格式:
+sort –options filenames
+选项
+可用的选项包括定义排序的类型、从哪个域开始排序。
+-n 以数字方式排序
+（+|-）n以n个分隔符开始（+n）、结束（-n）的域排序
+-r 反向排序
+-f 忽略大小写
++nM 排列域的前三个字符作为缩写的月份名称
+-d 排列目录顺序，只考虑字母、数字和空格。其他字符忽略
+-o filename输出结果到指定filename文件中
+-b 在限定起始和结束排序域时忽略开头的空格字符
+-t  char使用char字符作为域分隔符，如果没有指定该参数，则使用空格字符作为默认参数
+
+$ ls -ld f* > list
+$ cat list
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers_6
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.1
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.2
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.3
+-rw-r--r-- 1 user1 staff 1696 Feb 22 14:51 file1
+-rw-r--r-- 1 user1 staff 156 Mar 1 14:48 file2
+-rw-r--r-- 1 user1 staff 218 Feb 22 14:51 file3
+-rw-r--r-- 1 user1 staff 137 Feb 22 14:51 file4
+-rw-r--r-- 1 user1 staff 56 Feb 22 14:51 fruit
+-rw-r--r-- 1 user1 staff 57 Feb 22 14:51 fruit2
+$ sort -rn +4 list -o num.list
+$ cat num.list
+-rw-r--r-- 1 user1 staff 1696 Feb 22 14:51 file1
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers_6
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers
+-rw-r--r-- 1 user1 staff 218 Feb 22 14:51 file3
+-rw-r--r-- 1 user1 staff 156 Mar 1 14:48 file2
+-rw-r--r-- 1 user1 staff 137 Feb 22 14:51 file4
+-rw-r--r-- 1 user1 staff 57 Feb 22 14:51 fruit2
+-rw-r--r-- 1 user1 staff 56 Feb 22 14:51 fruit
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.3
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.2
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.1
+$ sort +5M +6n list -o update.list
+$ cat update.list
+-rw-r--r-- 1 user1 staff 56 Feb 22 14:51 fruit
+-rw-r--r-- 1 user1 staff 57 Feb 22 14:51 fruit2
+-rw-r--r-- 1 user1 staff 137 Feb 22 14:51 file4
+-rw-r--r-- 1 user1 staff 218 Feb 22 14:51 file3
+-rw-r--r-- 1 user1 staff 1696 Feb 22 14:51 file1
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.1
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.2
+-rw-r--r-- 1 user1 staff 0 Feb 25 12:54 file.3
+-rw-r--r-- 1 user1 staff 156 Mar 1 14:48 file2
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers
+-rw-r--r-- 1 user1 staff 218 Mar 1 11:36 feathers_6
+$
+第一个示例把ls命令的输出保存在文件list中，然后使用cat命令来查看文件内容。
+第一条sort命令对第五个域产生一个反向、数字排序，排序的结果保存到文件num.list中。
+第二条sort命令对文件list的域6和7进行多层排序，选项+5M对第6个域月份项按字母顺序排序，+6n对第7域天按数字顺序进行第二层排序，所有的排序结果保存在update.list文件中。
+
+列出目录下所有文件,按时间排序:
+
+ls -l | sort +7rn +5rn +6rn
+
+当然也可以用:
+
+ls -l --sort=t
+
+或
+
+ls -lt
+
+另外可以用whereis和which定位, 如:
+
+which perl
+
+whereis perl
+
+
+
+
+
+http://www.oklinux.cn/html/developer/other/20080305/47970.html
+这天无意间使用到Linux的sort -f的命令，发现sort的一个奇怪问题。sort -f在man里描述为："fold lower case to upper case characters" ，即忽略大小写的排序。但是使用下来直接用sort居然也是这个结果。
+
+后来终于发现问题所在。LC_ALL对sort的结果是有影响的。之前的LC_ALL设置的是zh_CN.GB18030。（使用locale命令可查看）
+
+info sort后查证，标准设置为LC_ALL=C，然后看结果才是标准的sort排序。
+
+输入：
+export LC_ALL=C
+
+然后用sort命令以及sort -f检验结果。
+
+另外locale对一些显示也有影响，例如ll时对时间的显示结果，设成中文和英文是不同的。中文会少一列当日期是去年的时候。如下显示：
+
+LC_ALL=zh_CN.GB18030
+-rw-r--r-- 1 root root 571 2006-12-25 reactivate_account.php
+-rw-r--r-- 1 root root 0 03-03 16:28 test
+
+
+LC_ALL=C时
+
+-rw-r--r-- 1 root root 571 Dec 25 2006 reactivate_account.php
+-rw-r--r-- 1 root root 0 03-03 16:28 test
+
+关于sort命令的一些常用：
+sort -t: -k3 -n /etc/passwd
+说明：该命令作用是根据passwd的第3列，uid进行排序
+
+参数：
+-t表示分割符，以：分割，默认情况下以空格分割
+-k作用是根据某个列来排序，这里根据第3列，默认是第1列（从1开始）。
+-n按照数字方式排序。不加-n参数时排序结果根据最左面的数字开始，等同于字母的比较方式。
+
+补充，当需要比较多列时候，可再加上-k
+sort -t: -k3 -k4 -n /etc/passwd
+
+先根据第3列排序，相等再根据第4列排序。 
+
+
+
+
+
+
+
+
+http://www.oklinux.cn/html/developer/other/20080305/47970.html
+
+
+[ 页的底部 | 上一页 | 下一页 | 目录 | 索引 | 资料库 | 法律条款 | 搜索 ]
+命令参考大全，卷 5，s - u
+sort 命令
+
+用途
+
+排序文件、对已排序的文件进行合并，并检查文件以确定它们是否已排序。
+语法
+
+sort [ -A ] [ -b ] [ -c ] [ -d ] [ -f ] [ -i ] [ -m] [ -n ] [ -r ] [ -u ] [ -o OutFile ] [ -t Character ] [ -T Directory ] [ -y [ Kilobytes ] ] [ -z RecordSize ] [ [ + [ FSkip ] [ .CSkip ] [ b ] [ d ] [ f ] [ i ] [ n ] [ r ] ] [ - [ FSkip ] [ .CSkip ] [ b ] [ d ] [ f ] [ i ] [ n ] [ r ] ] ] ... [ -k KeyDefinition ] ... [ File ... ]
+描述
+
+sort 命令对 File 参数指定的文件中的行排序，并将结果写到标准输出。如果 File 参数指定多个文件，那么 sort 命令将这些文件连接起来，并当作一个文件进行排序。-（减号）代替文件名指定标准输入。如果您不指定任何文件名，那么该命令对标准输入排序。可以使用 -o 标志指定输出文件。
+
+如果不指定任何标志，sort 命令基于当前语言环境的整理顺序对输入文件的所有行排序。
+排序关键字
+
+排序关键字是输入行的一部分，由字段号和列号指定。字段是输入行的组成部分，由字段分隔符分隔。缺省字段分隔符是由一个或多个连续空格字符组成的序列。使用 -t 标志可指定不同的字段分隔符。在 C 语言和英语语言环境下，制表符和空格字符都是空格符。
+
+使用排序关键字时，sort 命令首先根据第一个排序关键字的内容对所有行排序。然后，根据第二个排序关键字的内容，对所有第一个排序关键字相同的行排序，如此进行下去。按照排序关键字在命令行中出现的顺序给它们编号。如果两行对所有排序关键字的排序都相同，则对全部行依据当前语言环境的整理顺序进行比较。
+
+对字段中的列进行编号时，缺省字段分隔符中的空格符将作为后继字段计数。前导空格不计作第一字段的一部分，-t 标志指定的字段分隔符将不作为字段的一部分计数。可使用 -b 标志忽略前导空格符。
+
+可使用下列两种方法定义排序关键字：
+
+    * -k KeyDefinition
+    * FSkip.CSkip（废弃版本）。
+
+使用 -k 标志定义排序关键字
+
+-k KeyDefinition 标志采用下列形式：
+
+-k [ FStart [ .CStart ] ] [ Modifier ] [ , [ FEnd [ .CEnd ] ][ Modifier ] ]
+
+排序关键字包括所有以 FStart 变量指定的字段和 CStart 变量指定的列开头的及以 FEnd 变量指定的字段和 CEnd 变量指定的列结束的字符。如果不指定 Fend，就假定行的最后一个字符。如果不指定 CEnd，就假定 FEnd 字段的最后一个字符。KeyDefinition 变量中的任何字段号或列号都可以省略。缺省值为：
+FStart 	行开头
+CStart 	字段第一列
+FEnd 	行结束
+CEnd 	字段最后一列
+
+如果字段间有任意空格，sort 就把它们看作分隔的字段。
+
+Modifier 变量的值可以是字母 b、d、f、i、n 或 r 中的一个或多个。修饰符仅应用于它们连接的字段定义，与同一字母的标志有同样的效果。修饰符字母 b 仅应用于其连接的字段定义的末尾。例如：
+
+-k 3.2b,3r
+
+指定排序关键字，从第三字段的第二非空格列开始并扩展至第三字段结束，对这个关键字的排序以逆向整理顺序完成。如果 FStart 变量和 CStart 变量在命令行末尾以外或在 FEnd 变量和 CEnd 变量之后，那么该排序关键字被忽略。
+
+排序关键字也可用下列方式指定：
+
+[+[FSkip1] [.CSkip1] [Modifier] ] [-[FSkip2] [.CSkip2] [Modifier]]
+
++FSkip1 变量指定跳过的字段数以到达排序关键字第一字段，+CSkip 变量指定在该字段中跳过的列数以到达排序关键字第一个字符。-FSkip 变量指定跳过的字段数以到达排序关键字后的第一个字符，-CSkip 变量指定在该字段中跳过的列数。可以省略任何要跳过的字段和列。缺省值为：
+FSkip1 	行开头
+CSkip1 	零
+FSkip2 	行结束
+CSkip2 	零
+
+Modifier 变量指定的修改量与 -k 标志关键字排序定义中的相同。
+
+因为 +FSkip1.CSkip1 变量指定到达排序关键字前要跳过多少字段和列，所以这些变量指定的字段号和列号通常比排序关键字本身的字段号和列号小 1。例如：
+
++2.1b -3r
+
+指定排序关键字，从第三字段的第二非空格列开始并扩展至第三字段结束，对这个关键字的排序以逆向整理顺序完成。语句 +2.1b 指定跳过两个字段，然后跳过前导空格和另一列。如果 +FSkip1.CSkip1 变量在命令行末尾以外或在 -FSkip2.CSkip2 变量之后，则忽略该排序关键字。
+
+注：一行的最大字段数为 10。
+标志
+
+    注：在任何排序关键字定义前出现的 -b、-d、-f、-i、-n 或 -r 标志应用于所有排序关键字。-b、-d、-f、-i、-n 或 -r 标志都不能单独出现在 -k KeyDefinition 之后；如果它们作为修饰符连接 KeyDefinition 变量，那么就只应用于连接排序关键字。如果这些标志之一跟随在 +Fskip.Cskip 或 -Fskip.Cskip 排序关键字定义后，那么该标志只能用于此排序关键字。
+
+-A 	使用 ASCII 整理顺序代替当前语言环境的整理顺序在逐字节的基础上排序。
+-b 	忽略前导空格和制表符，找出字段的第一或最后列。
+-c 	检查输入是否已按照标志中指定的排序规则进行排序。如果输入文件排序不正确，就返回一个非零值。
+-d 	使用字典顺序排序。比较中仅考虑字母、数字和空格。
+-f 	比较前将所有小写字母改成大写字母。
+-i 	比较中忽略所有非打印字符。
+-k KeyDefinition 	指定排序关键字。KeyDefinition 选项的格式为：
+
+[ FStart [ .CStart ] ] [ Modifier ] [ , [ FEnd [ .CEnd ] ][ Modifier ] ]
+
+排序关键字包括所有以 FStart 变量指定的字段和 CStart 变量指定的列开头的字符及以 FEnd 变量指定的字段和 CEnd 变量指定的列结束的字符。Modifier 变量的值可以是 b、d、f、i、n 或 r。 修饰符与同一字母的标志等价。
+-m 	只合并多个输入文件；假设输入文件已经排序。
+-n 	按算术值对数字字段排序。数字字段可包含前导空格、可选减号、十进制数字、千分位分隔符和可选基数符。对包含任何非数字字符的字段进行数字排序会出现无法预知的结果。
+-o OutFile 	将输出指向 OutFile 参数指定的文件，而不是标准输出。OutFile 参数值可以与 File 参数值相同。
+-r 	颠倒指定排序的顺序。
+-t Character 	指定 Character 为单一的字段分隔符。
+-u 	禁止按照排序关键字和选项的所有等同排序（每一组行中一行除外）。
+-T Directory 	将创建的所有临时文件放入 Directory 参数指定的目录中。
+-y[Kilobytes] 	用 Kilobytes 参数指定的主存储的千字节数启动 sort 命令，并根据需要增加存储量。（如果 Kilobytes 参数指定的值小于最小存储站点或大于最大存储站点，就以这个最小存储站点或最大存储站点取代）。如果省略 -y 标志，sort 命令以缺省的存储大小启动。-y0 标志用最小存储启动，而 -y 标志（不带 Kilobytes 值）用最大存储启动。sort 命令使用的存储量显著地影响性能。以大存储量对小文件排序将很浪费。
+-z RecordSize 	如果正在排序的任一行大于缺省的缓冲区大小，要防止出现异常终止。指定 -c 或 -m 标志时，省略排序阶段，使用系统的缺省缓冲大小。如果已排序行超出这一大小，排序异常终止。-z 选项指定排序阶段最长行的记录，因而可在合并阶段分配足够的缓冲区。RecordSize 必须指明等于或大于要合并的最长行的字节值。
+退出状态
+
+该命令返回以下出口值：
+0 	所有输入文件成功输出，或指定了 -c 且正确排序了输入文件。
+1 	在 -c 选项下，文件没有按指定排序，或如果指定 -c 和 -u 选项，找到了两个具有相同关键字的输入行。
+>1 	发生错误。
+示例
+
+   1. 要在 LC_ALL、LC_COLLATE 或 LANG 环境变量设置为 En_US 的情况下排序 fruits 文件，请输入：
+
+      LANG=En_US sort fruits
+
+      此命令序列显示以升序词典顺序排序的 fruits 文件的内容。每一列的字符，包括空格、数字和特殊字符都经一一比较。例如，如果 fruits 文件包含文本：
+
+      banana
+      orange
+      Persimmon
+      apple
+      %%banana
+      apple
+      ORANGE
+
+      sort 命令显示:
+
+      %%banana
+      ORANGE
+      Persimmon
+      apple
+      apple
+      banana
+      orange
+
+      在 ASCII 整理序列中，%（百分号）在大写字母前，大写字母在小写字母前。如果您当前的语言环境指定 ASCII 之外的字符集，结果可能不同。
+   2. 要以字典顺序排序，请输入：
+      sort  -d fruits
+      此命令序列排序和显示 fruits 文件的内容，并且只比较字母、数字和空格。如果 fruits 文件与示例 1 相同，那么 sort 命令显示：
+
+      ORANGE
+      Persimmon
+      apple
+      apple
+      %%banana
+      banana
+      orange
+
+      -d 标志忽略 %（百分号）字符，因为它不是个字母、数字或空格。（即 %%banana 被 banana 取代）。
+   3. 要将包含大写字母和具有类似小写行的特殊字符行分组，请输入：
+      sort -d -f fruits
+      -d 标志忽略特殊字符，-f 标志忽略大小写差异。将 LC_ALL、LC_COLLATE 或 LANG 环境变量设置为 C 的情况下，fruits 文件的输出结果变为：
+
+      apple
+      apple
+      %%banana
+      banana
+      ORANGE
+      orange
+      Persimmon
+
+   4. 要除去重复行排序，请输入：
+      sort  -d  -f  -u fruits
+      -u 标志告诉 sort 命令除去重复的行，使文件中的每一行唯一。此命令序列显示：
+
+      apple
+      %%banana
+      orange
+      Persimmon
+
+      不仅除去重复的 apple，而且也除去了 banana 和 ORANGE。除去这些是因为 -d 标志忽略 %% 这个特殊字符，-f 标志忽略大小写差异。
+   5. 要如例 4 那样排序，除去重复的实例（除非是大写字母或标点不同），请输入：
+      sort  -u +0  -d -f +0 fruits
+      输入 +0 -d -f 完成的排序与示例 3 中 -d -f 的排序类型相同，+0 进行另一项比较以区分不一样的行。这防止 -u 标志将它们除去。
+
+      示例 1 所示的 fruits 文件中，添加的 +0 将 %%banana 与 banana 及 ORANGE 与 orange 区分开来。然而，apple 的两个实例是相同的，所以其中之一被删除。
+
+      apple
+      %%banana
+      banana
+      ORANGE
+      orange
+      Persimmon
+
+   6. 要指定分隔字段的字符，请输入：
+      sort  -t: +1 vegetables
+      此命令序列排序 vegetables 文件，对每一行上第一个冒号后的文本进行比较。+1 告诉 sort 命令忽略第一字段，从第二字段的开始到该行的结束进行比较。-t: 标志告诉 sort 命令冒号分隔字段。如果 vegetables 包含：
+
+      yams:104
+      turnips:8
+      potatoes:15
+      carrots:104
+      green beans:32
+      radishes:5
+      lettuce:15
+
+      那么，将 LC_ALL、LC_COLLATE 或 LANG 环境变量设置为 C 的情况下，sort 命令将显示：
+
+      carrots:104
+      yams:104
+      lettuce:15
+      potatoes:15
+      green beans:32
+      radishes:5
+      turnips:8
+
+      注意数字没有按照数字排序。当用字典式分类从左至右比较每一个字符时出现这种情况。换句话说，3 在 5 之前，所以 32 在 5 之前。
+   7. 要排序数字，请输入：
+      sort  -t: +1  -n vegetables
+      此命令序列按照第二个字段对 vegetables 文件进行数字排序。如果 vegetables 文件与示例 6 中的相同，那么 sort 命令将显示：
+
+      radishes:5
+      turnips:8
+      lettuce:15
+      potatoes:15
+      green beans:32
+      carrots:104
+      yams:104
+
+   8. 要对多个字段排序，请输入：
+      sort  -t: +1 -2  -n +0 -1  -r vegetables
+      或
+      sort  -t:  -k2,2 n -k1,1 r vegetables
+      此命令序列对第二字段（+1 -2 -n）进行数字排序。在这个顺序中，它以逆字母顺序（+0 -1 -r）对第一字段排序。将 LC_ALL、LC_COLLATE 或 LANG 环境变量设置为 C 的情况下，输出将类似于：
+
+      radishes:5
+      turnips:8
+      potatoes:15
+      lettuce:15
+      green beans:32
+      yams:104
+      carrots:104
+
+      此命令按数字顺序对行排序。当两行数字相同时，它们以逆字母顺序出现。
+   9. 要使用排序的文本替换原始文件，请输入：
+      sort  -o vegetables vegetables
+      此命令序列将排序输出存入 vegetables 文件（ -o vegetables）。
+
+文件
+
+/usr/bin/sort 	包含 sort 命令。
+
+/var/tmp 	sort 命令处理期间的临时空间。
+/usr/tmp 	如果不能在 /var/tmp 中创建文件，是 sort 命令处理期间的临时空间。
+/tmp 	如果不能在 /var/tmp 或 /usr/tmp 中创建文件，是 sort 命令处理期间的临时空间。
+相关信息
+
+comm 命令、join 命令和 uniq 命令。
+
+《AIX 5L V5.2 系统用户指南：操作系统与设备》中的『文件概述』和『输入输出重定向概述』。
+
+AIX 5L Version 5.2 National Language Support Guide and Reference 中的 National Language Support。
+
+[ 页的顶部 | 上一页 | 下一页 | 目录 | 索引 | 资料库 | 法律条款 | 搜索 ]
+

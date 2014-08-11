@@ -1,0 +1,44 @@
+Source: libgpewidget
+Section: libs
+Priority: optional
+Maintainer: Neil Williams <codehelp@debian.org>
+Uploaders: Debian GPE team <pkg-gpe-maintainers@lists.alioth.debian.org>, Moray Allan <moray@debian.org>, 
+ Phil Blundell <pb@debian.org>, Philippe De Swert <philippedeswert@scarlet.be>
+Build-Depends: debhelper (>> 5.0.0), libgtk2.0-dev, libx11-dev, x-dev, 
+ recode, libxrender-dev, libxml-perl, intltool, libcairo2-dev, dpkg-dev (>= 1.13.19),
+ gtk-doc-tools, docbook-xml
+Standards-Version: 3.7.2
+Homepage: http://www.kernelconcepts.de/~fuchs/gpe/doc/libgpewidget/
+
+Package: libgpewidget1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: gpe-icons
+Description: GPE Palmtop Environment widget library
+ This library contains Gtk+ widgets and other common code shared by
+ multiple GPE applications. 
+
+Package: libgpewidget-dev
+Section: libdevel
+Architecture: any
+Depends: libgpewidget1 (= ${binary:Version}), libgtk2.0-dev
+Description: Development files for libgpewidget
+ This package contains headers and other files required to compile
+ GPE Palmtop Environment applications.
+
+Package: libgpewidget1-dbg
+Section: libs
+Architecture: any
+Depends: libgpewidget1 (= ${binary:Version})
+Description: debug symbols for libgpewidget
+ This package provides the debugging symbols that may be
+ useful when developing GPE Palmtop Environment applications.
+
+Package: libgpewidget-doc
+Section: doc
+Architecture: all
+Recommends: dwww, devhelp
+Description: GPE Palmtop Environment widget library Reference Manual
+ This package provides the API documentation for libgpewidget.
+

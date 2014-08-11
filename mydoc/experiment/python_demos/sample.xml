@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<myroot>
+    <name>sample</name>
+    <mylists>
+        <myitem myid="item1" myproperty="item1 property 1" />
+        <myitem myid="item2" myproperty="item2 property 2" />
+    </mylists>
+ 
+    <mystruct>
+        <substruct name="sub1">
+            <category>category1</category>
+            <file>sub1.py</file>
+            <parameter></parameter>
+        </substruct>
+
+        <substruct name="sub2">
+            <category>category2</category>
+            <file>sub2.py</file>
+            <parameter name="desc"> the sub2 </parameter>
+        </substruct>
+
+        <substruct name="sub3">
+            <category>category3</category>
+            <file>sub3.py</file>
+            <parameter></parameter>
+        </substruct>
+    </mystruct>
+</myroot>

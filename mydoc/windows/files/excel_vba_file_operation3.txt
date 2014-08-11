@@ -1,0 +1,638 @@
+http://apps.hi.baidu.com/share/detail/1916245
+三、利用FileSystemObject对象来处理文件 
+FileSystemObject对象模型，是微软提供的专门用来访问计算机文件系统的，具有大量的属性、方法和事件。其使用面向对象的“object.method”语法来处理文件夹和文件，使用起来十分方便（需Office 2000以后版本）。FileSystemObject并不是VBA的一部分，它是以一个COM组件的形式提供的。因此，要使用先要创建FileSystemObject对象。
+
+FileSystemObject对象模型包含了下面的对象和集合：
+
+·FileSystemObject 主对象，包含用来创建、删除和获得有关信息，以及用来操作驱动器、文件夹和文件的方法和属性。
+
+·Drive    对象，包含用来获得信息的方法和属性，这些信息是关于连接在系统上的驱动器的，如有多少可用空间等。驱动器不一定是硬盘，也可以是CD－ROM、U盘甚至是通过网络在逻辑上连接的硬盘（如公司里部门共享的服务器网络硬盘）。
+
+·Drives   集合，提供驱动器的列表，这些驱动器以实物或在逻辑上与系统相连接。Drives集合包括所有驱动器，与类型无关。
+
+·File    对象，包含用来创建、删除或移动文件的方法和属性。
+
+·Files    集合，提供包含在文件夹内的所有文件的列表。
+
+·Folder   对象，包含用来创建、删除或移动文件夹的方法和属性。
+
+·Folders   集合，提供包含在文件夹内的所有文件夹的列表。
+
+·TextStream   对象，用来读写文本文件。
+
+
+（一）准备工作
+
+要使用FileSystemObject对象，先要创建它。创建FileSystemObject对象要使用CreatObject函数。CreateObject 函数用来创建并返回一个对 ActiveX 对象的引用。
+
+语法：CreateObject(class,[servername])
+class 是要创建的应用程序名称和类。 
+servername 要在其上创建对象的网络服务器名称。（如果要在远程计算机上创建对象才用）
+
+class 参数使用 appname.objecttype 这种语法，包括以下部分：
+
+appname 必需的；提供该对象的应用程序名。 
+objecttype 必需的；待创建对象的类型或类。
+
+因此，我们用下面的代码创建FileSystemObject对象:
+
+Dim fso As Object
+Set fso = CreateObject("Scripting.FileSystemObject")
+
+Scripting是类型库的名称，FileSystemObject就是要创建的对象的名字。
+
+同样我们可以创建Dictionary 对象如下：
+Dim d
+Set d = CreateObject("Scripting.Dictionary")
+
+
+（二）FileSystemObject对象的方法
+
+FileSystemObject对象模型中有些功能是重复的，如可用FileSystemObject对象的CpoyFile方法，也可用File对象的Copy方法来复制文件。下面先介绍FileSystemObject对象的方法。
+
+1、GetDrive 方法
+
+语法：object.GetDrive drivespec
+
+drivespec参数可以是一个驱动器字符（c）、一个驱动器字符加一个冒号（c:）、一个驱动器字符加冒号和路径分隔符（c:\）或任何网络共享的说明（）。
+
+作用：返回一个与指定路径中的驱动器相对应的 Drive 对象。
+
+示例：
+Dim d
+Set d = fso.GetDrive("D:")   '变量d就代表了驱动器D对象
+如果 drivespec 不符合任何一种可以接受的形式或者不存在，则发生一个错误。
+
+注意：为简洁，示例中都假定fso是已经创建的FileSystemObject对象
+
+2、GetDriveName 方法
+
+语法：object.GetDriveName(path)
+
+作用：返回一个包含指定路径的驱动器名字的字符串。
+
+示例：
+Debug.Print fso.GetDriveName("c:\test.txt")   '立即窗口显示"c:"
+
+3、GetExtensionName 方法
+
+语法：object.GetExtensionName(path)
+
+作用：返回一个包含路径中最后部件扩展名的字符串。
+
+示例：
+Debug.Print fso.GetExtensionName("c:\test.txt")   '立即窗口显示"txt"
+
+4、GetBaseName 方法
+
+语法：object.GetBaseName(path)
+
+作用：返回一个包含路径中最后部件的基本名字（去掉任何文件扩展名）的字符串。
+
+示例：
+Debug.Print fso.GetBaseName("c:\abc\test.txt")   '立即窗口显示"test"
+
+5、GetAbsolutePathName 方法
+
+语法：object.GetAbsolutePathName(pathspec)
+
+作用：从提供的路径说明中返回一个完整、明确的路径。
+
+示例：
+如果pathspec为空字符串""，则返回当前路径。假设当前路径为C:\Documents and Settings\yc\My Documents
+
+Debug.Print fs.GetAbsolutePathName("")   '显示C:\Documents and Settings\yc\My Documents
+
+Debug.Print fs.GetAbsolutePathName("c:..") '显示C:\Documents and Settings\yc，即上层目录
+
+Debug.Print fs.GetAbsolutePathName("abc") '显示C:\Documents and Settings\yc\My Documents\abc
+
+Debug.Print fs.GetAbsolutePathName("c:\test.txt") '显示C:\test.txt
+
+6、GetFile 方法
+
+语法：object.GetFile(filespec)
+
+作用：返回一个和指定路径中文件相对应的 File 对象。
+
+示例：
+Dim f
+Set f = fso.GetFile("c:\test.txt")   '变量f就代表了文件test.txt对象
+注意：如果指定的文件不存在，则发生一个错误。
+
+7、GetFileName 方法
+
+语法：object.GetFileName(pathspec)
+
+作用：返回指定路径中的最后部件，该路径不是驱动器说明的一部分。
+
+示例：
+Debug.Print fso.GetFileName("c:\abc\test.txt")   '立即窗口显示"test.txt"
+
+8、GetFolder 方法
+
+语法：object.GetFolder(folderspec)
+
+作用：返回一个和指定路径中文件夹相对应的 Folder 对象。
+
+示例：
+Dim fd
+Set fd = fso.GetFolder("c:\windows")   '变量f就代表了文件夹windows对象
+注意：如果指定的文件夹不存在，则发生一个错误。
+
+9、GetSpecialFolder 方法
+
+语法：object.GetSpecialFolder(folderspec)
+
+作用：返回指定的特殊文件夹。
+
+说明：
+folderspec 参数可为任何的下列值：
+
+WindowsFolder    0    Windows 文件夹，包含由 Windows 操作系统安装的文件。 
+SystemFolder    1    系统文件夹，包含库、字体、设备驱动程序。 
+TemporaryFolder 2    Temp 文件夹，用于存储临时文件。它的路径在 TMP 环境变量中。
+
+10、GetParentFolderName 方法
+
+语法：object.GetParentFolderName(path)
+
+作用：返回一个包含指定路径最后部件父文件夹名字的字符串。
+
+示例：
+Debug.Print fso.GetParentFolderName("c:\tmp\test.txt")   '显示"c:\tmp"
+
+11、GetTempName 方法
+
+语法：object.GetTempName
+
+作用：返回一个随机产生的临时文件或文件夹的名字，该名字在执行需要临时文件或文件夹的操作时有用。
+
+说明：GetTempName 方法不产生一个文件，它仅提供一个临时文件名字，该名字可被 CreateTextFile 用于创建一个文件。
+
+示例：
+Debug.Print fso.GetTempName    '显示"radB0208.tmp",每次都会变。
+
+12、BuildPath 方法
+
+语法：object.BuildPath(path, name)
+
+作用：追加一个名字到一个已经存在的路径。
+
+示例：
+Debug.Print fso.BuildPath("c:\tmp", "abc") '显示"c:\tmp\abc"
+
+13、CreateFolder 方法
+
+语法：object.CreateFolder(foldername)
+
+作用：创建一个文件夹。
+
+注意：如果指定的文件夹已经存在，则发生一个错误。
+
+示例：
+fso.CreateFolder("c:\myfolder")    '在C盘创建一个myfolder文件夹
+
+14、CopyFolder 方法
+
+语法：object.CopyFolder source, destination[, overwrite]
+source 必需的。指明一个或多个被复制文件夹的字符串文件夹说明，可以包括通配符。 
+destination 必需的。指明 source 中被复制文件夹和子文件夹的接受端的字符串，不允许有通配符。 
+overwrite 可选的。Boolean 值，它表示已存在的文件夹是否被覆盖。如果为 True，文件被覆盖。如果为 False，文件不被覆盖。缺省值为 True。
+
+作用：复制一个文件夹到另一个地方。
+
+说明：
+① 通配符仅可用于 source 参数的最后一个路径部件。
+
+例如：fso.CopyFolder "c:\mydocuments\letters\*", "c:\tempfolder\" 这是可以的。
+但不能这样：fso.CopyFolder "c:\mydocuments\*\*", "c:\tempfolder\"
+
+② 如果 source 包含通配符或 destination 以路径分隔符（\）为结尾，则认为 destination 是一个已存在的文件夹，在其中复制相匹配的文件夹和子文件夹。否则认为 destination 是一个要创建的文件夹的名字。
+
+例如：fso.copyfolder "c:\tmp", "f:\abc\"
+如果F盘没有abc文件夹，将发生错误。如果存在，可看到abc文件夹里有tmp文件夹。
+假如写成这样：fso.copyfolder "c:\tmp", "f:\abc"
+此时若abc不存在，将创建abc文件夹，且将tmp文件夹里的内容复制到abc文件夹里，而不是tmp文件夹，只有abc是一个已经存在的文件夹时，才复制整个tmp文件夹到abc文件夹里。
+
+③如果 destination 是一个已存在的文件，则发生一个错误。
+
+④如果 destination 是一个目录，它将尝试复制文件夹和它所有的内容。如果一个包含在 source 的文件已在 destination 中存在，当 overwrite 为 False 时发生一个错误，否则它将尝试覆盖这个文件。
+
+⑤如果 destination 是一个只读目录，当尝试去复制一个已存在的只读文件到此目录并且 overwrite为 False 时，则发生一个错误。
+
+⑥如果 source 不存在或使用的通配符不能和任何文件夹匹配，也发生一个错误。
+
+⑦CopyFolder 方法停止在它遇到的第一个错误上，之前所做的操作是不会消失的，所以要注意。
+
+15、MoveFolder 方法
+
+语法：object.MoveFolder source, destination
+参数与CopyFolder的前两个一样。
+
+作用：将一个或多个文件夹从一个地方移动到另一个地方。
+
+说明：
+①只有在操作系统支持的情况下，这个方法才允许文件夹在卷之间移动。Windows是不允许的，将C盘的文件夹移到D盘是不行的。
+
+②如果 source 包含通配符或 destination 以路径分隔符 （\） 为结尾，则认为 destination 指定了一个已存在的文件夹，在此文件夹中移动相匹配的文件。否则，认为 destination 是一个要创建的目标文件夹名字。这点与CopyFolder是一样的。
+
+③如果 destination 是一个已存在的文件，则发生一个错误。
+
+④如果 destination 是一个目录，则发生一个错误。
+例如：
+fso.movefolder "c:\tmp", "c:"   '发生错误。
+
+⑤如果 source 不存在或使用的通配符不能和任何文件夹匹配，也发生一个错误。
+
+⑥MoveFolder 方法停止在它遇到的第一个错误上。不要尝试回卷在错误发生前所做的任何改变。
+
+16、DeleteFolder 方法
+
+语法：object.DeleteFolder folderspec[, force]
+
+folderspec 必需的。要删除的文件夹的名字。 Folderspec 可以在最后的路径部件中包含通配符。 
+force 可选的。Boolean 值，如果要删除具有只读属性设置的文件夹，其值为 True，如果值为 False （缺省），则不能删除具有只读属性设置的文件夹。
+
+作用：删除一个指定的文件夹和它的内容。
+
+说明：如果没有发现相匹配的文件夹，则发生一个错误。DeleteFolder 方法停止在它遇到的第一个错误上，不要尝试回卷或撤消错误发生前所做的任何改变。
+
+示例：
+fso.DeleteFolder("c:\tmp")
+
+17、FolderExists 方法
+
+语法：object.FolderExists(folderspec)
+
+作用：如果指定的文件夹存在返回 True，不存在返回 False。
+
+18、DriveExists 方法
+
+语法：object.DriveExists(drivespec)
+
+作用：如果指定的驱动器存在，返回 True，如果不存在返回 False。
+
+19、FileExists 方法
+
+语法：object.FileExists(filespec)
+
+作用：如果指定的文件存在，返回 True，若不存在，则返回 False。
+
+20、CreateTextFile 方法
+
+语法：object.CreateTextFile(filename[, overwrite[, unicode]])
+
+overwrite 可选的。Boolean 值，表示一个已存在文件是否可被覆盖。如果可被覆盖其值为 True，其值为 False 时不能覆盖。如果它被省略，则已存在文件不能覆盖。
+
+unicode 可选的。Boolean 值，表示文件是作为一个 Unicode 文件创建的还是作为一个ASCII 文件创建的。如果作为一个 Unicode 文件创建，其值为 True，作为一个 ASCII 文件创建，其值为 False。如果省略的话，则认为是一个 ASCII 文件。
+
+作用：创建一个指定的文件名并且返回一个用于该文件读写的 TextStream 对象。
+
+示例：
+Dim f
+Set f = fso.CreateTextFile("c:\testfile.txt", True)
+
+21、OpenTextFile 方法
+
+语法：object.OpenTextFile(filename[, iomode[, create[, format]]])
+
+作用：打开一个指定的文件并返回一个 TextStream 对象，该对象可用于对文件进行读、写、追加操作。
+
+说明：
+·iomode 参数可为下面设置值中的任何值：
+
+ForReading    1 打开一个只读文件，不能对此文件进行写操作。 
+ForWriting    2 打开一个用于写操作的文件。如果和此文件同名的文件已存在，则覆盖以前内容。 
+ForAppending    8 打开一个文件并写到文件的尾部。
+
+注意：在VBA帮助里是没有ForWriting的，其实是有的，VBA帮助也是有错误的。另外，这些常数在使用前要先声明，或者直接用数值。
+
+·create 可选的，它表示如果指定的 filename 不存在是否可以创建一个新文件。如果创建新文件，其值为 True。若不创建文件其值为 False。缺省值为 False。
+
+·Format 参数可为下面设置值中的任何值：
+
+TristateUseDefault    –2    使用系统缺省打开文件。 
+TristateTrue     –1    以 Unicode 格式打开文件。 
+TristateFalse      0    以 ASCII 格式打开文件。
+
+示例：
+Dim f
+Set f = fso.OpenTextFile("c:\testfile.txt", 2, True)
+或者：
+Const ForWriting = 2
+Set f = fso.OpenTextFile("c:\testfile.txt", ForWriting, True)
+这两者功能是一样的，一个声明了常量，一个直接用数值。都是在C盘创建文件testfile.txt（如不存在），或以写的方式打开（如存在）。
+
+22、CopyFile 方法
+
+语法：object.CopyFile source, destination[, overwrite]
+
+作用：把一个或多个文件从一个地方复制到另一个地方。
+
+说明：需要注意的地方与CopyFolder是完全类似的。
+
+示例：
+fso.copyfile "c:\testfile.txt", "f:\abc\"   '若abc不存在则出错。
+fso.copyfile "c:\testfile.txt", "f:\abc"   '若abc不存在则复制testfile.txt到F盘文件名变为abc，若abc存在，出错，因为是一个目录。
+
+23、MoveFile 方法
+
+语法：object.MoveFile source, destination
+
+作用：将一个或多个文件从一个地方移动到另一个地方。
+
+说明：需要注意的地方与MoveFolder是完全类似的。
+
+24、DeleteFile 方法
+
+语法：object.DeleteFile filespec[, force]
+
+作用：删除一个指定的文件。
+
+说明：force 可选的。如果要删除具有只读属性设置的文件，其值为 True。如果其值为 False （缺省），则不能删除具有只读属性设置的文件。
+
+（三）处理驱动器
+
+可以利用Drive对象来获取有关各种驱动器的信息，Drive对象的属性有：
+
+TotalSize 属性    驱动器的总容量，以字节为单位。
+AvailableSpace 属性   驱动器的可用空间容量，以字节为单位。
+FreeSpace 属性    驱动器的剩余空间容量，和 AvailableSpace 属性是相同的。
+     对于支持限额的计算机系统来说，二者之间可能有所不同。
+DriveLetter 属性   驱动器字母，即盘符。
+DriveType 属性    驱动器的类型。如"Removable"、"Fixed"、"Network"、"CD-ROM"、"RAM Disk"
+SerialNumber 属性   驱动器的序列号。
+FileSystem 属性    驱动器所使用的文件系统类型。如FAT、FAT32、NTFS、以及 CDFS。
+IsReady 属性    驱动器是否可用。
+ShareName 属性    驱动器的网络共享名。
+VolumeName 属性    驱动器的卷标名。
+Path 属性    驱动器的路径。C 驱动器的路径是 C:，而不是 C:\。
+RootFolder 属性    定驱动器的根文件夹。C 驱动器的根文件夹是 C:\。
+
+这些属性的使用都十分简单，直接用“对象.属性”就可以了。在使用前要先用GetDrive获得一个Drive对象，注意不能创建一个驱动器对象。下面举个例子：
+
+Sub ShowFreeSpace(drvPath)
+    Dim fs, d, s
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    Set d = fs.Getdrive(fs.GetDriveName(drvPath))
+    s = "Drive " & UCase(drvPath) & "-"
+    s = s & d.VolumeName & vbCrLf
+    s = s & "Free Space: " & FormatNumber(d.FreeSpace / 1024, 0)
+    s = s & " Kbytes"
+    MsgBox s
+End Sub
+
+利用Call ShowFreeSpace("c:")，即可获得C盘的卷标名和可用空间。
+
+（四）处理文件夹
+
+1、获取文件夹的信息
+
+可以利用Folder对象来获取有关文件夹的信息，Folder对象的属性有：
+
+Attributes 属性    文件夹的属性。可为下列值中的任意一个或任意的逻辑组合：
+     Normal    0 一般文件。未设置属性。 
+     ReadOnly 1 只读文件。属性为读/写。 
+     Hidden    2 隐藏文件。属性为读/写。 
+     System    4 系统文件。属性为读/写。 
+     Volume    8 磁盘驱动器卷标。属性为只读。 
+     Directory 16 文件夹或目录。属性为只读。 
+     Archive 32 自上次备份后已经改变的文件。属性为读/写。 
+     Alias    64 链接或快捷方式。属性为只读。 
+     Compressed 128 压缩文件。属性为只读。 
+Name 属性    文件夹名字。
+ShortName 属性    较早的 8.3 命名约定的程序所使用的短名字。
+Type 属性    文件夹类型。
+Files 属性    所有 File 对象组成的 Files 集合，这些 File 对象包含在指定的文件夹中
+     ──包括设置了隐藏和系统文件属性的那些文件。
+Drive 属性    文件夹所在的驱动器符号。
+IsRootFolder 属性   文件夹是否是根文件夹。
+ParentFolder 属性   文件夹的父文件夹对象。
+SubFolders 属性    文件夹的子文件夹集合。
+Path 属性    文件夹的路径。
+ShortPath 属性    较早的 8.3 文件命名约定的程序所使用的短路径。
+Size 属性    文件夹的大小，以字节为单位。
+DateCreated 属性   文件夹的创建日期和时间。
+DateLastModified 属性   最后一次修改文件夹的日期和时间。
+DateLastAccessed 属性   最后一次访问文件夹的日期和时间。
+
+属性的使用和Drive对象是一样的，可以用GetFolder获取一个Folder对象，也可以用FileSystemObject对象的CreateFolder 方法创建一个Folder对象。
+
+2、Folder对象的方法
+
+⑴Copy 方法
+
+语法：object.Copy destination[, overwrite]
+
+作用：把一个指定的文件夹从一个地方复制到另一个地方。
+
+说明：Copy 方法的作用与FileSystemObject对象的CopyFolder 方法是一样的，不同在于后者可一次复制多个文件夹。
+
+⑵Move 方法
+
+语法：object.Move destination
+
+作用：将一个指定的文件夹从一个地方移动到另一个地方。
+
+说明：Move 方法的作用与FileSystemObject.MoveFolder 是一样的。不同在于后者可一次移动多个文件夹。
+
+⑶Delete 方法
+
+语法：object.Delete force
+
+作用：删除一个指定的文件夹。
+
+说明：Delete 方法的作用与FileSystemObject.DeleteFolder 是一样的。
+
+⑷CreateTextFile 方法
+
+语法：object.CreateTextFile(filename[, overwrite[, unicode]])
+
+作用：与FileSystemObject对象的CreateTextFile 方法是一样的。
+
+示例：
+    Set fd = fs.getfolder("c:\tmp")
+    Set f = fd.CreateTextFile("testfile.txt", True)
+可在C盘tmp文件夹下创建testfile.txt文件。
+
+
+（五）处理文件
+
+1、获取文件的信息
+
+可以利用File对象来获取有关文件的信息，File对象的属性和Folder的属性是完全一样的，只是少了Files 属性、IsRootFolder 属性、SubFolders 属性这3个属性。这里就不列了。
+
+2、File对象的方法
+
+⑴Copy 方法
+
+⑵Move 方法
+
+⑶Delete 方法
+
+以上三种方法与Folder的是完全类似的，语法也一样，同样也可用FileSystemObject对象相应的方法代替。
+
+⑷OpenAsTextStream 方法
+
+语法：object.OpenAsTextStream([iomode, [format]])
+
+作用：打开一个指定的文件并返回一个 TextStream 对象，该对象可用来对文件进行读、写、追加操作。
+
+说明：此方法与FileSystemObject对象的 OpenTextFile 方法相同的功能。参数也是一致的。
+
+
+（六）处理文本文件
+
+1、打开或创建文本文件
+
+打开现有的文本文件，可以使用FileSystemObject对象的 OpenTextFile 方法或File对象的OpenAsTextStream 方法。
+创建文件可以使用FileSystemObject对象的 CreatTextFile 方法或在OpenTextFile 方法中将iomode参数设为ForWriting＝2，create参数设为True。
+例如：
+Set f = fso.OpenTextFile("c:\test1.xls", 2, True)   '如果不存在test1.xls将自动创建。
+
+2、读取文件
+
+打开文件后，将返回一个TextStream 对象，我们可以利用TextStream 对象的属性及方法来对文件进行读写操作。
+
+先看TextStream 对象的几个属性。
+
+·AtEndOfLine 属性   文件指针是否正好在行尾标记的前面
+·AtEndOfStream 属性   文件指针是否在 TextStream 文件末尾
+·Column 属性    TextStream 文件中当前字符位置的列号
+·Line 属性    TextStream 文件中的当前行号
+
+利用TextStream 对象读取文件有三种方法。
+
+·Read 方法
+
+语法：object.Read(characters)
+
+功能：从一个 TextStream 文件中读取指定数量的字符并返回得到的字符串。
+
+示例：
+Sub du()
+Dim fso, a, retstring
+Const ForReading = 1
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set a = fso.OpenTextFile("c:\testfile.txt", ForReading, False)
+Do While a.AtEndOfLine <> True    '是否到行末
+    retstring = retstring & a.Read(1)   '读取一个字符
+Loop
+a.Close
+Debug.Print retstring     '可看到读取了第一行的字符
+End Sub
+
+·ReadLine 方法
+
+语法：object.ReadLine
+
+功能：从一个 TextStream 文件读取一整行（到换行符但不包括换行符）并返回得到的字符串。
+
+示例：
+Sub du_line()
+Dim fso, a, retstring
+Const ForReading = 1
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set a = fso.OpenTextFile("c:\testfile.txt", ForReading, False)
+Do While a.AtEndOfStream <> True   '是否在 TextStream 文件末尾
+    retstring = a.ReadLine    '读取一行
+    Debug.Print retstring    '显示在立即窗口
+Loop
+a.Close
+End Sub
+
+·ReadAll 方法
+
+语法：object.ReadAll
+
+功能：读取整个的 TextStream 文件并返回得到的字符串。
+
+说明：对于大的文件，使用ReadAll方法浪费内存资源。应使用其它的技术去输入一个文件，比如按行读取文件。
+
+示例：
+Sub du_all()
+Dim fso, a, retstring
+Const ForReading = 1
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set a = fso.OpenTextFile("c:\testfile.txt", ForReading, False)
+retstring = a.Readall    '全部读取
+Debug.Print retstring
+a.Close
+End Sub
+
+还有两个辅助读取的方法：
+
+·Skip 方法
+
+语法：object.Skip(characters)
+
+功能：当读一个 TextStream 文件时跳过指定数量的字符。
+
+示例：
+Sub duskip()
+Dim fso, a, retstring
+Const ForReading = 1
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set a = fso.OpenTextFile("c:\testfile.txt", ForReading, False)
+Do While a.AtEndOfLine <> True          '是否到行末
+    retstring = retstring & a.Read(1)      '读取一个字符
+    a.Skip (1)      '跳过一个字符
+Loop
+a.Close
+Debug.Print retstring                  '可看到读取了第一行的奇数位的字符
+End Sub
+
+·SkipLine 方法
+
+语法：object.SkipLine
+
+功能：当读一个 TextStream 文件时跳过下一行。
+
+
+3、写入数据到文件
+
+写入数据到文件也有三种方法。
+
+·Write 方法
+
+语法：object.Write(string)
+
+功能：写一个指定的字符串到一个 TextStream 文件。
+
+示例：
+Sub xie()
+    Const ForWriting = 2, ForAppending = 8
+    Dim fs, f
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    Set f = fs.OpenTextFile("c:\testfile.txt", ForAppending,TristateFalse)
+    f.Write "Hello world!"   '写入字符串
+    f.Close
+End Sub
+
+·WriteLine 方法
+
+语法：object.WriteLine([string])
+
+功能：写入一个指定的字符串和换行符到一个 TextStream 文件中。
+
+示例：
+f.WriteLine("Hello world!")   '写入字符串，加一个换行符。
+
+·WriteBlankLines 方法
+
+语法：object.WriteBlankLines(lines)
+
+功能：写入指定数量的换行符到一个 TextStream 文件中。
+
+示例：
+f.WriteBlankLines(3)    '相当于按3次回车。
+
+4、关闭文件
+
+利用TextStream 对象的Close方法，上面的示例中已经有了，很简单。
+
+
+（七）总结
+
+    从上面的介绍，我们看到使用FileSystemObject对象处理文件、文件夹比使用VBA语句的方法具有更容易存在的特点。这是因为FileSystemObject对象使用了面向对象的语法。另外FileSystemObject对象处理文本文件毫不逊色于VBA语句，非常值得推荐。唯一的问题是不能处理二进制文件，微软在有关文档中称计划将来支持二进制文件，不过应该只是计划而已，呵呵。

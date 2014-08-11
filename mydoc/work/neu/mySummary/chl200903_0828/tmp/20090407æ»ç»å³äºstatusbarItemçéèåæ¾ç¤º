@@ -1,0 +1,112 @@
+http://test.maemo.org/platform/docs/howtos/tutorial_desktop_plugins_bora.html#status-bar-plugins
+
+//20090407
+...
+状态栏分为三种类型：permanent,conditional,和temporal。permanent插件一直显示，conditional和temporal插件仅在条件满足的时候才会显示
+...
+
+为了创建自己的status bar,你需要在它的内部有一个共享的对象和相应的函数。
+
+注意：Hildon Desktop被改变为动态地链接到libhildonstatusbar.so 库上，因为如果静态地链接它就不可能利用插件的statusbaritem API。
+
+Each plugin have to offer a desktop-file: 
+...
+ Status bar functions
+
+最重要的函数就是entry函数了，它在库被打开的时候调用。这个函数定义了这个插件需要操作的其他函数。entry函数的名字取决于你的库的名字。即:[your lib name]_entry
+-------------------------------------
+/* Definition of HildonStatusBarPluginFn_st */
+#include <hildon-status-bar-lib/hildon-status-bar-item.h>
+#include <gtk/gtk.h>
+
+void *hello_initialize(HildonStatusBarItem *item, GtkWidget **button);
+void hello_destroy(void *data);
+void hello_update(void *data, gint value1, gint value2, const gchar *str);
+int hello_get_priority(void *data);
+/* You have to also include prototype of your entry function */
+void hello_entry(HildonStatusBarPluginFn_st *fn);
+
+void hello_entry(HildonStatusBarPluginFn_st *fn)
+{
+  /* Sanity check */
+  if (fn == NULL) {
+    return;
+  }
+  fn->initialize = hello_initialize;
+  fn->destroy = hello_destroy;
+  fn->update = hello_update;
+  fn->get_priority = hello_get_priority;
+}
+
+--------------------------------
+entry告诉status bar在特定的事件上调用哪个函数。在第一个事件上，initiali函数被调用。initialize的返回值被传递给destroy，update和get_priority函数。
+
+initialize :
+这个函数可以使析构一个item成为可能，第一个参数必须被存放起来，以利于后面的应用。第二个参数必须被初始化成为一个按钮，这个按钮代表插件的图块。
+...
+update function:
+
+这个函数在插件接收时间的时候会被调用。插件的接口允许有三个参数传递给插件：两个整数和一个字符串。这个插件能够随意使用这些参数。在这个例子里，第一个整数用来定义是否显示这个插件。
+...
+
+void [plugin_name]_set_conditional( void *data, gboolean conditional_status);
+这个函数用来给conditinal和temporal插件提供借口以设置一个插件。blloean值描述这个插件是否被显示（TRUE)。这个函数是可选的，permanent插件就不需要执行这个插件。
+Example:
+--------------------------------------------------------------------------------------------------
+/* Called by the desktop process whenever the
+ * hildon_status_bar_update_conditional is emitted on the
+ * SB item 
+ */
+static void
+hello_set_conditional (HelloSb *data, gboolean visible)
+{
+  if (!data)
+    return;
+
+  if (visible)
+    {
+      if (!data->button)
+        {
+          data->button = gtk_button_new_with_label ("H");
+          g_signal_connect_swapped (data->button, "clicked",
+                                    G_CALLBACK (hello_clicked),
+                                    data);
+
+          gtk_widget_show_all (data->button);
+
+        }
+    }
+
+  else
+    {
+      gtk_widget_destroy (data->button);
+      data->button = NULL;
+    }
+
+  hildon_status_bar_item_set_button (data->item, data->button);
+
+}
+——————————————————————————————————
+ 
+API现在也提供一个信号，用来提示statusBar一个conditional插件的状态改变:
+  void (*hildon_status_bar_update_conditional)
+            (HildonStatusBarItem * self, gboolean conditional_status);
+
+这里，布尔的参数用来提示status Bar一个插件是否需要被显示还是被隐藏。
+
+conditional插件不需要在initialize API调用的时候建立按钮，但是能够让button参数为空。为了指定一个按钮将会被插入到StatusBar里面，插件需要插件的set_conditional()执行中调用：
+   void hildon_status_bar_item_set_button (HildonStatusBarItem *item, GtkWidget *button);
+
+Changing the conditional status
+如果一个插件是permanent的，他不需要执行set_conditional函数。但是，如果它是condition或者是temporal的，他执行set_conditional函数。在StatusBar initialization默认那些插件是不被显示的。
+ 
+当一个插件需要改变它的状态的时候，它发射"hildon_status_bar_update_conditional"信号：
+
+ gboolean is_shown = FALSE;
+ g_signal_emit_by_name(item,
+                       "hildon_status_bar_update_conditional",
+                       !is_shown);
+
+
+发射信号之后，statusBarItem自己就设置conditional函数并且StatusBar在用户配置的相应位置显示插件。
+

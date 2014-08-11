@@ -1,0 +1,203 @@
+/* general purpose styles */
+
+body
+{
+    background-color: gray;
+    font-family: verdana, helvetica, arial, sans-serif;
+    font-size: 16px;
+    margin: 0px;
+    padding: 4%;
+}
+
+table
+{
+    border: 0px none Black;
+    border-collapse: collapse;
+    margin: 0px;
+    padding: 0px;
+    table-layout: fixed;
+    width: 600px;
+    height: 50px;
+
+}
+
+td
+{
+    margin: 0px;
+    padding: 0px;
+}
+
+a
+{
+    color: #525552;
+    text-decoration: none;
+}
+a:hover
+{
+    text-decoration: underline;
+}
+
+b
+{
+    color: #525552;
+    font-weight: bold;
+}
+
+hr
+{
+    border: 1px solid #525552;
+}
+
+img
+{
+    border: 0px none #525552;
+}
+
+
+/* body table-Container for all content */
+.bodyTable
+{
+    margin: 0px auto;
+    overflow: hidden;
+}
+.bodyData
+{
+    background-repeat: no-repeat;
+    border: 0px none Silver;
+}
+
+/* logoTable styles */
+.logoTable
+{
+    height: 60px;
+}
+.logoData
+{ padding: 0px 0px 0px 10px; }
+
+/* Title table styles */
+.titleTable
+{
+    height: 32px;
+}
+.titleData
+{
+    color: White;
+    font-size: 19px;
+    font-weight: bold;
+    padding: 9px 10px;
+    text-align: center;
+}
+
+/* blockDescTable styles */
+.contentTable
+{ }
+.contentData
+{
+    padding: 5px 10px;
+}
+
+/* infoTable styles */
+.infoTable
+{ }
+.infoData
+{
+    height: 14px;
+    padding: 0px 15px;
+}
+
+.buttonTable {
+    border: 0px none Black;
+    border-collapse: collapse;
+    margin: 0px;
+    padding: 0px;
+    table-layout: auto;
+    text-align:left;
+} 
+
+.button {
+    color: #525552;
+    font: bold small verdana, helvetica, arial, sans-serif;
+    font-size: 16px;
+    width: 350px;
+    margin: 0px;
+    padding: 0px;
+} 
+
+/* optionsTable styles */
+.optionsTable
+{ }
+.optionsData
+{
+    height: 12px;
+    padding: 0px 15px;
+}
+
+/* policyTable styles */
+.policyTable
+{ }
+.policyHeading
+{
+    color: #525552;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+.policyData
+{
+    color: Black;
+    font-size: 12px;
+    padding: 5px 15px;
+    text-align: justify;
+}
+
+/* cACertTable styles */
+.cACertTable
+{ }
+.cACertData
+{
+    padding: 5px 15px;
+    text-align: right;
+}
+
+/* actionTable styles */
+.actionTable
+{ }
+.actionData
+{
+    padding: 5px 10px;
+}
+.actionTitle
+{
+    color: #525552;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* footTable styles */
+.footTable
+{ }
+.footData
+{
+    color: Gray;
+    font-size: 9px;
+    font-style: italic;
+    padding: 2px;
+    text-align: right;
+}
+
+/* style for the helpdesk information text */
+.helpDeskData
+{
+    color: White;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 9px 10px;
+    text-align: center;
+}
+
+/* used to supress blank or empty (-) fields */
+.nodisplay { display: none; }
+.nodisplay- { display: none; }
+
+/*EOF*/
+

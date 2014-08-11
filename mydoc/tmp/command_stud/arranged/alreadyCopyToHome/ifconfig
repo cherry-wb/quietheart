@@ -1,0 +1,69 @@
+ifconfig
+功能：配置网络
+
+[举例]
+*查看网络配置信息
+[quietheart@lv-k test]$ifconfig
+输入之后输出包含如下：
+...省略...
+eth0 	Link encap:Ethernet HWaddr 00:0C:29:F3:3B:F2
+	inet addr:192.168.0.10 Bcast:192.168.0.255 Mask:255.255.255.0
+	UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+	RX packets:78 errors:0 dropped:0 overruns:0 frame:0
+	TX packets:104 errors:0 dropped:0 overruns:0 carrier:0
+	collisions:0 txqueuelen:100 
+	RX bytes:11679 (11.4 Kb)
+	TX bytes:14077 (13.7 Kb)
+	Interrupt:10 Base address:0x1080
+...省略...
+这里,使用不带参数的ifconfig将显示当前使用的网络接口。对于上面列出的：
+第一行(eth0...)：连接类型：Ethernet（以太网）,eth0就是网络接口。(HWaddr...):硬件mac地址.
+第二行(inet...)：网卡的IP地址、子网、掩码.
+第三行：UP（代表网卡开启状态）RUNNING（代表网卡的网线被接上）MULTICAST（支持组播）MTU:1500（最大传输单元）：1500字节.
+第四、五行：接收、发送数据包情况统计.
+第六行：接收、发送数据字节数统计信息.
+另外，有一个以lo为首的部分。lo是look-back网络接口，从IP地址 127.0.0.1就可以看出，它代表"本机"。无论系统是否接入网络，这个设备总是存在的，除非你在内核编译的时候禁止了网络支持，这是一个称为回送设备的特殊设备，它自动由Linux配置以提供网络的自身连接。
+
+*只显示eth3接口的状态：
+[quietheart@lv-k test]$ifconfig eth3
+输入之后，输出信息类似如下：
+eth3    Link encap:Ethernet  HWaddr 00:19:bb:e3:9f:a4  
+	inet addr:10.1.14.89  Bcast:10.1.14.255  Mask:255.255.255.0
+	inet6 addr: fe80::219:bbff:fee3:9fa4/64 Scope:Link
+	UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+	RX packets:252453 errors:0 dropped:0 overruns:0 frame:0
+	TX packets:279030 errors:0 dropped:0 overruns:0 carrier:0
+	collisions:0 txqueuelen:1000 
+	RX bytes:70684609 (70.6 MB)  TX bytes:296960665 (296.9 MB)
+	Interrupt:17 
+这里，表示eth3工作正常。如果ifconfig eth8（假设没有eth8），会提示找不到设备。
+
+**以下未实践
+*配置网卡eth0的ip地址：
+[root@lv-k test]#ifconfig eth0 192.168.0.1 netmask 255.255.255.0 
+这样，在eth0上配置上192.168.0.1 的IP地址及24位掩码。
+
+*再在ech0上面再配置一个ip地址(192.168.1.1/24的):
+[root@lv-k test]#ifconfig eth0:0 192.168.1.1 netmask 255.255.255.0
+这样，再用ifconifg命令查看，就可以看到两个网卡的信息了，分别为：eth0和eth0:0。若还想再增加IP，那网卡的命名就接着是：eth0:1、eth0:2...想要几个就填几个,这样可以为一个网卡配置多个IP地址。
+
+*配置网卡eth0的硬件地址：
+[root@lv-k test]#ifconfig eth0 hw ether xx：xx：xx：xx：xx：xx 
+然后重启，此时再用ifconfig命令查看一下，我们就会发现网卡的MAC地址已经变成xx:xx:xx:xx:xx:xx了。这样，就将网卡的硬件地址更改了(xx:xx...是硬件地址)，此时你就可以骗过局域网内的IP地址邦定了。 
+
+*手工实现IP与Mac地址的捆绑:
+#arp -i eth0 -s xxx.xxx.xxx.xxx(IP) xx.xx.xx.xx.xx(MAC)
+
+*将eth0网卡禁用:
+[root@lv-k test]#ifconfig eth0 down
+
+*将eth0网卡启用:
+[root@lv-k test]#ifconfig eth0 up 
+**
+
+[其他]
+ifconfig 命令的功能很强大，还可以设置网卡的MTU，混杂模式等。就不一一介绍了，用时间可以自己研究一下。 
+注意：用ifconfig命令配置的网卡信息，在网卡重启后机器重启后，配置就不存在。要想将上述的配置信息永远的存的电脑里，那就要修改网卡的配置文件了。 
+
+参考网址
+http://www.oklinux.cn/html/developer/shell/20070626/31495.html

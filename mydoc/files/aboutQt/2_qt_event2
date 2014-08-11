@@ -1,0 +1,145 @@
+http://blog.csdn.net/xuxinshao/archive/2007/12/29/2002934.aspx
+原文Another Look at Events 
+作者： Jasmin Blanchette  译：清源游民 gameogre@gmail.com
+
+什么是自发事件？哪些类型的事件可以被propagated 或compressed? posting and sending 事件之间有何不同？什么时候应该调用 accept() 或是ignore() ? 如果这些问题你还不是很了解，那么继续看下去。
+
+事件起源：
+
+基于事件如何被产生与分发，可以把事件分为三类：
+* Spontaneous 事件,由窗口系统产生，它们被放到系统队列中，通过事件循环逐个处理。
+* Posted 事件，由Qt或是应用程序产生，它们被Qt组成队列，再通过事件循环处理。
+* Sent  事件，由Qt或是应用程序产生，但它们被直接发送到目标对象。
+当我们在main()函数的末尾调用QApplication::exec()时,程序进入了Qt的事件循环，大概来讲，事件循环如下面所示：
+while (!exit_was_called)
+{
+  while(!posted_event_queue_is_empty)
+       {
+         process_next_posted_event();
+       }
+  while(!spontaneous_event_queue_is_empty)
+      {
+         process_next_spontaneous_event();
+      }
+  while(!posted_event_queue_is_empty)
+      {
+        process_next_posted_event();
+      }
+}
+首先，事件循环处理所有的posted事件，直到队列空。然后再处理所有的spontaneous事件，最后它处理所有的因为处理spontaneous事件而产生的posted事件。send 事件并不在事件循环内处理，它们都直接被发送到了目标对象。现在看一下实践中的paint 事件是如何工作的。当一个widget第一次可见，或是被遮挡后再次变为可见，
+窗口系统产生一个(spontaneous) paint事件，要求程序重画widget,事件循环最终从事件队列中捡选这个事件并把它分发到那个需要重画的widget。
+并不是所有的paint事件都是由窗口系统产生的。当你调用QWidget::update()去强行重画widget,这个widget会post 一个paint 事件给自己。这个paint事件被放入队列，最终被事件循环分发之。
+假如你很不耐烦，等不及事件循环去重画一个widget, 理论上，你应该直接调用paintEvent()强制进行立即的重画。但实际上这不总是可行的，因为paintEvent()函数是protected的（很可能访问不了）。它也绕开了任何存在的事件过滤器。因为这些原因，Qt提供了一个机制，直接sending事件而不是posting 。
+QWidget::repaint()就使用了这个机制来强制进行立即重画。
+posting 相对于sending的一个优势是，它给了Qt一个压缩(compress)事件的机会。假如你在一个widget上连续地调用update() 十次，因update()而产生的这十个事件，将会自动地被合并为一个单独的事件，但是QPaintEvents事件附带的区域信息也合并了。可压缩的事件类型包括：paint,move,resize,layout hint,language change。
+最后要注意，你可以在任何时候调用QApplication::sendPostedEvent()，强制Qt产生一个对象的posted事件。
+
+人工合成的事件
+
+QT应用程序可以产生他们自己的事件，或是预定义类型，或是自定义类型。 这可以通过创建QEvent类或它的
+子类的实例，并且调用QApplication:postEvent()或QApplication::sendEvent()来实现。
+这两个函数需要一个 QObject* 与一个QEvent * 作为参数，假如你调用postEvent(),你必须用 new 操作符来创建事件对象，Qt会它被处理后帮你删除它。假如你用sendEvent(), 你应该在栈上来创建事件。下面举两个例子：
+一是posting 事件：
+QApplication::postEvent(mainWin, new QKeyEvent(QEvent::KeyPress,Key_X,'X',0));
+二是sending 事件：
+    QKeyEvent event(QEvent::KeyPress, Key_X, 'X', 0);
+    QApplication::sendEvent(mainWin, &event);
+Qt应用程序很少直接调用postEvent()或是sendEvnet()，因为大多数事件会在必要时被Qt或是窗口系统自动产生
+。在大多数的情况下，当你想发送一个事件时，Qt已经为了准备好了一个更高级的函数来为你服务。（例如
+update()与repaint())。
+
+定制事件类型
+
+qt允许你创建自己的事件类型，这在多线程的程序中尤其有用。在单线程的程序也相当有用，它可以作为
+对象间的一种通讯机制。为什么你应该用事件而不是其他的标准函数调用，或信号、槽的主要原因是：事件既可用于同步也可用于异步（依赖于你是调用sendEvent()或是postEvents()),函数调用或是槽调用总是同步的。事件的另外一个好处是它可以被过滤。
+演示如何post一个定制事件的代码片段：
+const QEvent::Type MyEvent = (QEvent::Type)1234;
+  ...
+QApplication::postEvent(obj, new QCustomEvent(MyEvent));
+事件必须是QCustomEvent类型(或子类）的。构造函数的参数是事件的类型，1024以下被Qt保留。其他可被程序使用。为处理定制事件类型，要重新实现customEvent()函数：
+void MyLineEdit::customEvent(QCustomEvent *event)
+    {
+        if (event->type() == MyEvent) {
+            myEvent();
+        } else {
+            QLineEdit::customEvent(event);
+        }
+    }
+QcustomEvent类有一个void *的成员，可用于特定的目的。你也可以子类化QCustomEvent，加上别的成员，但是你也需要在customEvent()中转换QCustomeEvent到你特有的类型。
+
+事件处理与过滤
+
+Qt中的事件可以在五个不同的层次上被处理
+1,重新实现一个特定的事件handler
+ QObject与QWidget提供了许多特定的事件handlers，分别对应于不同的事件类型。（如paintEvent()对应paint事件）
+2,重新实现QObject::event()
+ event()函数是所有对象事件的入口，QObject和QWidget中缺省的实现是简单地把事件推入特定的事件handlers。
+3,在QObject安装上事件过滤器
+  事件过滤器是一个对象，它接收别的对象的事件，在这些事件到达指定目标之间。
+4，在aApp上安装一个事件过滤器，它会监视程序中发送到所有对象的所有事件
+5,重新实现QApplication:notify(),Qt的事件循环与sendEvent()调用这个函数来分发事件，通过重写它，你可以在别人之前看到事件。
+
+一些事件类型可以被传递。这意味着假如目标对象不处理一个事件，Qt会试着寻找另外的事件接收者。用新的目标来调用QApplication::notify()。举例来讲，key事件是传递的，假如拥有焦点的Widget不处理特定键，Qt会分发相同的事件给父widget,然后是父亲的父亲，直到最顶层widget。
+
+接受或是忽略？
+
+可被传递的事件有一个accept()函数和一个ignore()函数，你可以用它们来告诉Qt，你“接收”或是
+“忽略”这个事件。假如事件handler调用accept(),这个事件将不会再被传递。假如事件handler调用
+ignore(),Qt会试着查找另外的事件接收者。
+像大多数的开发者一样，你可能不会被调用accept()或是ignore()所烦恼。缺省情况下是“接收”，在
+QWidget中的缺省实现是调用ignore(),假如你希望接收事件，你需要做的是重新实现事件handler，避免
+调用QWidget的实现。假如你想“忽略”事件，只需简单地传递它到QWidget的实现。下面的代码演示了这一点：
+void MyFancyWidget::keyPressEvent(QKeyEvent *event)
+    {
+        if (event->key() == Key_Escape) {
+            doEscape();
+        } else {
+            QWidget::keyPressEvent(event);
+        }
+    }
+在上面的例子里，假如用户按了"ESC"键，我们会调用doEscape()并且事件被“接收”了（这是缺省的情况），
+事件不会被传递到父widget,假如用户按了别的键，则调用QWidget的缺省实现。
+void QWidget::keyPressEvent(QKeyEvent *event)
+    {
+        event->ignore();
+    }
+应该感谢ignore()，事件会被传递到父widget中去。
+讨论到目前为至，我们都假设基类是QWidget,然而，同样的规则也可以应用到别的层次中，只要用QWidget
+代替基类即可。举例来说：
+ void MyFancyLineEdit::keyPressEvent(QKeyEvent *event)
+    {
+        if (event->key() == Key_SysReq) {
+            doSystemRequest();
+        } else {
+            QLineEdit::keyPressEvent(event);
+        }
+    }
+由于某些原因，你会在event()中处理事件，而不是在特定的handler中，如keyPressEvent(),这个过程会有些不同。event() 会返回一个布尔值，来告诉调用者是否事件被accept或ignore,(true表示accept),从event()中调用accept()或是 ignore()是没有意义的。“Accept”标记是event()与特定事件handler之间的一种通讯机制。而从event()返回的布尔值却是用来与QApplication:notify()通讯的。在QWidgetk中缺省的event()实现是转换“Accept”标记为一个布尔值，如下所示：
+bool QWidget::event(QEvent *event)
+    {
+        switch (e->type()) {
+        case QEvent::KeyPress:
+            keyPressEvent((QKeyEvent *)event);
+            if (!((QKeyEvent *)event)->isAccepted())
+                return false;
+            break;
+        case QEvent::KeyRelease:
+            keyReleaseEvent((QKeyEvent *)event);
+            if (!((QKeyEvent *)event)->isAccepted())
+                return false;
+            break;
+            ...
+        }
+        return true;
+    }
+
+到现在为至，我们所说的内容不仅仅适用于key事件，也适用于mouse,wheel,tablet,context menu等事件
+Close事件有点不同，调用QCloseEvent:ignore()取消了关闭操作，而accept()告诉Qt继续执行正常的关闭操作。为了避免混乱，最好是在closeEvent()的新实现中明确地进行accept()与ignore()的调用：
+ void MainWindow::closeEvent(QCloseEvent *event)
+    {
+        if (userReallyWantsToQuit()) {
+            event->accept();
+        } else {
+            event->ignore();
+        }
+    }

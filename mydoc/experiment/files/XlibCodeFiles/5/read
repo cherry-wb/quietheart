@@ -1,0 +1,5 @@
+6)不规则窗口需要一图片做窗口掩码,图片是单色的xbm图片,GIMP同样完美支持.要用到
+#include <X11/extensions/shape.h> 这个库,其实核心就两句
+shapemask=XCreateBitmapFromData(dpy,d,pic_bits,320,320);
+XShapeCombineMask(dpy,d,0,0,0,shapemask,0);
+就这么简单成了.附上一个简单程序. 

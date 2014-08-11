@@ -1,0 +1,739 @@
+coding的时候参照此，
+注意：
+1）coding的进度在"===>coding"标记
+
+这里描述decksim的运行流程。
+实际主要描述的就是ply中的流程，position
+
+处理过程如下：
+1，设置一些默认配置变量(参考'.\Sub\DefaultSet.ttl')
+这里需要定义一些和这个脚本文件中对应的变量. 
+
+2，启动sc2psim, 和终端交互发送字符序列如下：
+sendln "sc2psim"  /*发送"sc2psim"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sendln "print" /*发送"print"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sc2psimStatus = 1
+
+3，初始化启动(参考:'.\Sub\SystemStart.ttl'), 和终端交互发送字符序列如下：
+sendln '# mediaSyLogTimeSet' /*发送"# mediaSyLogTimeSet"字符串给终端*/
+wait #10'>' #10'->' /*等待终端输出中出现两个以ascii码为10开头的字符,即'>'或'->'*/
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '13 00 9F F5 45 08 13 01 0A 00 00 00'  /*非常复杂处理后的结果，不确定是否与时间等因素有关,先这样用看看行不行具体参见（'.\Sub\GetTime.ttl'）。*/
+wait #10'>' #10'->'
+sendln '# ;'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaSyOutputLevelSet'
+wait #10'>' #10'->'
+sendln '# packet'
+wait #10'>' #10'->'
+sendln '# 0F 00 0F 00 00 00 00 80'
+wait #10'>' #10'->'
+sendln '# ;'
+wait #10'>' #10'->'
+sendln '# run'
+wait #10'>' #10'->'
+
+sendln '# mediaFrValidFrameTimingSet'
+wait #10'>' #10'->'
+sendln '# packet'
+wait #10'>' #10'->'
+sendln '# 91 01 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln '# run'
+wait #10'>' #10'->'
+
+sendln '# mediaSyLocaleSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '12 00 ' localeModeParam /*字符串的拼接,这里，localeModeParam = '01000000' 在1中的默认配置变量DefaultSet.ttl中设置*/
+wait #10'>' #10'->'
+sendln  ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+4，一些待机模式相关的信息（参考'.\Sub\DeckIdle.ttl'）
+sendln '# mediaDkDeckModeSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '2D 01 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+5，经过前面的步骤之后，开始进入和用户交互输入的地方。
+5.1)以如下脚本(Auto\play.txt)作为运行范例：
+ply <------用户输入进入ply播放模式
+position <------指定播放位置(对应后面依次输入的clip,基准位置,长度)
+1  <------clicp号码
+1  <------基准位置
+0f <------长度
+splay <------开始播放
+#wait 1000
+
+这样处理过程如下：
+如果sc2psim,执行2（这里判断可以先不做，如何判断还不很确定，应该参考DeckSim.ttl第89行）
+因为监测到将要进入"ply"模式，所以进入ply模式的处理流程(参考DeckSim.ttl中的subPlayMain):
+a)播放模式中最初的初始化工作(参考'.\Sub\PlayInit.ttl'):
+sendln '# mediaSyVideoFilterSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '1E 00 ' videoFilterFlagParam /*拼接videoFilterFlagParam    = '00000000'在1中的默认配置变量DefaultSet.ttl中设置*/
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkDeckModeSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '2D 01 00 00 00 00 03 00 00 00'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkDeckStatusGet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '2E 01 00 00 00 00'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkRecordingPropertySet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '2F 01 00 00 00 00 00 00 00 00 00 00 00 00 3C 00'
+wait #10'>' #10'->'
+sendln '00 00 0A 00 00 00 'keyFrameOffsetParam /*字符串拼接，keyFrameOffsetParam     = 'FFFFFFFF' 在1中的默认配置变量DefaultSet.ttl中设置*/
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+/*各种变量定义*/
+vFormatImgSize   = 3		/*1440*1080*/
+vFormatFRate     = 2		/*60i*/
+vEncodeFormatFRate = 2		/* 60i*/
+vFormatBRate     = 2		/*25Mbps*/
+vFormatBRateMode = 2		/*CBR*/
+vFormatImgSizeParam     = '03000000'
+vFormatFRateParam       = '02000000'
+vEncodeFormatFRateParam = '02000000'
+vFormatBRateParam       = '02000000'
+vFormatBRateModeParam   = '02000000'
+
+sendln '# mediaDkEncodeModeSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+
+/*以下是利用前面的变量各种拼接,拼接的结果是'32 01 00 00 00 00 03000000 02000000 02000000 02000000'*/
+sendln '32 01 00 00 00 00 ' vFormatImgSizeParam ' ' vEncodeFormatFRateParam ' ' vFormatBRateParam ' ' vFormatBRateModeParam
+
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaMdMediaStatusGet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '6F 00 ' slotNo ' 00 00 00'  /*字符串拼接,slotNo='01',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkDeviceInfoSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '41 01'
+wait #10'>' #10'->'
+sendln '00 00 00 00' 
+wait #10'>' #10'->'
+sendln '08 00 00 00'
+wait #10'>' #10'->'
+sendln '01 00 00 00' 
+wait #10'>' #10'->'
+sendln '01 00 00 00' 
+wait #10'>' #10'->'
+sendln '00 00 00 00' 
+wait #10'>' #10'->'
+sendln '00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00' 
+wait #10'>' #10'->'
+sendln '00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00' 
+wait #10'>' #10'->'
+sendln '00 00 00 00' 
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+wait #10'>' #10'->'
+sendln '00 00'
+wait #10'>' #10'->'
+sendln '74 65 73 74 00 80 C0 00 B8 80 74 E0 28 80 C0 60'
+wait #10'>' #10'->'
+sendln 'B8 80 C4 7B B7 80 C0 00 B8 80 40 33 BB 80'
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkClipFormatSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '34 01 00 00 00 00 '
+wait #10'>' #10'->'
+sendln clipFormatParam  /*clipFormatParam = '00000000',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkAudioModeSet'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+sendln '44 01 00 00 00 00 '
+wait #10'>' #10'->'
+sendln audioTypeParam /*audioTypeParam = '00000000',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+wait #10'>' #10'->'
+sendln audioChNumberParam /*audioChNumberParam = '02000000',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendn 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+sendln '# mediaDkAudioFaderEnable'
+wait #10'>' #10'->'
+sendln 'packet'
+wait #10'>' #10'->'
+
+/*字符串拼接clipFadeFlagParam = '01000000'chapterFadeFlagParam = '00000000',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+sendln '4D 01 00 00 00 00 ' clipFadeFlagParam ' ' chapterFadeFlagParam
+
+wait #10'>' #10'->'
+sendln ';'
+wait #10'>' #10'->'
+sendln 'run'
+然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+
+if(slotNo != "00")
+{
+  sendln '# mediaDkActiveSlotSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '30 01 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln slotNo /*slotNo='01',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+  wait #10'>' #10'->'
+  sendln '00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+b)Clip相关的初始化
+
+/*这里还是开始,所以状态是stop状态,注意这两个status,save_status变量很重要*/
+status=STP;
+save_status = status;
+if(slotNo != "00")
+{
+  /*获得thumbnail list item列表,参考'.\Sub\ThItmListGet.ttl'*/
+  sendln '# mediaCpClipThumbnailItemListGet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  /*各种拼接slotNo='01',searchKeyTypeParam='00000000' sortOrderParam='01000000' formatSearchKeyTypeParam='00000000' localeLimitedParam='00000000' resolutionSearchKeyParam='00000000' fpsSearchKeyParam='00000000',是在1中的默认配置变量DefaultSet.ttl中设置的*/
+  sendln 'C9 00 ' slotNo ' 00 00 00' searchKeyTypeParam ' ' sortOrderParam ' ' formatSearchKeyTypeParam ' ' localeLimitedParam ' ' resolutionSearchKeyParam ' ' fpsSearchKeyParam
+  
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>C9 0C'
+  然后设置输入为该行。
+  然后通过对该行进行读取，获得各种关于thumbnail的相关信息(这个步骤比较繁琐,需要参考.\Sub\ThItmListGet.ttl的82行以后)。
+  (这样获得的几个比较重要的变量的值:thumbnailItemListID,thumbnailItemListIDParam,startThumbnailItemID,thumbnailItemListCount,endThumbnailItemID,startClip,endClip)
+
+  if(thumbnailItemListCount>0)
+  {/*参考'.\Sub\ThumbnailDisplay.ttl'*/
+    sendln '# mediaCpThumbnailItemsPropertyGet'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    
+    /*各种字符串拼接，这里thumbnail相关的字符串变量都是从上面的获取thumbnail相关信息里面得到的*/
+    sendln 'CB 00 ' thumbnailItemListIDParam ' 00 00 00 ' startClip thumbnailItemListIDParam ' ' endClip thumbnailItemListIDParam
+    
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run'
+    for(i = 1; i <= thumbnailItemListCount; ++i)
+    {
+      /*下面参考'.\Sub\WaitThItmPropSend.ttl'*/
+      do
+      {
+        读取终端输出的每一行
+      }while(读出的行不包含'Call>34 09')
+      设置pauseonResult变量为读出的行(包含'Call>34 09') /*这个pauseonResult变量的作用是什么?*/
+    }
+  
+    sendln '# mediaDkThumbnailsCache'
+    wait #10'>' #10'->'
+    sendln 'packet'
+    wait #10'>' #10'->'
+    /*字符串拼接,这里thumbnail相关的字符串变量都是从上面的获取thumbnail相关信息里面得到的*/
+    sendln '3B 01 00 00 00 00 ' thumbnailItemListIDParam ' 00 00 00 ' startClip thumbnailItemListIDParam ' ' endClip thumbnailItemListIDParam
+    wait #10'>' #10'->'
+    sendln ';'
+    wait #10'>' #10'->'
+    sendln 'run'
+    然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+    然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  
+    for(i = 1; i <=thumbnailItemListCount; ++i)
+    {
+      sendln '# mediaDkThumbnailPlay'
+      wait #10'>' #10'->'
+      sendln 'packet'
+      wait #10'>' #10'->'
+      sendln '3E 01 00 00 00 00'
+      wait #10'>' #10'->'
+      sendln ';'
+      wait #10'>' #10'->'
+      sendln 'run'
+      
+      /*下面参考'.\Sub\WaitLastFrame.ttl'*/
+      do
+      {
+        读取终端输出的每一行
+      }while(读出的行不包含'Call>9F 09')
+      设置pauseonResult变量为读出的行(包含'Call>9F 09') /*这个pauseonResult变量的作用是什么?*/
+    }
+  }/*if(thumbnailItemListCount>0)*/
+}
+
+c)开始接受用户播放之前的输入设置:
+(前面的过程都是自用户输入"ply"之后自动进行的,从这里开始接受用户在"ply"模式下面的输入设置,以下内容都是在ply模式的一个循环中进行)
+ply中接收用户输入部分的总流程
+{
+  while(没有退出ply模式)
+  {
+    mainCommand=用户输入;
+    if(mainCommand != "send" && sc2psimStatus ==0)
+    {
+      执行步骤2;
+    }
+    检查并处理各个子命令;
+  }
+  /*以下参考'.\Sub\DeckIdle.ttl'*/
+  sendln '# mediaDkDeckModeSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '2D 01 00 00 00 00 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+}
+
+/*在ply接收用户输入的总流程中,依次读取并处理用户输入的子指令如下(根据前面的例子,这里输入的第一个是'position');*/
+处理用户输入的position命令
+{/*'.\Sub\PlayPosition.ttl'*/
+  while(读取用户设置的clip信息)
+  {/*这个例子里，用户输入的就是1*/
+    if(用户没有输入clip信息)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的playThumbnailItemID = 1
+      break;
+    }
+    else
+    {
+      if(输入合法,即 输入值属于区间:[startThumbnailItemID,endThumbnailItemID])
+      {
+        设置playThumbnailItemID=用户输入的int值
+        break;
+      }
+    }/*if(用户没有输入clip信息)*/
+  }/*while(读取用户设置的clip信息)*/
+  clipNo=刚才输入的数值的长度为1的16进制形式(字符串);/*这里clipNo原来在DefaultSet.ttl中是'01'*/
+
+  while(读取用户设置的基准位置)
+  {/*这个例子里，用户输入的就是1*/
+    if(用户没有输入基准位置信息)
+    {
+      使用1中的默认配置变量DefaultSet.ttl中设置的playPosReferencePoint = 0
+      break;
+    }
+    else
+    {
+      if(输入合法,即 输入值属于区间:[0,2])
+      {
+        playPosReferencePoint=用户输入的int值
+        break;
+      }
+    }/*if(用户没有输入基准位置信息)*/
+  }
+  (!!!如有必要，在这里处理刚才输入是BigEndian还是LittleEndian)
+  playPosRefPointParam=刚才处理好的长度为4的playPosReferencePoint的16进制形式(字符串)
+  while(读取用户设置的position命令的第3个参数)
+  {/*这个例子里，用户输入的就是0f*/
+    if(用户没有输入)
+    {
+      使用设置playPosOffsetValue为默认(??????默认什么,直接不输入就进入下次循环重新输入!)
+    }
+    playPosOffsetValue = 用户输入的字符
+    if(playPosOffsetValue长度大于等于2)
+    {
+      wkUnitType=(playPosOffsetValue中最后一个字符)
+      wkOffsetValue=(playPosOffsetValue除了最后一个字符之外的所有)
+      playPosUnitType = -1
+      if(wkUnitType=='f')
+      {
+        playPosUnitType = 0
+      }
+      else if(wkUnitType='s')
+      {
+        playPosUnitType = 1
+      }
+      else if(wkUnitType='c')
+      {
+        playPosUnitType = 2
+      }
+      if(playPosUnitType != -1)
+      {
+        playPosValue=wkOffsetValue表示的int形式值
+        if(playPosValue >= 0)
+        {break;}
+      }
+    }/*if(playPosOffsetValue长度大于等于2)*/
+  }/*while*/
+  playPosUnitTypeParam=playPosUnitType的16进制形式(字符串)
+  playPosValueParam=playPosValue的16进制形式(字符串)
+
+  sendln '# mediaDkPlayPositionSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+
+  /*根据前面的处理，进行各种拼接，这里playPosObject使用DefaultSet.ttl中的默认'01 00 00 00'*/
+  sendln '39 01 00 00 00 00 ' clipNo ' 00 00 01 ' playPosRefPointParam ' ' playPosUnitTypeParam ' ' playPosValueParam ' ' playPosObject ' 00 00 00 00'
+  wait #10'>' #10'->'
+
+  sendln ';'
+  wait #10'>' #10'->'
+  if(status=='STP'即当前状态是停止状态)
+  {
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+  }
+  else
+  {
+    if(status=='PAUS')
+    {
+      sendln 'run'
+      然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+      然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+      
+      if(disable4bitIfFlag > 0)
+      {/*disable4bitIfFlag在DefaultSet.ttl中默认为0*/
+        sendln '# mediaDk4BitIFDisable'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '4F 01 00 00 00 00 '
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run'
+        然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+        然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+      } /*if(disable4bitIfFlag > 0)*/
+      sendln '# mediaDkFirstFramePermitsend'
+      wait #10'>' #10'->'
+      sendln 'packet'
+      wait #10'>' #10'->'
+      sendln '3C 01 00 00 00 00'
+      wait #10'>' #10'->'
+      sendln ';'
+      wait #10'>' #10'->'
+      sendln 'run'
+  
+      /*下面参考'.\Sub\WaitLastFrame.ttl'*/
+      do
+      {
+        读取终端输出的每一行
+      }while(读出的行不包含'Call>9F 09')
+      设置pauseonResult变量为读出的行(包含'Call>9F 09') /*这个pauseonResult变量的作用是什么?*/
+  
+    }
+    else
+    {
+      sendln 'run'
+  
+      /*下面参考'.\Sub\WaitLastFrame.ttl'*/
+      do
+      {
+        读取终端输出的每一行
+      }while(读出的行不包含'Call>9F 09')
+      设置pauseonResult变量为读出的行(包含'Call>9F 09') /*这个pauseonResult变量的作用是什么?*/
+  
+      if(disable4bitIfFlag > 0)
+      {/*disable4bitIfFlag在DefaultSet.ttl中默认为0*/
+        sendln '# mediaDk4BitIFDisable'
+        wait #10'>' #10'->'
+        sendln 'packet'
+        wait #10'>' #10'->'
+        sendln '4F 01 00 00 00 00 '
+        wait #10'>' #10'->'
+        sendln ';'
+        wait #10'>' #10'->'
+        sendln 'run'
+        然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+        然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+      } /*if(disable4bitIfFlag > 0)*/
+  
+      sendln '# mediaDkFirstFramePermitsend'
+      wait #10'>' #10'->'
+      sendln 'packet'
+      wait #10'>' #10'->'
+      sendln '3C 01 00 00 00 00'
+      wait #10'>' #10'->'
+      sendln ';'
+      wait #10'>' #10'->'
+      sendln 'run'
+      然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+      然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+    } /*if(status='PAUS')*/
+  } /*if(status=='STP'即当前状态是停止状态)*/
+
+}/*处理用户输入的position命令*/
+
+处理用户输入的sply命令
+{ /*'.\Sub\PlayStart.ttl'*/
+  status = 'PLY'
+  sendln '# mediaDkPlayPositionSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  
+  
+  /*对应sply,单一的clip播放*/
+  playPosObject = '02 00 00 00'
+  
+  /*字符串拼接,这里拼接的变量前面都有设置*/
+  sendln '39 01 00 00 00 00 ' clipNo ' 00 00 01 ' playPosRefPointParam ' ' playPosUnitTypeParam ' ' playPosValueParam ' ' playPosObject ' 00 00 00 00'
+  wait #10'>' #10'->'
+  ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+  sendln '# mediaDkPlaySpeedSet'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+
+  /*字符串拼接playSpeedParam 设置过，默认在DefaultSet.ttl中被设置为'00 00 00 00 '*/
+  sendln '3A 01 00 00 00 00 ' playSpeedParam '00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+  sendln '# mediaDkFirstFramePermitsend'
+  wait #10'>' #10'->'
+  sendln 'packet'
+  wait #10'>' #10'->'
+  sendln '3C 01 00 00 00 00'
+  wait #10'>' #10'->'
+  sendln ';'
+  wait #10'>' #10'->'
+  sendln 'run'
+  然后循环从终端输出中读取每一行，直到该行包含'API Result>'
+  然后对读取的行进行检查，并设置一些变量，具体检查的过程需要参考'.\Sub\DataSend.ttl'中的sendDataCheck函数
+
+}/*处理用户输入的sply命令*/
+===>coding
+
+处理用户输入的exit的命令
+{
+  在这里直接退出ply用户交互部分主流程中的循环即可;/*余下的处理在ply用户交互部分的主流程中指明了*/
+}
+

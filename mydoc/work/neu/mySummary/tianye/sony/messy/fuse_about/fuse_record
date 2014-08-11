@@ -1,0 +1,56 @@
+介绍：
+=============
+fuse工作过程：
+1. The fuse library.
+当你的用户模式程序调用fuse_main的时候，fuse_main将传递到你的用户程序的参数封装，然后调用fuse_mount().
+fuse_mount()创建一对unix的socket,然后fork并且exec程序fusermount,将socket的一个端(在环境变量FUSE_COMMFD_ENV)传递给fusermount.
+fusermount首先确保fuse模块是加载了的，然后打开/dev/fuse设备，并且将这个文件句柄通过socket传递回fuse_mount().
+fuse_mount()返回/dev/fuse文件句柄给fuse_main().
+fuse_main()调用fuse_new()为fuse分配数据结构，存储和维护缓存的文件系统数据镜像。
+最后，fuse_main()调用fuse_loop()或者fuse_loop_mt()，开始从/dev/fuse读取文件系统的系统调用，在调用fuse_main之前调用用户程序中fuse_operations中相应的函数.这些调用的结果写回/dev/fuse文件，然后转送回系统调用(???)。
+2. The kernel module.
+内核模块分为两个部分：proc文件系统组件部分和文件系统调用部分。
+在kernel/file.c, kernel/inode.c,kernel/dir.c的所有系统调用会导致调用request_send(),request_send_noreply(),或者request_send_nonblock(),大多数调用是request_send(),request_send()会向"list of requests"结构添加一个request,然后等待回复request_send_noreply() 和 request_send_nonblock() 类似，不过后者不需要等待回复了。
+proc部分(kernel/dev.c)响应file io到/dev/fuse,fuse_dev_read() 处理文件读取，然后从"list of requests"结构返回命令到调用程序。fuse_dev_write() 处理文件写入,持有被写的数据，然后把它们放到req->out结构中,在这个结构中，它们可以通过"list of requests"结构和requests_send()返回给系统调用。
+
+编译安装：
+=============
+./configure
+make
+make install
+modprobe fuse
+这里，"modprobe fuse"是将fuse.ko加载，其中fuse.ko在我机器上在类似如下目录：
+"/lib/modules/2.6.18-194.17.4.el5/kernel/fs/fuse/fuse.ko"
+编译之后，在"example/"中有一些例子，我们可以通过修改"example/fusexmp.c"来创建自己的文件系统。
+参考：README
+
+使用：
+=============
+fuse有三个部分：
+一个内核模块，就是modprobe加载的那个。
+一个用户空间库
+一个mount/umount程序
+
+
+有一个特别简单的使用example/hello的例子，过程如下：
+1)挂载文件系统：
+$cd example
+$./hello /mnt/fuse/ -d
+这样启动的hello程序进入了循环，同时将文件系统挂载到了/mnt/fuse中。
+注意，挂载点/mnt/fuse没有写权限则无法挂载。
+
+2)操作文件系统：
+$ls -la /mnt/fuse
+我这里输出如下：
+drwxr-xr-x 2 root root    0 1970-01-01 .
+drwxr-xr-x 8 root root 4096 12-08 17:32 ..
+-r--r--r-- 1 root root   13 1970-01-01 hello
+这里的输出因hello.c的源代码而不同。
+
+$cat /mnt/fuse/hello
+这样输出如下：
+Hello World!
+
+因为这个文件系统在hello.c中没有实现write等函数，所以无法在/mnt/fuse中创建文件,以及进行写文件操作。
+
+参考：README

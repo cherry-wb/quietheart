@@ -1,0 +1,5 @@
+记住如下原则：
+ANSI C规定char类型一定是8位。
+long类型的长度和cpu字长一样。
+int长度没有规定，但是不比short短不比long长，并且linux上支持的所有体系中int长度目前都是32位。
+short和int类似，目前linux上长度都是16位。

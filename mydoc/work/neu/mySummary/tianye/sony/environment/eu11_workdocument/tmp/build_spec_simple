@@ -1,0 +1,36 @@
+编译diablo程序和内核的方法：
+1,编译diablo程序：
+方法1：
+#cd .../diablo/diabloMainCpu/build
+#./build.sh clean
+#./build.sh depend
+#./build.sh
+这里，如果没有导致diablo目录结构变化，可以直接运行./build.sh实现差分编译。
+
+方法2：
+#cd .../diablo
+#make clean
+#make
+
+2,编译内核
+#cd .../Operatingsystems/CELinux/Diablo/kernel
+
+1)用于烧写的avp13版本：
+#make __diablo_build_mode=avp13_release
+
+2)用于nfs开发的avp13版本：
+#make __diablo_build_mode=avp13_develop
+
+3)用于烧写的avp17版本：
+#make __diablo_build_mode=avp17_release
+
+4)用于nfs开发的avp17版本：
+#make __diablo_build_mode=avp17_develop
+或者#make
+
+5)清除之前的结果：
+#cd .../Operatingsystems/
+#make all-clean
+对于以上命令，生成的结果在相应的".../Operatingsystems/output/diablo/avp_13"或者".../Operatingsystems/output/diablo/avp_17"中。
+
+以上，2011年11月17日。

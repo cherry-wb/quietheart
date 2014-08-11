@@ -1,0 +1,76 @@
+Maemo????Linux??Debian Linux??deb??????
+Maemo?scratchbox 
+
+1. Scratchbox
+$ su   
+$ cd 
+$ mkidir marvell_mid; cd marvell_mid    
+$ wget http://repository.maemo.org/stable/diablo/maemo-scratchbox-install_4.1.2.sh     
+$ chmod 755 maemo-scratchbox-install_4.1.2.sh      
+$ echo 0 > /proc/sys/vm/vdso_enabled   
+$ mkdir scratchbox   
+$ ln -s /root/marvell_mid/scratchbox /scratchbox      
+$ ./maemo-scratchbox-install_4.1.2.sh -s /root/marvell_mid/scratchbox
+  
+$ /root/marvell_mid/scratchbox/sbin/sbox_adduser xieyan yes 
+  
+$ /root/marvell_mid/scratchbox/sbin/sbox_ctl start  
+$ /scratchbox/ login  
+> exit 
+
+2. maemo
+
+$ wget http://repository.maemo.org/stable/diablo/maemo-sdk-install_4.1.2.sh  
+$ chmod 755 maemo-sdk-install_4.1.2.sh  
+$ echo 4096 > /proc/sys/vm/mmap_min_addr       
+$ su xieyan              
+$ ./maemo-sdk-install_4.1.2.sh   
+$ /scratchbox/login   
+> sb-conf select DIABLO_ARMEL  
+> sb-conf select DIABLO_X86               
+
+3.nokia
+$ wget http://repository.maemo.org/stable/diablo/maemo-sdk-nokia-binaries_4.1.2.sh    
+$ chmod 755 maemo-sdk-nokia-binaries_4.1.2.sh     
+$ su xieyan              
+$ ./ maemo-sdk-nokia-binaries_4.1.2.sh -s /root/marvell_mid/scratchbox/   
+$ /scratchbox/login   
+> apt-get update       
+> fakeroot apt-get install maemo-explicit       
+#########################3
+4. xephyr 
+
+1)    xephyr?
+http://packages.debian.org/unstable/x11/xserver-xephyr ?i386汾
+???????Open with GDebi Package Installer
+?汾?Install Software?? 
+
+2)    xephyr
+$ Xephyr :2 -host-cursor -screen 800x480x16 -dpi 96 -ac -extension Composite
+????Xephyr xserver?DISPLAY:2 
+
+6.    ?marvell_mid?ν
+> export DISPLAY=:2      // y?DISPLAY:2?Xephyr
+> af-sb-init.sh start          // ?ν 
+###########################
+7.  
+
+1)/etc/sysctl.conf
+vm.vdso_enabled = 0
+vm.mmap_min_addr = 4096
+net.ipv4.ip_local_port_range = 1024 65535 
+
+2)root
+$ /root/marvell_mid/scratchbox/sbin/sbox_ctl start 
+
+3)xieyans sratchbox
+/scratchbox/login 
+
+###########################################
+卸载scratchbox
+由于scratchbox将本机系统的某些目录挂载(运行mount命令看看挂载信息), 所以不能直接通过删除目录来卸载scratchbox. 应该按下面的方法:
+1, 停止scratchbox:
+$ sudo /scratchbox/sbin/sbox_ctl stop
+2,再使用mount命令确定没有目录被挂载到scratchbox后再删除目录:
+$ rm -r /scratchbox
+在你删除全部目录之前, 最好将scratchbox的usrs目录中有用的资料拷贝到别处备份.

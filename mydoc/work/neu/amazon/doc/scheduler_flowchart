@@ -1,0 +1,38 @@
+# 2012-09-05
+# Scheduler Flow Chart:
+#
+#                +---------+
+#                |scheduler|
+#client request  +----+----+
+#-------------------->|(main thread)    (monitor waitting thread)          (socket thread)
+#                     +----------------------+-----------------------------------|response from rms
+#                     |                      |                                   +<-----------
+#                     X (loop)               X(loop have waiting?)               |
+#     release request/ \regist request   no / \  yes                             |
+#                   |   |                  |   +---------+                    +--+--+
+#          +--------+   +---------+        O   |waitting-|                    |busy-|
+#          |running-|   |waitting+|            +---------+                    +--+--+
+#          +--------+   +---------+            |                                 |
+#                   | request to rms           +---------+                       | status?
+#                   +---------------->X        |busy+    |                    +--+--+
+#                   |                          +---------+                   N|  |  |BUSY
+#                   X (loop have suspend?)     | request to rms               |  |  |
+#              no  / \ yes                     +---------------->X            |  |  +---------+
+#                 |   |                                response to client     |  |  |waitting+|
+#                 O   +---------+                 X<--------------------------+  |  +---------+
+#                     |suspend- |                                             |  |  |
+#                     +---------+                                             X  |  X
+#                     |                                                          |
+#                     +---------+                                                |YES
+#                     |running+ |                                                |
+#                     +---------+                                                |running overload?
+#  response to client |                                                   +------+
+#X<-------------------+                                                no |      |yes
+#                     |                                          +--------+      +--------+
+#                     O                                          |running+|      |suspend+|
+#                                                                +--------+      +--------+
+#                                                response to client       |      |
+#                                             X<--------------------------+      X
+#                                                                         |
+#                                                                         X
+#

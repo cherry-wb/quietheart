@@ -1,0 +1,64 @@
+/*程序的功能：
+利用statusbar的插件(hello_world1.so)，点击该插件的按钮，然后可以利用dbus启动一个应用程序(maemo_hello)。
+*/
+实际前面的是在libhildonwm/hd-wm.h直接包含这个文件了，我们可以简单点，不用完全包含这个文件。
+假设我们已经有了一个可执行的文件：maemo_hello
+一、为待启动的应用程序添加dbus service文件：
+添加步骤：
+>cd /usr/share/dbus-1/services
+>touch com.nokia.maemoHello.service
+>cat com.nokia.maemoHello.service
+
+[D-BUS Service]
+Name=com.nokia.maemoHello
+Exec=/usr/bin/maemo_hello
+
+添加完后，把可执行程序:maemo_hello放到/usr/bin中:
+>mv ....../maemo_hello /usr/bin
+
+二、为插件添加启动应用程序的源代码:
+1.在statusbar插件的源代码(hello-world-statusbar1.c)中包含头文件：
+ #include <dbus/dbus.h> 
+2.添加插件按钮的回调函数(在init之前)：
+ void my_button_pressed(GtkWidget *widget, GdkEventButton *event, gpointer data)                            
+ {                                                                                                          
+   gchar service_field[] = "maemoHello";                                                                    
+   gchar service[255],                                                                                      
+         path[255],                                                                                         
+         interface[255],                                                                                    
+         tmp[255];                                                                                          
+   DBusMessage *msg = NULL;                                                                                 
+   DBusError error;                                                                                         
+   DBusConnection *conn;                                                                                    
+   gboolean sent;                                                                                           
+     g_snprintf(service,255,"%s.%s","com.nokia",service_field);                                             
+     g_snprintf(path,255,"%s/%s","/com/nokia",service_field);                                               
+     g_snprintf(interface,255,"%s",service);                                                                
+   dbus_error_init (&error);                                                                                
+   conn = dbus_bus_get (DBUS_BUS_SESSION, &error);/*lkcomment连接重要！！？？*/                             
+   msg = dbus_message_new_method_call (service,                                                             
+                                       path,                                                                
+                                       interface,                                                           
+                                       "top_application");                                                  
+  dbus_message_set_auto_start (msg, TRUE);                                                                 
+   sent = dbus_connection_send (conn, msg, NULL);                                                           
+ }                                                                                                          
+
+3.
+在init中，为按钮连接上述回调函数：
+g_signal_connect(G_OBJECT(info->button), "button-press-event",
+                     G_CALLBACK(my_button_pressed), helloworld);/*lkupdate,add signal to the statusbar button*/
+至此，代码的编辑工作完毕。
+三、编译
+> gcc -shared `pkg-config gtk+-2.0 libosso hildon-1 libhildondesktop --libs --cflags` libhelloworld.c hello-world-statusbar1.c -o libhelloworld_sb1.so 
+
+四、运行的方法：
+1.把libhelloworld_sb1.so插件加入到hildon-desktop中（添加的方法可以参见前面的相关总结）。
+2.启动af-sb-init restart
+3.点击statusbar左上角的按钮就可以执行maemo_hello程序了。
+
+
+
+
+源代码在：smb://10.1.14.90/public/Marvell-MID/Study_doc/lvkai总结
+的参考资料里。hello-world-statusbar2_20090421.tar.gz给出了。

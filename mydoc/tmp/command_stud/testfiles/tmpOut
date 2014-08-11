@@ -1,0 +1,34 @@
+Asm      *.asm *.ASM *.s *.S *.A51 *.29[kK] *.[68][68][kKsSxX] *.[xX][68][68]
+Asp      *.asp *.asa
+Awk      *.awk *.gawk *.mawk
+Basic    *.bas *.bi *.bb *.pb
+BETA     *.bet
+C        *.c
+C++      *.c++ *.cc *.cp *.cpp *.cxx *.h *.h++ *.hh *.hp *.hpp *.hxx *.C *.H
+C#       *.cs
+Cobol    *.cbl *.cob *.CBL *.COB
+Eiffel   *.e
+Erlang   *.erl *.ERL *.hrl *.HRL
+Fortran  *.f *.for *.ftn *.f77 *.f90 *.f95 *.F *.FOR *.FTN *.F77 *.F90 *.F95
+HTML     *.htm *.html
+Java     *.java
+JavaScript *.js
+Lisp     *.cl *.clisp *.el *.l *.lisp *.lsp *.ml
+Lua      *.lua
+Make     *.mak *.mk [Mm]akefile
+Pascal   *.p *.pas
+Perl     *.pl *.pm *.plx *.perl
+PHP      *.php *.php3 *.phtml
+Python   *.py *.pyx *.pxd *.scons
+REXX     *.cmd *.rexx *.rx
+Ruby     *.rb *.ruby
+Scheme   *.SCM *.SM *.sch *.scheme *.scm *.sm
+Sh       *.sh *.SH *.bsh *.bash *.ksh *.zsh
+SLang    *.sl
+SML      *.sml *.sig
+SQL      *.sql
+Tcl      *.tcl *.tk *.wish *.itcl
+Vera     *.vr *.vri *.vrh
+Verilog  *.v
+Vim      *.vim
+YACC     *.y

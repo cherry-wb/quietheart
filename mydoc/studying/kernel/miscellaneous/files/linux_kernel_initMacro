@@ -1,0 +1,67 @@
+http://linux.chinaitlab.com/administer/807769_4.html
+史上最经典的Linux内核学习方法论
+(1)__init标记。
+
+　　关于usb_init，第一个问题是，第865行的__init标记具有什么意义?
+
+　　写过驱动的应该不会陌生，它对内核来说就是一种暗示，表明这个函数仅在初始化期间使用，在模块被装载之后，它占用的资源就会释放掉用作它处。它的暗示你懂，可你的暗示，她却不懂或者懂装不懂，多么让人感伤。它在自己短暂的一生中一直从事繁重的工作，吃的是草吐出的是牛奶，留下的是整个USB子系统的繁荣。
+
+　　受这种精神所感染，我觉得__________有必要为它说的更多些。__init的定义在include/linux/init.h文件里43 #define __init __attribute__ ((__section__ (".init.text")))
+
+　　好像这里引出了更多的疑问，__attribute__是什么?Linux内核代码使用了大量的GNU C扩展，以至于GNU C成为能够编译内核的唯一编译器，GNU C的这些扩展对代码优化、目标代码布局、安全检查等方面也提供了很强的支持。而__attribute__就是这些扩展中的一个，它主要被用来声明一些特殊的属性，这些属性主要被用来指示编译器进行特定方面的优化和更仔细的代码检查。GNU C支持十几个属性，section是其中的一个，我们查看GCC的手册可以看到下面的描述
+
+　　‘section ("section-name")'
+
+　　Normally, the compiler places the code it generates in the `text' section.　Sometimes, however, you need additional sections, or you need certain particular functions to appear in special sections.The `section' attribute specifies that a function lives in a particular section.　For example, the declaration:extern void foobar (void) __attribute__ ((section ("bar")));puts the function ‘foobar' in the ‘bar' section.Some file formats do not support arbitrary sections so the ‘section' attribute is not available on all platforms.　If you need to map the entire contents of a module to a particular section, consider using the facilities of the linker instead.
+
+　　通常编译器将函数放在.text节，变量放在.data或.bss节，使用section属性，可以让编译器将函数或变量放在指定的节中。那么前面对__init的定义便表示将它修饰的代码放在.init.text节。连接器可以把相同节的代码或数据安排在一起，比如__init修饰的所有代码都会被放在.init.text节里，初始化结束后就可以释放这部分内存。
+
+　　问题可以到此为止，也可以更深入，即内核又是如何调用到这些__init修饰的初始化函数?要回答这个问题，还需要回顾一下subsys_initcall宏，它也在include/linux/init.h里定义
+
+　　125 #define subsys_initcall(fn) __define_initcall("4",fn,4)
+
+　　这里又出现了一个宏__define_initcall，它用于将指定的函数指针fn放到initcall.init节里而对于具体的subsys_initcall宏，则是把fn放到.initcall.init的子节.initcall4.init里。要弄清楚.initcall.init、.init.text和.initcall4.init这样的东东，我们还需要了解一点内核可执行文件相关的概念。
+
+　　内核可执行文件由许多链接在一起的对象文件组成。对象文件有许多节，如文本、数据、init数据、bass等等。这些对象文件都是 __________由一个称为链接器脚本的文件链接并装入的。这个链接器脚本的功能是将输入对象文件的各节映射到输出文件中;换句话说，它将所有输入对象文件都链接到单一的可执行文件中，将该可执行文件的各节装入到指定地址处。 vmlinux.lds是存在于arch// 目录中的内核链接器脚本，它负责链接内核的各个节并将它们装入内存中特定偏移量处。
+
+　　我可以负责任的告诉你，要看懂vmlinux.lds这个文件是需要一番功夫的，不过大家都是聪明人，聪明人做聪明事，所以你需要做的只是搜索initcall.init，然后便会看到似曾相识的内容
+__inicall_start = .;
+
+.initcall.init : AT(ADDR(.initcall.init) – 0xC0000000) {
+
+*(.initcall1.init)
+
+*(.initcall2.init)
+
+*(.initcall3.init)
+
+*(.initcall4.init)
+
+*(.initcall5.init)
+
+*(.initcall6.init)
+
+*(.initcall7.init)
+
+}
+
+__initcall_end = .;
+
+　　这里的__initcall_start指向.initcall.init节的开始，__initcall_end指向它的结尾。而.initcall.init节又被分为了7个子节，分别是
+.initcall1.init
+
+.initcall2.init
+
+.initcall3.init
+
+.initcall4.init
+
+.initcall5.init
+
+.initcall6.init
+
+.initcall7.init
+
+　　我们的subsys_initcall宏便是将指定的函数指针放在了.initcall4.init子节。其它的比如 core_initcall将函数指针放在.initcall1.init子节，device_initcall将函数指针放在了.initcall6.init子节等等，都可以从 include/linux/init.h文件找到它们的定义。各个字节的顺序是确定的，即先调用.initcall1.init中的函数指针再调用.initcall2.init中的函数指针，等等。__init修饰的初始化函数在内核初始化过程中调用的顺序和.initcall.init节里函数指针的顺序有关，不同的初始化函数被放在不同的子节中，因此也就决定了它们的调用顺序。
+
+　　至于实际执行函数调用的地方，就在/init/main.c文件里，内核的初始化么，不在那里还能在哪里，里面的do_initcalls函数会直接用到这里的__initcall_start、__initcall_end来进行判断。

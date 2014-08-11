@@ -1,0 +1,65 @@
+http://www.diybl.com/course/6_system/linux/Linuxjs/2008717/133368.html
+在2.6的内核上允许内核栈的大小在4K和8K之间选择，于是，根据内核
+的配置，在thread_info.h中，加入了下面的一段代码
+#ifdef CONFIG_4KSTACKS
+#define THREAD_SIZE          (4096)
+#else
+#define THREAD_SIZE          (8192)
+这个大小的不同会影响内核堆栈的表示方法和current宏的实现，详见下面
+
+首先，看看内核栈在表达方法上的差异
+在2.6中
+union thread_union {
+	struct thread_info thread_info;
+	unsigned long stack[THREAD_SIZE/sizeof(long)];
+};
+这里THREAD_SIZE既可以是4K也可以是8K
+在2.4中
+union task_union {
+	struct task_struct task;
+	unsigned long stack[INIT_TASK_SIZE/sizeof(long)];
+};
+而INIT_TASK_SIZE只能是8K
+
+其次，看看current宏实现的不同
+众所周知，我们可以使用current宏来引用当前进程，但是实现方法，在2.4和2.6
+中，则截然不同。
+	在2.4中
+#define current get_current()
+static inline struct task_struct * get_current(void)
+{
+	struct task_struct *current;
+	__asm__("andl %%esp,%0; ":"=r" (current) : "" (~8191UL));
+	return current;
+}
+屏蔽掉%esp的13-bit LSB后，就得到了内核栈的开头，而这个开头正好是task_struct的开
+始，从而得到了指向task_struct的指针。
+	在2.6中，包装多了一层
+#define current get_current()
+	而
+static inline struct task_struct * get_current(void)
+{
+	return current_thread_info()-&gt;task;
+}
+继续深入
+/* how to get the thread information struct from C */
+static inline struct thread_info *current_thread_info(void)
+{
+	struct thread_info *ti;
+	__asm__("andl %%esp,%0; ":"=r" (ti) : "" (~(THREAD_SIZE - 1)));
+	return ti;
+}
+根据CONFIG_4KSTACKS的设置，分别屏蔽掉内核栈的12-bit LSB(4K)或13-bit LSB(8K)，
+从而获得内核栈的起始位置。
+
+看了thread_info的结构，一切豁然开朗
+struct thread_info {
+	struct task_struct    *task;       /* main task structure */
+	struct exec_domain    *exec_domain; /* execution domain */
+	unsigned long           flags;       /* low level flags */
+	unsigned long           status;       /* thread-synchronous flags */
+	... ..
+}
+看到了吧，其实thread_info结构的第一个成员就是一个指向task_struct结构的指针，所以
+要用current_thread_info()-&gt;task表示task_struct的地址，但是整个过程对用户是完全透
+明的，我们还是可以用current表示当前进程。

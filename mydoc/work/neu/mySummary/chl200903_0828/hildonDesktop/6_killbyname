@@ -1,0 +1,60 @@
+#######20090423
+大体步骤：
+1，先指定一个进程名字
+2，然后根据ps出来的结果
+3，获取指定进程名字的进程pid
+4，最后，利用kill把进程关闭。
+这个方法的缺点是：无法获得当前运行的活动窗口的模块。
+
+实现方法：
+
+1，先编写一个shell脚本如下：
+
+
+
+
+
+编写完毕，把脚本拷贝到：/usr/bin 中。
+
+2，修改代码如下：(脚本名字：killByName)
+
+#!/bin/sh
+#this program is used for get a pid by name and kill the process of pid
+#you can modify here when name changes
+#name1='xeyes'
+for name in './UIApplication' 'mplayer' 'mplayer';do
+##kill or echo corresponding pid 
+pid=`ps aux | grep -e "$name" | grep -v 'grep' | awk '{print $1}'`
+pid=`echo $pid | cut -d ' ' -f 1`
+#for test
+errz=0
+if [ "$errz" = "$pid" ];then
+echo "error!no pid!"
+else
+kill -9 "$pid"
+#for test
+echo "the pid is $pid"
+fi
+done
+
+3，添加代码：
+不细说了，看过前面的总结就都能够明白了。
+1）在init中添加按钮的消息回调函数： 
+g_signal_connect(G_OBJECT(info->button), "button-press-event",
+                      G_CALLBACK(my_button_pressed), helloworld);
+
+2）在init前面添加回调函数的内容
+void my_button_pressed(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+	system("killByName");
+
+}
+3）编译运行即可。
+
+
+
+
+注意：
+需要关闭什么程序，只修改脚本即可
+我把代码都放到
+smb://10.1.14.90/public/Marvell-MID/Study_doc/lvkai总结/hello-world-statusbar4_20090423.tar.gz

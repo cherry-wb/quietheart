@@ -1,0 +1,222 @@
+主要内容
+*关于C/C++
+*关于Qt
+*关于FrameBuffer
+杂乱的不知道是不是很重要的东西
+
+??
+*关于C/C++
+======
+关于预编译指令：
+#if !defined(_Embedded_x86) && !defined(__arm)
+#pragma pack(push)//保存以前的字节对齐方式
+#pragma pack(2) //强制2字节对齐，否则sizeof的时候会使用默认的.如18字节，sizeof默认会20个。
+#endif
+
+typedef struct tWAVEFORMATEX
+{
+	WORD    wFormatTag;        /* format type */
+	WORD    nChannels;         /* number of channels (i.e. mono, stereo...) */
+	DWORD   nSamplesPerSec;    /* sample rate */
+	DWORD   nAvgBytesPerSec;   /* for buffer estimation */
+	WORD    nBlockAlign;       /* block size of data */
+	WORD    wBitsPerSample;    /* Number of bits per sample of mono data */
+	WORD    cbSize;            /* The count in bytes of the size of
+								  extra information (after cbSize) */
+
+} WAVEFORMATEX;
+
+#if !defined(_Embedded_x86) && !defined(__arm)
+#pragma pack(pop)//恢复以前的字节对齐方式
+#endif
+
+另外
+#pragma pack(n)//n字节对齐:1,2,4,8
+#pragma pack()//恢复使用默认的对齐方式
+1.
+maemo4.1教程中,Xwindow部分:
+DISPLAY变量有两部分(p94)：
+1）主机名：例如ip地址的形式。
+2）Display/Screen对：例如':0.0',表示在0号的Xserver实例上面的0号屏幕；
+这里屏幕号部分（第2个0）可省略,成了':0'
+3)完整的举例：
+Display=10.1.14.122:3.0
+等价于Display=10.1.14.122:3
+
+2.在dbus官方文档上看到的：
+http://dbus.freedesktop.org/doc/dbus-tutorial.html#concepts
+http://raphael.slinckx.net/blog/documents/dbus-tutorial/
+推断，如果程序运行状态下，不用.service也可以实现通信，如果程序没有启动，需要service启动，然后再通信。
+
+3.关于gtk,gdk,xlib等
+1)GDK_WINDOW之中有获得gtkwidget window对应的xlib的Window类型的函数， (GDK_WINDOW_XID）;也有获得DISPLAY的函数。还有能够设置Window的一个属性，那么就可以使一个widow从popup到非popup.
+2)关于gtk_widget_show/hide,
+现象：软键盘程序当弹出别的窗口的时候会消失，尝试用show定时show也不行，同学通过看源代码了解到原来show和hide之前有一个判断，判断窗口是否是hide和show的状态，然后再进行动作的。
+于是，尝试把show中的判断去掉，这样无论状态如何，也会show，这样是可以了，但是还是有问题，窗口把其他的窗口弄得乱了。估计是show,hide里面有资源的申请和释放，所以需要判断之后再执行，需要释放资源才行，否则会一直占用资源。
+所以，用xlib的lower和raise分别替代hide,和show，前者把窗口放到栈底，后者提升到栈顶，如果hide了再raise是不行的，可能是因为hide把相应的资源都释放了。
+综上，show和hide配对，lower和raise配对。函数名字记不清楚了，但原理是这样的。
+
+4.
+-----------
+杂乱问题等：
+1，dbus-uuidgen --ensure
+发现和dbus-uuidgen有关的错误,查看man dbus-uuidgen则根据提示运行上述命令，生成相应的包含uuid文件：
+localstatedir/lib/dbus/machine-id
+(localstatedir 一般是 /var)
+2，发现vi没有高亮了，原来是没有.c文件后缀名字了。 	
+20090429
+3,touch不只是建立文件，如果有文件了那么它就改变文件的时间戳，不会修改文件。
+4，今天在机器上装了一个zhcon,可以在命令行下面显示中文的软件:
+$sudo apt-get install zhcon
+然后在命令行下面运行：$zhcon，死机了，然后重启，运行如下命令解决问题：
+$zhcon --utf8 --drv=vga
+问题就解决了。
+5,关于G_BEGIN_DECLS和G_END_DECLS
+这个是GLIB什么的一个宏，你可以看看glib的gmacro.h  
+你编译时候指定   pkg-config   --cflags   glib-2.0包含glib的头文件  
+#ifdef     __cplusplus  
+#   define   G_BEGIN_DECLS     extern   "C"   {  
+#   define   G_END_DECLS         }  
+#else  
+#   define   G_BEGIN_DECLS  
+#   define   G_END_DECLS  
+#endif 
+
+-----------
+
+
+杂乱的不知道是不是很重要的东西
+==============================
+1)man intro可以看一些帮助信息
+查看一个文件filename.txt中的字符是什么编码的可以用$file filename.txt
+
+2)bison   	
+根据一系列规则来生成一个可以分析文本文件的结构的程序的程序，Bison 是一个替代 Yacc (Yet Another Compiler Compiler) 的语法分析程序生成器。
+yacc 	
+一个 bison 的包装，意思是程序仍然调用 yacc 而不是 bison ，它用 -y 选项调用 bison 。 
+参照：http://lamp.linux.gov.cn/Linux/LFS-6.1.1/chapter06/bison.html#contents-bison
+
+3)flex
+参考网址：http://www.question8.com/getTopicInfoDetail/140.html
+flex (Fast Lexical Analyzer Generator) is a faster variant of lex. It generates a lexical analysis program (named lex.yy.c) based on the regular expressions and C statements contained in one or more input files. See also bison, yacc, and the O'Reilly book lex & yacc.
+linux下的flex全称叫做  快速词汇分析程序生成器
+包名确实叫做flex 
+如果你 apt-get install 说没找到的话 
+请先确认你的 /etc/apt/sources.list文件中正确配置了源地址 以及运行了 sudo apt-get update
+flex builder 跟linux下需要的flex根本是两码事 呵呵
+寻找适合你发行版的flex包吧 如果是ubuntu或者debian 直接sudo apt-get 
+install flex就可以了  rpm系统的 到 rpmfind.net查找即可 
+
+关于c/c++
+==============================
+1)
+有一些预处理命令如下：
+#ifdef XYZ
+or
+#if XYZ
+or
+#if defined(XYZ)
+
+and
+
+#elif
+or
+#elsif
+
+and
+
+#ifndef XYZ
+or
+#if !defined(XYZ)
+摘自：http://bytes.com/topic/c/answers/220600-ifdef-vs-if-vs-if-defined
+
+2)关于switch
+switch(a)
+{
+	printf("test\n");
+	case 1:
+	case 2:
+	default:
+}
+这里并不会打印test.实践过了的，估计是因为switch是一个跳转语句不会顺序执行。
+
+2)virtual定义函数的关键字只能在类的声明,不能在函数的实现中。
+函数参数的默认值只能出现在函数的声明，不能出现在函数的实现中。 
+如果基类中是virtual，那么子类不写virtual也是virtual.
+
+*关于Qt
+======
+关于blit的理解：
+void QScreen::blit ( const QImage & image, const QPoint & topLeft, const QRegion & region )   [virtual]
+官方文档：
+Copies the given region in the given image to the point specified by topLeft using device coordinates.
+意思是把image中的region(矩形列表)区域内容，拷贝到设备坐标中的点topLeft上面。
+但是，通过打印代码的log，发现，这样理解有误，
+有一个例子如下：
+在blit中，
+const QVector<QRect> rects = region.rects();                                        
+for (int i = 0; i < rects.size(); ++i) {                                            
+	    painter.drawImage( rects.at(i), image, QRect(rects.at(i).topLeft()-topLeft, rect
+	        s.at(i).size()) );                                                                          
+}     
+这里，意思是把image中的所有region块（rects[i]）,绘制到设备的rects[i]上面。
+rects[i]的左上角坐标是相对于设备的，
+topLeft是image相对于设备的左上角，
+根据函数drawImage的意思，需要把rects[i]转化为相对于image的坐标，所以要减去topLeft。
+综上所述，image包含了region中的许多或者一个矩形块，topLeft是image的左上角相对于设备的坐标。目前的理解就是这样。
+另外，image的image.rect()的左上角永远是0，0。因为image本身就没有rect的意义。
+
+关于move
+如果调用move之后，会产生一个move事件，处理这个事件的时候才会改变geometry所以不一定move之后geometry就立刻变化了，这一点要注意。
+
+关于eventFilter:
+使用a->install...(b);
+之后，a的事件会被b先截获处理。此时，b中收到的a的事件其pos都是相对于a的。
+
+关于QSetting注意：
+ * 注意：
+ *  QStringList preStartApp;
+ *  preStartApp<<"ereader"<<"qstardict";
+ *  launchCfg.setValue("AppLoading/PreloadApps",preStartApp);//lvkaiadd
+ *  设置之后PreloadApps=ereader, qstardict
+ *  但是如果
+ *  QString preStartApp="ereader,qstardict";
+ *  launchCfg.setValue("AppLoading/PreloadApps",preStartApp);//lvkaiadd
+ *  设置之后PreloadApps="ereader, qstardict"//多了一个冒号
+
+*关于FrameBuffer
+======
+1)设置用framebuffer驱动显示
+Xorg默认不使用frame buffer来进行显示，想要使用frame buffer来显示的话就在启动的时候，在grub的启动选项中，按e，然后编辑启动的参数，添加一个vga=0x318.如果不是这个编码会弹出提示你选择正确的编码。
+设置之后启动，这样会有一个/dev/fb0文件了。然后可以对framebuffer来进行操作了。通过读写/dev/fb0来实现。
+
+2)保存当前fb0的内容到一个文件：
+sudo cat /dev/fb0 >>test_out
+将一个文件写入fb0：
+sudo cat test_out >/dev/fb0
+这样会导致当前屏幕刷为和刚才保存这个test_out文件时候显示的状态。
+注意，如果是在命令行下保存，再在图形下写，会由于两者分辨不同导致问题的。所以应该在同一种环境下面保存fb0的内容，并且写。
+
+另外还有一个写fb0的方法是用
+cat /dev/fb0 >test生成文件，
+然后查看这个文件的大小。大小一般就是和分辨率和深度有关。可能是它们的乘积。
+dd if=/dev/zero of=***命令生成一个和前面一样大小的全0文件。
+然后
+cat *** /dev/fb0这样就写文件了。
+写到fb0中之后，再一刷新，内容就上去了。一般都自动刷新了。
+这里写和刷新都可能调用驱动的ioctrl
+注意这种操作应该在终端字符模式下面进行，直接在gui做会导致死机。
+--
+使用fbsplash可以用framebuffer显示ppm图片。
+关于ppm图片？
+http://bbs3.chinaunix.net/thread-314183-2-1.html
+用gimp在file-->;save as下根本没有PPM的类型!
+save as然后在文件名框里面输入文件名.ppm确定之后选择raw，当然英文说的make sure the width is evenly divisible by 8还是要满足的。
+ppm - portable pixmap file format
+The portable pixmap format is a lowest common denominator color image file format.
+It should be noted that this format is egregiously inefficient. It is highly redundant, while containing a lot of information that the human eye can't even discern. Furthermore, the format allows very little information about the image besides basic color, which means you may have to couple a file in this format with other independent information to get any decent use out of it. However, it is very easy to write and analyze programs to process this format, and that is the point.
+It should also be noted that files often conform to this format in every respect except the precise semantics of the sample values. These files are useful because of the way PPM is used as an intermediary format. They are informally called PPM files, but to be absolutely precise, you should indicate the variation from true PPM. For example, "PM using the red, green, and blue colors that the scanner in question uses."
+
+尝试
+====
+linux下有一个chntpd工具分析windows下的system32/config/SAM文件，按照提示删掉相应用户的密码，就能够破解windows登录了。

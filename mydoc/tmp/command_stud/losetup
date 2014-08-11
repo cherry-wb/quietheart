@@ -1,0 +1,17 @@
+在一个文件中创建文件系统：
+1 SIZE=1000000  # 1 meg
+2 
+3 head -c $SIZE < /dev/zero > file  # 建立指定尺寸的文件. 
+4 losetup /dev/loop0 file           # 作为loopback设备来创建. 
+5 mke2fs /dev/loop0                 # 创建文件系统. 
+6 mount -o loop /dev/loop0 /mnt     # mount.
+
+创建一个initrd(好象不好用，待尝试)
+redice # dd if=/dev/zero of=/tmp/initrd bs=1024 count=4096 # 制作一个4M的空白文件
+redice # losetup /dev/loop0 /tmp/initrd                    # 映射到loop设备上；
+redice # mkfs.ext2 /dev/loop0                              # 创建文件系统；
+redice # mount /dev/loop0 /mnt/rd
+redice # cp _what_you_like_ /mnt/rd                        # 复制需要的文件；
+redice # umount /mnt/rd
+redice # losetup -d /dev/loop0
+redice # gzip -9 /tmp/initrd

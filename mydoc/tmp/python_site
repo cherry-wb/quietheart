@@ -1,0 +1,45 @@
+关于python的site模块：
+简介
+python的site模块会在初始化python的时候被自动导入，使用python的'-s'选项可以去掉这个动作。我们可以调用site.main()来将site目录中指定的包路径导入，这在导入site模块时会自动执行（除非使用'-s'选项）。
+
+
+site路径
+site模块的包路径处理时，使用头部尾部来构成路径，
+头部包括：sys.prefix 和 sys.exec_prefix
+尾部包括：空字符串、lib/pythonX.Y/site-packages 和 lib/site-python (linux和unix)
+site将这些头部尾部串联，组成的路径进行检查，并将其中存在的路径添加到sys.path中，这样便能在使用import命令的时候搜索到相应的路径。
+
+pyvenv.conf文件?
+If a file named “pyvenv.cfg” exists one directory above sys.executable, sys.prefix and sys.exec_prefix are set to that directory and it is also checked for site-packages and site-python (sys.base_prefix and sys.base_exec_prefix will always be the “real” prefixes of the Python installation). If “pyvenv.cfg” (a bootstrap configuration file) contains the key “include-system-site-packages” set to anything other than “false” (case-insensitive), the system-level prefixes will still also be searched for site-packages; otherwise they won’t.
+
+路径配置文件位于上面的"头部/尾部"构成的路径中，以'.pth'作为文件后缀，它的内容(每个内容占一行)会被作为额外的内容添加到sys.path中。'#'注释行和空行会被忽略，'import'语句被执行。
+
+例如，假设sys.prefix和sys.exec_prefix被设置成/usr/local，那么Python X.Y库就会被安装在/usr/local/lib/pythonX.Y。假设其/usr/local/lib/pythonX.Y/site-packages中有子目录：foo, bar 和spam, 以及两个路径配置文件：foo.pth 和bar.pth，内容分别如下：
+foo.pth文件：
+# foo.pth文件内容
+foo
+bar
+bletch
+and bar.pth contains:
+
+bar.pth文件：
+# bar.pth文件内容
+bar
+
+那么如下路径：/usr/local/lib/pythonX.Y/site-packages/bar和/usr/local/lib/pythonX.Y/site-packages/foo会被依次添加到sys.path中。不存在的路径忽略（例如bletch），添加的次序是按照文件字母顺序，依次读取bar.pth和foo.pth，并且导入没有被导入的模块（即一种模块只导入一次）。
+
+如上处理之后，还会导入sitecustomsize模块，用于指定自定制的模块，通常系统管理员指定；然后根据ENABLE_USER_SITE 是否为True导入usercustomize模块，这个模块指定用户自定义的包。
+
+
+信息查找
+关于每种路径，以及其相应的操作，参见site中的函数。另外如下命令可以查看用户的包目录：
+$ python3 -m site --user-site
+/home/user/.local/lib/python3.3/site-packages
+如果没有选项，则打印sys.path，以及USER_BASE目录，以及它是否存在，以及USER_SITE目录以及ENABLE_USER_SITE的值。其他相关选项：
+--user-base
+打印用户基目录。
+--user-site
+打印用户包目录。
+
+参考：
+http://docs.python.org/3/library/site.html#module-site

@@ -1,0 +1,287 @@
+Samba服务配置和使用
+简介
+Samba服务可以用于在linux上面共享文件，甚至可以在linux和windows上面共享文件。
+给Windows客户提供文件服务是通过samba实现的，而samba也是一套基于UNIX类系统、实现SMB/CIFS协议的软件，作为UNIX的克隆，Linux也可以运行这套软件。samba的文件服务功能效率很高，借助Linux本身，可以实现用户磁盘空间限制功能。本文基于Linux介绍Samba的配置和使用。
+
+主要内容：
+一、关于配置文件
+二、关于配置和使用
+三、其它
+
+一、关于配置文件
+====================================
+samba通过配置文件来进行各种控制，关于配置文件，下面给出一个大致的介绍。
+
+1,smb.conf文件
+samba的最重要配置文件就是"/etc/samba/smb.conf"，它有三个重要的节：[global],[homes],[public]。一般来说本地的这个文件中都有对其内容的详细注释，这里列出一个完整的配置文件内容，并解释如下。具体信息参见"man smb.conf"的输出。
+##################以下为/etc/samba/smb.conf的内容#####################
+#####Global (全局)参数,该部分设置整个系统的规则，定义了一些公共变量。######
+[global]
+#定义Windows系统“网上邻居”中所见的机器名。
+netbios name = jorlon
+#定义主机所在网络上所属的NT域名或者工作组名称
+workgroup = workgroup
+#对主机的说明信息,缺省是：Samba Server
+server string = FunField
+#它允许设置哪些机器可以访问samba服务器
+hosts allow = 192.168.1. 192.168.3.
+guest account = nobody
+#定义smb用户名称。
+invalid users = root
+#定义访问权限。访问权限由低到高有三种：share、user和server。其中share安全级别最低，user模式要求连接时输入用户名和口令
+security = user
+#设置是否需要加密口令。因为Windows系列默认采用加密口令传输，而Linux默认采用非加密口令传输，为保证smb网络用户的正常登录，在user安全级下设置为加密，在share 安全级下可不设。
+encrypt passwords = true
+#由命令cat /etc/passwd | mksmbpasswd.sh > /etc/samba/smbpasswd产生。
+smb passwd file = /etc/samba/smbpasswd
+#配置smb服务所使用的网卡IP以及子网掩码,如果有两个以上网卡，要全部列出。
+interfaces = 192.168.1.50/24
+#设定smb服务时，从机器netbios名称到IP地址的解析方式，默认顺序为host lmhosts wins bcast。如果局域网内有DNS，可设置为host dns bcast。
+name resolve order = host dns bcast
+#设置是否有wins支持。
+wins support = no
+#为yes时，“网上邻居”中可见该资源，否则不可见。
+public = yes
+#为yes时，“网上邻居”中可见该资源，否则不可见。
+browseable = yes
+# 指定Linux使用哪个打印机守护进程（bsd、sysv、hpux、aix、qnx、plp），同时向samba说明命令lpr和lpq的缺省值。
+printing = bsd
+# 定义了打印配置文件所处的位置。
+printcap name = /etc/printcap
+# 表明是否加载printcap 定义的所有打印机以供浏览。
+load printers = no
+# 定义日志文件
+log file = /var/log/samba/log.%m
+#日志文件最大1000k （单位是KB）
+max log size = 1000
+#允许管理员指定一个映射文件，该文件包含了在客户机和服务器之间进行用户映射的信息。 用户映射经常在windows 和linux 主机间进行。 两个系统拥有不同的用户账号，用户映射的目的是将不同的用户映射成为一个用户，便于共享文件。
+username map = /etc/samba/smbuser
+
+#####共享资源的配置,本段中的设置控制了每一个用户目录的共享权限######
+#该部分通常定义了Linux机器上共享的目录资源，其名字可以由用户确定,例如这里使用"homes"那么其他访问的机器中将会看到"homes"目录。
+[homes]
+#设定在浏览本机资源时，出现在指定资源旁边的字符串。
+comment = Home Directories
+#控制一项服务是否能够出现在网上邻居中，no意味着这个目录将在浏览时显示为要验证的用户名称，yes则显示 homes 和要验证的用户名称的共享目录。
+browseable = yes
+#控制是否允许通过验证的用户对主目录有写入的权限，但最终取决于该目录的 Unix 权限。无论 Unix 的权限怎样, 设置 writable = no 后, 主目录只能是只读的。
+writable = yes
+create mask = 0700
+#若上面是可写的，则设置写文件和目录时的属性
+directory mask = 0700
+
+
+#用来指定某一特定用户组或者用户拥有访问权限的目录配置分，配置共享目录部分
+[public]
+# 说明部分
+comment = Public Stuff
+#共享的Linux目录
+path = /home/samba
+#写权限
+writable = no
+#打印权限
+printable = no
+##################以上为/etc/samba/smb.conf的内容#####################
+
+2,smbuser文件
+用于用户映射的文件/etc/samba/smbuser内容大致如下：
+##################以下为/etc/samba/smbuser的内容#####################
+# smb.conf中全局参数 “username map” 指定的映射文件
+#Map Windows admin to root
+root = admin administrator
+#Map the member of girl to hawk
+hawk = girl
+# 等号左边是单独的Linux账号，等号右边是要映射的账号列表。服务器逐行分析映射文件，如果提供的账号和某行有右侧列表中的账号匹配，就把它替换为等号左边的账号。
+snake = boy
+##################以上为/etc/samba/smbuser的内容#####################
+
+3,其他信息
+*乱码情况：
+为了防止共享时出现中文目录乱码的情况,可能需要为smb.conf的［global］段添加如下几行:
+############
+display charset = UTF-8
+unix charset = UTF-8
+dos charset = cp936
+############
+这里，其中根据你的local，UTF-8 有可能需要改成 cp936。
+
+二、关于配置和使用
+====================================
+这里介绍如何配置samba服务以及使用它，内容有点多，所以为便于查阅，先给出一个最简的配置方式，后面会给出关于配置和使用相对具体的内容。
+以下内容，都是在CentOS release 5.5 (Final)上面实践的结果，并假定配置samba的机器ip地址是10.1.2.213。
+1,最简配置过程
+这里，如果只是想要搭建一个可以工作的samba服务器，那么可以按照如下步骤配置：
+1)检查samba的安装情况：
+[root@lv-k samba]# yum list installed |grep samba
+这样，我们可以看到机器上面已经安装了samba，可以进行后面的配置了。如果你的机器上面没有相应的软件包，那么需要使用"yum install samba.i386"之类的命令安装，默认来说系统都将这个服务安装了的。
+
+2,配置samba:
+[root@lv-k samba]#vim /etc/samba/smb.conf
+编辑之后的文件内容如下：
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+security = share
+
+[public1]
+path = /home/mysamba
+public = yes
+writable = yes
+
+这里需要注意，不要将mysamba目录设置到/home下的某个子用户目录中，这样会导致目录无法通过其他的机器访问到。
+
+3,设置共享目录的访问权限：
+#chmod 777 /home/mysamba -R
+这样，外部就可以访问这个目录了。注意首先在本地机器上将这个目录的读写权限打开，这样外面才能访问。
+
+4,重新启动samba:
+#/etc/init.d/smb restart
+这样刚才的配置可以生效。
+
+5,在外部客户主机上访问共享目录：
+*在linux下面通过文件浏览器访问：
+在文件浏览器的位置栏输入："smb://10.1.2.213"
+这样，将看到一个目录"public1"就是那个smb.conf中设置的"[public1]"组名，进入"public1"就可以看到内容了，内容实际就是服务器上面的/home/mysamba路径下面的内容。
+
+*在windows下面通过文件浏览器访问：
+在文件浏览器的位置栏输入："\\10.1.2.213"
+这样，将看到一个目录"public1"就是那个smb.conf中设置的"[public1]"组名，进入"public1"就可以看到内容了，内容实际就是服务器上面的/home/mysamba路径下面的内容。
+
+总之两步，一个是修改"/etc/samba/smb.conf"设置共享目录，一个是运行"/etc/init.d/smb restart"让设置生效。
+
+
+2,更多配置使用信息
+1)关于配置
+配置samba可以控制哪些目录可以访问，以及谁可以访问，以什么权限访问等等。我们可以使用图形化的工具配置，方法是运行"#system-config-samba"命令或者通过菜单"系统－系统管理－Samba"，方法很简单就不多说了。还可以通过修改配置文件进行配置，这里重点介绍修改配置文件的方法，如下。
+修改配置文件如下:
+#vim /etc/samba/smb.conf
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+security = share
+
+[public1]
+path = /home/mysamba
+public = yes
+writable = yes
+
+[public2]
+path = /root/mysamba
+public = yes
+writable = yes
+browseable = yes
+hosts allow = 10.1.2.213 10.1.2.217
+
+[public3]
+path = /tmp/mysamba
+public = yes
+writable = yes
+browseable = yes
+security = user
+valid users = quietheart lv-k
+create mask = 0700
+directory mask = 0700
+这里，workgroup表示工作组名;server string表示服务器名（名称自定）;netbios name是对服务器的描述;hosts allow填入顺序访问的ip段，用空格分开,如果不设置则使用[global]中的，如果[global]中也没有，就表示允许任何ip访问;security表示访问权限，访问权限由低到高有三种：share、user和server。其中share安全级别最低，user模式要求连接时输入用户名和口令。具体支持的字段，以及每个字段的含义在配置文件的注释中都有详细的说明，或者可以查看"man smb.conf"文档说明。
+以上配置可知，设置了三个共享目录：public1,public2,public3，且public3共享目录只有quietheart和lv-k用户可以访问。
+
+
+配置之后，重新启动samba:
+#/etc/init.d/smb restart
+这样刚才的配置可以生效。
+
+2)帐户管理
+*添加一个访问samba的帐户或者修改一个samba帐户的密码：
+#smbpasswd -a quietheart
+#/etc/init.d/smb restart
+这里，添加帐号和修改密码都用这个smbpasswd命令。如果想要添加samba的网络访问帐户，首先必须保证系统中有相应的帐户名称，如果没有则需要使用"#useradd quietheart"建立一个，否则使用这个smbpasswd添加用户的时候，会出错误。 要注意，虽然samba的用户必须是本地机器的用户，但是samba的登录密码可以和本机登录密码可以不一样，上面只是为系统增加了quietheart这个用户，却没有给用户赋予本机登录密码，因为我们只用这个用户来远程samba访问，不想用它来做为一个本地登陆帐号，所以这个用户将只能从远程访问，不能从本机登录。
+
+*查看Samba用户帐号:
+这个功能没有太大必要，因为samba中的帐户，一定就是系统中的某个帐户，虽然密码不一样，所以可以查看/etc/passwd来得知所有系统帐号进而知道samba可能包含的用户帐号。
+
+*删除网络使用者的帐号:
+#smbpasswd -x lv-k
+#/etc/init.d/smb restart
+这里，删除命令就是将前面添加命令的-a改成-x了。
+
+3)访问Samba服务器
+**图形方式：
+*在linux下面
+在文件浏览器的位置栏输入："smb://10.1.2.213"
+
+*在windows下面
+在文件浏览器的位置栏输入："\\10.1.2.213"
+
+这样，将看到一个目录"public1"就是那个smb.conf中设置的"[public1]"组名，进入"public1"就可以看到内容了，内容实际就是服务器上面的/home/mysamba路径下面的内容。
+另外，为了方便访问:
+*在Windows端，映射一个网络驱动器
+右键开始菜单->我的电脑->映射网络驱动器->将Z:盘映射为：\\192.168.0.5\share
+之后打开Z:盘即可进入Ubuntu系统所共享的share路径，读写数据。
+
+*在Linux端，使用smbfs(未实践)
+可以通过mount和smbcount挂载远程共享文件夹:
+#mount -t smbfs -o  username=administrator,password=123456 //10.1.2.213/public1  /mnt/tmp
+或#smbmount //10.1.2.213/public1 /mnt/tmp -o username=administrator 
+这里，首先当前系统需要支持smbfs，否则需要自行安装："yum install smbfs"。
+**
+
+
+**命令行方式：
+*列出某个IP地址所提供的共享文件夹
+[root@lv-k samba]# smbclient -L 10.1.2.213
+Password: 
+Domain=[MY_GROUP] OS=[Unix] Server=[Samba 3.0.33-3.29.el5_5.1]
+
+        Sharename       Type      Comment
+        ---------       ----      -------
+        public1         Disk      
+        public2         Disk      
+        public3         Disk      
+        IPC$            IPC       IPC Service ("MySamba")
+Domain=[MY_GROUP] OS=[Unix] Server=[Samba 3.0.33-3.29.el5_5.1]
+
+        Server               Comment
+        ---------            -------
+
+        Workgroup            Master
+        ---------            -------
+        MY_GROUP             
+这里，使用前面的配置文件可知有三个共享目录，"Password:"处不用输入密码，直接回车(这里只是列出内容，不是登陆上去)。
+
+*直接列出某个共享文件夹的内容：
+[root@lv-k samba]# smbclient -c "ls" //10.1.2.213/public3 -U quietheart
+Password: 
+Domain=[MY_GROUP] OS=[Unix] Server=[Samba 3.0.33-3.29.el5_5.1]
+Server not using user level security and no password supplied.
+  .                                   D        0  Wed Jun 29 17:55:30 2011
+  ..                                  D        0  Wed Jun 29 17:55:30 2011
+  新文件                           A        0  Wed Jun 29 17:43:58 2011
+  新文件 2                         A        0  Wed Jun 29 17:55:30 2011
+  新文件 1                         A        0  Wed Jun 29 17:48:22 2011
+
+                33160 blocks of size 1048576. 6377 blocks available
+这里，还可以使用如下命令:
+smbclient -c "ls"  //10.1.2.213/public3  -U quietheart%123
+其中123就是quietheart的密码，这样不用提示输入密码了。
+
+*登陆samba服务器：
+[root@lv-k samba]# smbclient //10.1.2.213/public3 -U quietheart
+Password: 
+Domain=[MY_GROUP] OS=[Unix] Server=[Samba 3.0.33-3.29.el5_5.1]
+Server not using user level security and no password supplied.
+smb: \> 
+这里，出现"smb: \>"提示符号，就登陆进去了，然后可以类似ftp，使用"ls"列出当前目录文件，使用"cd"切换目录，使用"put"上传，"get"下载等，具体参见"help"命令。注意一定指定共享目录，不能只有"10.1.2.213"这个ip。另外，还可以使用"smbclient //10.1.2.213/public3 -U quietheart%123"登陆，退出的命令是"q"或者"[Ctrl]d"。
+**
+
+三、其它
+====================================
+
+参考资料：
+http://blog.csdn.net/annicybc/archive/2006/08/28/1133899.aspx
+http://news.newhua.com/news1/program/2008/128/0812817117659F4G0FHB6AHK1EC6GC.html
+
+作者：QuietHeart
+Email：quiet_heart000@126.com
+日期：2011年06月29日

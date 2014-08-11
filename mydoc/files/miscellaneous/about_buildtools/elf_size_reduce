@@ -1,0 +1,152 @@
+http://oss.lzu.edu.cn/modules/lifetype/index.php?op=ViewArticle&articleId=291&blogId=6
+这篇blog从减少可执行文件大小的角度分析了ELF文件，期间通过经典的"Hello World"实例逐步演示如何通过各种常用工具来分析ELF文件，并逐步精简代码。
+   
+    为了能够尽量减少可执行文件的大小，我们必须了解可执行文件的格式，以及链接生成可执行文件时的后台细节（即最终到底有哪些内容被链接到了目标代码中）。通过选择合适的可执行文件格式并剔除对可执行文件的最终运行没有影响的内容，就可以实现目标代码的裁减。因此，通过探索减少可执行文件大小的方法，就相当于实践性地去探索了可执行文件的格式以及链接过程的细节。
+
+    当然，算法的优化和编程语言的选择可能对目标文件的大小有很大的影响，在这篇blog的后面我们会跟参考资料[1]的作者那样去探求一个打印“Hello World”的可执行文件能够小到什么样的地步。
+
+1、可执行文件格式的选取
+   
+    可执行文件格式的选择要满足的一个基本条件是：目标系统支持该可执行文件格式，资料[2]分析和比较了UNIX平台下的三种可执行文件格式，这三种格式实际上代表着可执行文件的一个发展过程。
+    a.out文件格式非常紧凑，只包含了程序运行所必须的信息（文本、数据、BSS），而且每个 section的顺序是固定的。
+    coff文件格式虽然引入了一个节区表以支持更多节区信息，从而提高了可扩展性，但是这种文件格式的重定位在链接时就已经完成，因此不支持动态链接（不过扩展的coff支持）。
+    elf文件格式不仅动态链接，而且有很好的扩展性。它可以描述可重定位文件、可执行文件和可共享文件（动态链接库）三类文件。
+    下面来看看ELF文件的结构图。
+
+    文件头部(ELF Header)
+    程序头部表(Program Header Table)
+    节区1(Section1)
+    节区2(Section2)
+    节区3(Section3)
+    ...
+    节区头部(Section Header Table)
+   
+    无论是文件头部、程序头部表、节区头部表还是各个节区，都是通过特定的结构体(struct)描述的，这些结构在elf.h文件中定义。文件头部用于描述整个文件的类型、大小、运行平台、程序入口、程序头部表和节区头部表等信息。例如，我们可以通过文件头部查看该ELF文件的类型。
+
+$ cat hello.c   #典型的hello, world程序
+#include <stdio.h>
+
+int main(void)
+{
+        printf("hello, world!\n");
+        return 0;
+}
+$ gcc -c hello.c   #编译，产生可重定向的目标代码
+$ readelf -h hello.o | grep Type   #通过readelf查看文件头部找出该类型
+  Type:                              REL (Relocatable file)
+$ gcc -o hello hello.o   #生成可执行文件
+$ readelf -h hello | grep Type
+  Type:                              EXEC (Executable file)
+$ gcc -fpic -shared -W1,-soname,libhello.so.0 -o libhello.so.0.0 hello.o  #生成共享库
+$ readelf -h libhello.so.0.0 | grep Type
+  Type:                              DYN (Shared object file)
+
+    那节区头部表（将简称节区表）和程序头部表有什么用呢？实际上前者只对可重定向文件有用，而后者只对可执行文件和可共享文件有用。
+    节区表是用来描述各节区的，包括各节区的名字、大小、类型、虚拟内存中的位置、相对文件头的位置等，这样所有节区都通过节区表给描述了，这样连接器就可以根据文件头部表和节区表的描述信息对各种输入的可重定位文件进行合适的链接，包括节区的合并与重组、符号的重定位（确认符号在虚拟内存中的地址）等，把各个可重定向输入文件链接成一个可执行文件（或者是可共享文件）。如果可执行文件中使用了动态连接库，那么将包含一些用于动态符号链接的节区。我们可以通过 readelf -S（或objdump -h）查看节区表信息。
+
+$ readelf -S hello  #可执行文件、可共享库、可重定位文件默认都生成有节区表
+...
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        08048114 000114 000013 00   A  0   0  1
+  [ 2] .note.ABI-tag     NOTE            08048128 000128 000020 00   A  0   0  4
+  [ 3] .hash             HASH            08048148 000148 000028 04   A  5   0  4
+...
+    [ 7] .gnu.version      VERSYM          0804822a 00022a 00000a 02   A  5   0  2
+...
+  [11] .init             PROGBITS        08048274 000274 000030 00  AX  0   0  4
+...
+  [13] .text             PROGBITS        080482f0 0002f0 000148 00  AX  0   0 16
+  [14] .fini             PROGBITS        08048438 000438 00001c 00  AX  0   0  4
+...
+
+	(自结：以上可以用objcopy来删除指定段)
+
+
+    三种类型文件的节区(各个常见节区的作用请参考资料[11])可能不一样，但是有几个节区，例如.text, .data, .bss是必须的，特别是.text，因为这个节区包含了代码。如果一个程序使用了动态链接库（引用了动态连接库中的某个函数），那么需要.interp 节区以便告知系统使用什么动态连接器程序来进行动态符号链接，进行某些符号地址的重定位。通常，.rel.text节区只有可重定向文件有，用于链接时对代码区进行重定向，而.hash,.plt,.got等节区则只有可执行文件（或可共享库）有，这些节区对程序的运行特别重要。还有一些节区，可能仅仅是用于注释，比如.comment，这些对程序的运行似乎没有影响，是可有可无的，不过有些节区虽然对程序的运行没有用处，但是却可以用来辅助对程序进行调试或者对程序运行效率有影响。
+    虽然三类文件都必须包含某些节区，但是节区表对可重定位文件来说才是必须的，而程序的执行却不需要节区表，只需要程序头部表以便知道如何加载和执行文件。不过如果需要对可执行文件或者动态连接库进行调试，那么节区表却是必要的，否则调试器将不知道如何工作。下面来介绍程序头部表，它可通过readelf -l(或objdump -p)查看。
+
+$ readelf -l hello.o #对于可重定向文件，gcc没有产生程序头部，因为它对可重定向文件没用
+
+There are no program headers in this file.
+$  readelf -l hello  #而可执行文件和可共享文件都有程序头部
+...
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  PHDR           0x000034 0x08048034 0x08048034 0x000e0 0x000e0 R E 0x4
+  INTERP         0x000114 0x08048114 0x08048114 0x00013 0x00013 R   0x1
+      [Requesting program interpreter: /lib/ld-linux.so.2]
+  LOAD           0x000000 0x08048000 0x08048000 0x00470 0x00470 R E 0x1000
+  LOAD           0x000470 0x08049470 0x08049470 0x0010c 0x00110 RW  0x1000
+  DYNAMIC        0x000484 0x08049484 0x08049484 0x000d0 0x000d0 RW  0x4
+  NOTE           0x000128 0x08048128 0x08048128 0x00020 0x00020 R   0x4
+  GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4
+
+ Section to Segment mapping:
+  Segment Sections...
+   00    
+   01     .interp
+   02     .interp .note.ABI-tag .hash .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame
+   03     .ctors .dtors .jcr .dynamic .got .got.plt .data .bss
+   04     .dynamic
+   05     .note.ABI-tag
+   06    
+$  readelf -l libhello.so.0.0  #节区和上面类似，这里省略
+
+    从上面可看出程序头部表描述了一些段（Segment），这些段对应着一个或者多个节区，上面的readelf -l很好地显示了各个段与节区的映射。这些段描述了段的名字、类型、大小、第一个字节在文件中的位置、将占用的虚拟内存大小、在虚拟内存中的位置等。这样系统程序解释器将知道如何把可执行文件加载到内存中以及进行动态链接等动作。
+    该可执行文件包含7个段，PHDR指程序头部，INTERP正好对应.interp节区，两个LOAD段包含程序的代码和数据部分，分别包含有.text 和.data，.bss节区，DYNAMIC段包含.daynamic，这个节区可能包含动态连接库的搜索路径、可重定位表的地址等信息，它们用于动态连接器。NOTE和GNU_STACK段貌似作用不大，只是保存了一些辅助信息。因此，对于一个不使用动态连接库的程序来说，可能只包含LOAD段，如果一个程序没有数据，那么只有一个LOAD段就可以了。
+
+    总结一下，Linux虽然支持很多种可执行文件格式，但是目前ELF较通用，所以选择ELF作为我们的讨论对象。通过上面对ELF文件分析发现一个可执行的文件可能包含一些对它的运行没用的信息，比如节区表、一些用于调试、注释的节区。如果能够删除这些信息就可以减少可执行文件的大小，而且不会影响可执行文件的正常运行。
+
+2、链接优化
+
+    从上面的讨论中已经接触了动态连接库。ELF中引入动态连接库后极大地方便了公共函数的共享，节约了磁盘和内存空间，因为不再需要把那些公共函数的代码链接到可执行文件，这将减少了可执行文件的大小。
+    与此同时，静态链接可能会引入一些对代码的运行可能并非必须的内容。你可以从《GCC编译的背后(第二部分：汇编和链接)》 了解到GCC链接的细节。从那篇Blog中似乎可以得出这样的结论：仅仅从是否影响一个C语言程序运行的角度上说，GCC默认链接到可执行文件的几个可重定位文件(crt1.o,rti.o,crtbegin.o,crtend.o,crtn.o)并不是必须的，不过值得注意的是，如果没有链接那些文件但在程序末尾使用了return语句，main函数将无法返回，因此需要替换为_exit调用；另外，既然程序在进入main之前有一个入口，那么main入口就不是必须的。因此，如果不采用默认链接也可以减少可执行文件的大小。
+
+3、可执行文件“减肥”实例
+
+    这里主要是根据上面两点来介绍如何减少一个可执行文件的大小。以"Hello World"为例。
+    首先来看看默认编译产生的Hello World的可执行文件大小。
+
+# 系统默认编译
+
+代码同上，下面是一组演示，
+
+$ uname -r   #先查看内核版本和gcc版本，以便和你的结果比较
+2.6.22-14-generic
+$ gcc --version
+gcc (GCC) 4.1.3 20070929 (prerelease) (Ubuntu 4.1.2-16ubuntu2)
+...
+$ gcc -o hello hello.c   #默认编译
+$ wc -c hello   #产生一个大小为6442字节的可执行文件
+6442 hello
+# 不采用默认编译
+
+    可以考虑编辑时就把return 0替换成_exit(0)并包含定义该函数的unistd.h头文件。下面是从GCC编译的背后(第二部分：汇编和链接)》总结出的Makefile文件。
+
+#file: Makefile
+#functin: for not linking a program as the gcc do by default
+#author: falcon<zhangjinw@gmail.com>
+#update: 2008-02-23
+MAIN = hello
+SOURCE =
+OBJS = hello.o
+TARGET = hello
+CFLAGSs += -S  
+CFLAGSc += -c
+LDFLAGS += -dynamic-linker /lib/ld-linux.so.2 -L /usr/lib/ -lc
+RM = rm -f
+SEDc = sed -i -e '/\#include[ "<]*unistd.h[ ">]*/d;' \
+           -i -e '1i \#include <unistd.h>' \
+           -i -e 's/return 0;/_exit(0);/'
+SEDs = sed -i -e 's/main/_start/g'
+all: $(TARGET)
+$(TARGET): 
+        $(SEDc) $(MAIN).c
+        $(CC) $(CFLAGSs) $(MAIN).c
+        $(SEDs) $(MAIN).s
+        $(CC) $(CFLAGSc) $(MAIN).s $(SOURCE)
+        $(LD) $(LDFLAGS) -o $@ $(OBJS)
+clean:
+        @$(RM) $(MAIN).s $(OBJS) $(TARGET)

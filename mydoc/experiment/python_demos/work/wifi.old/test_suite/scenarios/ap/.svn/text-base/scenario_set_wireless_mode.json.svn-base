@@ -1,0 +1,8 @@
+{
+    "name":"set_wireless_mode",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_set_wireless_mode.py"},
+    "reporter":["success","fail"],
+    "description":"set wireless mode of cisco ap"
+}
+

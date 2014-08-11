@@ -1,0 +1,261 @@
+2007-07-20
+
+龙中花，北京麦克泰软件公司
+
+引言
+
+随着信息家电、手持设备、无线设备的迅速发展，面向嵌入式系统的硬件开始层出不穷的出现，对于消费类电子设备，就需要一个界面友好，稳定可靠的GUI系统，对于中国用户而言，一个良好的图形界面不仅需要能显示中文，像PDA这样的消费类电子设备还需能提供可靠的中文输入。Qtopia是Trolltech公司基于Qt的嵌入式版本Qt/Embedded，专门针对像PDA这样的移动计算设备开发的一套运行在嵌入式Linux系统上的一个应用程序软件包。由于Qt内部使用Unicode做内码处理的，并使用QString类来存储Unicode字符串，因此它不但可以支持单字节字符也可以支持像CJK这样的多字节字符，对于汉字的显示问题，调用qt中与国际化有关的函数，利用它提供的语言工具处理后，即可很好显示中文，但是Qtopia软件包中并没有提供相应的中文输入编辑器，因此本文就利用Qtopia中所提供的插件技术给出它的中文输入解决方案。
+
+１　Qtopia插件构架（plug-in architecture）技术及中文输入插件接口介绍
+
+Qtopia中的插件技术类似于Windows中COM技术，首先要为某类插件接口编写其子类，并在子类中实现插件接口中提供的必要虚函数，然后编写其插件将要实现的功能，最后将插件编译成动态库形式，并安装(拷贝)到某类插件对应的目录下，如$QPEDIR/plugins/type目录，这是因为Qtopia在动态装载某类插件时，PluginLoader装载器预先假设插件已经安装在要求的目录下。
+
+Qtopia中提供了两类IME（输入法编辑器）接口的支持，一类是从InputMethodInterface接口继承而来，而所要构造的输入法本身是QWidget的子类，其击键只能从虚拟键盘和手写识别装置产生；Qtopia从1.6.2开始增加了ExtInputMethodInterface输入法接口的支持，这类输入法本身是QWSInputMethod的子类，它既可以接受从物理键盘产生的击键，也能接受软键盘产生的击键，并利用QWSInputMethod提供的键盘过滤器拦截其击键消息，如果击键消息是字符消息，就对其进行缓冲组合，然后到输入法码表中进行查找，并将其对应的某个表意字符提取出来。然后利用 QWSInputMethod：：sendIMEvent函数将表意字符发送到目标程序。本文将以拼音输入法为例，就如何采用第二类输入法接口提出一个中文输入解决方案。
+
+２　中文输入法设计及实现
+
+ 
+
+图一：中文输入法类继承关系图 
+
+２.1　类ComposeImpl实现
+
+类ComposeImpl继承ExtInputMethodInterface接口并重载其相应的成员函数。设置其成员属性：具体的输入法实现类对象ComposeIM *input；输入法图标QPixmap *icn；输入状态显示窗口QWidget *statWid。构造函数初始化其成员，input(0)，icn(0)，statWid(0)；由于插件在系统运行时可以随时进行手工装载和卸载，当插件接口在自毁时，它自身应清除所占用的全部内存。因此在析构函数中，应该清除所有的已分配的资源，delete input，delete icn，delete statWid。实现virtual QWSInputMethod *inputMethod( )函数，来创建一个ComposeIm类输入法实例input；实现statusWidget函数，创建一个可以和用户交互，显示输入法切换状态的窗口类（Qwidget）实例statWid。
+
+2.2　类ComposeIM实现
+
+类ComposeIM继承输入法类（QWSInputMethod）来实现输入法处理。在这个类里，实现实现输入法的大部分工作。包括：汉字映射表上下文（Input Context）结构管理；组合字符串管理；状态窗口，组合输入窗口，候选列表窗口管理。
+
+2.2.1 Status状态， Composition组合， and Candidates候选列表窗口实现
+
+状态窗口、组合窗口和侯选列表窗口组成了（IME）输入法编辑器的整个用户交互接口。状态窗口根据IME开关状态，显示当前输入法状态。状态窗口的构建，可以通过实现ExtInputMethodInterface接口提供的statusWidget虚函数来进行构造。其函数原型如下：
+
+QWidget * ExtInputMethodInterface：：statusWidget ( QWidget * parent， Qt：：WFlags f )
+
+parent是其状态窗口的父窗口，通常情况下是Taskbar，当输入法装载成功时，此状态窗口将显示在任务栏上。Wflags参数是用来定制窗口的外观和特征。
+
+组合窗口是指当用户输入文本时，将在此窗口中显示键入的字母或者显示转换后的汉字字符。组合窗口是通过Qt提供的输入法类QWSInputMethod中InputRect进行构造的，如果在子类中，不对其进行重载的话，系统将默认地采用OverTheSpot组字模式。
+
+选择窗口是一个可供选择的汉字列表窗口，此窗口将显示在组合窗口附近，用户可以滚动这个列表选择需要的汉字，然后将选择的汉字返回到组合窗口中，并关闭窗口，最后再由QWSInputMethod：：sendIMEvent发送组合后的字符到目标程序。
+
+2.2.2 函数filter的实现
+
+在ComposeIm类中实现filter虚函数，通过它处理来自虚拟或物理键盘输入的键值（key），在输入法开启状态，键或键组合都应该在这个函数截获处理，其部分代码实现如下
+
+ 
+
+bool ComposeIM::filter(int unicode， int keycode， int modifiers， bool isPress， bool autoRepeat){
+
+．．．．．．
+
+if ( isPress && keycode == Qt::Key_Space &&
+
+        modifiers & Qt::ControlButton) {
+
+       //切换到相反状态
+
+       if ( state == On ) {
+
+           sendIMEvent( QWSServer::IMEnd， QString::null， 0 );
+
+           composed = "";
+
+           state = Off; //reset and remove text
+
+           butt->setText("EN");
+
+ReFreshCandidList ();
+
+          *(Pinyin_Module.inbuf)='\0';
+
+           ．．．．．．
+
+       } else {
+
+           state = On;
+
+           butt->setText(tr(“拼”));
+
+         ．．．．．．
+
+          }
+
+       return TRUE;
+
+} else if ( state == On ) {
+
+       if ( isPress ) {
+
+           if ( keycode == Qt::Key_Return ) {
+
+              //accept text and remain active
+
+sendIMEvent( QWSServer::IMEnd， composed， composed.length() );
+
+              composed = "";
+
+ReFreshCandidList ();
+
+          *(Pinyin_Module.inbuf)='\0';
+
+              } else if ( keycode == Qt::Key_Backspace ) {
+
+                     if ( composed.length() > 0 )
+
+                         composed = composed.left( composed.length() - 1 );        
+
+sendIMEvent( QWSServer::IMCompose， composed， composed.length()， 0 );
+
+                     Pinyin_Module.inbuf[strlen(Pinyin_Module.inbuf)-1]='\0';
+
+                     ．．．．．．
+
+                                         
+
+            } else if(keycode==Qt::Key_PageUp)
+
+                           FillPage(FALSE);
+
+             else if (keycode==Qt::Key_PageDown)
+
+                            FillPage(TRUE);
+
+                else if ( unicode > 0 && unicode < 0xffff) {
+
+                 ．．．．．．
+
+                    if (PinyinParseInput (&Pinyin_Module， key， buf)> 0)
+
+                       sendIMEvent(QWSServer::IMCompose， composed， composed.length()， 0 );
+
+              ．．．．．．
+
+}
+
+       }
+
+}
+
+字符过滤处理
+
+int ComposeIM::PinyinParseInput(InputModule *inmd， char ch， char *strbuf){
+
+if ( (ch>='a' && ch<='z') || ch=='\''|| ch=='\010' || ch=='\177')
+
+           return PinyinKeyPressed(inmd，ch，strbuf);
+
+    ．．．．．．
+
+switch(ch){
+
+        ．．．．．．
+
+           default:
+
+         if ( (ch>='1' && ch<='9') || ch=='0' || ch==' ')
+
+           SelectHz(ch);
+
+         break;
+
+}
+
+  return 1;
+
+}
+
+ 
+
+2.2.3与输入法有关的数据结构机器处理（以拼音输入法为例）
+
+（１）PinYin结构体：
+
+key 成员用来记录本拼音在同一开始字母的拼音列表中所处位置的偏移量；py 成员用来保存本拼音字符串内容。
+
+在InputModule结构中声明PinYin pytab[26][38]数据类型，在输入法初始化的时候，利用LoadPinYinTable()函数来装载进拼音表，根据map文件生成拼音字典.按照map文件中的拼音顺序为每个拼音分配一个key，  例如：a=1， ai=2， an=3， ang=4 … 即填充好InputModule的pytab，然后把map文件中每个拼音后的所有的汉字填充到InputModule的hztab中，这样在汉字过滤时可以根据每个拼音的key在map文件中找到相对应的所有的汉字，即pytab与汉字通过key相联系，其部分代码实现如下：
+
+．．．．．．
+
+while ( !feof( stream )){
+
+if ( fgets(str，250，stream) != NULL){
+
+sscanf(str，"%s %s"，strpy，strhz);
+
+    curpy = strpy[0]-'a';
+
+    if (curpy != lastpy) j = 0;
+
+    strcpy( inmd->pytab[curpy][j].py，strpy);
+
+    inmd->pytab[curpy][j].key = i+1;
+
+strcpy(inmd-> hztab[i]，strhz);
+
+    lastpy = curpy;
+
+    i++，j++;
+
+}
+
+}
+
+　．．．．．．
+
+（２）汉字映射表上下文（Input Context）结构
+
+设计一个内部结构，存放拼音和汉字内容，并建立其映射关系。当可接受输入的目标程序处于激活的输入法编辑器（IME）的时候，这个结构上下文，就由IME来进行维护。
+
+inbuf整个输入的字符串；inbuftmp还未进行汉字转换的字符串；pybuftmp已经转换过的汉字串。
+
+２.4 字符Uincode转换
+
+由于我们的拼音码表是采用GBK或GB2312编码的，而在Qt内部所有的处理均采用Unicode编码，因此我们在将汉字发送到目标程序之前必须做转码工作.在Qt 中，有一个 QTextCodec类就是专门处理不同编码之间的转换工作的.
+
+include <qtextcodec.h>
+
+char hztabtmp[];
+
+……
+
+QTextCodec *codec=QTextCodec::codecForName("GBK");
+
+QString composed=codec->toUnicode(hztabtmp);
+
+……
+
+３ 输入法装载
+
+   在将输入法编写完成以后，必须将其编译成动态库形式存放在$QPEDIR/plugin/InputMethod/目录下，当Qtopia启动时，插件装载器将到此目录下装载输入法.
+
+……….
+
+loader = new PluginLoader( "inputmethods" );
+
+……….
+
+if ( loader->queryInterface( *it， IID_ExtInputMethod， (QUnknownInterface**)&eface ) == QS_OK ) {
+
+           InputMethod input;
+
+           input.newIM = TRUE;
+
+           input.libName = *it;
+
+           input.extInterface = eface;
+
+           ……….
+
+inputModifierList.append( input );
+
+………..
+
+ifaceList.append( eface );
+
+}
+
+ 
+
+结语
+
+       本文在采用Qtopia的插件技术以及所提供的组合输入法接口基础上，论述了Qtopia上拼音输入的具体实现。这套方案已在运行MontaVista Linux 的Xscale目标平台上成功实现。此外，我们开发了多种中文输入法（包括五笔、内码等等），其实现原理同本文阐述的类似。

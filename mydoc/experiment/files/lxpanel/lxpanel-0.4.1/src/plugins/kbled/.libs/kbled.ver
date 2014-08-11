@@ -1,0 +1,6 @@
+{ global:
+event_filter;
+kbled_plugin_class;
+off_icons;
+on_icons;
+local: *; };

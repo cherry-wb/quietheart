@@ -1,0 +1,141 @@
+Declare Function GetExitCodeProcess Lib "kernel32" (ByVal hProcess As Long, lpExitCode As Long) As Long
+Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Public Const Process_Query_Information = &H400
+Public Const Still_Active = 259
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMillSecond As Long)
+
+
+Sub kernelCompare()
+'
+' mytest Macro
+'
+    Sheets("Kernel").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 1))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount_kernelfiles.bat"
+    'dir1 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    'dir2 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    resultfile = "D:\Program Files\diffcount\every_kernel_file_result.txt"
+
+    '输入自行选择输入参数，例如：D:\...\diablo
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    dir1 = InputBox("请输入svn中Kernel父目录的路径:" & dir1)
+    dir2 = InputBox("请输入vxworks原始代码父目录的路径(包含diablo和kernel26):" & dir2)
+    'dir1=FileDialog(msoFileDialogFolderPicker).Show
+    'dir2=FileDialog(msoFileDialogFolderPicker).Show
+
+    'XXX 配置忽略的前几个字符...
+    Dim ignore_stri As Integer
+    ignore_stri = 3
+
+    '开始比较每个文件
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+      param1 = Cells(i, 1)
+      param2 = Cells(i, 5)
+      If Not IsEmpty(param2) Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, vbHide)
+        'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+        hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+        Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+        Loop While exitcode = Still_Active
+        'Sleep (400)
+      ElseIf Cells(i,4) = "新规" Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = param1
+        param1 = "--count-only"
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, 1)
+        hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+        Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+        Loop While exitcode = Still_Active
+        'Sleep (400)
+      End If 'if isempty(param2)
+        i = i + 1
+    Wend 'while i < afer_end
+
+    '读取结果
+    i = start
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring As String
+    Dim tmpPos,tmpPos2 As Integer
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then '找到Total
+            tmpPos2 = InStr(1,retstring,"(standard C lines)")
+            retstring = Mid(retstring, tmpPos + 5, tmpPos2-tmpPos-5)
+            'retstring = Mid(retstring, tmpPos + 5, Len(retstring) - tmpTailLen)
+            Cells(i, 8).Value = retstring
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      ElseIf Cells(i,4) = "新规" Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then '找到Total
+            tmpPos2 = InStr(retstring,"(standard C lines)")
+            retstring = Mid(retstring, tmpPos + 5, tmpPos2-tmpPos-5)
+            Cells(i, 8).Value = retstring
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      Else
+        Cells(i, 8).Value = 0
+      End If 'if not IsEmpty(Cells(i,5))
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:H").AutoFit
+
+    ''''''统计总体数据情况
+    cmpapp = "D:\Program Files\diffcount\diffcount_kernelsummary.bat"
+    resultfile = "D:\Program Files\diffcount\summary_kernel_result.txt"
+    Dim diablo, k1_0831 As String
+
+    param1 = Chr(34) & dir1 & Chr(34)
+    param2 = Chr(34) & dir2 & Chr(34)
+'    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+'   ProcessId = Shell(shell_cmd, vbHide)
+'    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+'    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+'    Do
+'      GetExitCodeProcess hProcess, exitcode
+'      DoEvents
+'    Loop While exitcode = Still_Active
+'   Sheets("集計").Select
+    MsgBox "Ok"
+End Sub

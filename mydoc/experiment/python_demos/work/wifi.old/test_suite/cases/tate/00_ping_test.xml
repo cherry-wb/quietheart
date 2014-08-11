@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testcase>
+    <name>ping_test</name>
+    <aps>
+        <ap model="cisco" mac="11:22:33:44:55:66" />
+        <ap model="dlink" mac="77:66:55:44:33:22" />
+    </aps>
+ 
+    <duts>
+        <dut model="device:tate" mac="123456789" />
+        <dut model="device:jem" mac="987654321" />
+    </duts>
+
+    <scenarios>
+        <scenario name="login">
+            <category>ap</category>
+            <script>scenario_login.py</script>
+            <parameter></parameter>
+        </scenario>
+
+        <scenario name="ap_set_wireless_mode">
+            <category>ap</category>
+            <script>scenario_set_wireless_mode.py</script>
+            <parameter>
+                netMode={"5G":"M","2G":"M"}
+            </parameter>
+        </scenario>
+
+        <scenario name="logout">
+            <category>ap</category>
+            <script>scenario_logout.py</script>
+            <parameter></parameter>
+        </scenario>
+    </scenarios>
+</testcase>

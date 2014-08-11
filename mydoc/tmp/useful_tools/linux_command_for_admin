@@ -1,0 +1,13 @@
+这里给出常见的linux管理命令：
+
+fdisk -l
+
+du -sh
+
+du -shc
+
+df -h
+
+mount
+
+fuser

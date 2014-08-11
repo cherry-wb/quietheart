@@ -1,0 +1,91 @@
+free [-b | -k | -m | -g] [-o] [-s delay ] [-t] [-V]
+[功能]
+显示内存的信息。
+
+[描述]
+显示使用的和剩余的内存信息以及总计信息，这里共享内存信息会被忽略。实际可以看cat /proc/meminfo.
+
+[举例]
+*用来显示内存的信息
+$ free
+输出如下：
+		total       used       free     shared    buffers     cached
+Mem:        507456     497024      10432          0      20140      88840
+-/+ buffers/cache:     388044     119412
+Swap:       976552     125652     850900
+默认的单位是k。
+
+*显示内存信息，以byte为单位：
+$free -b
+输出如下：
+		total       used       free     shared    buffers     cached
+Mem:     518004736  495837184   22167552          0   13836288   77217792
+-/+ buffers/cache:  404783104  113221632
+Swap:   1019891712  252235776  767655936
+
+*显示内存信息，以兆为单位：
+$free -m
+输出信息如下：
+		total       used       free     shared    buffers     cached
+Mem:           494        472         21          0         13         73
+-/+ buffers/cache:        385        108
+Swap:          972        240        732
+此外，还有以g为单位的需要加'-g'选项。
+
+*显示内存信息，最下面有一个统计行：
+$free -t
+输出信息如下：
+		total       used       free     shared    buffers     cached
+Mem:        505864     495524      10340          0      13712      79408
+-/+ buffers/cache:     402404     103460
+Swap:       995988     246264     749724
+Total:     1501852     741788     760064
+
+*显示内存信息，调整缓存的显示(??)
+$free -o
+输出如下：
+		total       used       free     shared    buffers     cached
+Mem:        505864     491804      14060          0      13780      79904
+Swap:       995988     246244     749744
+这里，如果没有指定'=o'选项，那么会把buffer内存从used减去，加到free中去。
+
+*显示内存信息，隔一段时间自动运行一次：
+$free -s 2
+这样，每隔2秒自动运行一次。使用'-s'带参数选项指定间隔时间，间隔时间可以是浮点数。
+
+*显示free的版本：
+$free -V
+输出如下：
+procps version 3.2.7
+
+[其他]
+*对于free命令输出的每个部分的详解：
+(参考:http://www.cmsjzw.com/Web_xueyuan/fuwuqi/LINUX/37914.html)
+$ free -m
+total       used       free     shared    buffers     cached
+Mem:         1002        769        232          0         62        421
+-/+ buffers/cache:        286        715
+Swap:         1153          0       1153
+
+第一部分Mem行:
+	total 内存总数: 1002M
+	used 已经使用的内存数: 769M
+	free 空闲的内存数: 232M
+	shared 当前已经废弃不用，总是0
+	buffers Buffer 缓存内存数: 62M
+	cached Page 缓存内存数:421M
+	关系：total(1002M) = used(769M) + free(232M)
+
+第二部分(-/+ buffers/cache):
+	(-buffers/cache) used内存数：286M (指的第一部分Mem行中的used - buffers - cached)
+	(+buffers/cache) free内存数: 715M (指的第一部分Mem行中的free + buffers + cached)
+	由此可见，-buffers/cache反映的是被程序实实在在吃掉的内存，而+buffers/cache反映的是可以挪用的内存总数。
+
+第三部分是指交换分区, 我想不讲大家都明白.
+
+更详细的解释：
+	对于第一部分(Mem)与第二部分(-/+ buffers/cache)的结果其实我们可以从二个方面来解释.
+对操作系统来讲是Mem的参数.buffers/cached 都是属于被使用,所以它认为free只有232.
+对应用程序来讲是(-/+ buffers/cach).buffers/cached 是等同可用的，因为buffer/cached是为了提高程序执行的性能，当程序使用内存时，buffer/cached会很快地被使用。
+	所以,以应用来看看,以(-/+ buffers/cache)的free和used为主.所以我们看这个就好了.另外,Linux为了提高磁盘和内存存取效率, 做了很多精心的设计, 除了对dentry进行缓存(用于VFS,加速文件路径名到inode的转换), 还采取了两种主要Cache方式：Buffer Cache和Page Cache。前者针对磁盘块的读写，后者针对文件inode的读写。这些Cache能有效缩短了 I/O系统调用(比如read,write,getdents)的时间。
+	记住内存是拿来用的,不是拿来看的.不象windows,无论你的真实物理内存有多少,他都要拿硬盘交换文件来读.这也就是windows为什么常常提示虚拟空间不足的原因.你们想想,多无聊,在内存还有大部分的时候,拿出一部分硬盘空间来充当内存.硬盘怎么会快过内存.所以我们看linux,只要不用 swap的交换空间,就不用担心自己的内存太少.如果常常swap用很多,可能你就要考虑加物理内存了.这也是linux看内存是否够用的标准.

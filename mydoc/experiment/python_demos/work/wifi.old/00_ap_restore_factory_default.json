@@ -1,0 +1,43 @@
+{
+	"name":"ap_restore_factory_default",
+	"type":{"name":"seq"},
+	"description":"set cisco ap wireless mode(disabled,mixed,b-only,n-only).",
+	"scenarios":[{
+		"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"e3000",
+				"ip":"10.1.10.32:8080",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin"
+			}
+		}},
+		{"restore_factory_default":{
+			"fname":"ap/cisco/scenario_restore_factory_default.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"e3000",
+				"ip":"10.1.10.32:8080",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin"
+			}
+		}},
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"e3000",
+				"ip":"10.1.10.32:8080",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin"
+			}
+		}
+	}]
+}

@@ -1,0 +1,14 @@
+程序功能：
+这里的源代码提供两个函数，这两个函数可以启动一个gui图形程序。
+如果这个程序已经运行，那么将这个程序置顶，不必重新启动。
+
+文件结构：
+aspawn_launch.h:介绍了，本程序提供的函数和用法，是用户的接口。
+aspawn_launch.c:提供的函数的具体实现。
+main.c:提供了一个例子，通过这个例子可以大致了解这里源代码提供的库的使用方法。
+
+编译命令：
+gcc -o aspawnApp aspawn_launch.c main.c `pkg-config --cflags --libs gtk+-2.0`
+
+有问题，联系我：
+lv-k@neusoft.com

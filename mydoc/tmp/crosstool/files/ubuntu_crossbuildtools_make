@@ -1,0 +1,169 @@
+http://embed.chinaitlab.com/linux/784915.html
+在进行嵌入式开发之前，首先要建立一个交叉编译环境，这是一套编译器、连接器和libc库等组成的开发环境。本文具体说明了嵌入式交叉编译环境的建立过程和具体的操作步骤，希望能够对各位朋友搭建对应的交叉编译环境有所帮助。
+
+一、所需软硬件环境
+
+主机环境
+
+建立交叉编译工具链的主机环境：
+
+Ubuntu 8.10，gcc-4.3.2
+
+Ubuntu 8.10软件环境
+
+保证你的 Ubuntu 8.10 安装了如下的软件：
+
+Bison flex build-essential patch libncurses5-dev
+
+安装这些软件包：
+
+sudo apt-get install Bison flex build-essential patch libncurese5-dev
+
+或直接下载下列deb软件包
+
+bison_13a2.3.dfsg-4build1_i386.deb
+build-essential_11.4_i386.deb
+flex_2.5.33-10build1_i386.deb
+libncurses5-dev_5.6+20071124-1ubuntu2_i386.deb
+m4_1.4.8-1build1_i386.deb
+patch_2.5.9-5_i386.deb
+
+然后 sudo dpkg –i *.deb 安装这些软件包。
+
+相关软件包
+
+本方案所选软件包如下：
+
+gcc-3.4.5.tar.gz
+glibc-2.3.6.tar.gz 
+linux-2.6.26.5.tar.gz
+crosstool-0.43.tar.gz
+binutils-2.15.tar.gz 
+glibc-linuxthreads-2.3.3.tar.gz
+linux-libc-headers-2.6.12.0.tar.bz2
+
+二、具体工作步骤
+
+1、修改系统配置
+
+1.1、Ubuntu 8.10 默认安装的 gcc 版本为4.3.2，这个版本对于语法要求较高，编译会出错，目前不宜选用，于是选择了 gcc-4.1.1 ，但并不需要卸载 gcc-4.3.2。
+
+（1）第一种方法：直接在终端输入安装gcc-4.1
+
+sudo apt-get install gcc-4.1
+
+（2）第二种方法：下载下列软件包：
+
+gcc-4.1_4.1.2-23ubuntu3_i386.deb
+gcc-4.1-base_4.1.2-23ubuntu3_i386.deb
+cpp-4.1_4.1.2-23ubuntu3_i386.deb
+
+然后sudo dpkg –i *.deb
+
+安装就可以了
+
+sudo rm /usr/bin/gcc       (删除GCC，它只是个到gcc-4.3.2的软链接文件)
+
+sudo ln -s /usr/bin/gcc-4.1 /usr/bin/gcc  (建立GCC到gcc-4.1的软链接)
+
+1.2、修改sh版本
+
+如果运行
+
+ls -la /bin/sh
+
+看到链接的是 dash ，则请运行以下命令
+
+sudo dpkg-reconfigure dash
+
+选择 no 以删除 dash
+
+此处如果不改好的话，编译时会出现错误
+
+2.解压软件包，并进入该目录，查看重要的脚本文件。
+
+$cd downloads
+        $tar –zxvf crosstool-0.43.tar.gz
+        $cd crosstool-0.43
+
+在此目录下可以看到有很多.sh脚本和.dat配置文件，每一个支持的处理器都有它所相应的脚本。假如选用demo-arm-softfloat.sh 就是建立目标为支持软浮点的arm交叉编译工具链。
+
+3.修改demo-arm-softfloat.sh
+
+$vim demo-arm-softfloat.sh
+
+修改下面两句
+TARBALLS_DIR=$HOME/downloads   //表示下载的源码的存放目录
+
+RESULT_TOP=/opt/crosstools     //表示生成的工具链的存放目录
+
+为：
+
+TARBALLS_DIR=/home/linux/downloads(源码存放目录)
+
+RESULT_TOP=/home/linux/crosstools（生成工具链目录）
+
+4.修改 gcc-3.4.5-glibc-2.3.6.dat
+
+$ vim gcc-3.4.5-glibc-2.3.6.dat
+
+修改内容为：
+
+BINUTILS_DIR=binutils-2.15
+GCC_DIR=gcc-3.4.5
+GLIBC_DIR=glibc-2.3.6
+LINUX_DIR=linux-2.6.26.5
+LINUX_SANITIZED_HEADER_DIR=linux-libc-headers-2.6.12.0
+GLIBCTHREADS_FILENAME=glibc-linuxthreads-2.3.6
+
+5.$ ./ demo-arm-softfloat.sh
+
+这个过程较长（半个小时左右）
+
+6.修改环境变量
+
+修改环境变量有多种方法我们介绍两种
+
+（1）第一种方法：在当前用户目录的.bashrc中添加如下内容
+
+$export PATH=$PATH:/home/linux/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/bin:
+
+（2）第二种方法：或直接修改/home/linux/.bashrc
+
+cd /home/linux
+vim .bashrc 
+
+添加如下内容：
+
+PATH=$PATH:/home/linux/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/bin:
+
+然后
+
+source .bashrc
+
+7.执行如下命令
+
+$ arm-softfloat-linux-gnu-gcc -v
+
+显示
+
+Reading specs from /home/david/project/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/lib/gcc/arm-softfloat-linux-gnu/3.4.5/specs
+Configured with: /home/david/downloads/crosstool-0.43/build/arm-softfloat-linux-gnu/gcc-3.4.5-glibc-2.3.6/gcc-3.4.5/configure --target=arm-softfloat-linux-gnu --host=i686-host_pc-linux-gnu --prefix=/home/david/project/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu --with-float=soft --with-headers=/home/david/project/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/arm-softfloat-linux-gnu/include --with-local-prefix=/home/david/project/crosstool/gcc-3.4.5-glibc-2.3.6/arm-softfloat-linux-gnu/arm-softfloat-linux-gnu --disable-nls --enable-threads=posix --enable-symvers=gnu --enable-__cxa_atexit --enable-languages=c,c++ --enable-shared --enable-c99 --enable-long-long
+Thread model: posix
+gcc version 3.4.5
+
+ok交叉编译环境创建成功！
+
+8.恢复我们修改的系统配置：
+
+恢复gcc为4.3
+
+sudo rm /usr/bin/gcc
+
+sudo ln -s /usr/bin/gcc-4.3 /usr/bin/gcc
+
+重新安装dash
+
+sudo dpkg-reconfigure dash
+
+选择 yes 以重新安装 dash

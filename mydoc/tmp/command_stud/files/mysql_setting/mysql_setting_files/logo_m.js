@@ -1,0 +1,1 @@
+﻿document.write('<a href="http://www.59.cn" target="_blank"><img src="http://img.jb51.net/imgby/59cn370.gif" width=370 height=60 /></a>');

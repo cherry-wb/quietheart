@@ -1,0 +1,15 @@
+事无巨细，不可能把知道的所有内核相关内容都记录下来，但是至少可以将获取到这些知识的来源指明。
+
+*内核文档资源
+
+一个Linux Cross-Referrence站点，可以浏览、搜索内核源代码:
+http://lxr.linux.no/source/
+http://lxr.oss.org.cn/ident?v=2.6.34
+
+*内核文档资源
+===========
+关于终端和控制台的区别,可以看内核文档中的 Documentation/devices.txt 中关于”TERMINAL DEVICES” 的章节
+关于标准的设备号的选取（如果在驱动中不是动态分配的话），可以参见Documentation/devices.txt
+关于__init之类的宏的相关内容，可以参看代码："include/linux/init.h"
+关于内核参数参考:"Documentation/kernel-parameters.txt"
+关于initrd初始根文件系统的内容，参考："Documentation/initrd.txt"

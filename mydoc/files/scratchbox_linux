@@ -1,0 +1,167 @@
+http://ggsonic.javaeye.com/blog/474638
+使用Scratchbox来开发嵌入式Linux
+scratchbox介绍
+Scratchbox is a configuration and compilation environment for building Linux software and entire Linux distributions. The basic idea of Scratchbox is to offer developers an environment that works and looks like the target environment before the target environment is available.
+
+
+安装,配置scratchbox
+这里使用源代码来安装scratchbox, 使用Ubuntu/Debian的用户可以直接使用apt来安装. 具体可参考Cross-Compiling tutorial with Scratchbox和Installing Scratchbox
+
+ScratchBox组件
+必选:
+scratchbox-core : scratchbox环境, 常用工具及本地编译器.
+scratchbox-libs   : scratchbox-core, devkits和toolchains所需的库.
+
+可选:
+scratchbox-devkit-debian     : 用于Debian包开发的环境和工具.
+scratchbox-devkit-doctools  : 文档生成工具
+scratchbox-devkit-perl          : 额外的perl模块.
+
+工具链(可选)
+scratchbox-toolchain-arm-gcc3.3-glibc2.3
+scratchbox-toolchain-i686-gcc3.3-glibc2.3
+scratchbox-toolchain-arm-gcc3.2-uclibc20040229
+scratchbox-toolchain-i386-gcc3.2-uclibc20040229
+
+到 Scratchbox download page 下载下面这些组件.scratchbox-core-1.0.5-i386.tar.gz
+scratchbox-libs-1.0.5-i386.tar.gz
+scratchbox-toolchain-arm-gcc3.4-glibc2.3-1.0.2-i386.tar.gz
+
+将这些包解压 $ tar xvzf <package_name> -C ~/project/sb
+
+ScratchBox默认是要安装到/scratchbox目录的. 但如果你的根目录空间不够, 可以这样:(我把它安装到我的~/project/sb目录中)
+$ sudo ln -s ~/project/sb/scratchbox /scratchbox
+
+注意, 前面的包解压后都位于scratchbox目录中, 不需要自己建立scratchbox目录. 可以在全部解压缩工作结束后建立符号连接.
+
+配置scratchbox
+1, 运行 $ sudo /scratchbox/run_me_first.sh
+会提示你一些问题:
+Do you want to use sudo mode? [yes/no] (no): no
+选为yes会存在一些权限问题.
+Give the name of the scratchbox group (sbox): sbox
+sbox是默认的组.
+
+2, 选择这两项之后, scratch重启, 并提示你添加用户:
+Now you should add one or more users with /home/zp/project/sb/scratchbox/sbin/sbox_adduser
+$ sudo /scratchbox/sbin/sbox_adduser zp
+注意, 被添加的用户只能是本地主机上已有的用户(这里是zp)!
+3, 运行 $ groups 命令, 如果你看到有sbox这个组, 那么你就可以使用scratchbox了. 如果
+没看到, 你需要注销, 再登录.
+完成了上面的步骤之后， 运行 $ df -h ,看看是不是多了关于scratchbox的文件系统？
+
+卸载scratchbox
+由于scratchbox将本机系统的某些目录挂载(运行mount命令看看挂载信息), 所以不能直接通过删除目录来卸载scratchbox. 应该按下面的方法:
+
+1, 停止scratchbox:
+$ sudo /scratchbox/sbin/sbox_ctl stop
+2,再使用mount命令确定没有目录被挂载到scratchbox后再删除目录:
+$ rm -r /scratchbox
+在你删除全部目录之前, 最好将scratchbox的usrs目录中有用的资料拷贝到别处备份.
+使用scratchbox
+使用scratchbox有两类方法:
+(1)不登录到scratchbox中, 直接使用它提供的交叉编译工具. 这是我们常见的交叉编译开发手段.
+(2)登录到scratchbox, 如果登录到任何一台linux主机, 在scratchbox中进行开发. scratchbox就是一个完备的开发环境.
+这里分别介绍使用scratchbox的两类方法
+
+outside scratchbox
+安装上scratchbox之后, 在/scratchbox/compilers/中有这样一个目录:
+arm-linux-gcc3.4.cs-glibc2.3
+它正是我们安装的gcc-3.4 + glibc2.3的交叉编译工具.
+在该下层目录bin中的即是交叉编译工具.
+
+利用scratchbox提供的工具编译hello,world:
+$ /scratchbox/compilers/arm-linux-gcc3.4.cs-glibc2.3/bin/arm-linux-gcc \
+> -Wall -o hello hello.c
+$ file hello
+看看,它生成的hello可执行文件与使用别的交叉编译工具所生成的并无二致.
+
+这样,我们就可把生成的hello拿到目标系统中运行.
+
+在Cross-Compiling tutorial with Scratchbox中的2.2节介绍了相关内容.
+
+如果嫌输入完整的命令比较麻烦, 可以更改环境变量PATH, 把相应的目录放到PATH的开头.
+
+inside scratchbox
+Scratchbox是一个chrooted的交叉编译环境.登录它之前,先要添加用户.
+(这在安装,配置scratchbox的过程中已经完成了)
+
+1, 登录到scratchbox
+运行$ /scratchbox/login登录到scratchbox,出现这样的命令行提示符: [sbox-: ~] >
+第一次登录到sb, 需要配置target, 先看看下一节!
+
+在该提示符后, 可以输入常用的shell命令.
+eg. 运行 ls /, 我们会看到一些熟悉的目录. 不要以为这就是你原来的Linux系统中的目录, 实际上, 这些目录中有些根本就是空的. scratchbox就是一个完备的环境. 与原来的linux没多大关系!
+
+scratchbox将本地主机的一些目录挂载到scratchbox中. 运行$ mount可以看到哪些目录被挂载.
+
+但在scratchbox中, 是看不到本地主机的home目录的. 如何解决呢? --可以在scratchbox中建立一些符号连接来共享本地主机的目录, 比如在~/project/sb中, $ ln -s /scratchbox/users/zp/home/zp/app/ app-sb 这样往~/project/sbscratchbox-/app-sb/目录中添加的内容都能在scratchbox用户zp的home目录中的app目录中看到.
+
+在scratchbox中进行开发之前, 我们还有一些准备工作要做: 设置target.
+
+2, 配置target
+
+正如文章开头的scratchbox组件列表所述, 它提供了用于debian的开发环境和一些可选的glibc, uClibc的开发链. 先前我们只使用了3个源码包,  现在再下载一些你觉得会有用的包, 解压到同一目录, 这样在配置target的过程中, 可以基于这些包配置不同的target: scratchbox可以配置不同的目标target用于开发.
+
+在scratchbox中, 可以通过sb-menu图形配置工具来配置target, 也可以使用命令行sb-conf, sbrsh-conf来配置. 使用sb-menu比较方便. (sb-menu命令也可以用于选择另外一个target).
+
+我现在针对手头的ARM9开发板来配置target.
+arm9glibc: 使用glibc库; arm9uClibc: 使用uClibc库.
+
+运行 > sb-menu 进入配置菜单.
+关于建立target的详细配置步骤, 可参考Installing Scratchbox的第2.4节.
+
+这里有一点要注意: 在 Selected devkits 中要选择cputransp配置模拟器. 选为qemu-arm.
+
+QEMU是一个ARM指令集仿真器. scratchbox中提供了qemu和sbrsh两种仿真手段. 要使用qemu仿真, 需安装devkit-cputransp包!
+
+
+这里使用一个简单的例子来演示在scratchbox中进行交叉编译的方法
+
+(1)打开一个terminal, 进入~/project/sb/app-sb 目录. 这就是我在前面建立的符号连接, 它指向zp用户在scratchbox中的/home/zp/app目录. 我在里面写个hello, world程序.
+
+(2)打开另一个terminal, 登录到scratchbox. 在/home/zp/app目录, 能看到hello, world的源代码. 现在编译它:
+$ gcc -Wall -o hello hello.c
+这里的gcc调用的是scratchbox中对应该target选择的tool-chain. 还记得我们配置target时选择的吗?
+$ file hello
+hello: ELF 32-bit LSB executable, ARM, version 1 (ARM), for GNU/Linux 2.0.0, dynamically linked (uses shared libs), not stripped
+$ ./hello
+hello, world!
+上面显示的结果实际上就是qemu模拟器上显示的结果.
+
+怎么样? 在scratchbox中进行交叉开发是不是如同在本地主机上开发一样方便?
+
+
+使用sbrsh进行开发
+使用sbrsh应该算在上一节中"inside scratchbox"中的内容. 这里把它拿出来单独介绍.
+
+Sbrsh is an alternative to QEMU for implementing the CPU-transparency feature of Scratchbox. It runs the configure scripts' test programs on a remote device with the CPU architecture used by the cross-compilation toolchain-typically the device that you are developing software for. Some build systems also benefit from it when they attempt to execute a target binary which is used to generate data files. Running programs on an actual target device is more reliable than emulating a specific device because emulators might not support all required features or there might not be an appropriate emulator available at all.
+
+设置NFS
+
+使用sbrsh需要将用户的home目录和target目录对目标系统可见, 通过NFS挂载来实现.
+
+我使用的Ubuntu, 先前已经安装好了NFS服务. 关于设置NFS, 具体可参考本blog的这篇文章
+
+要将home, target目录挂载到目标系统, 需修改/etc/exports配置文件. 将home和target对应的目录添加到其中:
+
+/scratchbox/users/<USER>/targets/<TARGET><IP>(rw,all_squash,anonuid=<UID>,anongid=<GID>)
+/scratchbox/users/<USER>/home<IP>(rw,all_squash,anonuid=<UID>,anongid=<GID>)
+
+我用这样的配置:
+/scratchbox/users/zp/target/hh-glibc 192.168.2.120(rw,async,all_squash,anonuid=1000,anongid=1000)
+
+/scratchbox/users/zp/home 192.168.2.120(rw,async,all_squash,anonuid=1000,anongid=1000)
+
+all_squash : 将所有的UID和GID映射到他们各自的匿名版本上.
+anonuid     :  指定远程UID被映射到的uid
+anongid     :   指定远程uid帐号被映射到的gid
+
+运行 $ id zp, 可以知道uid = 1000, gid = 1000. 将1000分配给anonuid和anongid.
+目标系统mount后, 相当以用户zp的权限登录.
+
+更改了/etc/exports, 运行 $ sudo exportfs -r 更新
+运行 $ sudo /etc/init.d/nfs-kernel-server restart 重启nfs服务
+
+安装sbrsh
+接着要在主机上安装sbrsh dameon, 并在目标系统上运行它. 

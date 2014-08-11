@@ -1,0 +1,50 @@
+#####20090420####
+p32-36
+编写完了gtk程序之后，用下面的命令来进行编译肯定是有问题的，
+> gcc -Wall -g gtk_helloworld-1.c -o gtk_helloworld-1
+这样会输出许多的错误信息。尽管在源代码文件的开始，有#include，编译器需要知道从哪里来找到关键的GTK+头文件。需要一些特殊的标记传递给编译器，这样可以利用合适的编译设置来编译GTK+软件。那么我们怎么决定利用哪些编译器选项呢？
+----------
+pkg-config
+有一个叫做pkg-config的工具可以解决这个问题。它是一个简单的程序，提供了统一的接口输出编译器，链接器标志，和库版本号。
+
+> pkg-config --list-all | sort
+.. listing cut to include only relevant libraries ..
+这里将显示一相关库信息，以及它们的作用他们的作用，例如:
+dbus-glib-1    dbus-glib - GLib integration for the free desktop message bus
+gconf-2.0      gconf - GNOME Config System.
+gdk-2.0        GDK - GIMP Drawing Kit (x11 target)
+gdk-pixbuf-2.0 GdkPixbuf - Image loading and scaling
+等等。
+
+--------------
+pkg-config也有一些其他的命令比较有用,例如：
+> pkg-config --modversion gtk+-2.0
+2.10.12
+
+> pkg-config --cflags gtk+-2.0
+-I/usr/include/gtk-2.0 -I/usr/lib/gtk-2.0/include -I/usr/include/atk-1.0
+-I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0
+-I/usr/lib/glib-2.0/include -I/usr/include/freetype2
+-I/usr/include/libpng12
+
+这些都是-I选项，它们用来告诉编译器，除了默认的之外还需要哪些额外的系统头文件目录.
+
+--------------------
+链接应用程序的时候，需要告诉链接器，需要链接哪些库文件，否则在程序链接的阶段会报错。pkg-config libs可以用来做这部分的工作。
+输入：
+> pkg-config --libs gtk+-2.0
+将会输出：
+-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm
+-lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2
+-ldl -lglib-2.0
+--------------------
+继续前面过程，我们利用如下的命令进行编译：
+> gcc -Wall -g gtk_helloworld-1.c
+‘pkg-config --cflags gtk+-2.0‘ -o gtk_helloworld-1 
+
+这里仍然输出了一些错误的信息，原来不是编译过程中的错误了，是链接的时候指明缺少了符号,所以我们修改上面的命令，继续编译：
+> gcc -Wall -g gtk_helloworld-1.c‘pkg-config --cflags gtk+-2.0‘ -o gtk_helloworld-1‘pkg-config --libs gtk+-2.0‘
+
+这样就没有问题了。
+上面中pkg-configs的顺序和位置是非常重要的：cflags需要尽可能早的被指定，而libs必须放在最后(这在一些有问题的编译阶段确实非常重要)。还需要注意的是上面的pkg-config必须放置在反引号之中，并且最好要有空格和反引号隔开(因为有的键盘体系中不这样会有问题)。也可以利用$(...)，但是反引号`  `的形式可以和老版本的unix系统兼容.
+

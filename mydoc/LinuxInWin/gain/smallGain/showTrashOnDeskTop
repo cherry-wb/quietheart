@@ -1,0 +1,9 @@
+http://cache.baidu.com/c?m=9d78d513d98411e804abd3690c66c0166943f6692ba6a30209d38449e3732d46501694af60624e0b89833a2516ae3a41f7aa6d65377470e4c09ecf5dddccc3757095796f2340d70a0f8347f29e5b7e8777cf47b8f848edecf16193fed5d1db515399595429d7a4dd580315dd6f874e77bcf8&p=c4759a46dd8a57e80be295255f49&user=baidu
+让桌面显示回收站图标
+
+1.使用快捷键Alt+F2打开运行窗口。
+2.键入gconf-editor，打开Gnome配置编辑器。
+3.定位到apps \ nautilus \ desktop.
+4.在右侧找到名为trash_icon_visible的选项，打上勾。
+
+这样，你的桌面上就会出现久违的回收站图标了。

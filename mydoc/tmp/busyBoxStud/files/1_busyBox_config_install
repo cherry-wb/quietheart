@@ -1,0 +1,236 @@
+http://hi.baidu.com/embeded_gubi/blog/item/3d73187b8e4f15f40bd1874a.html
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc790c1e1731b5ec7135177086822c3c1cff1701bfed6d34605c3db6cdcd8949d7bec222788e73377748804342851aa5ce4076d620e700aff047f3ffad72c5a182949e1f039719127bf0e7fb581764ca7886112693a4&p=9d6ac64ad2934eac5cacd5344f07&user=baidu
+http://tech.ddvip.com/2008-10/122524165686221_8.html
+基于ARM的嵌入式Linux学习
+用心记录和分享每一天的进步
+ 
+主页博客相册|个人档案 |好友
+  	
+查看文章
+		 
+学习busybox基本配置安装
+2006-12-11 15:25
+[提要] 其实在“Linux内核及文件系统配置编译”系列实验中做busybox编译使用的，但是已经搁了很长时间了，于是废除 了原先的那篇，继续写篇新的笔记~
+
+[内容]
+
+《源码开放的嵌入式系统软件分析与实践——基于skyeye和arm开发平台》一书中对busybox的安装使用说明得似乎不是很清楚，而且过于复杂了，我尝试了几次，头绪不清。
+于是我在网上找，先对busybox编译这一步工作了解下先，然后在学习怎样用它。
+
+从http://www.busybox.net/可以看到最新版本BusyBox 1.2.2.1. 下载下来。
+在http://www.busybox.net/downloads/下载列表找到参考资料介绍的busybox-1.00.tar.gz 也下载下来备用。
+
+根据参考资料2,busybox安装需要经过make menuconfig， make， make install三个基本对步骤，跟编译linux内核差不多，配置的时候选项也非常多，以致一些像我这样初学的朋友搞得摸不着头脑。下面是对1.00版本的实验。
+
+1、文件准备
+
+解压busybox-1.00.tar.gz得到busybox-1.00目录，进入，阅读相关的README和INSTALL，没什么特别的，都是提示busybox需要经过三个步骤的操作进行安装使用。
+
+2、配置busybox
+
+busybox的配置程序和linux内核菜单配置方式简直一模一样
+#make menuconfig
+
+下面是需要编译进busybox的功能选项,其他的可以根据需要自选,但是同样不要太贪心.
+General Configuration应该选的选项
+[*] Show verbose applet usage messages
+[*] Support for SUID/SGID handling
+       [*]   Runtime SUID/SGID configuration via /etc/busybox.conf 
+
+Build Options
+[*] Build BusyBox as a static binary (no shared libs)
+这个选项是一定要选择的,这样才能把busybox编译成静态链接的可执行文件,运行时才独立于其他函数库.否则必需要其他库文件才能运行,在单一个linux内核不能使他正常工作.
+
+Installation Options
+[*] Don't use /usr
+(./_install) BusyBox installation prefix
+这个选项也一定要选,否则make install 后busybox将安装在原系统的/usr下,这将覆盖掉系统原有的命令.选择这个选项后,make install后会在busybox目录下生成一个叫_install的目录,里面有busybox和指向他的链接.
+
+其他选项都是一些linux基本命令选项,自己需要哪些命令就编译进去,一般用默认的就可以了.
+
+配置好后退出并保存.
+
+3,编译并安装busybox
+
+#make
+#make install
+顺利完成。
+
+4、检查安装结果
+
+根据参考资料2,检查到编译好后在解压目录busybox-1.00目录下生成子目录_install
+# ll
+总用量 8
+drwxr-xr-x    2 root     root         4096 12月 11 15:49 bin
+lrwxrwxrwx    1 root     root           11 12月 11 15:49 linuxrc -> bin/busybox
+drwxr-xr-x    2 root     root         4096 12月 11 15:49 sbin
+
+其中可执行文件busybox在bin目录下,其他的都是指向他的符号链接.
+-rwxr-xr-x    1 root     root       801400 12月 11 15:49 busybox
+可见busybox只要八百k多点。根据配置选择的不同，编译出来的busybox大小也会有差别。根据其他资料所述，典型的busybox文件大小在动态链接的情况下是300 KB左右,静态链接为800 KB左右,用它实现的文件系统完全可以控制在1 MB以下
+在bin/下面有：
+# ll
+总用量 788
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 [ -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 ash -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 basename -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 bunzip2 -> busybox
+-rwxr-xr-x    1 root     root       801400 12月 11 15:49 busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 bzcat -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 cat -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 chgrp -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 chmod -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 chown -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 chvt -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 clear -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 cmp -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 cp -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 cut -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 date -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 dd -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 deallocvt -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 df -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 dirname -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 dmesg -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 du -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 echo -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 egrep -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 env -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 expr -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 false -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 fgrep -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 find -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 free -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 grep -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 gunzip -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 gzip -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 head -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 hexdump -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 hostname -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 id -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 install -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 kill -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 killall -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 ln -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 logger -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 ls -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 mkdir -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 mknod -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 mktemp -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 more -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 mount -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 mv -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 openvt -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 pidof -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 ping -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 ps -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 pwd -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 readlink -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 reset -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 rm -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 rmdir -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 sed -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 sh -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 sleep -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 sort -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 strings -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 sync -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 tail -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 tar -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 tee -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 test -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 time -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 touch -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 tr -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 true -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 tty -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 umount -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 uname -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 uniq -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 unzip -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 uptime -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 usleep -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 vi -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 wc -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 wget -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 which -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 whoami -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 xargs -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 yes -> busybox
+lrwxrwxrwx    1 root     root            7 12月 11 15:49 zcat -> busybox
+
+
+根据资料，可以这样用busybox
+#busybox ls
+他的功能就相当运行ls命令
+实验如下：
+在bin/目录下
+# busybox ls
+[          chgrp      cut        du         find       hostname   ls         openvt     rm         sync       tr         uptime     xargs……
+
+实际就是把原先的命令加一个busybox的前缀就是了~
+
+最常用的用法是建立指向busybox的链接,不同的链接名完成不同的功能.
+#ln -s busybox ls
+#ln -s busybox rm
+#ln -s busybox mkdir
+然后分别运行这三个链接:
+#./ls
+#./rm
+#./mkdir
+就可以分别完成了ls rm 和mkdir命令的功能.虽然他们都指向同一个可执行程序busybox
+但是只要链接名不同,完成的功能就不同。
+
+实际上可以看到安装结果已经包含了这些基本命令但符号链接。实验如下：
+# ./ls
+Using fallback suid method
+[          chgrp      cut        du         find       hostname   ls         openvt     rm         sync       tr         uptime     xargs……
+
+# ./echo $PATH
+Using fallback suid method
+/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/X11R6/bin:/root/bin
+
+# ./mkdir
+Using fallback suid method
+BusyBox v1.00 (2006.12.11-07:42+0000) multi-call binary
+Usage: mkdir [OPTION] DIRECTORY...
+ ……
+
+# busybox mkdir
+BusyBox v0.60.5 (2003.01.24-22:43+0000) multi-call binary
+Usage: mkdir [OPTION] DIRECTORY...
+……
+
+可以看到，使用busybox的ls命令会多输出一个左括符号，并会多出Using fallback suid method或BusyBox v1.00 (2006.12.11-07:42+0000) multi-call binary的提示
+
+5、反思与总结
+
+实际上最麻烦的工作是配置，其中动态/静态库，安装位置，是否使用交叉编译工具等几个问题在上面操作中并没有深入涉及。
+参考资料3中提到配置时的选项：
+
+下面三个目录是很多人都会感兴趣的：
+Build Options --->
+Installation Options --->
+Login/Password Management Utilities --->
+在Build Options里面有是否使用交叉编译的选项（Do you want to build BusyBox with a Cross Compiler）。如果要对其他平台进行编译就要选择它并设置相应的编译程序前缀。
+在Installation Options里面可以设置安装的路径,即设置为新文件系统的根目录。当然也可以用缺省的 _install目录,安装之后再复制到新文件系统中去。
+在设置Login/Password Management Utilities的时候,为了免去配置glibc的麻烦,最好设置使用busybox自己的password和shadow文件的功能（Use internal password and group functions rather than system functions）。
+busybox 提供的命令无疑比较全面,但它的缺省配置还不能构成一个功能比较完备的文件系统。必须要添加的命令有Login/Password Management Utilities里面的getty、login和passwd,这些命令从前是由另外一个软件包tinylogin所提供的。当然,如果不需要一个交互的登录界面,这些命令也可以去掉。通过设定内核参数init=/bin/sh可以在系统启图1busybox的编译配置界面动后直接得到一个shell。
+tlenetd命令是一个远程登录服务程序,把它编译进busybox中会为将来的调试提供很多的方便。当然也可以通过串口终端的方式管理嵌入式设备,但网络登录的方式却更为方便。
+
+
+
+
+[遗留问题]
+
+1、Show verbose applet usage messages
+Runtime SUID/SGID configuration via /etc/busybox.conf是什么意思？
+
+[参考资料]
+
+1、《源码开放的嵌入式系统软件分析与实践——基于skyeye和arm开发平台》陈渝 李明 杨晔 等编著 北京航空航天大学出版社
+
+2、编译busybox
+实际上这个资料只不过是另一篇文章“BabyLinux制作过程详解”中的一个片段~
+
+3、Busybox制作嵌入式Linux的文件系统

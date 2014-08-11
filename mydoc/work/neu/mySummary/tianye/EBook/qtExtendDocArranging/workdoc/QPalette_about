@@ -1,0 +1,27 @@
+TO 大家
+
+在bookreader UI优化过程中，经过实测，发现使用QPalette方式比使用StyleSheet方式速度更快，有助于性能提升。
+
+1 QPalette适用范围：
+    UI布局使用了StyleSheet方式，特别是使用了“border-image"来设置背景图片
+
+2 QPalette使用方法：
+
+    一个范例如下：
+    QPalette palette;//创建一个QPalette
+
+    QPixmap bgPic(QString::fromUtf8("/usr/local/qtex/etc/eReader/icons/bookreader/options/commen.png")); //做一个指定图片的QPixmap
+
+    palette.setColor(QPalette::WindowText,Qt::white);//设置控件的文字颜色
+
+    lb_Annotation->setAutoFillBackground(true);//设置允许填充控件背景
+
+    palette.setBrush(lb_Notes->backgroundRole(), QBrush(bgPic));//设置背景图片
+
+    lb_Notes->setPalette(palette);//将QPalette设置到指定控件上
+
+3 注意事项
+    1 如果控件的父控件设置了StyleSheet，那么该控件的QPalette可能会无效
+    2 对于使用QPalette方法设置的背景图片，在旋转的时候，不是将图片resize，而是
+      将图片平铺，如下两张图片，在空间宽度发生变化的时候，黑色图片能够正常显示
+      而灰色图片就会在右侧出现一个圆弧

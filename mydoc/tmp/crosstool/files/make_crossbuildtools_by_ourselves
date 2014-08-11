@@ -1,0 +1,517 @@
+参考资料：
+http://hi.baidu.com/mynana/blog/item/479eb25183ec2210377abee0.html
+http://hi.baidu.com/mynana/blog/item/c4cb271fbd3375c0a68669e3.html
+http://hi.baidu.com/mynana/blog/item/c9e857fb1402e71e6c22ebec.html
+http://hi.baidu.com/mynana/blog/item/b395bb12f10667c6c2fd78ec.html
+http://hi.baidu.com/mynana/blog/item/f68d79f49e2ac6d1f3d385ee.html
+http://hi.baidu.com/mynana/blog/item/294153dac8379dd3b7fd48ee.html
+
+准备工作
+
+这个过程其实是很简单的。 之所以经常会失败， 大部分都是因为configure时使用的配置选项不正确导致编译出错。所以，出错时最好的解决办法是根据提示，把相关配置选项的真正含义搞明白，然后再做取舍；如果一味地去网上搜索别人的办法，即使解决了错误，自己也还是知其然而不知其所以然。
+
+工作环境：普通的x86电脑，Ubuntu9.04操作系统，目标是制作ARM交叉编译工具链，支持EABI和Soft Float。
+
+使用的软件包版本：Binutils-2.19.1; GCC-4.4.0; Glibc-2.9; Linux-2.6.29; gmp-4.3.0; mpfr-2.4.1; 所需的软件包大都可以从中国科技大学的镜像服务器上下载：http://oss.ustc.edu.cn， 教育网内速度应该是很快的。
+
+工作目录结构：
+
+package 存放下载到的原始文件压缩包
+patch 存放一些补丁文件
+source 存放解压缩后的源代码，
+build     存放编译过程中生成的所有文件，不在源代码目录下编译是为了避免对源代码文件夹造成影响
+result   存放编译后生成的最终结果放在此处
+
+几个环境变量：
+
+PACKAGE_DIR=${PWD}/package
+
+BUILD_DIR=${PWD}/build
+
+PATCH_DIR=${PWD}/patch
+
+RESULT_DIR=${PWD}/result
+
+SOURCE_DIR=${PWD}/source
+
+TARGET_PREFIX=${RESULT_DIR}/${TARGET}
+
+HOST=i686-pc-linux-gnu
+
+TARGET=arm-hwlee-linux-gnueabi
+
+注意这里的arm-*-linux-gnueabi，（中间的星号部分是任意的），这种写法是固定格式的，可以在Binutils软件包的README文件里找到格式说明。其中gnueabi表示创建的交叉编译器支持EABI。
+
+什么是EABI？简单的说，就是C/C++源代码编译成汇编码的约定，如符号表的生成，全局变量的初始化等。我们可以把ABI理解为一套规则，这套规则一般包括定义了以下内容： 1.应用程序如何发出系统调用来trap到内核态。 2.如何使用机器的寄存器。比如，RISC处理器的ABI就要规定用那个通用寄存器来作stack pointer和frame pointer。3.规定如何进行procedure call。这是从网上找来的别人的介绍，等我把它搞透彻了再通过一些实验来具体说明。
+
+使用shell脚本自动创建目录、下载软件包、自动解压和打补丁， 本文中所叙述的所有步骤都写在Shell脚本中。 该脚本将放在Blog上供参考。
+
+=====================================
+第一步 编译Binutils
+
+GNU Binutils是一组二进制工具集。 目前最新的版本为2.19.1，可以在中国科技大学的GNU镜像服务器上下载：http://oss.ustc.edu.cn/gnu/binutils/binutils-2.19.1.tar.bz2
+
+编译完成所需时间大概为：30分钟
+配置选项
+
+编译前要确保主机上已经配置好了GCC编译器。配置选项为：
+
+${SOURCE_DIR}/${PACKAGE_BINUTILS}/configure \
+        --target=${TARGET} \
+        --prefix=${RESULT_DIR} \
+        --disable-nls \
+        --disable-werror \
+        --disable-multilib \
+        --enable-shared  
+
+make configure-host
+
+make && make install || exit 1
+选项详解
+
+--target=${TARGET}
+
+这个选项是跟--host一起表示编译生成的可执行文件运行在HOST上面，但这些可执行文件服务的对象是TARGET，也就是说用这些可执行文件连接和汇编出来的程序运行在TARGET上面。这里，默认就会使用主机的GCC编译器， 因此我们省略了--host选项。
+
+--prefix=${RESULT_DIR}
+
+告诉配置脚本当运行 make install 时把编译好的东西安装在RESULT_DIR目录。
+
+--disable-nls
+
+这里nls的意思是本地语言支持（Native Language Support）。可以禁止， 但是使能这一项也没问题。
+
+--disable-werror
+
+意思是禁止把警告当成错误。如果不加这一项，编译器会严格检查语法错误，出现警告也会停止编译，这样要想编译通过就很难了。所以禁止了werror，这样编译就可顺利完成。
+
+--disable-multilib
+
+禁止编译适用于多重目标体系的库。纯32位系统或纯64位系统都是NON-Multilib，但是如果有x64的U，想要既可以运行64bit的程序又可以运行32bit的程序，就得安装Multilib。
+
+--enable-shared
+
+编译出共享链接库。
+
+make configure-host
+
+检查主机环境以确保所有必须的工具都已经安装。这一个命令也可以去掉，不是必须的。
+编译和安装的结果
+
+这次是利用主系统（i386）的GCC工具链来完成编译的，编译出来的程序也是运行在i386上的。编译得到的工具主要包括：
+
+·    ld - GNU连接器the GNU linker.
+
+·    as - GNU汇编器the GNU assembler.
+
+·       addr2line - 把地址转换成文件名和所在的行数
+
+·       ar - A utility for creating, modifying and extracting from archives.
+
+·       c++filt - Filter to demangle encoded C++ symbols.
+
+·       dlltool - Creates files for building and using DLLs.
+
+·       gold - A new, faster, ELF only linker, still in beta test.
+
+·       gprof - Displays profiling information.
+
+·       nlmconv - Converts object code into an NLM.
+
+·       nm - Lists symbols from object files.
+
+·       objcopy - Copys and translates object files.
+
+·       objdump - Displays information from object files.
+
+·       ranlib - Generates an index to the contents of an archive.
+
+·       readelf - Displays information from any ELF format object file.
+
+·       size - Lists the section sizes of an object or archive file.
+
+·       strings - Lists printable strings from files.
+
+·       strip - Discards symbols.
+
+·       windmc - A Windows compatible message compiler.
+
+·    windres - A compiler for Windows resource files. 
+=====================================
+第二步 内核头文件
+
+内核头文件其实是在第四步编译Glibc时才用到的，所以这一步也可以放在编译GCC（第一次）之后。这一步并没有编译内核，只是把内核头文件拷贝到了安装目录而已。
+
+cd ${SOURCE_DIR}/${PACKAGE_KERNEL}
+
+make \
+
+   ARCH=arm \
+
+   CROSS_COMPILE=${TARGET}- \
+
+   INSTALL_HDR_PATH=${TARGET_PREFIX} \
+
+   headers_install
+
+指定ARCH=arm表示拷贝对应于ARM体系结构的头文件。虽然其中指定了 CROSS_COMPILE， 而此时交叉编译器还没有生成，这没有关系，因为根本不会用到交叉编译器。
+=====================================
+第三步 编译GCC（第一次）
+
+需要的软件包：
+http://oss.ustc.edu.cn/gnu/gcc/gcc-4.4.0/gcc-4.4.0.tar.bz2
+http://oss.ustc.edu.cn/gnu/gmp/gmp-4.3.0.tar.bz2http://www.mpfr.org/mpfr-current/mpfr-2.4.1.tar.bz2
+
+编译完成需要时间大概为：1 ~ 1.5小时
+软浮点支持
+
+因为要支持软浮点（Soft Float），GCC需要同时编译GMP和MPFR。GMP是实现任意精度算术运算的软件包，可以完成有符号整数、有理数和浮点数的运算。只要计算机内存的满足需要，GMP的运算精度没有任何限制。MPFR是一个用于高精度浮点运算的C库。让GCC支持GMP和MPFR有两种方法，一是分别编译安装GMP和MPFR，把路径通过configure告诉GCC，这样在编译GCC的时候就会去找到GMP和MPFR；另一种更简单的方法是把GMP和MPFR源代码拷贝到GCC源代码目录内，两个文件夹分别命名为gmp和mpfr，这样在编译GCC的过程中就会自动去编译GMP和MPFR。我们采用第二种方法，下面的命令把GMP和MPFR源代码移动到GCC目录内：
+
+  
+
+cd ${SOURCE_DIR}
+
+mv ${PACKAGE_GMP} ${PACKAGE_GCC}/gmp
+
+mv ${PACKAGE_MPFR} ${PACKAGE_GCC}/mpfr
+配置选项
+
+第一次编译GCC的作用是生成支持C语言的交叉编译器，目的是用它来交叉编译后面的Glibc库。因为生成完整的GCC交叉编译器需要Glibc库的支持，但是现在还没有用于ARM平台的Glibc库，所以我们先生成一个简化的GCC，用它来编译Glibc，有了Glibc后再重新编译GCC生成完整的ARM-GCC。所以第一次编译GCC的配置选项禁止了很多功能，如下所示：
+
+cd ${BUILD_DIR}/${PACKAGE_GCC}
+
+${SOURCE_DIR}/${PACKAGE_GCC}/configure \
+
+   --build=${HOST} \
+
+   --host=${HOST} \
+
+   --target=${TARGET} \
+
+   --prefix=${RESULT_DIR} \
+
+   --without-headers \
+
+   --with-newlib \
+
+   --with-float=soft \
+
+   --with-cpu=arm920t \
+
+   --with-tune=arm9tdmi \
+
+   --with-gnu-as \
+
+   --with-gnu-ld \
+
+   --disable-nls \
+
+   --disable-decimal-float \
+
+   --disable-libgomp \
+
+   --disable-multilib \
+
+   --disable-libmudflap \
+
+   --disable-libssp \
+
+   --disable-shared \
+
+   --disable-threads \
+
+   --disable-libmudflap \
+
+   --disable-libstdcxx-pch \
+
+   --disable-libffi \
+
+   --enable-languages=c
+
+make && make install || exit 1
+选项详解
+
+BUILD= 是指在什么平台上编译源代码，这个肯定是主机了，x86
+HOST=  是指编译出来的可执行文件在什么平台上运行，这个对binutils个gcc来说是 x86, 对libc来说是arm
+TARGET= 是指用编译出来的交叉编译器编译其它代码生成的可执行文件在什么平台运行， arm
+
+-without-headers
+
+--with-newlib \
+
+   --with-float=soft \
+
+   --with-cpu=arm920t \
+
+   --with-tune=arm9tdmi \
+
+   --with-gnu-as \
+
+   --with-gnu-ld \
+
+--disable-decimal-float \
+
+   --disable-libgomp \
+
+   --disable-multilib \
+
+   --disable-libmudflap \
+
+   --disable-libssp \
+
+   --disable-shared \
+
+   --disable-threads \
+
+   --disable-libmudflap \
+
+   --disable-libstdcxx-pch \
+
+   --disable-libffi \
+
+--disable-shared
+
+Disables the creation of the shared libraries.
+
+--disable-threads
+
+This will prevent GCC from looking for the multi-thread include files, since they haven't been created for this architecture yet. GCC will be able to find the multi-thread information after the Glibc headers are created.
+
+--enable-languages=c
+
+This option ensures that only the C compiler is built.
+
+注意： 将这GMP和MPFR软件包解压到GCC源码树的根目录下，并分别命名为"gmp"和"mpfr"，那么GCC的编译程序将自动将两者与GCC一起编译。这样做了后，不需要加 --with-gmp 和with-mpfr 选项，加了反而会出错：configure: error: in `/home/hongwang/mktoolchain/build/gcc-4.4.0/mpfr':
+configure: error: Do not use --with-gmp-build and other --with-gmp options simultaneously.
+See `config.log' for more details.
+make: *** [configure-mpfr] 错误 1
+
+编译和安装的结果： （待完善）
+=====================================
+第四步 编译Glibc
+
+http://oss.ustc.edu.cn/gnu/glibc/glibc-2.9.tar.bz2
+
+http://ftp.cross-lfs.org/pub/clfs/conglomeration/glibc/glibc-ports-2.9.tar.bz2
+
+Glibc也就是C库函数，包括分配内存、搜索目录、打开和关闭文件、读和写文件、字符串操作、模式匹配、代数运算等。 libc-ports软件包的作用是移植，把Glibc库移植到ARM平台时需要它，解压后拷贝到glibc目录，并命名为 ports，就可以了：
+
+mv ${PACKAGE_GLIBCPORTS} ${PACKAGE_GLIBC}/ports
+
+编译完成需要时间大概为：1.5小时
+配置选项
+
+为了使Glibc支持NPTL，需要在Glibc编译目录下建立config.cache文件并写入：
+
+cat > config.cache << EOF
+
+libc_cv_forced_unwind=yes
+
+libc_cv_c_cleanup=yes
+
+libc_cv_arm_tls=yes
+
+libc_cv_gnu99_inline=yes
+
+EOF
+
+其中 libc_cv_arm_tls=yes 可以省略，因为交叉编译环境已经完全了解你要编译的目标体系，所以可以自行检测出来。
+
+BUILD_CC=gcc \
+
+CC=${TARGET}-gcc \
+
+AR=${TARGET}-ar \
+
+RANLIB=${TARGET}-ranlib \
+
+${SOURCE_DIR}/${PACKAGE_GLIBC}/configure \
+
+   --build=${HOST} \
+
+   --host=${TARGET} \
+
+   --target=${TARGET} \
+
+   --prefix="/usr" \
+
+   --with-headers=${TARGET_PREFIX}/include \
+
+   --with-binutils=${RESULT_DIR}/bin \
+
+   --with-tls \
+
+   --with-__thread \
+
+   --enable-sim \
+
+   --enable-nptl \
+
+   --enable-add-ons \
+
+   --enable-kernel=2.6.29 \
+
+   --disable-profile \
+
+   --without-gd \
+
+   --without-cvs \
+
+   --cache-file=config.cache
+
+make
+
+make install_root=${TARGET_PREFIX} prefix="" install
+
+选项详解
+
+BUILD_CC="gcc"
+
+Glibc在编译过程中需要先创建一些工具，这些工具需要用主机上的GCC来编译。
+
+CC=${TARGET}-gcc
+
+告诉Glibc使用我们在上一步为ARM目标平台创建的交叉编译器GCC来编译C库。
+
+AR=${TARGET}-ar \
+
+告诉Glibc使用我们在上一步为ARM目标平台创建的ar来汇编C库。
+
+RANLIB=${TARGET}-ranlib
+
+告诉Glibc使用我们在上一步为ARM目标平台创建的ranlib
+
+-with-headers=${TARGET_PREFIX}/include \
+
+   --with-binutils=${RESULT_DIR}/bin
+
+This tells Glibc to use the Binutils that are specific to our target architecture.
+
+   --with-tls
+
+This tells Glibc to use Thread Local Storage.
+
+   --with-__thread
+
+This tells Glibc to use use the __thread for libc and libpthread builds.
+
+   --enable-sim \
+
+   --enable-nptl \
+
+   --enable-add-ons
+
+This tells Glibc to utilize all add-ons that are available.
+
+   --enable-kernel=2.6.29 \
+
+   --disable-profile
+
+This builds the libraries without profiling information. Omit this option if profiling on the temporary tools is necessary.
+
+   --without-gd \
+
+   --without-cvs \
+
+   --cache-file=config.cache
+
+This tells Glibc to utilize a premade cache file.
+
+对 prefix 的解释
+
+对 libc.so 的修正·
+
+rm ${TARGET_PREFIX}/lib/libc.so
+
+cat > ${TARGET_PREFIX}/lib/libc.so << "EOF"
+
+/* GNU ld script
+
+    Use the shared library, but some functions are only in
+
+    the static library, so try that secondarily. */
+
+OUTPUT_FORMAT(elf32-littlearm)
+
+GROUP ( libc.so.6 libc_nonshared.a AS_NEEDED ( ld-linux.so.3 ) )
+
+EOF
+
+make install 后得到的文件：（待完善）
+=====================================
+第五步 编译GCC（第二次）
+
+需要时间大概为：1小时
+配置选项
+
+这次是编译完整的GCC，因此第一次disable的一些选项这次可以enable了。
+
+${SOURCE_DIR}/${PACKAGE_GCC}/configure \
+
+   --build=${HOST} \
+
+   --host=${HOST} \
+
+   --target=${TARGET} \
+
+   --prefix=${RESULT_DIR} \
+
+   --with-float=soft \
+
+   --with-cpu=arm920t \
+
+   --with-tune=arm9tdmi \
+
+   --enable-languages=c,c++ \
+
+   --enable-threads=posix \
+
+   --enable-c99 \
+
+   --enable-long-long \
+
+   --enable-shared \
+
+   --enable-__cxa_atexit \
+
+   --enable-nls \
+
+   --disable-libgomp
+
+make && make install
+选项详解
+
+-enable-languages=c,c++
+
+This option ensures that only the C and C++ compilers are built.
+
+--enable-__cxa_atexit
+
+This option allows use of __cxa_atexit, rather than atexit, to register C++ destructors for local statics and global objects and is essential for fully standards-compliant handling of destructors. It also affects the C++ ABI and therefore results in C++ shared libraries and C++ programs that are interoperable with other Linux distributions.
+
+--enable-c99
+
+Enable C99 support for C programs.
+
+--enable-long-long
+
+Enables long long support in the compiler.
+
+--enable-threads=posix
+
+This enables C++ exception handling for multi-threaded code.
+
+--enable-nls \
+
+--disable-libgomp
+
+如果不加这一项会出现如下错误：
+
+configure: error: Pthreads are required to build libgomp
+make[1]: *** [configure-target-libgomp] 错误 1
+make[1]:正在离开目录 `/home/hongwang/mktoolchain/build/gcc-4.4.0-2'
+make: *** [all] 错误 2
+没有找到好的解决办法，只能在configure里增加 --disable-libgomp
+
+为什么要编译两次GCC
+第一遍只编译一个支持c的gcc，原因是要编译出一个支持交叉的c++，必须有一个编译好的用于目标体系平台的glibc，而不是只有glibc的头文件就可以的，好在编译glibc有c支持就够了，所以编译glibc也成了第一遍的gcc唯一的理由和作用。工具链中gcc的第一次和第二次编译都是由主系统的gcc和binutils来完成的（之前没有提及binutils，只是为了理解方便，但实际上编译后是少不了链接过程的，这个过程是要binutils来完成的）。到目前为止只有在编译glibc的时候用到了交叉版本的binutils，其它部分的链接都是由主系统的binutils来完成的。

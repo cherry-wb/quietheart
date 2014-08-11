@@ -1,0 +1,3 @@
+在烧录到CDR之前创建一个镜像文件.
+mkisofs -r -o $IMAGEFILE $IMAGE_DIRECTORY
+

@@ -1,0 +1,15 @@
+Document: libgpewidget-doc
+Title: GPE Palmtop Environment widget library Reference Manual
+Author: Florian Boor 
+Abstract: GPE Palmtop Environment widget library Reference Manual
+ GPE Widget is the GPE base library for GUI applications
+ in the GPE Palmtop Environment.
+ .
+ This manual describes the Widget API to develop applications
+ using libgpewidget1.
+Section: Apps/Programming
+
+Format: HTML
+Index: /usr/share/doc/libgpewidget-doc/html/index.html
+Files: /usr/share/doc/libgpewidget-doc/html/*
+

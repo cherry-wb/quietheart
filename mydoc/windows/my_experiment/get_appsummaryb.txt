@@ -1,0 +1,228 @@
+Sub getAppSummaryB()
+'
+' mytest Macro
+'
+    '读取结果
+    Dim i, start, after_end As Integer
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+
+    Dim resultfile as String
+    resultfile = "D:\Program Files\diffcount\every_file_result.txt"
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+
+    Sheets("App").Select
+    ''''''统计各个文件数据情况用
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+    Dim retstring, token, addNum, modNum, delNum, totalNum As String
+    Dim tokenIndex,tmpPos,addColumn,modColumn,delColumn,totalColumn As Integer
+    addColumn=8
+    modColumn=9
+    delColumn=10
+    totalColumn=11
+    ''''''统计总体数据情况用
+    Dim osWrapper_Index,zou3App_Index,zou3Codec_Index,zou3iLink_Index,zou3Kernel_Index,zou3Main_Index,zou3Mif_Index,zou3Mux_Index,zou3Sc_Index,zou3SC2P_Index,diabloSubCpu_Index As Integer
+    'XXX How many??
+    Dim ii,appTitleRow,addRow,modRow,totalRow As Integer
+    appTitleRow=8
+    addRow=9
+    modRow=10
+    totalRow=11
+    ii = 0
+    'While Cells(2,i+2)<>集計
+    While ii < 11
+      If Sheets("集計").Cells(appTitleRow,ii+2)="osWrapper" Then
+        osWrapper_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3App" Then
+        zou3App_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Codec" Then
+        zou3Codec_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3iLink" Then
+        zou3iLink_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Kernel" Then
+        zou3Kernel_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Main" Then
+        zou3Main_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Mif" Then
+        zou3Mif_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Mux" Then
+        zou3Mux_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Sc" Then
+        zou3Sc_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3SC2P" Then
+        zou3SC2P_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="diabloSubCpu" Then
+        diabloSubCpu_Index=ii
+      EndIf
+      Sheets("集計").Cells(addRow,ii+2)=0
+      Sheets("集計").Cells(modRow,ii+2)=0
+      Sheets("集計").Cells(totalRow,ii+2)=0
+      ii = ii + 1
+    Wend
+
+    ''''''开始统计
+    i = start
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计非空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn).Value = 0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      ElseIf Cells(i,4) = "新规" Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn)=0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      Else
+        Cells(i, addColumn)=0
+        Cells(i, modColumn)=0
+        Cells(i, delColumn)=0
+        Cells(i, totalColumn)=0
+      End If 'if not IsEmpty(Cells(i,4))
+
+      If InStr(Cells(i,2), "\osWrapper") > 0 Then
+        Sheets("集計").Cells(addRow,osWrapper_Index+2)=Sheets("集計").Cells(addRow,osWrapper_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,osWrapper_Index+2)=Sheets("集計").Cells(modRow,osWrapper_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,osWrapper_Index+2)=Sheets("集計").Cells(totalRow,osWrapper_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3App") > 0 Then
+        Sheets("集計").Cells(addRow,zou3App_Index+2)=Sheets("集計").Cells(addRow,zou3App_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3App_Index+2)=Sheets("集計").Cells(modRow,zou3App_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3App_Index+2)=Sheets("集計").Cells(totalRow,zou3App_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Codec") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Codec_Index+2)=Sheets("集計").Cells(addRow,zou3Codec_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Codec_Index+2)=Sheets("集計").Cells(modRow,zou3Codec_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Codec_Index+2)=Sheets("集計").Cells(totalRow,zou3Codec_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3iLink") > 0 Then
+        Sheets("集計").Cells(addRow,zou3iLink_Index+2)=Sheets("集計").Cells(addRow,zou3iLink_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3iLink_Index+2)=Sheets("集計").Cells(modRow,zou3iLink_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3iLink_Index+2)=Sheets("集計").Cells(totalRow,zou3iLink_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Kernel") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Kernel_Index+2)=Sheets("集計").Cells(addRow,zou3Kernel_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Kernel_Index+2)=Sheets("集計").Cells(modRow,zou3Kernel_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Kernel_Index+2)=Sheets("集計").Cells(totalRow,zou3Kernel_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Main") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Main_Index+2)=Sheets("集計").Cells(addRow,zou3Main_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Main_Index+2)=Sheets("集計").Cells(modRow,zou3Main_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Main_Index+2)=Sheets("集計").Cells(totalRow,zou3Main_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Mif") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Mif_Index+2)=Sheets("集計").Cells(addRow,zou3Mif_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Mif_Index+2)=Sheets("集計").Cells(modRow,zou3Mif_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Mif_Index+2)=Sheets("集計").Cells(totalRow,zou3Mif_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Mux") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Mux_Index+2)=Sheets("集計").Cells(addRow,zou3Mux_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Mux_Index+2)=Sheets("集計").Cells(modRow,zou3Mux_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Mux_Index+2)=Sheets("集計").Cells(totalRow,zou3Mux_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Sc") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Sc_Index+2)=Sheets("集計").Cells(addRow,zou3Sc_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Sc_Index+2)=Sheets("集計").Cells(modRow,zou3Sc_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Sc_Index+2)=Sheets("集計").Cells(totalRow,zou3Sc_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3SC2P") > 0 Then
+        Sheets("集計").Cells(addRow,zou3SC2P_Index+2)=Sheets("集計").Cells(addRow,zou3SC2P_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3SC2P_Index+2)=Sheets("集計").Cells(modRow,zou3SC2P_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3SC2P_Index+2)=Sheets("集計").Cells(totalRow,zou3SC2P_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\diabloSubCpu") > 0 Then
+        Sheets("集計").Cells(addRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(addRow,diabloSubCpu_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(modRow,diabloSubCpu_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(totalRow,diabloSubCpu_Index+2) + Cells(i,totalColumn)
+      EndIf
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:L").AutoFit
+    Sheets("集計").Columns("B:T").AutoFit
+End Sub

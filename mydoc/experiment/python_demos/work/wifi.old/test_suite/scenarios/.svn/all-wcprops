@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scenarios
+END
+sample_subscenario.json.template
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/1323/Management/wifi/test_suite/scenarios/sample_subscenario.json.template
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/scenarios/__init__.py
+END
+sample_scenario1.py.template
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/amazon/!svn/ver/952/Management/wifi/test_suite/scenarios/sample_scenario1.py.template
+END
+sample_scenario1.json.template
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/819/Management/wifi/test_suite/scenarios/sample_scenario1.json.template
+END

@@ -1,0 +1,44 @@
+{
+	"name":"ap_set_SSID",
+	"type":{"name":"seq"},
+	"description":"set cisco ap SSID.",
+	"scenarios":[{
+		"login":{
+			"fname":"ap/cisco/scenario_login_wrt.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"wrt54gl",
+				"ip":"192.168.1.1",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin"
+			}
+		}},
+		{"ap_set_SSID":{
+			"fname":"ap/cisco/scenario_set_wireless_SSID_wrt.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"wrt54gl",
+				"ip":"192.168.1.1",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin",
+                "ssid":"Cisco20120306"
+			}
+		}},
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout_wrt.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"name":"wrt54gl",
+				"ip":"192.168.1.1",
+				"submask":"255.255.255.0",
+				"dns":"10.1.10.254",
+				"admin":"admin",
+				"password":"myadmin"
+			}
+		}
+	}]
+}

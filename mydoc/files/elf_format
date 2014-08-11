@@ -1,0 +1,102 @@
+参考：http://www.dz3w.com/mcu/linux/0070701.html
+1 引言
+    ELF(Executable and Linkable Format)即可执行连接文件格式，是Linux，SVR4和Solaris2.0默认的目标文件格式，目前标准接口委员会TIS已将ELF标准化为一种可移植的目标文件格式，运行于32-bit Intel体系微机上，可与多种操作系统兼容。分析elf文件有助于理解一些重要的系统概念，例如程序的编译和链接，程序的加载和运行等
+
+2 ELF文件格式
+2.1 ELF文件的类型
+ELF文件主要有三种类型：
+(1)可重定位文件包含了代码和数据．可与其它ELF文件建立一个可执行或共享的文件：
+(2)可执行文件时可直接执行的程序：
+(3)共享目标文件包括代码和数据，可以在两个地方链接。第一，连接器可以把它和其它可重定位文件和共享文件一起处理以建立另一个ELF文件;第二，动态链接器把它和一个可执行文件和其它共享文件结合在一起建立一个进程映像。
+
+2.2 ELF文件的组织
+    ELF文件参与程序的连接(建立一个程序)和程序的执行(运行一个程序)，编译器和链接器将其视为节头表(section header table)描述的一些节(section)的集合，而加载器则将其视为程序头表(program header table)描述的段(segment)的集合，通常一个段可以包含多个节。可重定位文件都包含一个节头表，可执行文件都包含一个程序头表。共享文件两者都包含有。为此，ELF文件格式同时提供了两种看待文件内容的方式，反映了不同行为的不同要求。下图显示了ELF文件的组织。
+ 
+2.3 文件头(Elf header)
+    Elf头在程序的开始部位，作为引路表描述整个ELF的文件结构，其信息大致分为四部分：一是系统相关信息，二是目标文件类型，三是加载相关信息，四是链接相关信息其中系统相关信息包括elf文件魔数(标识elf文件)，平台位数，数据编码方式，elf头部版本，硬件平台e_machine，目标文件版本 e_version，处理器特定标志e_ftags：这些信息的引入极大增强了elf文件的可移植性，使交叉编译成为可能。目标文件类型用e_type的值表示，可重定位文件为1，可执行文件为2，共享文件为3;加载相关信息有：程序进入点e_entry．程序头表偏移量e_phoff，elf头部长度 e_ehsize，程序头表中一个条目的长度e_phentsize，程序头表条目数目e_phnum;链接相关信息有：节头表偏移量e_shoff，节头表中一个条目的长度e_shentsize，节头表条目个数e_shnum ，节头表字符索引e shstmdx。可使用readelf -h filename来察看文件头的内容。
+文件头的数据结构如下：
+typedef struct elf32_hdr{
+unsigned char e_ident[EI_NIDENT];
+Elf32_Half e_type;//目标文件类型
+Elf32_Half e_machine;//硬件平台
+Elf32_Word e_version;//elf头部版本
+Elf32_Addr e_entry;//程序进入点
+Elf32_Off e_phoff;//程序头表偏移量
+Elf32_Off e_shoff;//节头表偏移量
+Elf32_Word e_flags;/处理器特定标志
+Elf32_Half e_ehsize;//elf头部长度
+Elf32_Half e_phentsize;//程序头表中一个条目的长度
+Elf32_Half e_phnum;//程序头表条目数目
+Elf32_Half e_shentsize;//节头表中一个条目的长度
+Elf32_Half e_shnum;//节头表条目个数
+Elf32_Half e_shstrmdx;//节头表字符索引
+}Elf32_Ehdr;
+
+2.4 程序头表(program header table)
+    程序头表告诉系统如何建立一个进程映像．它是从加载执行的角度来看待elf文件．从它的角度看．elf文件被分成许多段，elf文件中的代码、链接信息和注释都以段的形式存放。每个段都在程序头表中有一个表项描述，包含以下属性：段的类型，段的驻留位置相对于文件开始处的偏移，段在内存中的首字节地址，段的物理地址，段在文件映像中的字节数．段在内存映像中的字节数，段在内存和文件中的对齐标记。可用readelf -l filename察看程序头表中的内容。程序头表的结构如下：
+typedef struct elf32_phdr{
+Elf32_Word p_type; //段的类型
+Elf32_Off p_offset; //段的位置相对于文件开始处的偏移
+Elf32_Addr p_vaddr; //段在内存中的首字节地址
+Elf32_Addr p_paddr;//段的物理地址
+Elf32_Word p_filesz;//段在文件映像中的字节数
+Elf32_Word p_memsz;//段在内存映像中的字节数
+Elf32_Word p_flags;//段的标记
+Elf32_Word p_align;，/段在内存中的对齐标记
+)Elf32_Phdr;
+
+2.5节头表(section header table)
+    节头表描述程序节，为编译器和链接器服务。它把elf文件分成了许多节．每个节保存着用于不同目的的数据．这些数据可能被前面的程序头重复使用，完成一次任务所需的信息往往被分散到不同的节里。由于节中数据的用途不同，节被分成不同的类型，每种类型的节都有自己组织数据的方式。每一个节在节头表中都有一个表项描述该节的属性，节的属性包括小节名在字符表中的索引，类型，属性，运行时的虚拟地址，文件偏移，以字节为单位的大小，小节的对齐等信息，可使用 readelf -S filename来察看节头表的内容。节头表的结构如下：
+typedef struct{
+Elf32_Word sh_name;//小节名在字符表中的索引
+E1t32_Word sh_type;//小节的类型
+Elf32_Word sh_flags;//小节属性
+Elf32_Addr sh_addr; //小节在运行时的虚拟地址
+Elf32_Off sh_offset;//小节的文件偏移
+Elf32_Word sh_size;//小节的大小．以字节为单位
+Elf32_Word sh_link;//链接的另外一小节的索引
+Elf32 Word sh_info;//附加的小节信息
+Elf32 Word sh_addralign;//小节的对齐
+Elf32 Word sh_entsize; //一些sections保存着一张固定大小入口的表。就像符号表
+}Elf32_Shdr;
+
+3 ELF的特性
+3.1平台相关
+    在ELF 文件头中包含了足够的平台相关信息，如数据编码方式，平台位数，硬件平台e_machine等，这些平台相关信息可在编译由编译器决定。例如，与平台位数的相关的数据结构的定义在elf.h的头文件中．在编译预处理时确定：
+#if ELF CLASS==ELFCLASS32
+extern Elf32_Dyn_DYNAMIC[];
+#define elfhdr elf32_hdr;
+#define elf_phdr elf32_phdr;
+#define elf_note elf32_note;
+#else
+extern Elf64_Dyn_DYNAMIC[];
+#define elfhdr elf64_hdr;
+#define elf_phdr elf64_phdr;
+#define elf_note elf64_note;
+#endif
+    linux系统加载ELF可执行文件时，必须首先做一些简单的一致性检查．其代码如下
+if(memcmp(elf_ex.e_ident,ELFMAG,SELFMAG)!=0)
+goto out; //检查文件头开始四个字符是否为ELF魔数'\0177ELF
+if(elf_ex.e_type!=ET_EXEC&&elf_ex.e_type!=ET_DYN)
+goto out;//检查文件类型是否为可执行文件或共享目标文件
+if(!elf_check_arch(&elf_ex))
+goto out;//检查硬件平台是否一致
+    其中的elf_check_arch(x)在不同的硬件平台上有不同的定义，其由系统的硬件平台决定。这样，在硬件平台相同的系统上，ELF可以不作修改的执行。因此，它可以支持不同平台上的交叉编译(cross_compilation)和交叉链接(cross_linking)。
+
+3.2 PIC
+    ELF可以生成一种特殊的代码——与位置无关的代码(position-independent code,PIC)。用户对gcc使用-fPIC指示GNU编译系统生成PIC代码。它是实现共享库或共享可执行代码的基础．这种代码的特殊性在于它可以加载到内存地址空间的任何地址执行．这也是加载器可以很方便的在进程中动态链接共享库。
+    PIC的实现运用了一个事实，就是代码段中任何指令和数据段中的任何变量之间的距离都是一个与代码段和数据段的绝对存储器位置无关的常量。因此，编译器在数据段开始的地方创建了一个表．叫做全局偏移量表(global offset table．GOT)。GOT包含每个被这个目标模块引用的全局数据目标的表目。编译器还为GOT中每个表目生成一个重定位记录。在加载时，动态链接器会重定位GOT中的每个表目，使得它包含正确的绝对地址。PIC代码在代码中实现通过GOT间接的引用每个全局变量，这样，代码中本来简单的数据引用就变得复杂，必须加入得到GOT适当表目内容的指令。对只读数据的引用也根据同样的道理，所以，加上 IC编译成的代码比一般的代码开销大。
+    如果一个elf可执行文件需要调用定义在共享库中的任何函数，那么它就有自己的GOT和PLT(procedure linkage table，过程链接表)．这两个节之间的交互可以实现延迟绑定(lazy binging)，这种方法将过程地址的绑定推迟到第一次调用该函数。为了实现延迟绑定，GOT的头三条表目是特殊的：GOT[0]包含.dynamic 段的地址，.dynamic段包含了动态链接器用来绑定过程地址的信息，比如符号的位置和重定位信息;GOT[1]包含动态链接器的标识;GOT[2]包含动态链接器的延迟绑定代码的入口点。GOT的其他表目为本模块要引用的一个全局变量或函数的地址。PLT是一个以16字节(32位平台中)表目的数组形式出现的代码序列。其中PLT[0]是一个特殊的表目，它跳转到动态链接器中执行;每个定义在共享库中并被本模块调用的函数在PLT中都有一个表目，从 PLT[1]开始．模块对函数的调用会转到相应PLT表目中执行，这些表目由三条指令构成。第一条指令是跳转到相应的GOT存储的地址值中．第二条指令把函数相应的ID压入栈中，第三条指令跳转到PLT[O]中调用动态链接器解析函数地址，并把函数真正地址存入相应的GOT表目中。被调用函数GOT相应表目中存储的最初地址为相应PLT表目中第二条指令的地址值，函数第一次被调用后．GOT表目中的值就为函数的真正地址。因此，第一次调用函数时开销比较大．但是其后的每次调用都只会花费一条指令和一个间接的存储器引用。
+
+3.3 强大的工具支持
+    由于gnu由大量的工具支持elf文件个时．随着gnu工具的功能的扩展．程序员对ELF文件的运用也越来越灵活。例如，在C++中全局的构造函数和析构函数必须非常小心的处理碰到的语言规范问题。构造函数必须在main函数之前被调用。析构函数必须在main函数返回之后被调用。ELF文件格式中，定义了两个特殊的节 (section)，.init和.fini，.init保存着可执行指令，它构成了进程的初始化代码。当一个程序开始运行时，在main函数被调用之前 (c语言称为main)，系统安排执行这个section的中的代码。.fini保存着可执行指令，它构成了进程的终止代码。当一个程序正常退出时．系统安排执行这个section的中的代码。C++编译器利用这个特性．构造正确的.init和.fini sections．并结合.ctors(该section保存着程序的全局的构造函数的指针数组)和.dtors(该section保存着程序的全局的析构函数的指针数组)两个section，完成全局的构造函数和析构函数的处理。
+    GCC还有许多扩展的特性．有些对ELF 特别的有用。其中一个就是_attribute_ 。使用_attribute_可以使一个函数放到_CTOR_LIST_或者_DTOR_LIST_里。 _attribute_((constructor))促使函数在进入main之前会被自动调用。_attribute_((destructor))促使函数在main返回或者exit调用之后被自动调用。这种函数必须是不能带参数的而且必须是static void类型的函数。在ELF下，这个特性在一般的可执行文件和共享库中都能很好的工作。另外一个GCC的特性是 attribute_(section("sectionname"))，使用这个，能把一个函数或者是数据结构放到任何的section中。
+
+4 结论
+    elf文件格式是一种比较复杂的文件格式，但其应用广泛。与linux下的其他可执行文件(a.out，cof)相比，它对节的定义和gnu工具链对它的支持使它十分灵活，它保存的足够了系统相关信息使它能支持不同平台上的交叉编译和交叉链接，可移植性很强．同时它在执行中支持动态链接共享库。
+    
+    
+其他参考文件：
+http://linux.chinaunix.net/techdoc/beginner/2009/04/23/1108716.shtml
+http://www.dz3w.com/mcu/linux/0070701.html
+http://www.sudu.cn/info/html/edu/20080428/302819.html

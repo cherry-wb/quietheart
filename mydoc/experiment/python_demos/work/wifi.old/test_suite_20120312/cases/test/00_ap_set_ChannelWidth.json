@@ -1,0 +1,28 @@
+{
+	"name":"ap_set_channelwidth",
+	"type":{"name":"seq"},
+	"description":"set cisco ap wireless channelwidth.",
+	"scenarios":[
+		{
+		"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{				
+				"ip":"10.1.10.32:8080"
+			}
+		}},
+		{"set_wireless_mode":{
+			"fname":"ap/cisco/scenario_set_ChannelWidth.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{                        
+                                "channelwidth":{"5G":"A","2G":"20"}
+			}
+		 }},              
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout.json", 
+			"type":{"name":"seq"}
+		}
+	}
+	]
+
+}

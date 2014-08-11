@@ -1,0 +1,23 @@
+midori
+  依赖: libatk1.0-0
+  依赖: libc6
+  依赖: libcairo2
+  依赖: libfontconfig1
+  依赖: libfreetype6
+  依赖: libglib2.0-0
+  依赖: libgtk2.0-0
+  依赖: libpango1.0-0
+  依赖: libpixman-1-0
+  依赖: libpng12-0
+  依赖: libsexy2
+  依赖: libwebkitgtk1d
+  依赖: libx11-6
+  依赖: libxcursor1
+  依赖: libxext6
+  依赖: libxfixes3
+  依赖: libxi6
+  依赖: libxinerama1
+  依赖: libxml2
+  依赖: libxrandr2
+  依赖: libxrender1
+  依赖: zlib1g

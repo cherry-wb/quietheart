@@ -1,0 +1,58 @@
+http://www.idcnews.net/html/edu/20080428/302490.html
+gzip命令
+　　减少文档大小有两个明显的好处，一是能够减少存储空间，二是通过网络传输文档时，能够减少传输的时间。gzip是在Linux系统中经常使用的一个对文档进行压缩和解压缩的命令，既方便又好用。
+　　语法：gzip ［选项］ 压缩（解压缩）的文档名
+　　各选项的含义：
+　　-c 将输出写到标准输出上，并保留原有文档。
+　　-d 将压缩文档解压。
+　　-l 对每个压缩文档，显示下列字段：
+　　压缩文档的大小
+　　未压缩文档的大小
+　　压缩比
+　　未压缩文档的名字
+　　-r 递归式地查找指定目录并压缩其中的任何文档或是解压缩。
+　　-t 测试，检查压缩文档是否完整。
+　　-v 对每一个压缩和解压的文档，显示文档名和压缩比。
+　　-num 用指定的数字num调整压缩的速度，-1或--fast表示最快压缩方法（低压缩比），-9或--best表示最慢压缩方法（高压缩比）。系统缺省值为6。
+　　假设一个目录/home下有文档mm.txt、sort.txt、xx.com。
+　　例1：把/home目录下的每个文档压缩成.gz文档。
+　　$ cd /home
+　　$ gzip *
+　　$ ls
+　　m.txt.gz sort.txt.gz xx.com.gz
+　　例2：把例1中每个压缩的文档解压，并列出周详的信息。
+　　$ gzip -dv *
+　　mm.txt.gz 43.1%-----replaced with mm.txt
+　　sort.txt.gz 43.1%-----replaced with sort.txt
+　　xx.com.gz 43.1%-----replaced with xx.com
+　　$ ls
+　　mm.txt sort.txt xx.com
+　　例3：周详显示例1中每个压缩的文档的信息，并不解压。
+　　$ gzip -l *
+　　comcodessed uncompr. ratio uncomcodessed_name
+　　277 445 43.1% mm.txt
+　　278 445 43.1% sort.txt
+　　277 445 43.1% xx.com
+　　$ ls
+　　mm.txt.gz sort.txt.gz xx.com.gz
+　　例4：压缩一个tar备份文档，如usr.tar，此时压缩文档的扩展名为.tar.gz
+　　$ gzip usr.tar
+　　$ ls
+　　usr.tar.gz
+
+
+http://www.tsnc.edu.cn/default/tsnc_wgrj/doc/abs-3.9.1_cn/html/filearchiv.html
+gzip
+标准的GNU/UNIX压缩工具, 取代了比较差的compress命令. 相应的解压命令是gunzip, 与gzip -d是等价的.
+
+Note	
+
+-c选项将会把gzip的输出打印到stdout上. 当你想通过管道传递到其他命令的时候, 这就非常有用了.
+
+zcat过滤器可以将一个gzip文件解压到stdout, 所以尽可能的使用管道和重定向. 这个命令事实上就是一个可以工作于压缩文件(包括一些的使用老的compress工具压缩的文件)的cat命令. zcat命令等价于gzip -dc.
+
+Caution	
+
+在某些商业的UNIX系统上, zcat与uncompress -c等价, 并且不能工作于gzip文件.
+
+请参考例子 7-7. 

@@ -1,0 +1,194 @@
+这里是工作时候临时记录的“有用”的东西。
+主要内容：
+=========
+*关于HildonDesktop的启动
+*关于关于自带软件盘的启动
+*杂乱收获总结
+*hildon-input-method体系结构
+
+
+
+关于HildonDesktop的启动
+======================
+$HOME/.osso/current-gtk-theme:
+include "/usr/share/themes/default/gtk-2.0/gtkrc"
+
+$HOME/.osso/current-gtk-theme.maemo_af_desktop:
+include "/usr/share/themes/default/gtk-2.0/gtkrc.maemo_af_desktop"
+
+-------------
+/etc/osso-af-init/hildon-desktop.sh由/etc/rc2.d/S51hildon-desktop先切换到user用户态下再调用
+hildon-desktop.sh
+运行过程：
+1）写$HOME/.osso/current-gtk-theme.maemo_af_desktop，内容为：
+include "/usr/share/themes/default/gtk-2.0/gtkrc.maemo_af_desktop"
+
+PROG=/usr/bin/hildon-desktop
+SVC="Hildon Desktop"(实际它就是启动时候的提示，提示：Starting Hildon Desktop)
+2）如果参数是start，
+检查是否存在X显示
+
+$LAUNCHWRAPPER_NICE_TRYRESTART start "$SVC" $PROG
+3)如果参数是stop,
+$LAUNCHWRAPPER_NICE_TRYRESTART stop "$SVC" $PROG
+---------messy
+cat current-gtk-theme |sed -e "s/include\ \"\/usr\/share\/themes\///" -e 's/\/gtk\-2\.0\/gtkrc\"//'|tr -d " "
+执行之后是：default
+
+
+LAUNCHWRAPPER_NICE_TRYRESTART=/etc/osso-af-init/launch-wrapper.sh
+
+
+综上，
+最终启动hildon的语句
+/sbin/start-stop-daemon --start -x /usr/bin/hildon-desktop -p /tmp/af-piddir/$hildon-desktop.pid -o -m -q -- $PARAMS &
+这里的$PARAMS应该是空？
+
+最终停止hildon的语句
+/sbin/start-stop-daemon --stop -p /tmp/af-piddir/$hildon-desktop.pid -R TERM/1/KILL -q &
+
+
+
+关于关于自带软件盘的启动
+=========================
+内容:
+*系统中和软键盘相关的脚本
+*关于软件盘的简单启动和配置
+*关于hildon-input-method的资料
+
+系统中和软键盘相关的脚本
+------------------------
+相关文件在/etc/osso-af-init/目录中的：
+keyboard.defs(内容为空) keyboard.sh
+
+阅读keyboard.sh脚本结合grep最终确定运行keyboard.sh的关键语句：
+export AF_PIDDIR=/tmp/af-piddir
+CMD=/usr/bin/hildon-input-method
+PIDFILE=$AF_PIDDIR/hildon-input-method.pid
+CONFIGURED=$HOME/.osso/hildon-input-method/.configured
+mkdir -p $HOME/.osso/hildon-input-method
+/usr/bin/hildon-input-method-configurator && touch $CONFIGURED
+/sbin/start-stop-daemon --start -x $CMD -p $PIDFILE -o -m -q -- $PARAMS
+
+也即软件盘的运行命令：
+/sbin/start-stop-daemon --start -x /usr/bin/hildon-input-method -p /tmp/af-piddir/hildon-input-method.pid -o -m -q --""
+或者
+/sbin/start-stop-daemon --start -x /usr/bin/hildon-input-method
+注意：可能需要运行hildon-im-recache,更新/usr/lib/hildon-input-method中的缓存
+
+停止软件盘的命令：
+/sbin/start-stop-daemon --stop -p /tmp/af-piddir/hildon-input-method.pid -R TERM/1/KILL -q &
+
+start-stop-daemon用来控制启动系统级别的守护进程
+应该启动的是hildon-input-method
+
+关于软件盘的简单启动和配置
+--------------------------
+运行软件盘之后，点击地址栏，就会启动软件盘了。运行
+/sbin/start-stop-daemon --stop -p /tmp/af-piddir/hildon-input-method.pid -R TERM/1/KILL -q &
+就停止那个软件盘了。
+
+*把/apps/osso/inputmethod/input_method_plugin 的Gconf设置为:himExample_vkb
+先打印看看：
+gconftool-2 -g /apps/osso/inputmethod/input_method_plugin
+不行再设置：
+$gconftool-2 --type string -s /apps/osso/inputmethod/input_method_plugin himExample_vkb
+这样它可以被UI加载。
+
+是否需要虚拟键盘的gconf相关显示以及设置：
+gconftool-2 -g /apps/osso/inputmethod/use_finger_kb
+$gconftool-2 --type boolean -s /apps/osso/inputmethod/use_finger_kb true
+
+另外：
+/apps/osso/inputmethod/launch_finger_kb_on_select = true
+启动
+/sbin/start-stop-daemon --start -x /usr/bin/hildon-input-method -p /tmp/af-piddir/hildon-input-method.pid -o -m -q --""
+之后，点击输入框就会显示软件盘了。
+倘若设置为false：
+gconftool-2 --type boolean -s /apps/osso/inputmethod/launch_finger_kb_on_select false
+也没有看出有什么变化
+gconftool-2 --type boolean -s /apps/osso/inputmethod/launch_finger_kb_on_select true
+
+关于hildon-input-method的资料：
+-------------------------------
+源代码：
+http://www.oschina.net/p/hildon+input+method
+
+介绍hildon-input-method总体框架：
+http://live.gnome.org/Hildon/HildonInputMethod
+
+详细并通过例子介绍如何编写hildon-input-method的插件：
+http://maemo.org/maemo_release_documentation/maemo4.1.x/node8.html#SECTION008130000000000000000
+---------
+
+
+
+杂乱收获总结
+--------------
+重要的包含部分：
+* 如何将原来的软键盘运行起来
+* scratchbox环境配置
+
+插件放在/usr/lib/hildon-input-method/中。
+
+我们机器上面的仅仅是him-vkb-example这个例子插件，不支持语言切换，因为它没有实现切换语言的函数(参照"如何编写hildon-input-method的相关资料")：
+static void
+language (HildonIMPlugin *plugin)
+{
+	  /* not implemented */
+}
+
+阅读maemo教程p132:
+The maemo platform includes text input methods used with touchscreen. There
+are two different input types: virtual keyboard and handwriting recognition.
+Only the virtual keyboard is provided in maemo SDK, but as the input is
+transparent for the application, all applications will automatically support also
+handwriting recognition. When using the device, it is possible to select between
+two keyboard layouts. When touching the screen using a finger, a thumb
+keyboard is provided.
+致命maemo平台包括两种输入方式：虚拟键盘和手写识别，只有虚拟键盘在maemosdk中被提供了，但是为了透明性，所有的程序也自动支持手写识别。
+(也就是说手写识别是自动被支持的，但是在SDK中没有提供?)
+
+hildon-input-method体系结构
+-------------------
+hildon-input-method-framework
+定义了hildon输入法相关的协议，用来在客户程序和hildon-input-method进程之间通过X相互通信。它使得hildon-input-method对于任何使用X的可见工具集来说都是可用的。
+另外它也提供了HildonIMContext（HildonIM上下文）,它能够使用前面定义的协议和hildon-input-method进程之间通信。
+
+hildon-input-method
+这是一个独立的进程，它提供了主要的功能。并且提供输入插件。在Maemo5中，实际的用户界面被完全地移走，每个插件用来提供图形接口。
+hildon-input-method-plugins-example
+
+
+
+=============
+
+如何将原来的软键盘运行起来：
+-------------------
+运行软键盘，需要好像这个库：
+libfakekey-dev
+添加这个源：
+deb http://ftp.de.debian.org/debian lenny main 
+
+...../src/window就run了。如果不能就用dbus-uuidgen --ensure
+
+
+scratchbox环境配置：
+=======
+关于scratchbox的安装scratchbox-Installation-Guild-v0.2.doc已说了。
+1,在scratchbox中如果选择最新的rootfs，
+首先要下载相应的target,platform,***.conf
+platform用于开发。
+target release用
+其次，在进入scratchbox之前运行scratchbox/sbin/load....
+最后,进入scratchbox再用sb-menu选择
+或者：
+sb-conf select platform_v0.2
+这里platform_v0.2是name
+2,文件存放在：
+/root/hs/scratchbox/users/root
+这个文件将成为根目录（共享）
+
+/root/hs/scratchbox/users/root/targets
+这个目录将成为目标文件系统的安装位置。
+

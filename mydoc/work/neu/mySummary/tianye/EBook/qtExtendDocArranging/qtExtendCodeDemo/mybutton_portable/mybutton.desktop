@@ -1,0 +1,11 @@
+[Translation]
+File=mybutton-nct
+Context=MyButton
+
+[Desktop Entry]
+Comment[]=My Button 
+Exec=mybutton
+#Icon=example/Example
+Type=Application
+#Builtin=Yes
+Name[]=MyButton

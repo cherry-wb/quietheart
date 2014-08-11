@@ -1,0 +1,81 @@
+问题：
+1)编译错误：
+文件MP3_D_SAMPLE.c
+170         outData.Buffer   = outBuf;
+导致如下错误：
+error: cannot convert 'short int*' to 'unsigned char*' in assignment
+
+//////init
+#define READ_SIZE	(2000)	
+	FILE *infile;
+	VO_MEM_OPERATOR moper;
+	VO_CODEC_INIT_USERDATA useData;
+	VO_AUDIO_CODECAPI AudioAPI;
+	VO_HANDLE hCodec;
+	VO_CODECBUFFER inData;
+	VO_CODECBUFFER outData;
+	VO_AUDIO_OUTPUTINFO outInfo;
+	unsigned char inBuf[READ_SIZE];
+	short outBuf[1024*8];
+	int bytesLeft, nRead;
+	int	returnCode;
+
+
+//////get input
+
+    const char *infileName = argv[1];
+	infile = fopen(infileName, "rb");
+
+	moper.Alloc = cmnMemAlloc;
+	moper.Copy = cmnMemCopy;
+	moper.Free = cmnMemFree;
+	moper.Set = cmnMemSet;
+	moper.Check = cmnMemCheck;
+
+	useData.memflag = VO_IMF_USERMEMOPERATOR;
+	useData.memData = (VO_PTR)(&moper);
+
+	returnCode  = voGetMP3DecAPI(&AudioAPI);
+	if(returnCode)
+		return -1;
+	returnCode = AudioAPI.Init(&hCodec, VO_AUDIO_CodingMP3, &useData);
+	if(returnCode < 0)
+	{
+		printf("#### VOI_Error2:fail to initialize the decoder###\n");
+		return -1;
+	}
+
+	//////do decoder
+	inData.Buffer = inBuf;
+	//bytesLeft = ReadFile2Buf(infile,inData.Buffer,READ_SIZE);
+	//fread(inParam.inputStream, 1, READ_SIZE, infile);
+	bytesLeft = fread(inData.Buffer, 1, READ_SIZE, infile);
+	do {
+
+		//frameCount++;
+		inData.Length    = bytesLeft;
+		outData.Buffer   = outBuf;
+		outData.Length = 1024*8;
+
+		returnCode = AudioAPI.SetInputData(hCodec,&inData);
+		do {
+			outData.Buffer   = outBuf;
+			outData.Length = 1024*8;
+			returnCode = AudioAPI.GetOutputData(hCodec,&outData, &outInfo);
+		} while(returnCode != (VO_ERR_INPUT_BUFFER_SMALL));
+
+		if (!eofFile) {
+			nRead = ReadFile2Buf(infile, inBuf,READ_SIZE);
+			nRead = fread(inBuf, 1, READ_SIZE, infile);
+			bytesLeft = nRead;
+			inData.Buffer = inBuf;
+			if (!nRead)
+				break;
+		}
+
+	} while (returnCode);
+
+
+	//////release resource
+	returnCode = AudioAPI.Uninit(hCodec);
+	fclose(infile);

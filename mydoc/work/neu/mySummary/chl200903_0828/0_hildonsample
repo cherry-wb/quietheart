@@ -1,0 +1,75 @@
+适应环境：估计大家不用看了
+安装scratchbox之后，先适应环境，
+##########################
+1,启动环境：
+start the xephyr:
+$ Xephyr :2 -host-cursor -screen 800x480x16 -dpi 96 -ac -extension Composite
+then we can see a window on the desktop, that is Xephyr xserver, it is as the DISPLAY:2 
+
+change the root,start the sever:
+# /root/marvell_mid/scratchbox/sbin/sbox_ctl start
+
+log in scratchbox as user xieyan:
+$ /scratchbox/login
+
+show marvell_mid interface:
+> export DISPLAY=:2      // set show on DISPLAY:2上,that is also Xephyr
+> af-sb-init.sh start          //start graph interface
+
+#############################
+2，编写一个小程序：
+//example:
+//a hello world program
+//maemo_hello.c
+include <hildon/hildon-program.h>
+#include <gtk/gtkmain.h>
+#include <gtk/gtkbutton.h>
+
+int main(int argc, char *argv[])
+{
+    /* Create needed variables */
+    HildonProgram *program;
+    HildonWindow *window;
+    GtkWidget *button;
+
+    /* Initialize the GTK. */
+    gtk_init(&argc, &argv);
+
+    /* Create the hildon program and setup the title */
+    program = HILDON_PROGRAM(hildon_program_get_instance());
+    g_set_application_name("Hello maemo!");
+
+    /* Create HildonWindow and set it to HildonProgram */
+    window = HILDON_WINDOW(hildon_window_new());
+    hildon_program_add_window(program, window);
+
+    /* Create button and add it to main view */
+    button = gtk_button_new_with_label("Hello!");
+    gtk_container_add(GTK_CONTAINER(window), button);
+
+    /* Connect signal to X in the upper corner */
+    g_signal_connect(G_OBJECT(window), "delete_event",
+      G_CALLBACK(gtk_main_quit), NULL);
+
+    /* Begin the main application */
+    gtk_widget_show_all(GTK_WIDGET(window));
+    gtk_main();
+
+    /* Exit */
+    return 0;
+}
+
+
+/////then
+1.
+>gcc -o maemo_hello maemo_hello.c `pkg-config --cflags gtk+-2.0 hildon-1` -ansi -Wall `pkg-config --libs gtk+-2.0 hildon-1`
+
+2.
+>run-standalone.sh ./maemo_hello
+//////////other
+use gtk code a helloworld
+then only:
+> export DISPLAY=:2      
+then:
+>./helloworld
+that is all.

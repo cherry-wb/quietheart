@@ -1,0 +1,339 @@
+Option Explicit
+Declare Function GetExitCodeProcess Lib "kernel32" (ByVal hProcess As Long, lpExitCode As Long) As Long
+Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Public Const Process_Query_Information = &H400
+Public Const Still_Active = 259
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMillSecond As Long)
+
+
+Sub MyScript()
+'
+' mytest Macro
+'
+    Sheets("App").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount_appfiles.bat"
+    dir1 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    dir2 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    resultfile = "D:\Program Files\diffcount\every_file_result.txt"
+
+    '输入自行选择输入参数，例如：D:\...\diablo
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+    'dir2 = InputBox("修改后代码中diablo目录的路径:" & dir2)
+    'dir1=Application.FileDialog(msoFileDialogFolderPicker).Show
+    'dir2=Application.FileDialog(msoFileDialogFolderPicker).Show
+
+    'XXX 配置忽略的前几个字符...\diablo
+    Dim ignore_stri As Integer
+    ignore_stri = 10
+
+    '开始比较每个文件
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+      param1 = Cells(i, 2)
+      param2 = Cells(i, 5)
+      If Not IsEmpty(param2) Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, vbHide)
+        'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+	  GetExitCodeProcess hProcess, exitcode
+	  DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      Else 'Cells(i,4) = "新规"
+        param2 = param1
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        param1 = "--count-only"
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, 1)
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      End If 'if isempty(param2)
+        i = i + 1
+    Wend 'while i < afer_end
+
+    '读取结果
+    i = start
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring As String
+    Dim tmpPos As Integer
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0 
+       	  If tmpPos > 0 Then '找到Total
+	    retstring = Mid(retstring, tmpPos + 5, Len(retstring))
+       	    Cells(i, 8).Value = retstring
+       	  End If 'tmpPos > 0
+       	End If 'Not f.AtEnd
+      Else 'Cells(i,4) = "新规"
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0 
+       	  If tmpPos > 0 Then '找到Total
+	    retstring = Mid(retstring, tmpPos + 5, Len(retstring))
+       	    Cells(i, 8).Value = retstring
+       	  End If 'tmpPos > 0
+       	End If 'Not f.AtEnd
+      End If 'if not IsEmpty(Cells(i,5))
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:H").AutoFit
+
+    '文件输入对话框，以及消息对话框
+    'Dim kk As String
+    'kk = Application.GetOpenFilename("EXCEL (*.XLS), *.XLS", Title:="提示：请打开一个EXCEL文件：")
+    'msgbox kk
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+
+    ''''''统计总体数据情况
+    cmpapp = "D:\Program Files\diffcount\diffcount_appsummary.bat"
+    resultfile = "D:\Program Files\diffcount\summary_result.txt"
+    Dim osWrapper, zou3App, zou3Codec, zou3iLink, zou3Kernel, zou3Main, zou3Mif, zou3Mux, zou3Sc, zou3SC2P, diabloSubCpu As String
+
+    ''''''oswrapper
+    param1 = "--count-only"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\osWrapper"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+'   fso.DeleteFile resultfile
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+'   Set fso = CreateObject("Scripting.FileSystemObject")
+'   Set f = fso.OpenTextFile(resultfile, ForReading, False)
+'   Do While f.AtEndOfStream <> True   '是否在 TextStream 文件末尾用这个判断
+'           retstring = f.ReadLine    '读取一行
+'       'Dim tmpPos as Integer
+'       'Total
+'       tmpPos = InStr(retstring,"otal:")
+'       If tmpPos > 0 Then
+'       Dim tmpPos2 as Integer
+'       tmpPos2 = InStr(retstring,"(standard C lines)")
+'       retstring = Mid(retstring, tmpPos+5, tmpPos2-tmpPos-5)
+'       Sheets("集計").Select
+'       Cells(9,2).Value = retstring
+'       Cells(10,2).Value = 0
+'       Cells(11,2).Value = retstring
+'       Sheets("App").Select
+'       i = i + 1
+'       End If
+'   Loop
+    
+'   f.Close
+
+    ''''''zou3App
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3App"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3App"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+'    Do While f.AtEndOfStream <> True   '是否在 TextStream 文件末尾用这个判断
+'            retstring = f.ReadLine    '读取一行
+'        retstring = "test" & retstring
+'        tmpPos = InStr(retstring, "LANG")
+'        If tmpPos > 0 Then
+'            Dim str_tokens(),my_token As String
+'            Dim token_index As Integer
+'            Dim tmpPosAdd, tmpPosMod, tmpPosAM, tmpPosBLK As Integer
+'            token_index = 0
+'            'str_tokens = Split(retstring,"	")
+'            'Do While token_index < 6
+'            '    If InStr(str_tokens(token_index), "DD") > 0 Then
+'            '    tmpPosAdd = token_index
+'            '    End If
+'            '    If InStr(str_tokens(token_index), "OD") > 0 Then
+'            '    tmpPosMod = token_index
+'            '    End If
+'            '    If InStr(str_tokens(token_index), "&M") > 0 Then
+'            '    tmpPosAM = token_index
+'            '    End If
+'            '    token_index = token_index + 1
+'            'Loop
+'                tmpPosAdd = 0
+'                tmpPosMod = 1
+'                tmpPosAM = 3
+'
+'            retstring = f.ReadLine    '读取一行
+'            retstring = f.ReadLine    '读取一行
+'		my_token = f.Read(1)
+'		my_token = f.Read(1)
+'            str_tokens = Split(retstring,my_token)
+'            Sheets("集計").Select
+'            Cells(9, 3).Value = str_tokens(tmpPosAdd)
+'            Cells(10, 3).Value = str_tokens(tmpPosMod)
+'            Cells(11, 3).Value = str_tokens(tmpPosAM)
+'            Sheets("App").Select
+'            i = i + 1
+'        End If
+'    Loop
+'    f.Close
+'
+    ''''''zou3Codec
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Codec"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Codec"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3iLink
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3iLink"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3iLink"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3Kernel
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Kernel"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Kernel"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3Main
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Main"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Main"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3Mif
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Mif"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Mif"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3Mux
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Mux"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Mux"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3Sc
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3Sc"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3Sc"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''zou3SC2P
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloMainCpu\zou3SC2P"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloMainCpu\zou3SC2P"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'
+    ''''''diabloSubCpu
+    param1 = Chr(34) & dir1 & Chr(34) & "\diabloSubCpu"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diabloSubCpu"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'    Sheets("集計").Select
+    msgbox "Ok"
+End Sub

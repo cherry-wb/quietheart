@@ -1,0 +1,21 @@
+%%命令和源代码通常使用等宽字样来表示排。对此LATEX 提供了\verb 命令(一般用于在正文中插入较短的命令)和verbatim 环境。后者有带*的版本用来标明空格。
+
+\documentclass[10pt,titlepage]{report} %文档类声明
+\begin{document}               %正文
+\title{mytitle} %这里为什么不管用？在属性里面看不见。
+
+This is out of verbatim:
+
+printf("Hello, world!");
+and the following is in verbatim:
+\begin{verbatim}
+printf("Hello, world!");
+\end{verbatim}
+
+Here out of verbatim,and the following is in verbatim:
+%这个用小上框表明空格,如果该行注释放在begin的后面，'%'也打印出来了
+\begin{verbatim*}
+printf("Hello, world!");
+\end{verbatim*}
+
+\end{document}

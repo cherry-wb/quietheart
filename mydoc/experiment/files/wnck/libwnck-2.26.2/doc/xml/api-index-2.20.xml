@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="WnckScreen-class-group-closed"><link linkend="WnckScreen-class-group-closed">WnckScreen::class-group-closed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-class-group-opened"><link linkend="WnckScreen-class-group-opened">WnckScreen::class-group-opened</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-showing-desktop-changed"><link linkend="WnckScreen-showing-desktop-changed">WnckScreen::showing-desktop-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-viewports-changed"><link linkend="WnckScreen-viewports-changed">WnckScreen::viewports-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="WnckScreen-window-manager-changed"><link linkend="WnckScreen-window-manager-changed">WnckScreen::window-manager-changed</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-number"><link linkend="wnck-screen-get-number">wnck_screen_get_number</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-window-manager-name"><link linkend="wnck-screen-get-window-manager-name">wnck_screen_get_window_manager_name</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspaces"><link linkend="wnck-screen-get-workspaces">wnck_screen_get_workspaces</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>T</title>
+<indexentry><primaryie linkends="WnckTasklist--s-fade-max-loops"><link linkend="WnckTasklist--s-fade-max-loops">WnckTasklist:fade-max-loops</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-get-client-window-geometry"><link linkend="wnck-window-get-client-window-geometry">wnck_window_get_client_window_geometry</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-is-below"><link linkend="wnck-window-is-below">wnck_window_is_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-make-below"><link linkend="wnck-window-make-below">wnck_window_make_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-set-sort-order"><link linkend="wnck-window-set-sort-order">wnck_window_set_sort_order</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmake-below"><link linkend="wnck-window-unmake-below">wnck_window_unmake_below</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-layout-column"><link linkend="wnck-workspace-get-layout-column">wnck_workspace_get_layout_column</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-layout-row"><link linkend="wnck-workspace-get-layout-row">wnck_workspace_get_layout_row</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-neighbor"><link linkend="wnck-workspace-get-neighbor">wnck_workspace_get_neighbor</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

@@ -1,0 +1,139 @@
+http://blog.csdn.net/wangqis/archive/2009/09/13/4547997.aspx
+Qt事件
+Qt程序是事件驱动的, 程序的每个动作都是由幕后某个事件所触发. Qt事件的类型很多, 常见的qt的事件如下:
+键盘事件: 按键按下和松开.
+鼠标事件: 鼠标移动,鼠标按键的按下和松开.
+拖放事件: 用鼠标进行拖放.
+滚轮事件: 鼠标滚轮滚动.
+绘屏事件: 重绘屏幕的某些部分.
+定时事件: 定时器到时.
+焦点事件: 键盘焦点移动.
+进入和离开事件: 鼠标移入widget之内,或是移出.
+移动事件: widget的位置改变.
+大小改变事件: widget的大小改变.
+显示和隐藏事件: widget显示和隐藏.
+窗口事件: 窗口是否为当前窗口.
+
+还有一些非常见的qt事件,比如socket事件,剪贴板事件,字体改变,布局改变等等.
+
+Qt 的事件和Qt中的signal不一样. 后者通常用来"使用"widget, 而前者用来"实现" widget. 比如一个按钮, 我们使用这个按钮的时候, 我们只关心他clicked()的signal, 至于这个按钮如何接收处理鼠标事件,再发射这个信号,我们是不用关心的. 但是如果我们要重载一个按钮的时候,我们就要面对event了. 比如我们可以改变它的行为,在鼠标按键按下的时候(mouse press event) 就触发clicked()的signal而不是通常在释放的( mouse release event)时候.
+
+2. 事件产生和处理流程
+
+2.1 事件的产生
+事件的两种来源:
+
+一种是系统产生的;通常是window system把从系统得到的消息,比如鼠标按键,键盘按键等, 放入系统的消息队列中. Qt事件循环的时候读取这些事件,转化为QEvent,再依次处理.
+
+一种是由Qt应用程序程序自身产生的.程序产生事件有两种方式, 一种是调用QApplication::postEvent(). 例如QWidget::update()函数,当需要重新绘制屏幕时,程序调用update()函数,new出来一个paintEvent,调用 QApplication::postEvent(),将其放入Qt的消息队列中,等待依次被处理. 另一种方式是调用sendEvent()函数. 这时候事件不会放入队列, 而是直接被派发和处理, QWidget::repaint()函数用的就是这种方式.
+
+// 自定义事件的时候讲述: 需要注意的时, 这两个函数的使用方法不大一样, 一个是new, 一个是....
+
+2.2 事件的调度
+两种调度方式,一种是同步的, 一种是异步.
+
+Qt的事件循环是异步的,当调用QApplication::exec()时,就进入了事件循环. 该循环可以简化的描述为如下的代码:
+
+while ( !app_exit_loop )
+{
+   while( !postedEvents ) { processPostedEvents() }
+   while( !qwsEvnts ){ qwsProcessEvents();   }
+   while( !postedEvents ) { processPostedEvents() }
+
+}
+
+先处理Qt事件队列中的事件, 直至为空. 再处理系统消息队列中的消息, 直至为空, 在处理系统消息的时候会产生新的Qt事件, 需要对其再次进行处理.
+
+调用QApplication::sendEvent的时候, 消息会立即被处理,是同步的. 实际上QApplication::sendEvent()是通过调用QApplication::notify(), 直接进入了事件的派发和处理环节.
+
+2.3 事件的派发和处理
+首先说明Qt中事件过滤器的概念. 事件过滤器是Qt中一个独特的事件处理机制, 功能强大而且使用起来灵活方便. 通过它, 可以让一个对象侦听拦截另外一个对象的事件. 事件过滤器是这样实现的: 在所有Qt对象的基类: QObject中有一个类型为QObjectList的成员变量,名字为eventFilters,当某个QObjec (qobjA)给另一个QObject (qobjB)安装了事件过滤器之后, qobjB会把qobjA的指针保存在eventFilters中. 在qobjB处理事件之前,会先去检查eventFilters列表, 如果非空, 就先调用列表中对象的eventFilter()函数. 一个对象可以给多个对象安装过滤器. 同样, 一个对象能同时被安装多个过滤器, 在事件到达之后, 这些过滤器以安装次序的反序被调用. 事件过滤器函数( eventFilter() ) 返回值是bool型, 如果返回true, 则表示该事件已经被处理完毕, Qt将直接返回, 进行下一事件的处理; 如果返回false, 事件将接着被送往剩下的事件过滤器或是目标对象进行处理.
+
+Qt中,事件的派发是从 QApplication::notify() 开始的, 因为QAppliction也是继承自QObject, 所以先检查QAppliation对象, 如果有事件过滤器安装在qApp上, 先调用这些事件过滤器. 接下来QApplication::notify() 会过滤或合并一些事件(比如失效widget的鼠标事件会被过滤掉, 而同一区域重复的绘图事件会被合并). 之后,事件被送到reciver::event() 处理.
+
+同样, 在reciver::event()中, 先检查有无事件过滤器安装在reciever上. 若有, 则调用之. 接下来,根据QEvent的类型, 调用相应的特定事件处理函数. 一些常见的事件都有特定事件处理函数, 比如:mousePressEvent(), focusOutEvent(),  resizeEvent(), paintEvent(), resizeEvent()等等. 在实际应用中, 经常需要重载这些特定事件处理函数在处理事件. 但对于那些不常见的事件, 是没有相对应的特定事件处理函数的. 如果要处理这些事件, 就需要使用别的办法, 比如重载event() 函数, 或是安装事件过滤器.
+
+事件派发和处理的流程图如下:
+
+ 2.4 事件的转发
+
+对于某些类别的事件, 如果在整个事件的派发过程结束后还没有被处理, 那么这个事件将会向上转发给它的父widget, 直到最顶层窗口. 如图所示, 事件最先发送给QCheckBox, 如果QCheckBox没有处理, 那么由QGroupBox接着处理, 如果QGroupBox没有处理, 再送到QDialog, 因为QDialog已经是最顶层widget, 所以如果QDialog不处理, QEvent将停止转发.       如何判断一个事件是否被处理了呢? Qt中和事件相关的函数通过两种方式相互通信. QApplication::notify(), QObject::eventFilter(), QObject::event() 通过返回bool值来表示是否已处理. “真”表示已经处理, “假”表示事件需要继续传递. 另一种是调用QEvent::ignore() 或 QEvent::accept() 对事件进行标识. 这种方式只用于event() 函数和特定事件处理函数之间的沟通. 而且只有用在某些类别事件上是有意义的, 这些事件就是上面提到的那些会被转发的事件, 包括: 鼠标, 滚轮, 按键等事件.
+
+
+3. 实际运用
+
+根据对Qt事件机制的分析, 我们可以得到5种级别的事件过滤,处理办法. 以功能从弱到强, 排列如下:
+
+3.1 重载特定事件处理函数.
+最常见的事件处理办法就是重载象mousePressEvent(), keyPressEvent(), paintEvent() 这样的特定事件处理函数. 以按键事件为例, 一个典型的处理函数如下:
+
+void imageView::keyPressEvent(QKeyEvent * event)
+{
+    switch (event->key()) {
+    case Key_Plus:
+        zoomIn();
+        break;
+    case Key_Minus:
+        zoomOut();
+        break;
+    case Key_Left:
+        // …
+    default:
+        QWidget::keyPressEvent(event);
+    }
+}
+
+3.2重载event()函数.
+通过重载event()函数,我们可以在事件被特定的事件处理函数处理之前(象keyPressEvent())处理它. 比如, 当我们想改变tab键的默认动作时,一般要重载这个函数. 在处理一些不常见的事件(比如:LayoutDirectionChange)时,evnet()也很有用,因为这些函数没有相应的特定事件处理函数. 当我们重载event()函数时, 需要调用父类的event()函数来处理我们不需要处理或是不清楚如何处理的事件.
+
+下面这个例子演示了如何重载event()函数, 改变Tab键的默认动作: (默认的是键盘焦点移动到下一个控件上. )
+
+bool CodeEditor::event(QEvent * event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *keyEvent = (QKeyEvent *) event;
+        if (keyEvent->key() == Key_Tab)
+        {
+            insertAtCurrentPosition('\t');
+            return true;
+        }
+    }
+    return QWidget::event(event);
+}
+
+3.3 在Qt对象上安装事件过滤器.
+
+安装事件过滤器有两个步骤: (假设要用A来监视过滤B的事件)
+首先调用B的installEventFilter( const QOject *obj ), 以A的指针作为参数. 这样所有发往B的事件都将先由A的eventFilter()处理.
+然后, A要重载QObject::eventFilter()函数, 在eventFilter() 中书写对事件进行处理的代码.
+用这种方法改写上面的例子: (假设我们将CodeEditor 放在MainWidget中)
+
+MainWidget::MainWidget()
+{
+    CodeEditor * ce = new CodeEditor( this, “code editor”);
+    ce->installEventFilter( this );
+}
+
+bool MainWidget::eventFilter( QOject * target , QEvent * event )
+{
+   if( target == ce )
+   {
+       if( event->type() == QEvent::KeyPress )
+       {
+             QKeyEvent *ke = (QKeyEvent *) event;
+             if( ke->key() == Key_Tab )
+             {
+                ce->insertAtCurrentPosition('\t');
+                return true;
+             }
+      }
+   }
+   return false;
+}
+
+3.4 给QAppliction对象安装事件过滤器.
+一旦我们给qApp(每个程序中唯一的QApplication对象)装上过滤器,那么所有的事件在发往任何其他的过滤器时,都要先经过当前这个 eventFilter(). 在debug的时候,这个办法就非常有用, 也常常被用来处理失效了的widget的鼠标事件,通常这些事件会被QApplication::notify()丢掉. ( 在QApplication::notify() 中, 是先调用qApp的过滤器, 再对事件进行分析, 以决定是否合并或丢弃)
+
+4.5 继承QApplication类,并重载notify()函数.
+Qt 是用QApplication::notify()函数来分发事件的.想要在任何事件过滤器查看任何事件之前先得到这些事件,重载这个函数是唯一的办法. 通常来说事件过滤器更好用一些, 因为不需要去继承QApplication类. 而且可以给QApplication对象安装任意个数的事

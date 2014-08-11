@@ -1,0 +1,36 @@
+#########note:when meet problem,try the way supported in the folder try,and record the solution here.########
+
+1.how do I do if I forget the root password?
+by:http://aplawrence.com/Linux/lostlinuxpassword.html
+1).if you are logged as a root,you can type"passwd"and type new password.
+2).or you can type:"sudo su" in common user,then type the common password.If you get the "#" prompt,you can change the root password as before.(I have tried it)
+
+2.how can I get the Chinese input method?
+
+3.how can I solve the refresh problem?(driver for display)
+
+4.when I type "vi test" and edit the file, I can't delete character in "backspace",or I can't use "up,down,left,right"in insert mode.
+answer:ubuntu default install vim-tiny which have the problems before.if you use the "vim"command,the problem will be solved.
+
+5.how to install Chinese input method?
+answer:
+1).added sourcelist as following(or replace the origin before backup)
+/etc/apt/sourcelist's content:
+deb http://mirror.lupaworld.com/ubuntu intrepid main restricted universe multiverse
+deb http://mirror.lupaworld.com/ubuntu intrepid-security main restricted universe multiverse
+deb-src http://mirror.lupaworld.com/ubuntu intrepid main restricted universe multiverse
+deb-src http://mirror.lupaworld.com/ubuntu intrepid-security main restricted universe multiverse
+2).add the following in /etc/bash.bashrc
+export http_proxy:http://username:password@proxyplace(example:dl-proxy.neusoft.com:8080)
+3).sudo apt-get update
+apt-get install scim
+apt-get install scim-pinyin
+
+6.cann't move or close xwindow?
+answer:
+right click->changedesktopground->visual effects->normal
+
+7.how to exit current shell?
+for example:
+1)man man 2)$SHELL 3) jobs#this can't see the man man,but I can see it in ps
+in this case, run exit ,to exit current and then return to the old shell ,then run:jobs 1,we can see the man man

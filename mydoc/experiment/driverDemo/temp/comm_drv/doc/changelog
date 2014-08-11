@@ -1,0 +1,16 @@
+this file backup good features.
+current good feature is:
+1)devices count is 32;
+2)ioctl commands and app build framework;
+3)ioctl creat command can create and release table blocks with list;
+4)send data;
+5)receive data;
+6)mutithread receive data;
+7)block/nonblock mode.
+
+problem:
+1)driver init check.
+2)driver number is fixed static number.
+3)table block create needs to protect.
+4)no sync for multi thread.
+5)semaphore cann't work

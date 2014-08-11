@@ -1,0 +1,170 @@
+问题：
+如何查看已经安装的软件？
+如何确定一个软件是否已经安装？
+
+目前常用的
+==========
+*更新本机中的数据库缓存：
+sudo apt-get update
+
+*查找包含部分关键字的软件包：
+sudo apt-cache search <你要查找的name>
+
+*安装指定的软件：
+sudo apt-get install <你要安装的软件包>
+
+*下载软件包源代码（如果有的话）:
+apt-get source <你要下载的源代码包名>
+
+5,查看已经安装的软件
+6,卸载软件
+
+详细的资料
+=========
+http://www.debian.org/doc/manuals/apt-howto/ch-sourcehandling.en.html
+apt-get:
+安装和卸载------
+*更新本机中的数据库缓存：
+sudo apt-get update
+最好定期更新一下使你自己机器上面的数据和服务器(/etc/apt/sources.list列出)上面的信息保持一致,在安装软件之前可以运行一下这个命令保证成功性。
+
+*安装软件：
+#apt-get install packagename
+这里将安装你需要的在sources.lists中的最新的软件包，如果有其他依赖则自动安装相应的依赖软件包。packagename可以是多个软件包。
+一些有用的选项：
+-h  This help text.
+-d  Download only - do NOT install or unpack archives
+-f  Attempt to continue if the integrity check fails
+-s  No-act. Perform ordering simulation
+-y  Assume Yes to all queries and do not prompt
+-u  Show a list of upgraded packages as well
+
+*卸载软件(用install)：
+#apt-get install packagename-
+在需要卸载的包后面加上一个'-'（我没有实验过）,当然可以apt-get install p1 p2-这样多个命令合并了,装p1卸p2。
+
+*卸载软件2：
+#apt-get remove packagename
+这会卸载相应的软件，同时也会卸载依赖的部分，没办法指定不卸载依赖的。但是软件的配置文件还是会留在系统中。
+
+*完全卸载软件包括删除配置：
+#apt-get --purge remove packagename
+这样配置文件也会被删除。
+
+*安装软件2（用remove）:
+#apt-get remove packagename+
+这个和用install来卸载软件的意义类似，在包名称后面添加一个+，表示安装。
+
+*修复或者只安装最新版本：
+#apt-get --reinstall install packagename
+这里，如果你的软件包被破坏了，或者你想要安装一个最新的软件，运行这个。
+
+升级软件包------
+*升级软件包1：
+#apt-get -u upgrade
+这里加上-u选项列出将要升级的软件，可能会提示有些软件不会升级，因为可能会破坏依赖关系，更好的方法是利用apt-get dist-upgrade
+
+你可以通过cd或者添加源地址来更新，如果你想从cd来升级，首先运行apt-cdrom把cd中的软件添加到/etc/apt/sources源中，然后运行apt-get dist-upgrade来升级，但是因为apt-get总是使用最新版本，如果cd中的不是最新的版本，那么也不会用到cd。
+*升级软件包2：
+#apt-get -u dist-upgrade
+这样安装的软件前面apt-get -u upgrade安不了的也会安装了，但个别的仍然不能安装，例如：升级会导致需要卸载一些包，卸载这些包会导致另外的软件不能用，所以就不升级了。
+
+*升级软件包3：
+#apt-get -u install packagename
+假设前面升级的时候packagename无法升级，那么这个命令会升级packagename如果需要卸载默写模块而卸载这些模块导致一些软件无法使用，那么干脆把这些软件都卸载了，然后升级，这个命令会导致packagename最终升级了。
+
+清理没用的包文件------
+用apt-get 安装软件包的时候，apt会从/etc/apt/sources.list里面将相应的软件包恢复出来，把它们存放在一个本地的文档库中（/var/cache/apt/archives/）然后才开始安装，随着时间的增长，这将不断地消耗硬盘的空间。
+*清理所有的缓存文件：
+#apt-get clean
+这会清理所有/var/cache/apt/archives/ 和 /var/cache/apt/archives/partial/中没有被锁定的文件。当然你再次安装软件的时候，这个软件又被恢复到本地文档库中了。
+
+*仅仅清理旧的缓存文件：
+#apt-get autoclean
+这会清理旧版本的/var/cache/apt/archives/ 和 /var/cache/apt/archives/partial/中的文件。旧版本是指已经有更新的版本的软件了，再下载的话应下载最新的而不是这个旧版本的了。根据apt-show-versions -p可以知道哪些是旧的。
+
+*安装指定版本的软件包:
+# apt-get install package=version
+
+查找信息--------
+*查找一个含有packagename字符串的包:
+#apt-cache search packagename
+这样将输出所有包含packagename字符串的包。
+
+*显示软件包的详细信息：
+# apt-cache show stella
+这包含了软件包许多的信息，例如如果你已经安装了这个软件包，信息里面也会显示。
+
+*显示软件包的大致信息：
+apt-cache showpkg packagename
+这会显示大致的信息。
+
+*查看那些包可以升级的信息：
+$ apt-show-versions -u
+这个apt-show-versions工具需要安装一下的。
+
+*查看当前特定软件版本：
+apt-show-versions -p packagename
+
+*检查packagename依赖的包：
+#apt-cache depends packagename
+
+工作相关--------
+*安装编译源代码需要的库(包)：
+# apt-get build-dep packagename
+所有的源代码包有一个'Build-Depends'域，指明了从源代码编译这个包需要安装的软件。上面的命令可以下载这些包，其中'packagename'是包名。
+
+
+*查看编译一个包需要哪些其他的库（包）：
+#apt-cache show packagename
+如果你只是想要检查编译一个包需要哪些其他的包，那么可以利用上面的命令,其中'packagename'是包名。
+
+
+*下载包packagename的源代码：
+$ apt-get source packagename
+
+这将在当前目录下载三个文件：*.orig.tar.gz,*.dsc,*.diff.gz。如果这个包是debian的，那么最后一个文件没有，并且第一个文件名里面不包括"orig"字符串。
+.dsc文件被dpkg-source使用，把源代码包解压到目录 packagename-version.每一个下载的源代码包里面都有一个debian/目录，这个目录包含了用于创建.deb包的文件。
+
+
+*下载的时候自动把源代码包编译：
+$ apt-get -b source packagename
+可能是编译成.deb包，我没有试过。
+
+*根据下载的源代码创建deb包:
+$ dpkg-buildpackage -rfakeroot -uc -b
+如果你决定在下载的时候不创建deb包，你可以以后通过在下载的包之后创建的目录里面运行这个命令来创建。
+
+*直接利用包管理器安装包：
+# dpkg -i file.deb
+需要直接使用包管理器，运行这个命令来安装包。
+
+-------dpkg查找
+*已知软件包中有一个文件，根据文件查找软件包：
+# dpkg -S stdio.h
+输入之后，输出如下：
+libc6-dev: /usr/include/stdio.h
+libc6-dev: /usr/include/bits/stdio.h
+perl: /usr/lib/perl/5.6.0/CORE/nostdio.h
+这在知道包中有某些文件的时候，来根据文件查找软件包这种情况下非常有用。
+
+*查找安装在你的机器上面的软件包：
+dpkg -l
+
+*自动安装缺失的软件:
+# auto-apt run command
+这里，command是你要运行的命令。例如 auto-apt run ./configure .当缺失依赖软件的时候，它会询问你安装，方便了编译。安装之后会继续运行。auto-apt需要保持一个最新的数据库，利用这个命令进行更新：auto-apt update, auto-apt updatedb and auto-apt update-local。
+--------apt-get查找
+*利用apt-file根据文件名查找相应的软件包：
+$ apt-file search filename
+如果你只知道程序名字filename，那么你可以运行这个命令，它的工作方式和 dpkg -S差不多，就是根据某个软件包里可能包含的文件来查找这个软件包的名字。另外，它也会显示包含这个文件的没有安装的软件包。当你编译的时候，提示缺了什么头文件的时候，利用这个很方便地确定需要装哪些软件包（当然利用audo-apt更方便）.
+
+
+*列出一个软件包中包含的文件：
+$apt-file list packagename
+这里，apt-file是根据一个数据库来读取信息的，所以需要保持数据库是最新的。
+
+*更新apt-file的数据库：
+# apt-file update
+默认情况下，apt-file的数据库和auto-apt是一样的。
+

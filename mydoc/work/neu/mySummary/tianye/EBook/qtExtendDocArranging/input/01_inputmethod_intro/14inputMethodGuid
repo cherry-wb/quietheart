@@ -1,0 +1,310 @@
+更为详细的内容可以参见http://www.qteverywhere.com/archives/449
+Qt/e输入法程序设计指南
+
+主要内容：
+*须知
+*简单原理
+*文字输入过程:
+*一些重要接口
+*举例代码
+
+
+
+
+*须知
+(qt版本,本文侧重接口不是编码)
+	输入法设计指南针对Qt for Embedded Linux 4.5.1，并且以中文输入法为例做说明，并且本文只是侧重于说明Qt/Embedded对输入法的支持接口，并不涉及到如何把键盘输入转换为中文所对应的编码方法。对其它Qt版本的适用性未曾验证。
+
+*简单原理
+(输入法属于Server层，需做的是继承QWSInputMethod并实现相关接口)
+	大家都知道，Qt for Embedded Linux是Client/Server结构，在Server端负责监听系统消息，尤其是键盘和鼠标消息，而输入法又是一个全局性的模块，所以在Qt /Embedded中，就把输入法的设计放在了Server这一层上。具体来说，就是，输入法是属于Server层的一部分。
+	Qt/e 输入法基类，QWSInputMethod，在这个基类中定义了一些接口用以支持输入法程序设计，我们需要做的就是从QWSInputMethod这个类继承出一个输入法类，在这个类中处理键盘和鼠标事件，把接收到的键盘事件按照输入法的编码规则转换为对应的中文，一个汉字，或者是一个中文短语，我们可以把这个正在输入过程中的汉字或者短语发送给当前的编辑窗口，或者把最终用户的选择发送到当前编辑窗口。我们需要自己定义一个输入法窗口来显示用户当前的输入，我们可以称之为IME Window。
+
+*文字输入过程:
+(输入法先“截获”输入，调用自己的filter函数处理用户输入的字符,处理后发送到编辑窗口)
+文字的输入一般分为三个步骤：
+1，开始输入
+	当用户在键盘上按下第一个按键的时候，输入法上下文就被创建出来，这个输入法上下文包含键盘输入字符
+2，编辑
+	当有任何一个新的按键被按下的时候，输入法就会尝试着去创建与键盘输入相对应的中文字符，这个时候，输入法上下文处于激活状态，用户可以在这个输入法上下文中前后移动光标。
+3，完成输入
+	在用户认为输入已经完成的时候，用户会选择以某种方式来选择最终的字符串，通常是使用键盘按键；或者鼠标点击；用户所选择的字符串最终应该被发送到当前的编辑窗口。
+
+*一些重要接口
+	QWSInputMethod类是Qte提供的、专门为输入法程序设计的基类，这个类定义了一系列的通用接口来对输入法提供支持，现在，让我们来看看这个类所定义的几个主要的接口：
+
+1)virtual bool filter(int unicode, int keycode, int modifiers,
+		bool isPress, bool autoRepeat );
+	这个接口的作用就是过滤键盘事件，详细一点儿说，就是我们可以在这个函数中处理键盘输入，并且根据相应的输入法规则把键盘输入转换为相应的中文。
+	这个函数的参数含义如下：
+	unicode：Qte统一使用的键盘按键编码，本文中，我们不使用这个参数
+	keycode： 键值，Qt定义了一系列的键值与键盘一一对应，具体定义在Qt namespace中，比如说，Qt::Key_Left, Qt::Key_Up, Qt::Key_Right, Qt::Key_Down，这四个定义对应到四个方向键，Qt::Key_0则对应数字键0，Qt::Key_A则对应大写字母A，等等。详细列表请参考 Qt在线文档
+	modifiers: 这个参数表示是否有其它的辅助按键同时被按下，比如，Alt, Ctrl, Shift，等，其预定义值如下：
+	Qt::NoModifier, 没有辅助键被按下
+	Qt::ShiftModifier, Shift键被按下
+	Qt::ControlModifier, Ctrl键被按下
+	Qt::AltModifier, Alt键被按下
+	Qt::MetaModifier, Meta键被按下
+	Qt::KeypadModifier, keypad 的按键被按下
+	Qt::GroupSwitchModifier，仅用于X11，Mode_switch键被按下
+	更多解释请参考Qt在线文档
+	这些定义相互之间并不冲突，它们是按照“与”的关系组合在一起，在我们的使用中，我们可以用C++的&操作符来判断某一个建是否被按下，比如，如果我们需要判断Alt键是否被按下，就应该这样做：
+if (Qt::AltModifier & modifiers)
+{
+	//Alt键被按下
+}
+	isPress: 这个参数表示键是被按下(press)，还是被释放(release)
+	autoRepeat: 这个参数表示这个按键事件是否是自动重复产生的
+	返回值：返回true表示这个按键事件已经被处理了，不需要继续分发；返回false表示这个按键没有被处理，Qt会继续分发这个事件
+
+2)void sendCommitString(const QString & commitString, int replaceFromPosition = 0, int replaceLength = 0);
+	这个接口函数表示把相应的字符串发送到当前编辑窗口，一般用于在用户作出最终的选择之后，把相应的字符串发送出去。
+
+3)void sendPreeditString(const QString & preeditString, int cursorPosition, int selectionLength = 0);
+	把当前正在编辑的字符串发送给当前编辑窗口
+
+
+*举例代码
+(继承输入法类，加载输入法，输入法在filter中处理用户输入，处理后的输出存放在一个成员中，将这个成员发送就是最终在编辑框中的字)
+	下面我们写一个最简单的例子，
+	首先我们从QWSInputMethod派生出一个类来，在这个类中，我们集成了安装/卸载输入法，响应键盘事件，响应用户选择，上翻页，下翻页的功能。
+
+//xinputmethod.h*
+#include <QWSInputMethod>
+struct XInputMethodPrivate;
+class XInputMethod : public QWSInputMethod
+{
+    Q_OBJECT
+
+public:
+
+    static void installInputMethod();
+    static void releaseInputMethod();
+    static XInputMethod* instance();
+
+    virtual bool filter(int unicode, int keycode, int modifiers,
+                        bool isPress, bool autoRepeat);
+
+    virtual ~XInputMethod();
+
+private:
+    XInputMethod();
+	
+  
+    void toggleIME();
+
+    void newCharacter(char);
+    bool makeSelection(int);
+    void showNextPage();
+    void showPreviousPage();
+
+    XInputMethodPrivate* mpdata;
+};
+	首先，我们定义了一个类的私有数据成员结构体，这种方法也是从Qt学来的。关于这个方法的详细解释，请看本系列文章的2，3，4篇，《对象数据存储》。
+	这里，我们定义了一个XWindow 类型的pframe指针变量，注意，这个XWindow和Linux系统的XWindow不是一回事，这个XWindow是本文中的输入法用户界面窗口类。
+
+//xinputmethod.cpp*
+struct XInputMethodPrivate
+{
+	static XInputMethod* pInputMethod;
+
+	XWindow* pframe;
+
+	XData imedata;
+
+	XInputMethodPrivate(): pframe(NULL) {}
+};
+XInputMethod* XInputMethodPrivate::pInputMethod = NULL;
+	我们开发了一个输入法，最重要的就是需要install，这样系统中才会有输入法模块，输入法才能工作。我们来看一下最重要的install和release输入法的代码。这里就是调用QWSServer类中的成员函数来实现的。
+	QWSServer::setCurrentInputMethod 这个函数为当前的Qt/Embedded 安装一个输入法，如果把参数设置为NULL，就是卸载输入法。
+
+void XInputMethod::installInputMethod()
+{
+    XInputMethod* pim = instance();
+   
+    if (pim)
+    {
+        QWSServer::setCurrentInputMethod(pim);
+    }
+}
+
+void XInputMethod::releaseInputMethod()
+{
+    if (XInputMethodPrivate::pInputMethod)
+    {
+        QWSServer::setCurrentInputMethod(NULL);
+        delete XInputMethodPrivate::pInputMethod;
+        XInputMethodPrivate::pInputMethod = NULL;
+    }
+}
+
+XInputMethod* XInputMethod::instance()
+{
+    if (NULL == XInputMethodPrivate::pInputMethod)
+    {
+        XInputMethodPrivate::pInputMethod = new XInputMethod();
+    }
+    
+    return XInputMethodPrivate::pInputMethod;
+}
+
+XInputMethod::XInputMethod(): mpdata(new XInputMethodPrivate)
+{
+    mpdata->pframe = new XWindow(mpdata->imedata);
+}
+
+XInputMethod::~XInputMethod()
+{
+    if (mpdata)
+    {
+        delete mpdata->pframe;
+        delete mpdata;
+        mpdata = NULL;
+    }
+}
+
+	输入法安装完成之后，在我们的输入法类中就可以接收到键盘事件了，这是在QWSInputMethod类中定义的虚函数filter完成的；我们重新实现这个函数，
+	* 在这里，我们用ALT+Z按键来显示/隐藏输入法用户界面。
+	* 当用户界面显示出来之后，就处理键盘点击事件，当用户输入’a’ – ‘z’，或者 ‘A’ – ‘Z’的时候，就启动输入法引擎，把用户输入安装编码规则转换为相应的汉字，或者短语；紧接着，就在用户界面窗口上显示出来用户的输入和转换后的中文字符。
+	* 当用户输入数字0 – 9 的时候，用户处理用户选择候选字。
+	* 当用户输入PageDown的时候，用来处理下翻页
+	* 当用户输入PageUp的时候，用来处理上翻页
+
+bool XInputMethod::filter(int /*unicode*/, int keycode, int modifiers,
+                                bool isPress, bool /*autoRepeat*/)
+{
+    if (isPress && (Qt::AltModifier & modifiers) && (Qt::Key_Z == keycode))
+    {
+        toggleIME();
+
+        return true;
+    }
+
+
+    if (mpdata && mpdata->pframe && mpdata->pframe->isVisible() && isPress)
+    {
+        if ((Qt::Key_A <= keycode) && (Qt::Key_Z >= keycode))
+        {
+            char ch = (char)((Qt::ShiftModifier & modifiers) ? 
+                             keycode : (keycode - Qt::Key_A + 'a'));
+
+            newCharacter(ch);
+
+            return true;
+        }
+
+        if ((Qt::Key_0 <= keycode) && (Qt::Key_9 >= keycode))
+        {
+            return makeSelection(keycode - Qt::Key_0);
+        }
+
+        if (Qt::Key_PageDown == keycode)
+        {
+            showNextPage();
+            return true;
+        }
+
+        if (Qt::Key_PageUp == keycode)
+        {
+            showPreviousPage();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+void XInputMethod::toggleIME()
+{
+    if (mpdata->pframe->isVisible())
+    {
+        mpdata->pframe->hide();
+        mpdata->imedata.reset();
+    }
+    else
+    {
+        mpdata->pframe->show();
+    }
+}
+	在这个函数中把通过编码转换后的中文字符加入到mpdata->imedata.listHanzi 这个变量中，就可以在界面上显示出来了。
+	由于本文仅仅只是为了讲解Qt/Embedded的输入法设计接口，没有编码方面的内容，所以这里就加入了两个字符做为示例。
+void XInputMethod::newCharacter(char ch)
+{
+    mpdata->imedata.strPinyin += ch;
+
+    mpdata->imedata.listHanzi << "a";
+    mpdata->imedata.listHanzi << "b";
+    mpdata->imedata.listHanzi << "c";
+    mpdata->imedata.listHanzi << "d";
+    mpdata->imedata.listHanzi << "e";
+    mpdata->imedata.listHanzi << "f";
+    mpdata->imedata.listHanzi << "g";
+    mpdata->imedata.listHanzi << "h";
+    mpdata->imedata.listHanzi << "i";
+    mpdata->imedata.listHanzi << "j";
+    mpdata->imedata.listHanzi << "k";
+    mpdata->imedata.listHanzi << "l";
+    mpdata->imedata.listHanzi << "m";
+    mpdata->imedata.listHanzi << "n";
+    mpdata->imedata.listHanzi << "o";
+    mpdata->imedata.listHanzi << "p";
+    mpdata->imedata.listHanzi << "q";
+    mpdata->imedata.listHanzi << "r";
+    mpdata->imedata.listHanzi << "s";
+    mpdata->imedata.listHanzi << "t";
+    mpdata->imedata.listHanzi << "u";
+    mpdata->imedata.listHanzi << "v";
+    mpdata->imedata.listHanzi << "w";
+    mpdata->imedata.listHanzi << "x";
+    mpdata->imedata.listHanzi << "y";
+    mpdata->imedata.listHanzi << "z";
+
+    mpdata->pframe->update();
+}
+
+	用户按下数字键，选择当前显示的字符，注意，这里有一个很重要的地方，就是使用QWSInputMethod类的方法sendCommitString，把用户选择的字符发送给当前的应用程序编辑窗口。
+
+bool XInputMethod::makeSelection(int number)
+{
+    number--;
+
+    if ((mpdata->imedata.first_visible + number) < mpdata->imedata.listHanzi.count())
+    {
+        QString result = mpdata->imedata.listHanzi[mpdata->imedata.first_visible + number];
+
+        if (!result.isEmpty())
+        {
+            sendCommitString(result);
+            mpdata->imedata.reset();
+            mpdata->pframe->update();
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+	显示下一页
+void XInputMethod::showNextPage()
+{
+    if ((mpdata->imedata.first_visible + mpdata->imedata.counts_per_page) < mpdata->imedata.listHanzi.count())
+    {
+        mpdata->imedata.first_visible += mpdata->imedata.counts_per_page;
+        mpdata->pframe->update();
+    }
+}
+
+void XInputMethod::showPreviousPage()
+{
+    if ((mpdata->imedata.first_visible - mpdata->imedata.counts_per_page) >= 0)
+    {
+        mpdata->imedata.first_visible -= mpdata->imedata.counts_per_page;
+        mpdata->pframe->update();
+    }
+}
+
+另外，我们还需要一个窗口来显示用户的输入字符，和经过中文编码转换后的中文，我们称之为XIMWindow。这个用户界面窗口的代码，就不做详细解释了，它是很简单的，附件文件包含了完整的代码，有兴趣的朋友可以下载下来读一下。
+关于这个窗口，有一点需要注意的就是，由于输入法需要在最顶层显示出来，免得被其它窗口给覆盖了，所以在创建窗口的时候，需要设置好相应的Widget Flag才行。
+#define IME_WND_FLAG (Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint | Qt::Tool)

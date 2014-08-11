@@ -1,0 +1,8 @@
+{
+	"name":"login",
+	"vendor":"ap:cisco:wrt54gl",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_login_wrt.py"},
+	"reporter":["success","fail"],
+	"description":"open firefox and login."
+}

@@ -1,0 +1,193 @@
+参考
+http://raphael.slinckx.net/blog/documents/dbus-tutorial
+首先，/usr/bin/program-providing-servicename提供了org.gnome.ServiceName服务，如果这个程序没有启动的话，当dbus需要这个服务的时候将会启动这个程序。
+另外，我们有一个想要使用这个服务的客户程序。
+
+DBus需要一个.service文件，这个文件告诉Dbus如何启动一个给定了service name的程序,文件在路径/usr/share/dbus-1/services/。
+
+
+需要一个glib bindings头文件，用来声明　server/client调用的函数。
+一个叫做dbus-binding-tool的工具能够生成这头文件。
+在makefile里面的相关命令：
+server-bindings.h:  servicename-infos.xml
+	dbus-binding-tool --prefix=server_object --mode=glib-server $<> $@
+
+client-bindings.h:  servicename-infos.xml
+	dbus-binding-tool --prefix=server_object --mode=glib-client $<> $@
+
+
+文件servicename-infos.xml
+		<?xml version="1.0" encoding="UTF-8"?>
+
+		<node name="/org/gnome/ServiceName">
+		<interface name="org.gnome.ServiceName">
+		<annotation name="org.freedesktop.DBus.GLib.CSymbol" value="server"/>
+		<method name="EchoString">
+		<arg type="s" name="original" direction="in" />
+		<arg type="s" name="echo" direction="out" />
+		</method>
+		<!-- Add more methods/signals if you want -->
+		</interface>
+		</node>
+
+	direction="in"意思是这个参数将传到method中，direction="out"指一个返回值
+	type="s"意思是一个string类型，可以参见dbus教程了解更多的类型的符号.
+	name="xxx"纯粹是一个修饰
+	annotation是server binding使用的一个前缀，这里，指定了我们所有的server方法使用server_前缀。
+因此，我们将要执行的方法的名字就叫做server_echo_string
+
+server需要包含　#include"server-bindings.h"
+client需要包含  #include"client-bindings.h"
+
+
+/****服务端的执行*****/
+在server中，我们必须保证我们能够拥有提供的service的拥有权，否则激活例程不会成功。
+在你的GObject的class_init中，你必须安装dbus相关的信息，然后在init中我们注册service.
+
+
+#include <dbus/dbus-glib-bindings.h>
+
+/*标准GObject类结构*/
+typedef struct
+{
+	DBusGConnection *connection;
+}ServerObjectClass;
+
+class_init(ServerObjectClass *klass)
+{
+	GError *error = NULL;
+
+	/*初始华DBus连接*/
+	klass->connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+	if (klass->connection == NULL)
+	{
+		g_warning("Unable to connect to dbus: %s", error->message);
+		g_error_free (error);
+		return;
+	}
+
+	/* &dbus_glib__object_info 在server-bindings.h文件里面提供了，OBJECT_TYPE_SERVER是你的server对象的GType类型。*/
+	dbus_g_object_type_install_info (OBJECT_TYPE_SERVER, &dbus_glib__object_info);
+}
+
+init(ServerObject *server)
+{
+	GError *error = NULL;
+	DBusGProxy *driver_proxy;
+	ServerObjectClass *klass = SERVER_OBJET_GET_CLASS (server);
+	int request_ret;
+
+	/*注册DBUS路径*/
+	dbus_g_connection_register_g_object (klass->connection,
+			"/org/gnome/ServiceName",
+			G_OBJECT (server));
+
+	/*注册service名字，这里定义的常量在dbus-glib-bindings.h里面已经定义了*/
+	driver_proxy = dbus_g_proxy_new_for_name (klass->connection,
+			DBUS_SERVICE_DBUS,
+			DBUS_PATH_DBUS,
+			DBUS_INTERFACE_DBUS);
+
+	if(!org_freedesktop_DBus_request_name (driver_proxy,
+				"org.gnome.ServiceName",
+				0, &request_ret,    
+				&error))
+	{
+		g_warning("Unable to register service: %s", error->message);
+		g_error_free (error);
+	}
+	g_object_unref (driver_proxy);
+}
+这样，我们的server对象就建立完毕了，可以对dbus调用进行响应,现在我们提供一个可以提供调用的方法。
+我们需要实现一个server_echo_string函数和server-bindings.h文件中的相关声明相符合。
+需要注意的是这个函数的声明必须要有server_前缀.函数必须成功的时候返回TRUE,失败的时候返回FALSE,可以在失败的时候设置错误信息.
+gboolean
+server_echo_string (ServerObject *server, gchar *original, gchar **echo, GError **error)
+{
+	*echo = g_strdup (original);
+
+	if (problem)
+	{
+		/*在这里设置错误信息*/
+		g_set_error (error, g_quark_from_static_string ("echo"),
+				0xdeadbeef,
+				"Some random problem occured, you're screwed");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/****客户端的实现*****/
+我们可以调用client-bindings.h中声明的函数来透明地执行一个远程请求.
+在远程调用之前,必须先建立一个代理对象.实际中,这两部分内容放在使用它们的地方.例如,在对象的constructor中建立代理对象,在一个按钮的回调函数中来实现远程调用.
+
+/*在代码中远程调用EchoString函数的部分*/
+DBusGProxy *proxy;
+DBusGConnection *connection;
+GError *error = NULL;
+gchar *result;
+
+connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+if (connection == NULL)
+{
+	g_warning("Unable to connect to dbus: %sn", error->message);
+	g_error_free (error);
+	/*没有dbus的错误*/
+	return;
+}
+
+/*这样将不能够触发调用*/
+proxy = dbus_g_proxy_new_for_name (connection,
+		"org.gnome.ServiceName",
+		"/org/gnome/ServiceName",
+		"org.gnome.ServiceName");
+
+/*函数调用将会触发激活*/
+if (!org_gnome_ServiceName_echo_string (proxy, "The string we want echo-ed", &result, &error))
+{
+	/*处理错误信息*/
+	g_warning ("Woops remote method failed: %s", error->message);
+	g_error_free (error);
+	return;
+}
+
+g_print ("We got the folowing result: %s", result);
+
+/*释放资源*/
+g_free (result);
+g_object_unref (proxy);
+
+/*不要释放DBusGConnection因为它只存在一次并且在进程之间共享*/
+现在说说激活，当你创建了一个proxy不会发生任何事情，但是当你调用远程方法的时候，dbus将会检查service是否在bus上面已经存在。
+	*如果service 已经存在，那么相应的方法被调用，然后阻塞一直到函数返回。
+	*如果service不存在，dbus开始搜索dbus-1/services/*.service文件，直到它找到一个匹配的service描述符号。
+	当service文件存在的时候，那么就阻塞，然后dbus启动相关的执行，等待执行掌管service,然后执行远程调用，最后返回。
+	当service文件不存在的时候，会返回一个错误。
+上面的过程中，你的程序在远程调用的时候一直会阻塞下去。这一点很不好.
+当然也有非阻塞调用方法，非常简单：
+只需要修改上面代码很少的一部分：
+	/*远程调用的部分用下面的方法实现*/
+	org_gnome_ServiceName_echo_string_async (proxy,
+			"The string we want echo-ed",
+			client_echo_reply,    /* See below */
+			client);
+/*不能释放proxy，因为我们需要在callback中使用它 */
+正如所见，我们直接给出了参数，但是，利用一个回调函数client_echo_reply取代error和返回指针,这个回调函数将在远程调用结束的时候被调用。我们也可以利用gpointer提供任何用户数据,这里我们给了一个假设的ClientObject实例。
+下面我们必须要实现这个回调函数了：
+static void
+client_echo_reply (DBusGProxy *proxy, char *answer, GError *error, gpointer userdata)
+{
+	ClientObject *client = CLIENT_OBJECT (userdata);
+	if (error!= NULL)
+	{
+		g_warning ("An error occured while calling echo_string remote method: %s", error->message);
+		g_error_free (error);
+		return;
+	}
+
+	g_print ("We got an echo reply, result: %sn", answer);
+}
+	这样就可以用非阻塞（异步）的方式实现远程调用了。
+	当远程程序返回的数值的时候也可以通知你了。
+	当远程程序启动失败的时候，Dbus设置一个超时机制，如果超过时间限制且没有程序响应的話就会设置一个错误。

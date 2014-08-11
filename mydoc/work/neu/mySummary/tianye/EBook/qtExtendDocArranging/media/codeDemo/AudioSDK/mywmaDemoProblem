@@ -1,0 +1,161 @@
+问题：
+=======================
+1,类型不符合
+SampleCode/voWMA_D_SAMPLE.c,237行，
+编译报错，
+inData.Buffer = temp;
+temp有符号， inData.Buffer无符号。
+我把temp修改成unsigned char*就没有这个错误了，不知道会不会对后面的处理产生影响。
+
+2,SampleCode/voWMA_D_SAMPLE.c:
+读取的文件信息和分配内存大小不一致，内存拷贝越界，
+236     memcpy(&(inData.Length), fileBuffer, 4);
+237     inData.Buffer = temp;
+238     fileBuffer += 4;
+239     memcpy(temp, fileBuffer, inData.Length);
+执行到238行之后，查看inData.Length是一个非常大的数，例如:1974609456,我试过了三个文件都是这个数字。
+这样在执行239的时候，就出现了问题,后面的语句就执行不到了,导致后面的代码执行不下去了。
+
+3,通过上网查询，发现：
+每一个WMA文件，它的头16个字节是固定的，为十六进制的“30 26 B2 75 8E 66 CF 11 A6 D9 00 AA 00 62 CE 6C”，用来标识这个是否为WMA文件。接下来的8个字节为一个整数，表示整个WMA文件头部的大小.
+于是初始化的时候使用：
+ memcpy(&(inData.Length), fileBuffer+16, 8);
+这条语句，结果也没有什么反应。
+基础实例代码如下：
+=======================
+//decode demo
+
+/////////////init
+char *temp;//, *temp1; 
+char *fileBuffer = NULL;
+VO_U32 filesize = 0, pos_end = 0;
+FILE *pfSrc = NULL;
+VO_CODECBUFFER inData;
+
+VO_PBYTE pbSrc = NULL;
+VO_WAVEFORMATEX *WAVFormat;
+VO_MEM_OPERATOR wmaoper;
+VO_CODEC_INIT_USERDATA userData;
+VO_HANDLE hCodec = 0;
+int outbuffersize;
+if((temp = (char *)malloc(0x100)) == NULL)
+	   printf("temp is not distributed buffer!\n");
+//////////////getinput
+//map inputfile to filebuffer
+if((pfSrc = fopen(szInputName, "rb")) == NULL)goto gCleanup;
+    fseek(pfSrc, 0, SEEK_END);
+    filesize = ftell(pfSrc);
+    fseek(pfSrc, 0, SEEK_SET);
+
+	fileBuffer = (char *)malloc(filesize);
+
+	if(fread(fileBuffer, 1, filesize, pfSrc) != filesize)
+		goto gCleanup;
+	pos_end = (VO_U32)fileBuffer + filesize;
+
+//fetch first 4 bytes of filebuffer to inData
+	memcpy(&(inData.Length), fileBuffer, 4);
+	inData.Buffer = temp;
+	fileBuffer += 4;
+	memcpy(temp, fileBuffer, inData.Length);
+	fileBuffer += inData.Length;
+	WAVFormat = (VO_WAVEFORMATEX *)inData.Buffer;
+
+
+//set op and input/output param
+	wmaoper.Alloc =		cmnMemAlloc;
+	wmaoper.Free =		cmnMemFree;
+	wmaoper.Copy =		cmnMemCopy;
+	wmaoper.Set =		cmnMemSet;
+	wmaoper.Compare =	cmnMemCompare;
+	wmaoper.Check =		cmnMemCheck;
+	wmaoper.Move =		cmnMemMove;
+	userData.memflag = VO_IMF_USERMEMOPERATOR;
+	userData.memData = &wmaoper;
+	returnCode = voGetWMADecAPI(&pDecHandle);
+	if(returnCode != VO_ERR_NONE)
+		goto gCleanup;
+    returnCode = pDecHandle.Init(&hCodec, VO_AUDIO_CodingWMA, &userData);
+    if(returnCode < 0)
+        goto gCleanup;
+
+
+    returnCode = pDecHandle.SetParam(hCodec, VO_PID_COMMON_HEADDATA, &inData);
+    if(returnCode < 0)
+        goto gCleanup;
+
+    returnCode = pDecHandle.GetParam(hCodec, VO_PID_WMA_OUTBUFFERSIZE, &outbuffersize);
+    if(returnCode < 0)
+        goto gCleanup;
+
+//begin decode
+                        
+	pbDst = (VO_U8 *)malloc(outbuffersize);
+	outData.Length = outbuffersize;
+	pbSrc = (VO_U8 *)malloc(WAVFormat->nBlockAlign + 100);
+	returnCode = pDecHandle.GetParam(hCodec, VO_PID_AUDIO_FORMAT, &pcmformat);
+	if(returnCode < 0)
+		goto gCleanup;
+
+	read_size = WAVFormat->nBlockAlign;
+	memcpy(pbSrc, fileBuffer, read_size);
+	printf("first 4 bytes: 0x%x, 0x%x, 0x%x, 0x%x\n", pbSrc[0], pbSrc[1], pbSrc[2], pbSrc[3]);
+	fileBuffer += read_size;
+	printf("read_size: 0x%x\n", read_size);
+    inData.Buffer = pbSrc;
+    inData.Length = read_size;
+
+	do{
+		returnCode = pDecHandle.SetInputData(hCodec, &inData);
+		if(returnCode != VO_ERR_NONE)
+			break;
+		do
+		{
+			outData.Buffer = pbDst;
+			outData.Length = outbuffersize;
+			memset(pbDst, 0, outbuffersize);
+		
+			returnCode = pDecHandle.GetOutputData(hCodec, &outData, &outFormat);
+
+			if(returnCode == VO_ERR_NONE)
+			{
+
+				datalength += outData.Length;
+			}
+			else if(returnCode == VO_ERR_INPUT_BUFFER_SMALL)
+			{
+				//i++;
+				break;
+			}
+		}while(1);
+
+		if((VO_U32)fileBuffer + WAVFormat->nBlockAlign <= pos_end)
+		{
+			read_size = WAVFormat->nBlockAlign;
+			memcpy(pbSrc, fileBuffer, read_size);
+			fileBuffer += read_size;
+		}
+		else
+		{
+			read_size = pos_end - (VO_U32)fileBuffer;
+			if(read_size <= 0)
+				break; 
+			memcpy(pbSrc, fileBuffer, read_size);
+			fileBuffer += read_size;
+		}
+			
+		inData.Buffer = pbSrc;
+		inData.Length = read_size;
+	}while(1);
+
+
+
+==========free
+pDecHandle.Uninit(hCodec);
+if(pfSrc) fclose(pfSrc);
+if(pbSrc) free(pbSrc);
+if(pbDst) free(pbDst);
+ if(fileBuffer) free(fileBuffer);
+if(temp) free(temp);
+
+

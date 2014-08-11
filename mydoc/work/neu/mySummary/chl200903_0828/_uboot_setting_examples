@@ -1,0 +1,214 @@
+这里的内容包括设置nfs启动，从sdcard启动，从板子内部flash启动，以及如何使用uboot命令等。
+开发板子环境的设置过程：
+一、准备：
+1，nfs文件系统的备份，在10.1.14.90中有相应的压缩包。
+
+2，cutecom工具，用于和板子进行串口通信的工具。
+
+3，开发板子。
+
+4，连接板子（注意，板子不同，连接可能也不一样）：
+1）串口线，红色部分对准j11
+2）电源处，头部蓝色部分朝上
+3) 电源处，j2接j10,j1接j9
+4)显示器：宽线都是蓝的朝上，窄线白的朝下。
+
+5，nfs服务器建立：
+1）.安装nfs服务器端和客户端
+sudo apt-get install portmap nfs-kernel-server
+sudo apt-get install portmap nfs-common
+2）.配置共享文件
+编辑/etc/exports，在其中增加要共享的目录
+如 
+/home/quietheart/nfs 10.1.14.0/24(rw,sync,no_root_squash,no_subtree_check)
+其中 /home/quietheart/nfs，10.1.14.0/24代表共享给哪个子网，rw是可读写权限
+然后
+sudo exportfs -ra
+3）.重启服务(这一步实际不用，有上一步就行了)
+sudo /etc/init.d/portmap restart
+sudo /etc/init.d/nfs-kernel-server restart
+4）.客户就可以加载了
+sudo mount 10.1.14.58:/home/quietheart/nfs /home/xxx
+
+建立好了nfs之后，如果板子里面的内核支持网络和nfs，需要板子和你的机器各有一个网线和网口，两者在同一个网段，配置好了就能互访。也可以把机器和板子用一根网线链接（板子有独立的网口），这样不需要网关，就能使板子挂载机器的nfs系统了，但是机器也不能够上网了。
+------------------------------------------------
+二、设置：
+连接好板子和电源之后：
+1.启动cutecom：
+$cutecom&
+2,设置相关：
+--------
+常用命令：
+*打印所有变量：
+printenv
+这里用print也行.
+
+*打印某个变量(如:ip)：
+printenv ip
+这里用print也行.
+
+*设置某一个变量（如ip=10.1.1.1）：
+setenv ip 10.1.1.1
+或者setenv ip '10.1.1.1'
+注意这里面变量后面没有等号。如果有‘；’等特殊字符，而字符又不再''中，则需要转义。这里用set也行。
+
+*保存设置的变量：
+saveenv
+这里用save也行。
+--------
+为清晰起见，这里只列出了设置的变量值，后面说详细的设置过程。
+dnsip=210.83.210.155
+serverip=10.1.14.90
+gatewayip=10.1.14.1
+ipaddr=10.1.14.81
+bootargs=console=ttyS0,115200n8 root=/dev/nfs rw nfsroot=10.1.14.122:/quietheart/nfs/ ip=10.1.14.81
+bootcmd=cp.b 0xf80a0000 0x200000 250000;bootm 0x200000
+bootcmd=tftpboot 0x2000000 uImage_avenger_with_usb; bootm 0x2000000 
+
+注意：这里的bootargs使用nfs启动，默认是udp的，可以设置nfsroot为
+nfsroot=10.1.14.122:/quietheart/nfs/,proto=tcp
+这样使用tcp协议，速度会快一些。
+--------
+--------
+设置变量：
+1，点击cutecom上面的“Open device”.
+2，Device:选择‘/dev/ttyS0’,表示使用第0个串口。
+3，baud rate:选择'115200'
+4，databits：选择‘8’
+5，stopbits：选择‘1’
+6，给板子上电，然后在提示的时间（一般3秒内）按回车进入设置：
+
+*设置板子上网的dns：
+setenv dnsip 210.83.210.155
+
+*设置tftp服务器的地址：
+setenv serverip 10.1.14.90
+这个地址是下载内核启动需要的内核所在的服务器的地址。
+
+*设置网关：
+setenv gatewayip 10.1.14.1
+
+*设置板子ip地址：
+setenv ipaddr 10.1.14.81
+
+*设置uboot启动参数：
+setenv bootargs console=ttyS0,115200n8 root=/dev/nfs rw nfsroot=10.1.14.122:/home/quietheart/nfs/ ip=10.1.14.81
+这里，nfsroot=10.1.14.122:/home/quietheart/nfs/ 是指定我电脑上nfs的服务目录。ip=10.1.14.81指定板子的ip地址。
+
+*设置uboot启动执行命令：
+setenv bootcmd cp.b 0xf80a0000 0x200000 250000\;bootm 0x200000
+注意，这里我设置的是从板子自身的内核启动了(不需要从服务起下载内核了)。
+
+*如果从服务器的tftp下载内核并启动，需要这样设置：
+setenv bootcmd tftpboot 0x2000000 uImage_avenger_with_usb\; bootm 0x2000000 
+这里,uImage_avenger_with_usb是要下载的内核名称，另外需要注意‘；’需要用‘\’来转义,如果不用这个来转义那么就把所有的内容放到单引号中。
+(实际可以利用1,tftp 0x2000000 uImage_** 2,bootm这两步来启动系统。)
+
+*保存设置的变量：
+saveenv
+
+*启动板子：
+boot
+------------------------------------------------
+开发板没有LCD的的情况下，如何在虚拟机中显示启动桌面:
+1)修改新文件系统下的脚本文件（etc/osso-af-init/af-defines.sh）中，第59行:
+             原有 export DISPLAY=:0.0
+        －－》修改为   export DISPLAY=自己pc机的IP地址:2    
+
+2）虚拟机下启动Xephyr(虚拟显示)的命令修改为
+        －－》Xephyr :2 -host-cursor -screen 1024x600x16 -dpi 96 -ac-extension Composite
+
+这样系统启动后，桌面自动显示在虚拟窗口中。除了触摸屏不好用，其他和真正的
+LCD一样。
+
+其他杂技
+========
+--------------------------------------
+uboot里面的serverip里面下载内核，然后启动：
+1）tftp 0x2000000 uImage_support_backlight_suspend
+2）bootm
+
+从板子启动：
+1)setenv bootcmd 'cp.b 0xf80a0000 0x2000000 250000;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x2000000'
+
+2)boot
+
+设置变量
+Marvell>> setenv mtdparts mtdparts=cafe_nand:1G(rootfs),-(data)
+Marvell>> setenv bootramfs setenv bootargs \$(constargs) \$(mtdparts)\;cp.b 0xf80a0000 0x20000 240000\;cp.b 0xf82e0000 0x1000000 0x120000\;bootm 0x20000 0x1000000
+Marvell>> saveenv
+Marvell>> run bootramfs
+----------------------------------------------
+
+从板子flash启动
+bootcmd=cp.b 0xf80a0000 0x200000 250000;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x200000
+这里实际setenv bootargs的部分可以在botargs里面进行设置，如果这样设置那么bootargs里面的设置就不起作用了。
+
+设置板子自动从tftp启动：
+bootcmd=tftp 0x2000000 uImage_wifi_fixed;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs);bootm 0x2000000
+类似上面，这里需要注意的是，这样虽然可以从tftp服务器中（在serverip里面指明了）下载内核，但是启动系统之后内核网络不通的话，在进入系统之后一样连接不上网络。
+
+如果设置从sdcard上面启动，那么需要类似这样设置bootargs:
+setenv bootargs 'console=ttyS0,115200n8 root=/dev/mmcblk0p1 rootdelay=6 mem=256M'
+注意，用第一个分区启动用名字mmcblk0p1如果没有分区那么启动的地方就不是mmcblk0p1这个名字了。mmc就是sdcard。在这里实际也可以指定sdcard的文件系统：
+bootargs=root=/dev/mmcblk0p1 rootdelay=3 rootfstype=ext3 console=ttyS0,115200
+有可能是
+setenv bootargs root=/dev/mmcblk0p1 rootdelay=3 rootfstype=ext3 console=ttySAC0,115200
+如果ttyS0这里弄错了，本来应该是ttySAC0的话，内核会停止在解压的部分。
+
+----------------------------------
+如果是usb转网口的设备，连接nfs的时候，bootargs设置如下：
+bootargs=console=ttyS0,115200 uart_dma root=/dev/nfs nfsroot=192.168.100.118:/home/quietheart/nfs,proto=tcp ip=192.168.100.101:192.168.100.1::255.255.255.0::usb0:on.
+这里，192.168.100.118是你的机器usb网址的ip，注意这个网址不要是你机器的etho网卡地址，防止冲突。
+192.168.100.101是板子的usb网址ip。192.168.100.1是虚拟网关。usb的网址网段在这里不要和你机器以太网的网段一样。这里的网段是*100*.设置之后保存，重启设备。然后
+1）当进入到加载内核的时候会停顿
+2）在停顿的时候进入你的机器，设置usb网址。
+sudo ifconfig usb0 192.168.100.118
+3)这样就启动了。
+如果启动不了uboot，可能会设置串口。
+/dev/ttyS0
+/dev/ttyUSB0
+/dev/ttySAC0
+都有可能，
+如果提示找不到设备，修改/etc/inittab这个文件，有类似如下的内容：
+# Put a getty on the serial port
+ttyS0::respawn:/sbin/getty -L ttyS0 115200 vt100
+#ttyS0::respawn:/bin/sh 
+#ttySAC0::respawn:/bin/sh 
+
+--------------------------------------
+20100812
+一个测试用例：
+目的：比较mmc(sd 卡)和nand(flash)启动的速度：
+工作过程：
+mmc启动：
+1,将文件系统拷贝到sd卡中
+使用读卡器，插入sd卡，这样在pc上面会有类似/dev/sdb之类的设备出现。
+使用mount挂载设备之后，把文件系统拷贝到设备中。
+2，设置uboot从sd卡启动。
+setenv bootargs root=/dev/mmcblk0p1 rootdelay=3 rootfstype=ext3 console=ttySAC0,115200
+之后启动板子:重启或者run bootcmd
+其他参考值：
+setenv bootargs rootfstype=ext2 root=/dev/mmcblk0p1 console=ttyS0,115200 uart_dma
+这里我查了一下， uart(通用异步接收发送装置)是并行数据转串行数据的东西，pc上面的并行数据通过uart接口变成可以在串口终端使用。
+setenv bootargs root=/dev/mtdblock4 rootdelay=3 rootfstype=jffs2 console=ttyS0,115200
+setenv bootargs root=/dev/mtdblock4 rootdelay=3 rootfstype=yaffs2 console=ttyS0,115200
+具体是哪个block通过uboot启动内核之后的信息可以获知，编号从0开始，包括uboot,kernel,***,rootfs等等字样的地方。
+yaffs2和jffs2用于是nand flash上面的文件系统。
+
+有时候板子无法启动，那么：
+"root=/dev/mtdblock4 rootdelay=3 rootfstype=jffs2 console=ttyS0,115200"改成：
+" rootfstype=yaffs2 root=/dev/mtdblock4 rootdelay=3 console=ttyS0,115200”
+或者"root=/dev/mmcblk0p1 rootfstype=ext2 rootdelay=3 console=ttyS0,115200 uart_dma"
+改成："rootfstype=yaffs2 root=/dev/mtdblock4 rootdelay=3 console=ttyS0,115200"
+
+nand flash启动：
+3，将文件系统从sd卡拷贝到nand flash中。
+在板子上面运行如下命令：
+mkdir -p /mnt/nand
+mount -t yaffs2 /dev/mtdblock3 /mnt/nand
+这样，板子上面的nand flash对应的设备mtdblk3就挂到了/mnt/nand上面。
+然后拷贝sd卡上面的文件系统到/mnt/nand
+4,设置uboot从nand flash启动：
+setenv bootargs root=/dev/mtdblock3 rootdelay=3 rootfstype=yaffs2 console=ttySAC0,115200
+之后启动板子:重启或者run bootcmd

@@ -1,0 +1,87 @@
+这里讲述如何在minicom下面，开发板子和pc机器直接通过串口传输文件。
+主要内容：
+*包含的文件
+*工具:lrzsz,minicom
+*配置
+*传输文件
+
+*包含的文件
+========================
+lrzsz-0.12.20.tar.gz
+传输文件的工具，需要编译成开发板子可运行的，
+也可能还要再编译一份在pc上面运行的。
+
+bin_forarm/*
+编译好的在开发板子运行的文件传输工具，需要拷贝到板子上的/usr/bin目录下。
+
+bin_forpc_maybe/*
+在pc运行的文件传输工具，如果只拷贝bin_forarm/*不好用的话就把这里的内容拷贝到pc的/usr/bin下。
+
+
+*工具:lrzsz,minicom
+========================
+1)下载lrzsz-0.12.20
+http://download.chinaunix.net/download/0007000/6293.shtml
+2)编译
+交叉编译lrzsz拷贝到开发板上.
+编译lrzsz并拷贝到pc机器上.
+2)下载minicom
+#apt-get install minicom
+
+*配置
+========================
+1)打开minicom,配置环境。
+2)配置文件所在目录
+--------------------------------------------------
+Ctrl + a     o   
+         +-----[configuration]------+
+         | Filenames and paths      |   
+         | File transfer protocols -|
+         | Serial port setup        |   
+         | Modem and dialing        |   
+         | Screen and keyboard      |   
+         | Save setup as dfl        |   
+         | Save setup as..          |   
+         | Exit                     |   
+         +--------------------------+
++-----------------------------------------------------------------------+
+| A - Download directory : /tmp                                         |   
+| B - Upload directory   : /home/quietheart/tmpTrans                    |   
+| C - Script directory   :                                              |   
+| D - Script program     : runscript                                    |   
+| E - Kermit program     :                                              |   
+| F - Logging options                                                   |   
+|                                                                       |   
+|    Change which setting?                                              |   
++-----------------------------------------------------------------------+
+    A - download 下载的文件的存放位置    
+    B - upload   从此处读取上传的文件
+    download     开发板 ---> PC
+    upload       PC     ---> 开发板
+    B - Upload directory   : /home/quietheart/tmpTrans
+    PC机向开发板发送文件，需要发送的文件在/home/quietheart/tmpTrans目录下(PC机上的目录)。
+    
+做了此项配置后，每次向开发板发送文件时，只需输入文件名即可>，无需输入文件所在目录的绝对路径
+
+
+*传输文件
+========================
+实际前面的upload directory表示pc机器的上传目录，将会把这个目录中的内容传到板子上面.上面的配置不是必须的，但在后面选择的时候使用上面的目录做为默认。
+方法：
+假设我在pc上面，使用minicom,在minicom中，
+一、PC-->开发板
+1）首先minicom中，运行开发板子上的rz,准备接受数据：
+#lrz
+2）在minicom中，输入
+[Ctrl]a S
+这里的Send表示从pc发送到开发板子.然后会进入选择文件的目录(默认为upload目录),选择PC机上面准备传输的文件，然后确认即可。
+
+这样会开始传输文件，传输的文件最终存放在开发板子上运行lrz命令的地方。
+
+二,开发板-->PC
+1,在开发板子上面运行:
+#lsz filename
+2,在开发板子上minicom下运行(有时候不需要这一步)
+[Ctrl]a R
+这样,会自动把要传送的文件传送到前面设置的Download directory上面(/tmp)
+

@@ -1,0 +1,115 @@
+Sub getKernelSummary()
+'
+' mytest Macro
+'
+    Sheets("Kernel").Select
+    Dim i, start, after_end As Integer
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 1))
+        i = i + 1
+    Wend
+    after_end = i
+
+    '其他的就是"その他"
+    'Dim CSI,STCC,Timer,GPIO,IRQ,PCI,PCIE,UART,INT,EXPCD,TORINO,AVSEL,BSIF,HFDMA,MEMORY,VREF,TK1 As String
+
+    Dim CSI_Index,STCC_Index,Timer_Index,GPIO_Index,IRQ_Index,PCI_Index,PCIE_Index,UART_Index,INT_Index,EXPCD_Index,TORINO_Index,AVSEL_Index,BSIF_Index,HFDMA_Index,MEMORY_Index,VREF_Index,TK1_Index,OTHER_TOTAL As Integer
+    'XXX How many??
+    Dim Kernel_Total(17) As Integer
+    i = 0
+    Sheets("集計").Select
+    'While Cells(2,i+2)<>集計
+    While i < 18
+      If Cells(2,i+2)="CSI" Then
+        CSI_Index=i
+      ElseIf Cells(2,i+2)="STCC" Then
+        STCC_Index=i
+      ElseIf Cells(2,i+2)="Timer" Then
+        Timer_Index=i
+      ElseIf Cells(2,i+2)="GPIO" Then
+        GPIO_Index=i
+      ElseIf Cells(2,i+2)="IRQ" Then
+        IRQ_Index=i
+      ElseIf Cells(2,i+2)="PCI" Then
+        PCI_Index=i
+      ElseIf Cells(2,i+2)="PCIE" Then
+        PCIE_Index=i
+      ElseIf Cells(2,i+2)="UART" Then
+        UART_Index=i
+      ElseIf Cells(2,i+2)="INT" Then
+        INT_Index=i
+      ElseIf Cells(2,i+2)="EXPCD" Then
+        EXPCD_Index=i
+      ElseIf Cells(2,i+2)="TORINO" Then
+        TORINO_Index=i
+      ElseIf Cells(2,i+2)="AVSEL" Then
+        AVSEL_Index=i
+      ElseIf Cells(2,i+2)="BSIF" Then
+        BSIF_Index=i
+      ElseIf Cells(2,i+2)="HFDMA" Then
+        HFDMA_Index=i
+      ElseIf Cells(2,i+2)="MEMORY" Then
+        MEMORY_Index=i
+      ElseIf Cells(2,i+2)="VREF" Then
+        VREF_Index=i
+      ElseIf Cells(2,i+2)="TK1" Then
+        TK1_Index=i
+      Else
+        OTHER_Index=i
+      EndIf
+      Kernel_Total(i)=0
+      i = i + 1
+    Wend
+    Sheets("Kernel").Select
+    i = start
+    While i < after_end
+      If Cells(i,2)="CSI" Then
+        Kernel_Total(CSI_Index)=Kernel_Total(CSI_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="STCC" Then
+        Kernel_Total(STCC_Index)=Kernel_Total(STCC_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="Timer" Then
+        Kernel_Total(Timer_Index)=Kernel_Total(Timer_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="GPIO" Then
+        Kernel_Total(GPIO_Index)=Kernel_Total(GPIO_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="IRQ" Then
+        Kernel_Total(IRQ_Index)=Kernel_Total(IRQ_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="PCI" Then
+        Kernel_Total(PCI_Index)=Kernel_Total(PCI_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="PCIE" Then
+        Kernel_Total(PCIE_Index)=Kernel_Total(PCIE_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="UART" Then
+        Kernel_Total(UART_Index)=Kernel_Total(UART_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="INT" Then
+        Kernel_Total(INT_Index)=Kernel_Total(INT_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="EXPCD" Then
+        Kernel_Total(EXPCD_Index)=Kernel_Total(EXPCD_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="TORINO" Then
+        Kernel_Total(TORINO_Index)=Kernel_Total(TORINO_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="AVSEL" Then
+        Kernel_Total(AVSEL_Index)=Kernel_Total(AVSEL_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="BSIF" Then
+        Kernel_Total(BSIF_Index)=Kernel_Total(BSIF_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="HFDMA" Then
+        Kernel_Total(HFDMA_Index)=Kernel_Total(HFDMA_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="MEMORY" Then
+        Kernel_Total(MEMORY_Index)=Kernel_Total(MEMORY_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="VREF" Then
+        Kernel_Total(VREF_Index)=Kernel_Total(VREF_Index)+Cells(i,8)
+      ElseIf Cells(i,2)="TK1" Then
+        Kernel_Total(TK1_Index)=Kernel_Total(TK1_Index)+Cells(i,8)
+      Else
+        Kernel_Total(OTHER_Index)=Kernel_Total(OTHER_Index)+Cells(i,8)
+      EndIf
+      i = i + 1
+    Wend 'while i < afer_end
+    Sheets("集計").Select
+    i = 0
+    Dim numtext as String
+    While i < OTHER_Index+1
+      numtext=Kernel_Total(i)
+      Cells(5,i+2)=numtext
+      i = i + 1
+    Wend
+    Columns("B:T").AutoFit
+End Sub

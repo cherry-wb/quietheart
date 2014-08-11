@@ -1,0 +1,209 @@
+这里是对spec文档的一些总结：
+
+一、uboot（NBL）的编译方法：
+1,通常得编译方法：
+$ cd ${RELDIR}/loader
+$ ./setup diablo avp13 rom
+$ make
+生成得文件：
+    ${RELDIR}/loader/arch/arm/diablo/nbl-avp13.raw
+    ${RELDIR}/loader/arch/arm/diablo/nbl-avp13.nui
+向nor写nbl用raw文件，更新nbl用nui文件。
+实践需要添加：
+export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+
+2,删除不需要文件得方法：
+删除make产生的目标文件：
+    $ make clean
+
+删除load的目标文件和软链接：
+    $ make distclean
+
+编译release的方法：
+    $ make release
+注意一下loader/arch/arm/diablo/avp13/RELEASE这个文件。 
+
+make和make release的区别：
+make没有指定自定义版本号，生成的文件是：
+          loader/arch/arm/diablo/nbl-avp13.raw
+          loader/arch/arm/diablo/nbl-avp13.nui
+make release如果指定了版本号，那么,自定义版本号在NUI header中包含,
+例如版本号1.10，那么生成的文件：
+          loader/nbl-AVP13_1_10.raw
+          loader/nbl-AVP13_1_10.nui
+
+2,nup的编译方法：
+NBL包含NBL BIOS Library和NUP sample 程序。
+进行完前面得"通常得编译方法"之后，
+编译NBL BIOS Library方法：
+    $ cd ${RELDIR}/nup
+    $ make
+
+编译NUP Sample hello程序的方法：
+    $ cd ${RELDIR}/nup/hello
+    $ make
+这样会产生如下的hello 的elf二进制文件：
+${RELDIR}/nup/hello/hello.elf
+
+二、安装NBL的方法：
+讲述执行NBL的方法：
+1,使用JTAG写NBL:
+当使用JTAG向Nor Flash中写入NBL的时候，NBL的raw文件会从Nor flash的初始地址下载。
+具体参考：
+ICEによるROM焼き手順/AVP-13基板とadvicePro.ppt
+简洁的内容就是：
+============
+a,一些术语
+1)AVP-13基板
+搭载Diablo的主板名称。
+2)advicePro
+ICE的名称。
+3)microView-PLUS
+advicePro的pc程序名称。
+
+接cpu0然后设置串口
+检查跳线:s2000为:2和5号on，其他都off。
+
+b,烧写Rom必需的文件：
+diablo.mvp
+--microVIEW-PLUS使用
+
+diablo.mvr
+--microVIEW-PLUS使用
+
+diablo.uer
+--microVIEW-PLUS使用
+
+mem_init.bin
+diablo的LSI初始化程序
+
+diablo_img.bin
+rom的imagefile
+
+serial_flash_program.out
+rom烧写程序
+
+init.mvw
+Diablo LSI初始化宏
+
+c,上电步骤：
+1)avp-13主板和advicePro连接
+2)将pc和avp-13主板用串口线连接，设置波特率230400(?).
+3)打开advicePro ICE电源
+4)打开avp-13主板电源
+5)在pc上面启动advicePro程序
+
+d,使用ice烧写rom：
+1)请将如下文件放在一个文件夹内：
+1_meminit_download.mvw
+2_romimg_download.mvw
+diablo.mvp
+diablo.mvr
+diablo.uer
+diablo_img.bin
+meminit.bin
+serial_flash_program.out
+2)双击diablo.mvp
+提示是否reset,选择はい.
+弹出的对话框选すべてクリア并确定.(参照文档)
+这样，microVIEW-PLUS就起来了。
+3)
+选择「ファイル」→「ログの実行」、
+选择1_meminit_download.mvw
+选择「表示」→「出力」,这样可以看见1_meminit_download.mvw被执行。
+2秒之后，选择：「実行制御」→「Stop」.
+
+4)
+选择「ファイル」→「ログの実行」
+选择2_romimg_download.mvw
+选择「表示」→「出力」这样可以看见 2_romimg_download.mvw被执行。
+有一个串口灯闪，表示正在烧写。
+当出现「Program End」的时候，表示烧写完成了。
+============
+
+
+2,更新NBL的方法
+更新NBL使用*.nui文件（NBL update image）,步骤如下：
+NBL> update -f net:tftp:/nbl.nui
+这里，使用tftp来进行传输。
+
+3,执行一个NUP的方法：
+可以使用go命令执行一个nup,例如如下:
+NBL> go -f net:tftp:/hello.elf
+
+三、NBL的boot命令：
+命令语法：
+boot [-t {srec|bin|binary|elf}] [-r] [-d] [-nd] [-b <address>]
+     [-e <entry_point>] [-c <string_option>] [-to <timeout>]
+     [-i <initrd_address>] [-s <initrd_size>]
+     [-initrd <initrd_file>] <file>
+
+描述：
+将内核加载到内存，并且执行内核。也即会执行后面的exec 和load指令。
+支持格式：
+    .bin
+        raw binary形式
+    .bin.gz
+        gzipで圧縮された raw binary形式
+    .srec
+        S-record形式
+    .srec.gz
+        gzipで圧縮された S-record形式
+    それ以外
+        ELF形式、もしくは gzipで圧縮された ELF形式
+
+选项：
+-t <type>
+指定加载文件得二进制格式。可以指定得形式包括：srec | bin | binary | elf 
+
+-r
+做和"-t bin"同样的操作。
+
+-d
+当文件镜像是gzip压缩格式的时候，会被解压缩，并载入内存。当非压缩镜像使用这个选项，镜像会像平时一样被加载。
+
+-nd
+ファイルが gzipで圧縮されている/いないに関わらず、ファイルを
+そのまま(伸長せずに)メモリにロードします。
+デフォルトではこのオプションが指定されている状態です。
+
+-b <address>
+指定文件被加载的地址。如果是raw binary形式，那么文件加载的效率比较高。如果为被指定，那么文件被加载到默认的地址。
+
+-e <entry_point>
+指定被加载文件开始执行时的地址。当加载文件是raw binary文件得时候，这个选项的效率比较高。如果忽略则使用默认的加载地址。
+
+-c <string_option>
+指定传递给linux内核的参数，字符串需要使用 “”括起来，例如"console=ttyS0",如果没有指定这个选项，会使用环境变量boot_option的值做为内核参数。
+
+-to <timeout>
+设定watchdog的超时值(秒)，如果没有指定这个选项或者指定为0，那么不使用watchdog，可以指定255以内的值。
+
+-i <initrd_address>
+指定initrd的初始地址。这个选项在使用加载到内存中的initrd镜像，boot指令执行之前，被使用。请在指定这个选项的同时，必须指定-s选项。
+这个选项在同时指定"-initrd"选项 以及指定initrd环境变量的时候，会被忽略。
+
+-s <initrd_size>
+指定initrd的字节数目。这个选项在使用加载到内存中的initrd镜像，boot指令执行之前，被使用。请在指定这个选项的同时，必须指定-i选项。
+这个选项在同时指定"-initrd"选项 以及指定initrd环境变量的时候，会被忽略。
+
+-initrd <initrd_file>
+指定initrd的二进制文件。在这个选项指定的时候，被做为initrd镜像的文件在内核执行之前加载到内存.
+当initrd环境变量指定加载到内存的initrd镜像文件的时候，可省略这个选项。
+
+<file>
+命令最后的file指定加载到内存并执行的内核镜像的二进制文件。
+
+
+四、aboot命令
+使用boot profile来启动内核。
+
+  -s
+	使用boot selection模式启动。
+  -n
+	启动内核时候使用正常启动的boot profile.
+  -r
+	启动内核时使用recovery start的boot profile.
+  -h
+内核启动时候，使用Hot Boot start的profile。
+注意：默认aboot -n.

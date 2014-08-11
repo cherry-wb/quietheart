@@ -1,0 +1,75 @@
+http://blog.chinaunix.net/u3/104479/showart_2089369.html
+有网友来信问到，kernel 里的 system call 实作函数中（C 函数），为什麼每一个函数原型宣告的前面都有一个 "asmlinkage" 的字串？例如：
+
+asmlinkage long sys_nice(int increment)
+
+"asmlinkage" 是在 i386 system call 实作中相当重要的一个 gcc 标签（tag）。
+
+当 system call handler 要呼叫相对应的 system call routine 时，便将一般用途暂存器的值 push 到 stack 里，因此 system call routine 就要由 stack 来读取 system call handler 传递的参数。这就是 asmlinkage 标签的用意。
+
+system call handler 是 assembly code，system call routine（例如：sys_nice）是 C code，当 assembly code 呼叫 C function，并且是以 stack 方式传参数（parameter）时，在 C function 的 prototype 前面就要加上 "asmlinkage"。
+
+加上 "asmlinkage" 后，C function 就会由 stack 取参数，而不是从 register 取参数（可能发生在程式码最佳化后）。
+
+更进一步的说明...
+
+80x86 的 assembly 有 2 种传递参数的方法：
+
+1. register method
+2. stack method
+
+Register method 大多使用一般用途（general- purpose）暂存器来传递参数，这种方法的好处是简单且快速。弢r />??外一种传递参数的做法是使用 stack（堆叠），assembly code 的模式如下：
+
+push number1
+push number2
+push number3
+call sum
+
+在 'sum' procedure 里取值的方法，最简单的做法是：
+
+pop ax 
+pop ax
+pop bx
+pop cx
+
+Stack Top 是放 IP，我们传给 sum procedure 的参数由 stack 的后一个 entry 开始读取。
+
+其它有关 asmlinkage
+
+1. asmlinkage 是一个定义
+2. "asmlinkage" 被定义在 /usr/include/linux/linkage.h
+3. 如果您看了 linkage.h，会发现 "__attribute__" 这个语法，这是 gcc 用来定义 function attribute 的语法。
+ 
+ 
+二：它是GCC对C程序的一种扩展, #define asmlinkage __attribute__((regparm(0)))
+表示用0个寄存器传递函数参数，这样，所有的函数参数强迫从栈中提取。
+这个asmlinkage大都用在系统调用中，系统调用需要在entry.s文件中用汇编语言调用，所以必须要保证它符合C语言的参数传递规则，才能用汇编语言正确调用它。
+这也是为何使用asmlinkage的原因吧！这是我的理解。
+
+仔细看一下有asmlinkage的地方通常是系统调用的函数，因为在系统调用中，寄存器从用户空间传过来后SAVE_ALL压入堆栈，接着调用相应的系统调用函数，这样系统调用函数一定要保证是通过堆栈传递参数的
+
+转贴一段：
+The asmlinkage tag is one other thing that we should observe about this simple function. This is a #define for some gcc magic that tells the compiler that the function should not expect to find any of its arguments in registers (a common optimization), but only on the CPU's stack. Recall our earlier assertion that system_call consumes its first argument, the system call number, and allows up to four more arguments that are passed along to the real system call. system_call achieves this feat simply by leaving its other arguments (which were passed to it in registers) on the stack. All system calls are marked with the asmlinkage tag, so they all look to the stack for arguments. Of course, in sys_ni_syscall's case, this doesn't make any difference, because sys_ni_syscall doesn't take any arguments, but it's an issue for most other system calls. And, because you'll be seeing asmlinkage in front of many other functions, I thought you should know what it was about.
+
+具体可以研究一下arch/i386/kernel/entry.S
+
+是不是为了保护寄存器内容不受更改 才用堆栈传递参数 以便以后能RESTORE--ALL?
+
+系统调用把参数存放在寄存器中然后进入内核空间，其实就和正常的函数调用一样，在内核中通过SAVE_ALL构造一个函数调用的栈帧环境，然后调用相应的系统调用函数而已
+这里使用的堆栈就是原来SAVE--ALL的寄存器的内容吧??
+
+对的
+
+ENTRY(system_call)
+pushl %eax # save orig_eax
+SAVE_ALL
+GET_THREAD_INFO(%ebp)
+# system call tracing in operation
+/* Note, _TIF_SECCOMP is bit number 8, and so it needs testw and not testb */
+testw $(_TIF_SYSCALL_TRACE|_TIF_SYSCALL_AUDIT|_TIF_SECCOMP),TI_flags(%ebp)
+jnz syscall_trace_entry
+cmpl $(nr_syscalls), %eax
+jae syscall_badsys
+syscall_call:
+call *sys_call_table(,%eax,4)
+movl %eax,EAX(%esp) # store the return value

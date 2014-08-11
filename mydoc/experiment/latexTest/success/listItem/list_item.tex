@@ -1,0 +1,63 @@
+%%%%%文档类(documentclass)有三种:article、report、book%%%%%
+%\documentclass[options]{class} %文档类声明
+
+%\usepackage[options]{package}  %引入宏包
+
+%%%%%文档正文部分的开头通常有标题、作者、摘要等信息,之后是章%%%%
+%%%%%节等层次结构,内容则散布于层次结构之间%%%%
+%\begin{document}               %正文
+%\title{标题}
+%\author{作者}
+%\today
+%\maketitle
+
+%\begin{abstract}
+%...摘要部分...
+%\end{abstract}
+
+%%%%%常用的层次结构%%%%%
+%\chapter{...}
+%\section{...}
+%\subsection*{...}%不让此章节显示在目录中加*
+%\subsubsection{...}
+
+%%article 中没有 chapter,而report 和 book 则支持上面所有层次。
+
+
+%\end{document}
+
+
+\documentclass[10pt,titlepage]{report} %文档类声明
+\begin{document}               %正文
+%LATEX 中有三种列表环境:itemize、enumerate、description,分别如下
+
+
+\begin{itemize}%没有数字标号的列表
+    \item C++
+		\begin{enumerate}
+			\item c
+
+			This is a very good language.%内层的item的内容,这里一定要有前面的空行，否则就和前面的字符c在同一行了。
+			\item c++
+
+			Extension of the language of c.
+			\item function
+		\end{enumerate}
+    \item Java
+    \item HTML
+\end{itemize}
+
+
+\begin{enumerate}%带有数字标号的列表,如果没有前面的两个空行也没有看出什么不同，但是最好有。
+\item C++
+\item Java
+\item HTML
+\end{enumerate}
+
+
+\begin{description}
+\item{C++} a programming language
+\item{Java} another programming language
+\item{HTML} another programming language for network
+\end{description}
+\end{document}

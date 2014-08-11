@@ -1,0 +1,43 @@
+uname
+uname [OPTION]...
+功能：查看系统信息。
+
+[举例]
+*打印内核的名称：
+$uname -s
+输入之后，输出如下：
+Linux
+这里，我机器的内核名称是Linux.
+
+*打印发布的内核：
+$uname -r
+输入之后，输出如下：
+2.6.27-7-generic
+这里，表明Linux的内核版本是2.6.27-7-generic的。
+
+*打印内核版本：
+$uname -v
+输入之后，输出如下：
+#1 SMP Fri Oct 24 06:42:44 UTC 2008
+
+*打印操作系统：
+$uname -o
+输入之后，输出如下：
+GNU/Linux
+
+*打印机器硬件名称：
+$uname -m
+输入之后，输出如下：
+i686
+这里表明，我的机器是i686的。
+
+*打印网络节点主机名：
+$uname -n
+输入之后，输出如下：
+quietheart
+这表明我的主机的名称是quietheart.
+
+*打印所有信息：
+$uname -a
+输入之后，输出如下：
+Linux lvkai 2.6.27-7-generic #1 SMP Fri Oct 24 06:42:44 UTC 2008 i686 GNU/Linux

@@ -1,0 +1,179 @@
+参考：http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104c8c711923d030678197027fa3c215cc791a1b143aa8ec73754c51ce95223a54b2121abdaf2b7667072bb79e9e8c4e8ebfc57c2a882d36751e8c4b42d813b8cb317f877fce4eacf259b1b5b162c8f2c5d3ae0b059d17&p=87759a46d0891be80be295201542&user=baidu
+mdev
+2008-12-17 14:38
+用mdev来自动创建/dev中的设备文件，busybox的文档中说的很明白，使用
+mdev时不加参数就是用hotplug机制来决定创建什么样的设备文件。
+而用mdev -s是用sys文件系统提供的信息来创建设备文件的。我一开始没仔细看文档，在linuxrc中没加参数调用的mdev，结果造成真正的根文件系统没有挂载成功。因为那样mdev就要找hotplug而
+buzybox好像还不能支持hotplug，我自己也没提供hotplug的机制，所以设备文件创建失
+败，那么在mount 根文件系统的时候就失败了，后面再pivot_root也就没戏了。
+最后一点要注意的是在你的initrd的/dev中必须要有console这个文件，要不启动的时候
+就会报错的。
+我把linuxrc贴在这，顺便加点注释：
+#!/bin/ash
+echo Start the script in initrd ＃输出一些信息
+echo Press any key to continue ＃输出信息
+read TEMP ＃等待你瞪大眼睛看后面的东西
+/bin/mount -t proc /proc /proc #挂proc fs，其实我们这暂时还没用到，如果你要动
+＃态分析根文件系统，你就得分析kernel的cmdline，那个cmdline就在proc中
+/bin/mount -t sysfs none /sys ＃挂sys为mdev填充/dev搜集信息
+echo Creating /dev
+/bin/mount -o mode=0755 -t tmpfs none /dev #在原有的/dev目录上再盖上一层，这
+#样系统退出时就不会留下mdev填充的东西
+#下面创建一些最基本设备文件，这些设备文件是mdev所使用的
+/bin/mknod /dev/console c 5 1
+/bin/mknod /dev/null c 1 3
+/bin/mknod /dev/zero c 1 5
+/bin/mkdir /dev/pts
+/bin/mkdir /dev/shm
+/sbin/mdev -s #mdev为我们自动填充/dev目录，该有的都会有的
+#下面加载ext3所需的模块
+echo "Loading ext3 modules"
+/sbin/insmod /lib/jbd.ko
+/sbin/insmod /lib/ext3.ko
+/sbin/mdev -s   #再次调用mdev，我不知道为什么，rh的initrd中就是调用两次，也许
+#去掉前面的一次也没问题，回头我试试
+/bin/umount /sys #卸掉sys，反正用完了
+echo press any key to continue
+read TEMP     ＃等待你瞪大眼睛
+echo Mounting root filesystem
+/bin/mount -o defaults --ro -t ext2 /dev/hda1 /sysroot #挂载真正的根文件系统
+，老道的技术应该是从kernel的cmdling中猜出根文件设备，而不是象我这样hard coded
+/bin/mount -t tmpfs --bind /dev /sysroot/dev ＃保持新旧root 中的/dev是一样的
+#下面的root切换都是标准动作在pivot_root的man page中有
+echo Switching to new root
+read TEMP
+cd /sysroot
+/sbin/pivot_root . mnt
+exec /usr/sbin/chroot . /sbin/init
+/bin/umount /mnt/dev ＃卸掉原来root 的dev目录
+
+一个比较完整的资料。
+=============================
+参考：http://blog.csdn.net/futurepeter/archive/2010/02/22/5316355.aspx
+mdev是busybox下精简版的udev,适合在嵌入式系统下管理设备使用
+
+mdev会把所有的设备都动态创建在/dev/目录下，比如有些程序使用dev目录子目录下设备名，就需要修改程序，比较麻烦，当然也可以在mdev运行之后，手工创建目录，然后再做ln的链接
+这里有人作出了更好的脚本处理机制:
+http://lists.busybox.net/pipermail/busybox/2007-May/027309.html
+再贴上mdev的使用说明
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+MDEV 入门(转)
+
+Busybox-1.7.0/docs/mdev.txt
+翻译：tekkamanninja Email：tekkamanninja@163.com - 1 -
+
+-------------
+MDEV Primer
+MDEV 入门
+-------------
+For those of us who know how to use mdev, a primer might seem lame. For
+这份文档对于那些知道如何使用mdev 的人看来可能有些肤浅。
+everyone else, mdev is a weird black box that they hear is awesome, but can't
+但对于其他人，mdev 可能是一个神秘的黑匣子，以至让人敬畏。
+seem to get their head around how it works. Thus, a primer.
+而这份文档又不足以让他们知道mdev 是如何工作的。 因此，这是一份入门文档。
+-----------
+Basic Use
+基本使用方法
+-----------
+Mdev has two primary uses: initial population and dynamic updates. Both
+mdev 有两个主要的应用：初始化对象和动态更新。
+require sysfs support in the kernel and have it mounted at /sys. For dynamic
+两个应用都需要内核 sysfs 的支持，且必须挂载到 /sys 。为了实现动态更新，
+updates, you also need to have hotplugging enabled in your kernel.
+你还必须在内核配置时增加热插拔支持（hotplugging）。
+Here's a typical code snippet from the init script:
+以下是系统初始化脚本中一个典型的使用mdev 的代码片段：
+    [1] mount -t sysfs sysfs /sys
+    [2] echo /bin/mdev > /proc/sys/kernel/hotplug
+    [3] mdev -s
+
+Of course, a more "full" setup would entail executing this before the previous
+当然，一个对mdev 更完整的安装还必须在以上代码片段前执行下面的命令：
+code snippet:
+    [4] mount -t tmpfs mdev /dev
+    [5] mkdir /dev/pts
+    [6] mount -t devpts devpts /dev/pts
+
+The simple explanation here is that [1] you need to have /sys mounted before
+简单说明一下上面的代码：[1]你必须在执行mdev 前挂载 /sys 。
+executing mdev. Then you [2] instruct the kernel to execute /bin/mdev whenever
+随后你 [2] 命令内核在增删设备时执行 /bin/mdev ，
+a device is added or removed so that the device node can be created or
+使设备节点文件会被创建和删除。
+destroyed. Then you [3] seed /dev with all the device nodes that were created
+最后你 [3] 设置mdev，让它在系统启动时创建所有的设备节点。
+while the system was booting.
+For the "full" setup, you want to [4] make sure /dev is a tmpfs filesystem
+而对mdev 更完整的安装，你必须[4]确保 /dev 是 tmpfs 文件系统
+(assuming you're running out of flash). Then you want to [5] create the
+(假设文件系统在 flash 外运行)。 而且你必须 [5] 创建
+
+-------------
+MDEV Config (/etc/mdev.conf)
+MDEV 配置 (/etc/mdev.conf)
+-------------
+Mdev has an optional config file for controlling ownership/permissions of
+device nodes if your system needs something more than the default root/root
+660 permissions.
+如果你的系统需要一些比默认的 root/root 660 更多的权限，
+你可以使用 mdev 的可选配置文件，以控制设备节点的 所有者 和 权限。
+The file has the format:
+这个文件的格式如下：
+    <device regex> <uid>:<gid> <octal permissions>
+For example:
+例如：
+    hd[a-z][0-9]* 0:3 660
+The config file parsing stops at the first matching line. If no line is
+这个配置文件在第一个匹配行处停止解析。 如果没有匹配行，
+matched, then the default of 0:0 660 is used. To set your own default, simply
+那么就使用默认的 0:0 660 。 你也可以通过在最后创建如下的全匹配
+create your own total match like so:
+行，来设置你自己的默认设置：
+    .* 1:1 777
+If you also enable support for executing your own commands, then the file has
+如果你想 mdev 在找到匹配行时可以执行自定义的命令，那么文件格式如下：
+the format:
+    <device regex> <uid>:<gid> <octal permissions> [<@|$|*> <command>]
+The special characters have the meaning:
+特殊字符的意义如下：
+   @ Run after creating the device.
+    @ 在创建设备节点后运行命令。
+    $ Run before removing the device.
+    $ 在删除设备节点前运行命令。
+    * Run both after creating and before removing the device.
+    * 在创建设备节点后和删除设备节点前都运行命令。
+The command is executed via the system() function (which means you're giving a
+这些命令是通过系统函数（system()）执行的（也就是说你在对shell 下命令）
+command to the shell), so make sure you have a shell installed at /bin/sh.
+，所以请确保你已在 /bin/sh 安装了shell。
+For your convenience, the shell env var $MDEV is set to the device name. So if
+为了方便，shell 的环境变量 $MDEV 会被设置成设备名。 例如
+the device 'hdc' was matched, MDEV would be set to "hdc".
+mdev 解析到设备 'hdc' 匹配，MDEV 将会被设置为 "hdc"。
+
+----------
+FIRMWARE
+固件
+----------
+Some kernel device drivers need to request firmware at runtime in order to
+有些设备驱动程序在运行时，为了正确的初始化设备，需要上传固件。
+properly initialize a device. Place all such firmware files into the
+请将所有的固件文件放入
+/lib/firmware/ directory. At runtime, the kernel will invoke mdev with the
+/lib/firmware/ 目录。 在运行时，内核将会按固件文件名调用 mdev ，
+filename of the firmware which mdev will load out of /lib/firmware/ and into
+之后 mdev 会通过 sysfs 接口将固件从 /lib/firmware/
+the kernel via the sysfs interface. The exact filename is hardcoded in the
+装载到内核。 确定的文件名被固化在内核中，
+kernel, so look there if you need to want to know what to name the file in
+如有必要，你必须知道如何在用户空间命名这个文件。
+userspace.
+
+
+注：
+今天有从别人那里了解到，固件实际上可以是一个类似软件的东西。
+打个比方来说：我们做的电子书系统，每次开发完,release生成的linux文件系统以及相应的软件集合镜像烧写到ebook的板子上面，然后启动板子就有电子书阅读的界面和功能了,可以进行测试了。这个镜像从某种意义上面来说就是一种固件。把固件烧写之后硬件才能有丰富的功能。
+我遇到的一个实际情况就是，在ebook系统中，加载wifi驱动（用来和wifi模块交互）的时候，加载不上去，如果在/lib/firmware添加了相应的固件（就是一个二进制文件）之后，启动的时候把这个固件会load到wifi模块中，这样就能够加载驱动了。
+因为wifi模块可能是对现有板子的cpu的一种扩展，如果不给它一个固件的话，驱动无法和这个模块交互，这个模块也无法识别相应的指令.这个固件加载进去之后，就可以识别相应的机器码指令了。一般来说，扩展一个模块，会把它的固件直接烧写到那个模块中，但是这样不如动态地从/lib/fireware这样的地方加载来的灵活。以上是我的理解。

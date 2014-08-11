@@ -1,0 +1,9 @@
+#######20090504
+1,问题描述:一般插件的statusbar位置用前面的方法可以控制了,但是对于一些动态启动的程序,如QQ还无法控制它的显示位置.
+2,分析原因:
+原来,在
+static void hildon_desktop_panel_expandable_add_button (HildonDesktopPanel *panel, GtkWidget *widget);这个函数里添加所有的item插件,添加之后,还要调用一下:
+hildon_desktop_panel_expandable_arrange_items (HildonDesktopPanelExpandable *panel)
+这个函数负责对插件在statusbar上面重新组织.导致如果是socket的插件,那么就会跑到最前面(或最后面)QQ插件是socket的,动态加载的时候就会"不按预定的方式显示".
+3,问题解决:
+我把这个函数置空了,所以就实现了QQ这样的插件可以像其它插件一样加载了.

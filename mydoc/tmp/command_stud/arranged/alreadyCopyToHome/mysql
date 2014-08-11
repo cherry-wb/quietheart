@@ -1,0 +1,465 @@
+mysql命令使用总结
+[描述]
+这里简单介绍Linux下面mysql命令（以及相关命令）操作mysql数据库的方法。
+
+[举例]
+*启动mysqld服务：
+[root@lv-k wordpress]#service mysqld start
+当然，可以用stop参数停止，用restart参数重启mysqld服务。
+
+*设置mysql管理员密码：
+[root@lv-k wordpress]#mysqladmin -u root password '123'
+这里首先启动mysqld服务，然后设置mysql数据库root帐号密码,密码为123。 数据库安装好后，我们应该为mysql数据库创建一个管理帐号。执行这个命令之后， mysql数据库的管理员是root，密码是123(实践发现，不让设置成root之外的名字，应该有其他的方法)。
+
+*使用root用户登录mysql：
+[root@lv-k wordpress]#mysql --user=root --password=123
+或者[root@lv-k wordpress]#mysql -uroot -p123
+或者[root@lv-k wordpress]#mysql -uroot -p
+这里，假设root用户的密码是123,最后一个命令会提示你额外输入密码。这样会有 "mysql>"提示符号，提示你和mysql进行交互。操作这些命令的时候，应该把mysqld服务器打开。注意，如果是连接到另外的机器上，则需要加入一个参数-h机器IP。
+
+**mysql常用交互命令：
+首先使用root用户登录：
+$mysql --user=root --password=123
+
+*创建一个超级用户：
+mysql> grant all privileges on *.* to 'test'@'localhost' identified by 'password' with grant option;
+这里，创建了一个用户"test",其密码是"password".注意，这里第一行"@"字符的左右没有空格。另外，在mysql数据库中，每操作一个命令，都是;号结尾的。
+
+*取消用户test的权限：
+mysql> revoke all privileges on *.* from test@localhost;
+
+*查看当前所使用的数据库:
+mysql> SELECT DATABASE();
+输入之后，输出类似如下：
++------------+
+| DATABASE() |
++------------+
+| NULL       | 
++------------+
+1 row in set (0.00 sec)
+这里，输出表示还没有使用数据库，输入命令可以小写为："select database();"。
+
+*查找存在的数据库
+mysql> show databases;
+输入之后，输出如下：
++--------------------+
+| Database           |
++--------------------+
+| information_schema | 
+| mysql              | 
+| test               | 
++--------------------+
+3 rows in set (0.00 sec)
+这里，在mysql安装好，设置好管理员后，第一次进入系统，我们用show databases;命令查看数据库的列表，发现有两个数据库，mysql和test，这是系统自建的，是让大家练习用的。
+
+*查找当前数据库存在的所有表
+mysql> show TABLES;
+输入之后，输出如下：
+ERROR 1046 (3D000): No database selected
+这里，因为没有打开数据库，所以无法显示表。
+
+*创建一个名为quietheart的数据库
+mysql> create database quietheart;
+如果创建成功，输出如下：
+Query OK, 1 row affected (0.07 sec)
+这里，我们创建之后可以用用"show databases;"查看,如下：
+mysql> show databases
+    -> ;
++--------------------+
+| Database           |
++--------------------+
+| information_schema | 
+| mysql              | 
+| quietheart         | 
+| test               | 
++--------------------+
+4 rows in set (0.00 sec)
+
+*删除数据库quietheart
+mysql> drop database quietheart;
+删除成功的话，输出如下：
+Query OK, 0 rows affected (0.00 sec)
+这里，我们删除之后可以用用"show databases;"查看,如下：
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema | 
+| mysql              | 
+| test               | 
++--------------------+
+3 rows in set (0.00 sec)
+
+*使用一个数据库
+mysql> use test
+输入之后，输出如下：
+Database changed
+这里，操作一个数据库之前，都需要用这个命令。比较奇怪，没有使用';'作为结尾,使用';'做结尾也行,可以连着写其他的命令，例如"use test;show tables;"。
+可以查看数据库中的表(TABLES可以为小写)如下：
+mysql> show TABLES;
+Empty set (0.00 sec)
+查看当前选择的数据库如下：
+mysql> select database();
++------------+
+| database() |
++------------+
+| test       |
++------------+
+1 row in set (0.00 sec)
+
+*查看状态
+mysql> show status;
+输入之后，输出部分如下：
++-----------------------------------+-----------+
+| Variable_name                     | Value     |
++-----------------------------------+-----------+
+| Aborted_clients                   | 1         |
+| Aborted_connects                  | 0         |
+| Binlog_cache_disk_use             | 0         |
+| Binlog_cache_use                  | 0         |
+| Bytes_received                    | 226       |
+| Bytes_sent                        | 6708      |
+| Com_admin_commands                | 0         |
+这里会输出很多的内容，省略。
+
+*查看用户信息：
+mysql> select user,host,password from mysql.user;
+输入之后，输出如下：
++------------+-----------------+------------------+
+| user       | host            | password         |
++------------+-----------------+------------------+
+| root       | localhost       | 773359240eb9a1d9 |
+| root       | lv-k.domain.com |                  |
+| root       | 127.0.0.1       |                  |
+|            | localhost       |                  |
+|            | lv-k.domain.com |                  |
+| quietheart | localhost       | 773359240eb9a1d9 |
++------------+-----------------+------------------+
+6 rows in set (0.04 sec)
+
+*设置root在主机lv-k.domain.com上面的密码：
+mysql> set password for root@'lv-k.domain.com'=password('123456');
+Query OK, 0 rows affected (0.04 sec)
+
+*删除匿名用户：
+mysql> select user,host from mysql.user;
++------------+-----------------+
+| user       | host            |
++------------+-----------------+
+| root       | 10.1.2.213      |
+| root       | 127.0.0.1       |
+|            | localhost       |
+| quietheart | localhost       |
+| root       | localhost       |
+|            | lv-k.domain.com |
+| root       | lv-k.domain.com |
++------------+-----------------+
+7 rows in set (0.00 sec)
+mysql> delete from mysql.user where user="";
+Query OK, 2 rows affected (0.03 sec)
+mysql> select user,host from mysql.user;
++------------+-----------------+
+| user       | host            |
++------------+-----------------+
+| root       | 10.1.2.213      | 
+| root       | 127.0.0.1       | 
+| quietheart | localhost       | 
+| root       | localhost       | 
+| root       | lv-k.domain.com | 
++------------+-----------------+
+5 rows in set (0.00 sec)
+这里，先查看存在用户信息，然后使用"delete"命令进行真正的删除操作，最后再次查看用户信息,发现匿名用户被delete了。
+
+*退出mysql：
+mysql>exit
+这里，也可以直接按[Ctrl]d退出mysql.
+**
+
+*导出数据库
+[root@lv-k wordpress]#mysqldump -u root -p123 --databases mytest >mysql.mytest
+或[root@lv-k wordpress]#mysqldump -uroot -p --opt mytest > mysql.mytest
+或[root@lv-k wordpress]#mysqldump -uroot -p mytest > mysql.mytest
+或[root@lv-k wordpress]#mysqldump -u root -p123456 --databases mytest >mysql.mytest
+其中前三种方式需要输入密码，具体过程如下：
+mysql> create database mytest;
+Query OK, 1 row affected (0.04 sec)
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema | 
+| mysql              | 
+| mytest             | 
+| test               | 
+| wordpress_db       | 
++--------------------+
+5 rows in set (0.00 sec)
+mysql> use mytest
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
++------------------+
+| Tables_in_mytest |
++------------------+
+| mytest           | 
++------------------+
+1 row in set (0.00 sec)
+
+mysql> select * from mytest;
++------+--------------+
+| num  | name         |
++------+--------------+
+|    1 | Hello World! | 
+|    2 | Hi World!    | 
++------+--------------+
+2 rows in set (0.00 sec)
+这里，我们先创建一个数据库mytest，之后操作导致这个数据库中有一个mytest表,导出的数据库都是文本格式的,后两种方法需要输入密码。
+
+*恢复一个已经导出的数据库
+[root@lv-k wordpress]#mysql -uroot -p123 mytest < mysql.mytest
+或[root@lv-k wordpress]#mysql -uroot -p mytest < mysql.mytest
+这里，第二个方法需要输入密码。具体过程如下：
+mysql> use mytest;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+Database changed
+
+mysql> drop table mytable;
+ERROR 1051 (42S02): Unknown table 'mytable'
+mysql> drop table mytest;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show tables;
+Empty set (0.00 sec)
+
+[root@lv-k wordpress]#mysql -uroot -p123 mytest < mysql.mytest
+[root@lv-k wordpress]# mysql -u root -p123
+
+mysql> use mytest
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+Database changed
+
+mysql> show tables;
++------------------+
+| Tables_in_mytest |
++------------------+
+| mytest           | 
++------------------+
+1 row in set (0.00 sec)
+
+mysql> select * from mytest;
++------+--------------+
+| num  | name         |
++------+--------------+
+|    1 | Hello World! | 
+|    2 | Hi World!    | 
++------+--------------+
+2 rows in set (0.00 sec)
+
+这里，我们先把原来的数据库mytest里面的表删除，然后通过之前的备份mysql.mytest将数据库重新导入，然后就会查看发现数据库中的表被恢复过来了。
+
+**数据库操作命令
+假设之前已经登陆了mysql服务，并且选择了test数据库，如下：
+mysql> show databases;    
++--------------------+
+| Database           |
++--------------------+
+| information_schema | 
+| mysql              | 
+| test               | 
++--------------------+
+3 rows in set (0.00 sec)
+
+mysql> use test;show tables;
+Database changed
+Empty set (0.00 sec)
+
+*创建表mytest：
+mysql> create table mytest(num int, name varchar(50));
+具体过程如下：
+mysql> show tables;
+Empty set (0.00 sec)
+mysql> create table mytest(num int, name varchar(50));
+Query OK, 0 rows affected (0.08 sec)
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| mytest         | 
++----------------+
+1 row in set (0.00 sec)
+这里，我们先"show tables;"检查当前数据库的表，发现为空；然后使用"create"命令创建表mytest；最后再使用"show tables;"可以发现我们创建的表已经存在了。
+
+*向表中插入一个元素：
+mysql> insert into mytest values(1,'Hello World!');
+具体如下：
+mysql> select * from mytest;
+Empty set (0.00 sec)
+mysql> insert into mytest values(1,'Hello World!');
+Query OK, 1 row affected (0.00 sec)
+mysql> select * from mytest;
++------+--------------+
+| num  | name         |
++------+--------------+
+|    1 | Hello World! | 
++------+--------------+
+1 row in set (0.00 sec)
+这里，先用"select"查看表中所有元素，发现为空；然后使用"insert"插入一个元素；再用"select"查看所有元素，就发现了我们刚刚插入的那个元素。
+
+*更新表中所有元素的某列值：
+mysql> update mytest set name="Hello!";
+具体如下：
+mysql> insert into mytest values(2,'Hi World!');
+Query OK, 1 row affected (0.00 sec)
+mysql> select * from mytest;
++------+--------------+
+| num  | name         |
++------+--------------+
+|    1 | Hello World! | 
+|    2 | Hi World!    | 
++------+--------------+
+2 rows in set (0.00 sec)
+mysql> update mytest set name="Hello!";
+Query OK, 2 rows affected (0.00 sec)
+Rows matched: 2  Changed: 2  Warnings: 0
+mysql> select * from mytest;
++------+--------+
+| num  | name   |
++------+--------+
+|    1 | Hello! | 
+|    2 | Hello! | 
+	+------+--------+
+2 rows in set (0.00 sec)
+这里先使用"insert"插入一个元素，再用"select"查看发现表的两个元素；然后使用"update"更新列name；最后查看结果。
+
+*更新表中指定元素的某列值：
+mysql> update mytest set name="Hi!" where num=2;
+具体如下：
+mysql> update mytest set name="Hi!" where num=2;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+mysql> select * from mytest;
++------+--------+
+| num  | name   |
++------+--------+
+|    1 | Hello! | 
+|    2 | Hi!    | 
+	+------+--------+
+2 rows in set (0.00 sec)
+这里，我们在前面的基础上，使用"update"命令更新num为2的元素的name为Hi；然后使用select查看相应的结果。
+
+*删除表中指定元素：
+mysql> delete from mytest where num=2;
+具体如下：
+mysql> select * from mytest;
++------+--------+
+| num  | name   |
++------+--------+
+|    1 | Hello! | 
+|    2 | Hi!    | 
+	+------+--------+
+2 rows in set (0.00 sec)
+mysql> delete from mytest where num=2;
+Query OK, 1 row affected (0.00 sec)
+mysql> select * from mytest;
++------+--------+
+| num  | name   |
++------+--------+
+|    1 | Hello! | 
++------+--------+
+1 row in set (0.01 sec)
+这里，先使用"select"查看表元素；然后使用"delete"命令删除指定元素(num=2)；最后再次使用"select"查看执行的结果。
+
+*删除数据库中指定的表：
+mysql> drop table mytest2;
+具体如下：
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| mytest         | 
+| mytest2        | 
++----------------+
+2 rows in set (0.00 sec)
+mysql> drop table mytest2;
+Query OK, 0 rows affected (0.02 sec)
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| mytest         | 
++----------------+
+1 row in set (0.00 sec)
+这里，先使用"show"查看所有表；然后使用"drop"删除表mytest2；最后使用"show"查看结果。另外如果没有"use test"的话，可以用"mysql> drop table test.mytest;"来删除test数据库中的表。
+**
+
+[其它]
+几个常用的mysql相关的管理命令
+mysql 命令：基本文本的，显示和使用的mysql数据库。前面已经简单的提过用法；比如登录等。
+mysqladmin 命令，用来创建和维护mysql数据库的命令，前面已经简单的提过；
+mysqldump 是用于备份数据库，前面已经简单的说明过； 软件开发网 www.mscto.com
+myisamchk 用来修复.myi后缀的数据库文件；
+
+*备份数据库
+[root@lv-k wordpress]# mysqldump -uroot -p test >/root/test/mysql20110512.sql
+Enter password:
+这里，需要在"Enter password:"后面输入你的密码，这样就备份了test数据库，备份文件为mysql20110512.sql。 
+
+*导入备份的数据库
+[root@lv-k wordpress]# mysql -uroot -p test < /root/test/mysql20110512.sql 
+Enter password: 
+这里，需要在"Enter password:"后面输入你的密码，这样就导入了先前备份的test数据库。
+
+*查看名为test的数据库
+[root@lv-k wordpress]# mysqlshow -uroot -p test
+Enter password: 
+输入之后，输出如下：
+Database: test
++--------+
+| Tables |
++--------+
++--------+
+这样，会显示用户选择的数据库和表。
+
+**修复数据库：
+这里的过程，暂时没有实践过。
+*把mysqld服务器停下来
+[root@lv-k wordpress]#service mysqld stop
+
+*检查数据库文件：
+[root@lv-k wordpress]#myisamchk ../var/linux/*.MYI
+这里的命令意思是检查所有的.myi文件，数据库的目录在../var/linux/目录中.
+
+*修复有问题的数据库：
+[root@lv-k wordpress]#myisamchk -r ../var/linux/*.MYI
+这里，如果前面的检查有问题，应该用-r参数来修复。
+**
+
+**使用mysql创建一个用户的方法如下：
+(1)使用root用户登录：
+$mysql --user=root --password=123
+这里，假设root用户的密码是123。这样会有 "mysql>"提示符号，提示你和mysql进行交互。操作这些命令的时候，应该把mysqld服务器打开。
+(2)运行mysql下面的命令，创建一个超级用户：
+mysql>grant all privileges on *.* to 'test'@'localhost'
+    -> identified by 'password' with grant option;
+	这里，创建了一个用户"test",其密码是"password".注意，这里第一行"@"字符的左右没有空格，之后回车就会有第二行的"-> "提示符号了。
+
+*退出mysql：
+mysql>exit
+这里，也可以直接按[Ctrl]d退出mysql.
+**
+
+*Linux下什么mysql区分大小写的时候:
+(1)、Linux下mysql安装完后是默认：区分表名的大小写，不区分列名的大小写；
+(2)、用root帐号登录后，在/etc/my.cnf 中的[mysqld]后添加添加lower_case_table_names=1，重启MYSQL服务，这时已设置成功：不区分表名的大小写；
+lower_case_table_names参数详解：
+lower_case_table_names = 0
+其中 0：区分大小写，1：不区分大小写
+
+参考：
+http://aumy2008.iteye.com/blog/487133
+http://xinsync.xju.edu.cn/index.php/archives/5575
+http://www.jb51.net/article/23255.htm

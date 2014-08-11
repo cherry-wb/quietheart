@@ -1,0 +1,26 @@
+
+*列出以wait为开头的所有文件并把每个文件复制一份为原名+.bak后缀：
+ls wait_test* |xargs -i cp {} {}.bak
+这样，把每个列出的文件复制一份*.bak副本。-i 参数是xargs命令的"替换字符串"选项.
+{}对就是替换点，相当于每个文件类似find的-exec选项的{}.
+
+批量重命令文件：
+*.txt变成*.bak
+
+[root@P-D4-lv-k temp]# ls *.cpp |xargs -I{} echo {}
+1.cpp
+2.cpp
+3.cpp
+4.cpp
+5.cpp
+这里"-i"等价于"-I{}"其实，-I"string"表示，用string来代表整个文件名称,使用-I来"定义"一个替换字符串。所以上面的命令和后面的等价：
+[root@P-D4-lv-k temp]# ls *.cpp |xargs -Imyown echo myown
+这里，myown定义的直接替换成整个文件，不用受字符串保护。
+
+**
+[root@P-D4-lv-k temp]# ls *.cpp |xargs -I{} echo .cpp
+.cpp
+.cpp
+.cpp
+.cpp
+.cpp

@@ -1,0 +1,342 @@
+""" 
+Cisco E3000 Access point .
+"""
+<<<<<<< .mine
+import sys
+import os
+=======
+import sys
+import os
+import ConfigParser
+import MySQLdb
+>>>>>>> .r618
+
+from base import ApBase
+
+from selenium import webdriver
+from selenium.webdriver.support.ui import Select
+
+class CiscoE3000(ApBase):
+<<<<<<< .mine
+    def __init__(self,mac):
+        self.mac = mac
+        if 1:
+            self.ip="192.168.1.1"
+            self.admin="admin"
+            self.password="admin"
+            self.serial="CVQ01k634585"
+            self.submask="255.255.255.0"
+            self.dns="10.1.10.254"
+        else:
+            '''
+            defProfile = sys.path[0] + os.sep + "profiles" + os.sep + "ap" + os.sep + "cisco.conf"
+            defConfig = ConfigParser.SafeConfigParser(allow_no_value=True)
+            defConfig.read(defProfile)
+            
+            sectionName='MySQLStorage'
+            myHost=defConfig.get(sectionName,'Host')
+            myUser=defConfig.get(sectionName,'User')
+            myPasswd=defConfig.get(sectionName,'Password')
+            myDb=defConfig.get(sectionName,'Database')
+            print myHost, " ", myUser, " ", myPasswd, " ", myDb
+            
+            apTable="cisco_ap"
+            self.conn = MySQLdb.connect(host=myHost, user=myUser, passwd=myPasswd)
+            self.conn.select_db(myDb)
+            cursor = self.conn.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+            command = "select * from %s where mac= '%s';" %(apTable,self.mac)
+            print command
+            cursor.execute(command)
+    
+            apInfo = cursor.fetchone()
+            if apInfo != None:
+                for member in apInfo.keys():
+                    exec 'self.' + member + ' = apInfo["' + member + '"]'
+            cursor.close()
+            '''
+            pass
+=======
+    def __init__(self,mac):
+        self.mac = mac
+        if 1:
+            self.ip="192.168.1.1"
+            self.admin="admin"
+            self.password="admin"
+            self.serial="CVQ01k634585"
+            self.submask="255.255.255.0"
+            self.dns="10.1.10.254"
+        else:
+            defProfile = sys.path[0] + os.sep + "profiles" + os.sep + "ap" + os.sep + "cisco.conf"
+            defConfig = ConfigParser.SafeConfigParser(allow_no_value=True)
+            defConfig.read(defProfile)
+            
+            sectionName='MySQLStorage'
+            myHost=defConfig.get(sectionName,'Host')
+            myUser=defConfig.get(sectionName,'User')
+            myPasswd=defConfig.get(sectionName,'Password')
+            myDb=defConfig.get(sectionName,'Database')
+            print myHost, " ", myUser, " ", myPasswd, " ", myDb
+            
+            apTable="cisco_ap"
+            self.conn = MySQLdb.connect(host=myHost, user=myUser, passwd=myPasswd)
+            self.conn.select_db(myDb)
+            cursor = self.conn.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+            command = "select * from %s where mac= '%s';" %(apTable,self.mac)
+            print command
+            cursor.execute(command)
+    
+            apInfo = cursor.fetchone()
+            if apInfo != None:
+                for member in apInfo.keys():
+                    exec 'self.' + member + ' = apInfo["' + member + '"]'
+            cursor.close()
+>>>>>>> .r618
+
+    def setParameters(self, params):
+        ''' default value in profile is useful at the first time.
+            '''
+        for key in params.keys():
+            exec 'self.' + key + '=params["' + key + '"]'
+
+    def turnOn(self):
+        ApBase.turnOn(self)
+        print 'CiscoE3000 turnOn'
+
+    def turnOff(self):
+        ApBase.turnOff(self)
+        print 'CiscoE3000 turnOff'
+
+    def openWebDriver(self):
+        self.driver = webdriver.Firefox()
+        self.driver.implicitly_wait(20)
+        self.base_url = "http://" + self.admin + ":" + self.password + "@" + self.ip
+
+    def closeWebDriver(self):
+        self.driver.quit()
+
+    def reboot(self):
+        ApBase.reboot(self)
+        print 'CiscoE3000 reboot'
+
+    def setChannelWidth(self,ChannelWidth_5G,ChannelWidth_24G,mode='24G'):       
+          dict_ChannelWidth24G={"A":"Auto(20MHz or 40MHz)","20":"20MHz only"}
+          dict_ChannelWidth5G={"A":"Auto(20MHz or 40MHz)","20":"20MHz only","40":"40MHz only"}
+          driver = self.driver
+          driver.get(self.base_url + "/")
+          driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()       
+          if mode.find('24G')!=-1: 
+              #if self.netmode_24G=='Wireless-B/G Only' or self.netmode_24G=='Dissabled' or self.netmode_24G=='Wireless-B Only' or self.netmode_24G=='Wireless-G Only':
+                  #pass
+              #else:
+                  Select(driver.find_element_by_name("_wl0_nbw")).select_by_visible_text(dict_ChannelWidth24G[ChannelWidth_24G])
+          if mode.find('5G')!=-1:
+              #if self.netmode_5G=='Wireless-A Only' or self.netmode_5G=='Dissabled':
+                  #pass
+              #else:
+                 Select(driver.find_element_by_name("_wl1_nbw")).select_by_visible_text(dict_ChannelWidth5G[ChannelWidth_5G])
+          driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+          driver.find_element_by_name("action").click()
+          if mode.find('24G')!=-1: 
+              self.ChannelWidth_24G=dict_ChannelWidth24G[ChannelWidth_24G]
+          if mode.find('5G')!=-1: 
+              self.ChannelWidth_5G=dict_ChannelWidth5G[ChannelWidth_5G]
+
+    def setChannel(self,channel_5G,channel_24G,mode='24G'):
+          dict_channel5G= {'36':'36 - 5.180GHz', '40':'40 - 5.200GHz', '44':'44 - 5.220GHz', '48':'48 - 5.240GHz', '149':'149 - 5.745GHz', '153':'153 - 5.765GHz', '157':'157 - 5.785GHz', '161':'161 - 5.805GHz',"A":"Auto (DFS)"}
+          dict_channel24G= {'1':'1 - 2.412GHZ', '2':'2 - 2.417GHZ', '3':'3 - 2.422GHZ', '4':'4 - 2.427GHZ', '5':'5 - 2.432GHZ', '6':'6 - 2.437GHZ', '7':'7 - 2.442GHZ', '8':'8 - 2.447GHZ','9':'9 - 2.452GHZ', '10':'10 - 2.457GHZ', '11':'11 - 2.462GHZ',"A":"Auto"}
+          driver = self.driver
+          driver.get(self.base_url + "/")
+          driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+          if mode.find('5G')!=-1: 
+              #if self.netmode_5G=='Dissabled':
+                  #pass
+              #else:      
+                  Select(driver.find_element_by_name("_wl1_channel")).select_by_visible_text(dict_channel5G[channel_5G])    
+          if mode.find('24G')!=-1:
+              #if self.netmode_5G=='Dissabled':
+                  #pass
+              #else:          
+                  Select(driver.find_element_by_name("_wl0_channel")).select_by_visible_text(dict_channel24G[channel_24G])
+          driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+          driver.find_element_by_name("action").click()
+          if mode.find('5G')!=-1:        
+              self.channel_5=dict_channel5G[channel_5G]
+          if mode.find('24G')!=-1:         
+              self.channel_24=dict_channel24G[channel_24G] 
+    
+    def setRadioOFF(self,netmode_5G='D',netmode_24G='D',mode='24G'):
+        dict_wmode = {'D':'Disabled'}
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+        if mode.find("24G") != -1 :
+            Select(driver.find_element_by_name("wl0_net_mode")).select_by_visible_text(dict_wmode[netmode_24G])
+        if mode.find("5G") != -1 :
+            Select(driver.find_element_by_name("wl1_net_mode")).select_by_visible_text(dict_wmode[netmode_5G])
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+        driver.find_element_by_name("action").click()
+        if mode.find("24G") != -1 :
+            self.netmode_24G=dict_wmode[netmode_24G]
+        if mode.find("5G") != -1 :
+            self.netmode_5G=dict_wmode[netmode_5G]
+
+    def setWirelessMode(self, netmode_5G='M',netmode_24G='M',mode='24G'):
+        dict_wmode1 = {'A':'Wireless-A Only', 'N':'Wireless-N Only', 'M':'Mixed'}
+        dict_wmode2 = {'B/G':'Wireless-B/G Only', 'B':'Wireless-B Only', 'G':'Wireless-G Only', 'M':'Mixed', 'N':'Wireless-N Only'}
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+        if mode.find("24G") != -1 :
+            Select(driver.find_element_by_name("wl0_net_mode")).select_by_visible_text(dict_wmode2[netmode_24G])
+        if mode.find("5G") != -1 :
+            Select(driver.find_element_by_name("wl1_net_mode")).select_by_visible_text(dict_wmode1[netmode_5G])
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+        driver.find_element_by_name("action").click()
+
+        if mode.find("24G") != -1 :
+            self.netmode_24G=dict_wmode2[netmode_24G]
+        if mode.find("5G") != -1 :
+            self.netmode_5G=dict_wmode2[netmode_5G]
+
+    def setDns(self,ipaddr):
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+        driver.find_element_by_css_selector("a").click()
+        driver.find_element_by_id("dns00").clear()
+        driver.find_element_by_id("dns00").send_keys(self.dns.split('.')[0])
+        driver.find_element_by_id("dns01").clear()
+        driver.find_element_by_id("dns01").send_keys(self.dns.split('.')[1])
+        driver.find_element_by_id("dns02").clear()
+        driver.find_element_by_id("dns02").send_keys(self.dns.split('.')[2])
+        driver.find_element_by_id("dns03").clear()
+        driver.find_element_by_id("dns03").send_keys(self.dns.split('.')[3])
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+        self.dns=ipaddr
+
+
+    def setParkingState(self):
+        ApBase.setParkingState(self)
+        print 'CiscoE3000 setParkingState'
+
+    def dump(self):
+        ApBase.dump(self)
+
+    
+    def setSSID(self, ssid_5G, ssid_24G, mode = "24G"):
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+#        if mode.find("5G") != -1 and self.netmode_5G != "Disabled":
+        if mode.find("5G") != -1:
+            driver.find_element_by_name("wl1_ssid").clear()
+            driver.find_element_by_name("wl1_ssid").send_keys(ssid_5G)
+#        if mode.find("24G") != -1 and self.netmode_24G != "Disabled":
+        if mode.find("24G") != -1:
+            driver.find_element_by_name("wl0_ssid").clear()
+            driver.find_element_by_name("wl0_ssid").send_keys(ssid_24G)
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+#        if mode.find("5G") != -1 and self.netmode_5G != "Disabled":
+        if mode.find("5G") != -1:
+            self.ssid_5G=ssid_5G
+#        if mode.find("24G") != -1 and self.netmode_24G != "Disabled":
+        if mode.find("24G") != -1:
+            self.ssid_24G=ssid_24G
+
+    def setSsidBroadcast(self, ssid_en_5G, ssid_en_24G, mode = "24G"):
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+#        if mode.find("5G") != -1 and self.netmode_5G != "Disabled":
+        if mode.find("5G") != -1:
+            if ssid_en_5G == 'enable':
+                driver.find_element_by_name("wl1_closed").click()
+            elif ssid_en_5G == 'disable':
+                driver.find_element_by_xpath("(//input[@name='wl1_closed'])[2]").click()
+#        if mode.find("24G") != -1 and self.netmode_24G != "Disabled":
+        if mode.find("24G") != -1:
+            if ssid_en_24G == 'enable':
+                driver.find_element_by_name("wl0_closed").click()
+            elif ssid_en_24G == 'disable':
+                driver.find_element_by_xpath("(//input[@name='wl0_closed'])[2]").click()
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+#        if mode.find("5G") != -1 and self.netmode_5G != "Disabled":
+        if mode.find("5G") != -1:
+            self.ssid_en_5G=ssid_en_5G
+#        if mode.find("24G") != -1 and self.netmode_24G != "Disabled":
+        if mode.find("24G") != -1:
+            self.ssid_en_24G=ssid_en_24G
+
+    def setPassphrase(self,passphrase_5G='12345678',passphrase_24G='12345678',mode= '24G'):
+
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+        driver.find_element_by_css_selector("td.small > a").click()
+
+        if mode.find("5G") != -1 :
+            if 'WPA2/WPA Mixed Mode' ==self.security_mode_5 or 'WPA2 Personal' == self.security_mode_5 or 'WPA Personal' == self.security_mode_5: 
+                driver.find_element_by_name("wl1_wpa_psk").clear()
+                driver.find_element_by_name("wl1_wpa_psk").send_keys(passphrase_5G)
+            elif 'Disabled' ==self.security_mode_5:
+                pass
+
+        elif '24G' == mode :
+            if 'WPA2 Personal' == self.security_mode_24 :
+                driver.find_element_by_name("wl0_wpa_psk").clear()
+                driver.find_element_by_name("wl0_wpa_psk").send_keys(passphrase_24G)
+            elif 'Disabled' == self.security_mode_24 :
+                pass
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+    def restore_factory_default(self):
+        driver = self.driver
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[7]/p/font/a").click()
+        driver.find_element_by_xpath("//table[@id='AutoNumber1']/tbody/tr[3]/td/table/tbody/tr/td[11]/a").click()
+        driver.find_element_by_name("restore_b").click()
+        # ERROR: Caught exception [ERROR: Unsupported command [getConfirmation]]
+
+    def test(self,params):
+        ''' Test function for develop.
+            '''
+        print "run test function, param value are:",params
+        print "all data attributes are:",self.__dict__
+
+<<<<<<< .mine
+=======
+    def setSecurityMode(self,security_mode_5G,security_mode_24G,mode='24G'):
+        dict_SecurityMode_5G={"WPA2/WPA":"WPA2/WPA mixed Mode","WPA2":"WPA2 Personal","WPA":"WPA Personal","D":"Disabled"}
+        dict_SecurityMode_24G={"WPA2/WPA":"WPA2/WPA mixed Mode","WPA2":"WPA2 Personal","WPA":"WPA Personal","D":"Disabled"}
+        driver = self.driver     
+        driver.get(self.base_url + "/")
+        driver.find_element_by_xpath("//table[@id='table3']/tbody/tr[2]/td[2]/font/a").click()
+        driver.find_element_by_css_selector("td.small > a").click()
+        if mode.find("5G")!=-1:
+           Select(driver.find_element_by_name("wl1_security_mode")).select_by_visible_text(dict_SecurityMode_5G[security_mode_5G])
+           driver.find_element_by_name("wl1_wpa_psk").clear()
+           driver.find_element_by_name("wl1_wpa_psk").send_keys('000000000')
+        if mode.find("24G")!=-1:
+            Select(driver.find_element_by_name("wl0_security_mode")).select_by_visible_text(dict_SecurityMode_24G[security_mode_24G])
+            driver.find_element_by_name("wl0_wpa_psk").clear()
+            driver.find_element_by_name("wl0_wpa_psk").send_keys('11111111')
+        driver.find_element_by_xpath("//table[@id='AutoNumber9']/tbody/tr[2]/td/table/tbody/tr[2]/td[3]/table/tbody/tr/td/font/a").click()
+        driver.find_element_by_name("action").click()
+        if mode.find("5G")!=-1:
+           self.security_mode_5G=dict_SecurityMode_5G[security_mode_5G]
+        if mode.find("24G")!=-1:
+           self.security_mode_24G=dict_SecurityMode_24G[security_mode_24G]
+
+>>>>>>> .r618
+if __name__ == '__main__':
+    e3000 = CiscoE3000()
+    e3000.setParameters({'name':'E3000', 'ip':'10.1.10.32:8080', 'submask':'255.255.255.0', 'dns':'10.1.10.254', 'admin':'admin', 'password':'myadmin'})
+    e3000.openWebDriver()
+    e3000.setWirelessMode('A','24G')
+    e3000.setRadioOFF('D','24G')
+    e3000.setChannelWidth('20','','5G')
+    e3000.setChannel('','1','24G')
+    e3000.setSecurityMode('WPA2 Personal','WPA2 Personal','5G24G')
+    e3000.setSSID('Cisco6300','5G')
+    e3000.setSsidBroadcast('enable','5G')
+    e3000.closeWebDriver()
+    e3000.setWirelessMode_24G('B/G')

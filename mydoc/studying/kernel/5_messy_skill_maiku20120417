@@ -1,0 +1,594 @@
+这里是学习内核的时候，遇到的杂乱的定义，概念等。
+(有待整理)
+
+学习的起点：
+这里讲述了我学习内核中遇到问题的摸索过程，这些过程对学习的进度有很大的帮助。
+搜索的时候，不只是在代码中搜索，还有一个更大的资源库------网络。
+目前感觉一些学习内核的入手点有：（更新中）
+内核学习方向的可能入口：
+(1)从驱动角度
+例如驱动初始化函数如何调用，驱动如何加载
+(2)从文件系统角度
+例如vfs文件系统的机制
+(3)从启动流程角度
+操作系统从main.c开始，是如何启动的,如何进入到各种初始化函数中的。
+(4)从内存管理角度
+内核是如何分配和管理内存的
+例如kmalloc.h/c,slab.h/c,kmalloc_size.h/c等
+(5)从信号/中断角度
+内核是如何处理信号的，以及同步互斥相关得内容。
+(6)从线程进程管理角度
+内核是如何启动一个线程的
+(7)从程序执行角度
+内核是如何解释并且执行一个程序的。
+(8)从编译角度
+内核是如何进行总体编译的
+(9)从系统调用角度
+
+主要内容：
+*相关概念
+*小技巧
+*杂乱定位
+*摸索过程
+*留滞问题
+*gnu gcc相关扩展
+
+*内存管理
+*中断机制
+*同步互斥
+*系统调用
+*文件系统
+*设备管理
+
+*未分类
+===========
+(待整理)
+1，一些概念
+*什么是xscale?
+Xscale是ARM体系结构的一种内核，基于ARM v5TE，由Intel公司开发，在架构扩展的基础上同时也保留了对于以往产品的向下兼容，因此获得了广泛的应用。相比于ARM处理器，XScale功耗更低，系统伸缩性更好，同时核心频率也得到提高，达到了400Mhz甚至更高。这种处理器还支持高效通讯指令，可以和同样架构处理器之间达到高速传输。其中一个主要的扩展就是无线MMX，这是一种64位的SIMD指令集，在新款的 Xscale处理器中集成有SIMD协处理器。这些指令集可以有效的加快视频、3D图像、音频以及其他SIMD传统元素处理。
+　基于Xscale内核的处理器主要包括：
+　Intel PXA25x
+　Intel PXA26X
+　Intel PXA27X
+　2006年，XScale被出售给Marvell。
+
+2,小技巧
+*查看已经注册的设备主设备号：
+cat /proc/devices
+
+*查看使用的io端口：
+cat /proc/ioports
+
+*查看系统时间:
+cat /proc/uptime
+执行这句命令，终端会输出类似
+3.68 1.06
+系统上面,2个数字的意义，第一个数值代表系统总的启动时间(代表系统跑了多少时间)，第二个数值则代表系统空闲的时间，都是用秒来表示的。
+
+*关于内核模块的log查看：
+编译生成一个my.ko模块之后，其中的init函数中包含：
+printk(KERN_ALERT "hello!%s\n",__FUNCTION__);
+如下：
+#insmod my.ko
+这样不会显示log，那么如何查看运行时候的log呢？
+
+(1)可以通过查看"/var/log/messages"文件找到相应的信息。
+(2)如果想要打到终端上面，那么修改"/proc/sys/kernel/prink"文件
+#cat /proc/sys/kernel/printk
+这样显示:
+6       4       1       7
+分别表示"当前记录级别, 适用没有明确记录级别的消息的缺省级别, 允许的最小记录级别, 以及启动时缺省记录级别"
+#echo 8 > /proc/sys/kernel/printk
+#cat /proc/sys/kernel/printk
+会显示修改的值：
+8       4       1       7
+这里，8表示打印所有级别的log。注意这里的级别和内核中的[0-7]级别范围差了一个数。例如如果设置为1那么只有0级别的会显示到控制台。注意，这里显示到控制台表示使用F1-F6的纯命令行终端，而不是X图形界面xterm的伪终端。
+
+另外,/proc/kmsg也含有内核消息，使用dmesg来查看它更方便，但是前提是klogd要启动才行。
+可以修改/etc/syslog.conf或者通过klogd来设置显示log的地方，具体参见ldd的4.2节。网址：
+http://www.deansys.com/doc/ldd3/ch04s02.html
+
+*控制内核log的函数：printk_ratelimit()，如果log太多了，它会返回0，这样可以防止打印的log过多导致终端阻塞严重。
+因此，使用方法大致如下：
+if (printk_ratelimit(  ))
+	    printk(KERN_NOTICE "The printer is still on fire\n");
+这个函数会检查一个上限值来确定返回，其值可以在/proc/sys/kernel/printk_ratelimit和/proc/sys/kernel/printk_ratelimit_burst设置。
+具体参见：http://www.makelinux.net/ldd3/chp-4-sect-2
+
+*查看某个块设备现在使用的I/O调度器：
+# cat /sys/block/<blockname>/queue/scheduler
+输出类似：
+[noop] anticipatory deadline cfq
+这样，可以看到<blockname>设备使用的为noop调度器。
+例如:
+# cat /sys/block/sda/queue/scheduler 
+noop anticipatory deadline [cfq] 
+
+3,杂乱定位
+1)全局变量current是怎么回事？
+在include/asm-x86/current.h中看到了current是一宏定义调用get_current
+据说返回值就是task_struct,定义在linux/sched.h(/usr/src/$(KERDIR)/include/linux/sched.h)
+
+2)类型gid_t，time_t等一般是在哪个头文件声明的阿？
+答：
+在/usr/include/linux/types.h  
+不过也是typedef  
+一般情况下，你可以这样找一个定义，比如__kernel_time_t  
+grep   -r   __kernel_time_t   /usr/include/*  
+可以看到一行：  
+asm/posix_types.h:typedef   long  __kernel_time_t;
+
+3)linux启动的起点：
+具体过程不多说了，上网搜索，
+最终会调用到第一个用c语言的我们应该看的文件：
+init/main.c中的start_kernel
+
+4)内核参数是如何解析的？
+搜索main.c中的关于early_param和__setup宏的信息，再结合start_kernel中的parse_early_param和parse_args即可。
+具体来说，early_param和__setup宏将参数和某个函数关联，然后通过parse_early_param和parse_args进行相关的解析。
+其中early_param的参数比__setup的参数优先。
+可参见:linux-2.6.32/include/linux/init.h
+另外还有一个就是内核模块参数参见:"linux-2.6.32/include/linux/moduleparam.h".
+
+5)模块的初始化函数是如何调用的？
+搜索关于__init宏的信息，知道了它就知道了在哪里调用模块初始化函数。
+实际_init宏把其修饰的函数放到了.init.text段。
+而具体通过***init宏放到initCall.initN段（N是数字）。
+然后通过main.c中的do_initcalls来依次调用initN段的函数。
+__init之类的宏的使用方法:linux-2.6.32/include/linux/init.h
+比较详细的参考资料参见：http://blog.csdn.net/fudan_abc/article/details/1793872
+
+6)模块中有些只有extern声明的函数，没有实现，如何做的？
+查找关于EXPORT_SYMBOL宏的信息即可。
+实际这个宏在内核源代码中，用这个宏声明的变量，会导出到内核空间中，通过/proc/kallsyms可以看到。然后其他程序只需要用extern来声明就可以了。
+函数的实际实现是在内核中而不是在模块中。
+
+7)动态加载的模块是从哪里怎样开始运行的？
+"linux-2.6.32/kernel/module.c"中的SYSCALL_DEFINE3调用load_module
+
+8)linux内核中unlikely(!c)是什么意思？
+这是gcc的扩展，目的是增加条件分支预测的准确性，cpu会提前装载后面的指令，遇到条件转移指令时会提前预测并装载某个分支的指令。unlikely 表示你可以确认该条件是极少发生的，相反likely表示该条件多数情况下会发生。编译器会产生相应的代码来优化cpu执行效率。
+总结起来就是：
+GCC提供了这个内建的函数来帮助处理分支预测，优化程序。使用的时候很简单的，就是，if语句你照用，只是如果你觉得if条件为1的可能性非常大的时候，可以在条件表达式外面包装一个likely()，如果可能性非常小，则用unlikely()包装。
+其定义如下：
+//内核文件：include/linux/compiler.h
+...
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+...
+参考：http://topic.csdn.net/u/20070429/08/24ea26d2-1ce1-4e97-acb1-1c08b4fba736.html
+更为详细的参考：http://www.xue5.com/itedu/200707/123615.html
+比较清晰的参考：http://blog.csdn.net/fudan_abc/article/details/1814891
+
+9)rdinit参数和init参数
+之前制作cpio的ramdisk的时候，发现如果不在根目录放一个/init文件的话就不行，即使放在/sbin/init并且用init来指定也不行，后来阅读内核代码，发现内核有个"rdinit="参数，再结合代码main.c中kerner_init函数中的:
+if (!ramdisk_execute_command)
+ ramdisk_execute_command = "/init";
+以及init_post函数，估计，如支持initrd,那么有rdinit,则优先使用rdinit,否则就使用init.所以如果我设置"rdinit=/sbin/init"就好了。
+
+10)关于平台移植的代码：
+有些和平台相关的代码，一般采用特殊的处理方式。例如
+#include <mach/hardware.h>
+实际这个路径是不存在的，编译的时候预处理会自动将其处理成：
+类似"#include <arch/arm/mach-diablo/include/mach/hardware.h>"这样加了平台信息的内容。
+一般好多drivers以及arch中所需要包含的头文件，都这样处理，这样代码不会改动，便于增加不同平台之间的可移植性。
+
+
+11)kconfig中的一些内容：
+一般kconfig相关的文件在make menuconfig等配置的时候被读取，它们中的'source "XXX"'可以导入其他的kconfig文件，并且在make menuconfig中显示为"*** support"项，而"***"名字一般就是被导入文件中的menu item 关键字定义的名称。
+
+参考资料:
+http://linux.chinaunix.net/bbs/thread-1123620-1-1.html
+http://www.linuxdiyf.com/bbs/thread-2063-1-1.html
+
+7)块设备的bio
+page一般各种cpu操作page的最小单位是4k，当然有的设成8k等，但是最小是4k。
+例如当块设备请求到来的时候，会为用户请求数据分配一块虚拟地址，存放在请求结构(request)中的bio结构中，而bio结构中的bi_io_vec数组存放实际的数据。数组元素为：
+struct bio_vec
+{
+	struct page* bv_page;
+	unsigned int bv_len;
+	unsigned int bv_offset;
+}
+实际上，分配给用户请求数据的虚拟地址不一定以page进行对齐，所以要对其align，如下：
+|--###|#####|#####|##---|
+这里，分配了4个页给用户请求数据，这四个页都存放在一个bio_vec中的bv_page列表中。而由于需要align，所以'#'中的才是实际的数据，而'-'的可能是别人的或者没有用的数据等。这里，bv_offset就是第一个bv_page中第一个'#'中的偏移，而bv_len就是从第1个'#'到最后一个'#'的长度。这一点要注意，不要从bv_page开始的页对应的虚拟地址访问page。
+获取一个page对应的起始地址方式是使用page_address宏，这样返回page的起始地址，再加上bv_offset就得到整个bio结构中数据的起始地址了。获取bio数据对应的虚拟地址的函数的实现就是如下：
+//include/linux/bio.h
+static inline void *bio_data(struct bio *bio)
+{
+    if (bio->bi_vcnt)
+        return page_address(bio_page(bio)) + bio_offset(bio);
+
+    return NULL;
+}
+可知，通过bio_data就可以获得bio数据的虚拟地址了，通过内核代码发现，这个虚拟地址只是bio数据的当前vec索引地址，而不一定是整个的。
+
+另外，我们使用ioremap来将外设的空间映射到内存空间，借以访问外设，而这里所映射得到的就是物理地址，物理地址是一个固定的常量，而不是我们以为的随意的一个地址。
+
+8)驱动中的read，write中的pos指针参数指向的是下次将要读／写的数据。
+假设文件大小为size，pos可以由0开始，而pos=size表示，pos指向的是文件末尾，也就读取完了。
+类似的概念是空堆栈和满堆栈。假设当前指针pos。
+空堆栈，栈指针pos指向的是一个空的slot，也就是下一个可用的空闲。便于压栈，而弹的时候需要弹pos-1。
+满堆栈，栈指针pos指向的是一个有可用数据的slot，也就是最后一个使用的空间。便于弹栈，而压的时候需要压pos+1。
+不要以为空堆栈就是没有内容的堆栈，满堆栈就是没有空间的堆栈。
+以上位置，其实都可以自己定义的。
+
+中断处理函数必须要返回一个值，表示已经处理或者没有被处理，如果没有被处理则对于share会继续调用下一个中断处理函数。
+
+9)互斥量(mux)和二值信号量(sem)的区别:
+前者可以递归地加锁，
+后者不能，当sem递归加锁会导致死锁。
+
+
+
+10)如果内核中，判断条件最好用：
+if(likely(offset == 0))
+if(unlikely(size > SC2P_CTRL_MMAP_BUFF_SIZE))
+之类的，可以优化编译。
+
+ioctl的参数检测：
+489     if( unlikely((_IOC_TYPE(cmd) != SC2P_CTRL_IO_MAGIC) ||^M
+490         (_IOC_NR(cmd) > SC2P_CTRL_MAX_NR)) ) {^M
+491         SC2P_CTRL_ERROR("Invalid cmd: [0x%08x]\n", cmd );^M
+492         return -ENOTTY;^M
+493     }^M 
+
+
+11)开发板的初始化：
+板子不同，cpu一样，也要对板子进行初始化。
+(1)入口类似：
+/mnt/c/linux-2.6.32/arch/arm/mach-s3c2410/mach-smdk2410.c
+或者arch/arm/mach-at91/board-csb337.c
+中的
+MACHINE_START(...)
+...声明初始化函数...
+MACHINE_END
+通过这个宏的实现，可知这个宏将machine_desc结构变量link到指定的section中。
+文件名称有所不同。
+
+(2)这个宏在
+init/main.c中的start_kernel中的setup_arch中会将link的machine_desc取出来。
+
+
+
+12)关于数据段
+bss段是初始化为0以及未初始化的数据，所以在可执行文件里面不占空间；而data段是初始化为非0的变量。
+
+13)总线
+片上的总线架构
+AMBA(advanced microprocess bus architecture)
+包括三个：
+APB(advanced perpheral bus)
+AHB(advanced hierarchy bus)
+AXI(advanced extension interface)
+三者由慢到快。
+如果慢速设备接到快速的总线上面，则导致整个总线上速度下降，从而影响整个总线上的设备；如果快速设备接到慢速的总线上面则导致该设备之多只能用到总线的速度。例如一般ddr接到ahp上面，pci接到ahp甚至axi上面，而timer只有33M,66M的级别的设备，只接到apb上面等等。一条指令分多个阶段，这些阶段之间通过总线仲裁进行次序调整，单个cpu之间没有仲裁，只有多个cpu上面才有仲裁的必要。总线的速度可能比cpu快，所以多余的带宽可以用于dma。可以使用内存屏障来控制一条指令各个阶段，而编译器的noreorder类似的伪指令只能控制指令编译之后的次序。
+
+14)关于mmap函数的实现
+
+驱动中有对mmap的具体实现。用户调用mmap系统调用函数之后，最终会调用到驱动中的mmap函数接口。下面是一个例子：
+static int commdrv_mmap(struct file* file, struct vm_area_struct* vma)
+{
+    long phy_addr;
+    unsigned long offset;
+    unsigned long size;
+    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+    vma->vm_flags |= VM_LOCKED;
+    offset = vma->vm_pgoff << PAGE_SHIFT;/*XXX assume is 12*/
+    size = vma->vm_end - vma->vm_start;
+    if(BUF0_OFF == offset) {
+        phy_addr = PHYS_BASE0;
+    } else if(BUF1_OFF == offset) {
+        phy_addr = PHYS_BASE1;
+    } else if(START_OFF == offset) {
+        phy_addr = PHYS_BASE;
+    } else {
+        return -ENXIO;
+    }
+    /*phy_addr must be 4k *n*/
+    if(remap_pfn_range(vma, vma->vm_start, phy_addr >> PAGE_SHIFT, size, vma->vm_page_prot)) {
+        return -ENXIO;
+    }
+    return 0;
+}
+对于以上代码，
+"vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);"表示要映射的内存是非cached的，这样不会存在缓存中的数据和实际数据不一致的情况，但是速度会比cached的要慢。
+offset表示要映射的数据的偏移，这个偏移量来自用户空间的mmap调用，用户空间传入的偏移在这里进行判断，虽然一般的文件就将这个偏移量做为文件偏移了，其实这个offset的含义，由驱动自己解释，不一定就是字节偏移，驱动根据这个偏移量来决定映射哪块内存，
+size表示要映射的内存的大小。
+"remap_pfn_range(vma, vma->vm_start, phy_addr >> PAGE_SHIFT, size, vma->vm_page_prot)"表示将根据被映射的物理地址，以及虚拟起始地址，和大小等信息，将相应的部分映射到用户空间。其中参数vma直接来自commdrv_mmap函数的参数，phy_addr是要映射的设备的物理地址(必须是页对齐的)，只有少量的信息自己设置，大多来自外部。最后映射的地址，通过用户调用的mmap函数返回，用户可以直接操作。
+mmap实现了将设备驱动在内核空间的部分地址直接映射到用户空间，使得用户程序可以直接访问和操作相应的内容。减少了额外的拷贝，而一般的read，write函数虽然表面上直接向设备写入，其实还需要进行一次拷贝。
+例如，下面是某个设备驱动中的的write实现，当外面用户程序调用write系统调用向相应设备文件写之后，最终会进入到这个函数进行真正的读取所需操作。
+static ssize_t commdrv_write(struct file* filp, char __user* buf,
+        size_t count, loff_t* ppos)
+{
+    char* wbuf;
+    wbuf = (char*)vmalloc(count);
+    if(!wbuf) {
+        return 0;
+    }
+    ret = copy_from_user(wbuf, (char __user*)buf, count);
+    if(0 != ret) {
+        vfree(wbuf);
+        return 0;
+    }
+	.....do others things with wbuf......
+    vfree(wbuf);
+    return count;
+}
+由上面的代码可知，用户传入的数据指针buf，在驱动中（也就是内核空间）不能直接访问，必须使用copy_from_user将其拷贝到内核空间的一块内存，然后才能进行后续的操作（内核中不能不经过copy_from_user，直接访问用户传下来的指针buf的地址的内容）。而mmap，使得将内核空间直接映射到了用户空间，让用户空间通过返回的指针直接访问，这样内核和用户空间直接操作同样的内存。也就是说，如果不使用mmap，那么由于在内核空间的代码，和外面用户空间的代码对应的地址空间不同，这样内核空间和用户空间不能互相访问其指针；如果想要访问，对方指针的内容，那么只能通过copy_from_user之类的函数先将其数据拷贝到内核空间（相应的read一般使用copy_to_user可以将内核空间内的指针数据拷贝给用户空间的指针所指）再访问。除非直接将内存映射，否则一定要拷贝才能访问用户空间数据。
+
+
+
+*gnu gcc相关扩展
+===========
+1，关于__attribute__((force))的含义：
+网上查询:http://topic.csdn.net/u/20090219/10/14e3dd34-8ad5-4a0d-9c90-c0fb2044b94f.html
+说，__attribute__((force))的意思是"大概意思应该就是说防止类型转换时出现警告"。
+例如:
+arch/um/kernel/skas/uaccess.c:int copy_from_user(void *to, const void __user *from, int n)
+中，有一句"memcpy(to, (__force void*)from, n);"，这里的"__force"定义为：
+# define __force    __attribute__((force))
+
+*内存管理
+===========
+1，地址空间和设备
+	32位的cpu，总共寻址空间4G，而使用的各种设备通过地址进行访问。这些设备有些是片外的有些是片内(或片上)的（片外和片内是指是否集成到cpu芯片中，片内就是在一款cpu中，但是可能片外也在板子上）。具体如下：
+	a)cpu芯片在板子上面；片内的设备在cpu芯片上面；
+	b)片外的各种设备不在cpu芯片上面，而可能在板子上面；
+	c)各种设备其物理地址固定。
+	d)片外的设备，其物理地址随板子（接线方式）而不同(板子不变就不变)； 
+	e)片内的设备（以及寄存器等），其物理地址随cpu类型而不同(cpu不变就不会改变)。 
+	f)这里的设备，包括寄存器，ddr内存，等等各种设备。
+
+2，Linux内存管理概述
+	基于前面的内容，假设这里将ddr内存设计为片外的了(现在的内存都是ddr的了)，使用linux系统，则情况如下：
+	a)linux内核中一般定义(ddr)内存的物理地址为PHY_OFFSET；将PHY_OFFSET映射之后的、linux内核空间的、虚拟地址，定义为其PAGE_OFFSET，是值为3g(也就是说，3g-4g的地址空间范围是内核虚地址空间，每个进程公用；而0-3g是进程虚地址空间，每个进程一个；用户进程通过系统调用才能访问到内核虚地址空间)，3g以上的内核空间的前896M空间就是kmalloc和_get_free_pages分配的，而之后的高端内存区当内存超过896M的时候会被映射到。
+	b)实际上，内存中的前面的部分存放内存映射表等相关内容，所以真正使用的是不是最开始的内容，而是最开始后面的某处为起点的内容。
+	c)linux中，使用ioremap可以将整个4G中的物理地址进行remap，之后用返回的虚拟地址访问各种设备。
+	d)linux内核中的各种内存管理函数（例如vmalloc,kmalloc）只是对ddr内存进行管理。
+	e)linux的内存管理函数kmalloc以及get_free_pages之类的函数返回的只是内核管理内存的虚拟空间（PAGE_OFFSET为其起点）中的一部分，这个部分和物理地址PHY_OFFSET是线性映射的，可以用_pa和_va宏进行物理地址和虚拟地址之间的转换。
+	f)vmalloc返回的地址也是内存映射之后的虚拟空间的一部分，但是不能用_pa和_va宏转换，因为它返回的内核虚拟地址不是和物理地址线性映射的。
+	上面需要注意的就是，ddr内存和io外设口之间的区别，linux内存分配的时候，是内存的地址，而io外设分配的地址使用ioremap之类的端口映射。
+
+	另外，补充一点内存映射的内容，内存通过mmu管理的时候，mmu表项存放物理和虚拟地址映射关系，mmu通过这个表项进行初始化，使用mmu管理的时候只能访问虚拟地址，如果一个虚拟地址没有在表项中映射过，那么访问这个地址就会有问题，所以通过mmc访问一个地址，那么这个地址必然是虚拟地址，并且虚拟地址在mmu表中要添加相应的表项。另外，mmu映射的大小单>位至少是一页。当然如果dma方式的话，就不需要这个虚拟地址物理地址映射了，直接给出地址进行访问。
+    还有一个就是对于外设寄存器映射，可能多个外设在同一个总线的地址空间上面，这样想要使用相应的寄存器的地址进行访问，只需要映射一下相应的总线，就行了，不用对所有的寄存器都进行映射。
+
+	片外设备，片上设备都是通过到总线地址空间上面进行访问的。如果片外设备大于4g，那么间接访问(另外这些存储器的访问需要指令，并且自身也慢，直接访问影响相应总线速度了,usb什么的是扩展总线，片上总线有如ahb,axi等)。通过总线，向器控制寄存器写入要访问的地址，而实际通过总线控制器访问外设，且每次只能访问一个块，因为16g不能用32位完全表示。
+
+3,内存和外设地址
+	PAGE_OFFSET的地址，是用户虚拟地址空间和内核虚拟地址空间之间的分界点，也是ddr内存物理地址映射之后的虚拟地址。用 kmalloc或者get_free_pages分配内存的话，就会分配其中的内容(实际是3g以上约896M之内的区域，并且受内存的大小限制，如果内存只有128M那么就没有896M那么大的区域让这两个函数分配了)。这两个函数分配的内存默认有cache，如果不想有cache，则分配的时候传入dma标记。
+	另外，用于dma的内存地址必须是连续的，所以kmalloc和get_free_pages都可以用于dma；但是kmalloc分配的地址不一定是页对齐的，而get_free_pages是页对齐的；只有页对齐的区域才能被remap_pfn_page映射到用户空间，所以kmalloc分配的内存不能被映射到用户空间。
+	ioremap是将外设映射到某一地址空间，空间可以用PAGE_OFFSET范围内的，也可以用PAGE_OFFSET之外的地址空间。如果是之内的，那么就ioremap的内容无法通过内核管理了(内核不知道它所管理的PAGE_OFFSET内存也被ioremap了)，这时候内核如果调用kmalloc的话，可能返回的内存也是刚才ioremap的内容，这样就乱了。所以ioremap的时候要将其减去。反正总之，ioremap在3g-4g空间够用的时候（例如内存大小900M，而要io映射的不到100M这样不会超过1g）；就映射在其中，否则就映射到用户空间的0-3g上面。
+	内存的io映射，调用ioremap之后，就可以知道物理和虚拟地址的基地址了，这样就可以通过这两个地址在虚拟地址和物理地址之间进行转换；另外还可以在类似general.c等类似文件中的map_desc结构中进行定义其虚拟和物理之间的映射，这样的物理地址和虚拟地址之间的关系，是强制指定的，不能通过_pa和_va宏进行转换。其中的cached属性可以设置为nocached，这个和mmap中参数的是两回事。
+
+4，内存地址转换和映射
+(1)关于内存，有三个地址：
+（a）物理地址 phyaddr:对应真实的内存(和系统无关，由板子硬件确定)，内核中定义为PHY_OFFSET之类的宏。
+（b）内核虚拟地址kervir:内核的虚地址空间(3g-4g)，例如_get_free_pages等就是从这里分配。
+（c）用户虚拟地址usrvir:用户的虚拟空间地址(0g-3g).例如malloc等返回的就是这里的地址。
+kervir和usrvir以PAGE_OFFSET(3g)为分界点，PAGE_OFFSET也是真是PHY_OFFSET对应的虚拟地址。
+有个比较不错的参考资料：http://bbs.chinaunix.net/thread-2083672-1-1.html#
+
+(2)内存地址空间之间的转换：
+	phyaddr<->kervir:有类似_pa, _va这样的宏(这样宏转换的也只是3g以上896M的那块区域)。
+	kervir->usrvir:有类似remap_pfn_range这样的函数，一般在驱动里面调用，返回内核地址给用户空间。
+	phyaddr->usrvir:知道phyaddr的基地址，与usrvir的基地址，然后计算偏移量即可。
+
+	总之，space1和space2两个空间转换的原理，就是知道两个基地址，知道实际地址与对应基地址的偏移，就可以转换了。假设space1的基地址为base1，space2的基地址为base2，那么space1的address1转换的space2就是：
+	address2=(address1 - base1) + base2。
+
+(3)内存分配：
+(a)内核空间
+	_get_free_pages:连续物理地址，并且页对齐，且连续最大页为2^PAGE_SHIFT*2^MAXORDER，宏可以配置。
+	kmalloc:连续物理地址，但是页不对齐，不过分配的空间太小了，只有128k,也有一个可以配置的宏。
+	vmalloc:分配的地址空间物理上不连续。
+	有用的文件类似如下：
+	kmalloc.h/c, kmalloc_size.h/c, slab.h/c等。
+	kmalloc和_get_free_pages分配的是连续物理地址，因此可以用于dma。
+	_get_free_pages分配的地址是页对齐，并且连续，因此可以通过remap_pfn_page映射到用户空间。
+(b)用户空间
+	使用malloc等进行分配。
+
+*中断机制
+===========
+中断总体
+1,cpsr和spsr
+	cpsr(current program status register)是cpu core上的寄存器。这里的cpu core实际就是cpu片子上面的核心部分，和cpu片子的厂商无关，而和体系相关，例如arm体系的cpu core，可能有多种厂商的cpu。
+	cpsr中的内容大致如下：
+1),表示over flow等的位,
+	省略。
+2),保留位
+	省略。
+3)I位和F位(一般为第6,7两个位)
+	即irq或者fiq位，irq就是普通中断屏蔽位，fiq就是快速中断屏蔽位，从这两个位可以在全局上设置是否屏蔽所有中断，一般设置为1表示屏蔽了所有的中断。
+4)cpu模式的位（例如总长一般5位）
+	这些位用来表示cpu处于何种工作模式。例如：
+	a)用户模式（usr）：普通用户工作的模式，是受限制的模式，此模式下面不能修改cpsr，所以也不能设置中断屏蔽。
+	b)特权模式（svc）：一般普通用户调用系统调用的时候，会进入到这个模式，进入这个模式之后可以修改cpsr了。
+	c)普通中断模式（irq）：进入普通中断的模式，可以修改cpsr。
+	d)快速中断模式（fiq）：进入快速中断的模式，可以修改cpsr。
+	e)数据异常模式：例如访问非法内存。
+	f)指令异常模式：
+	g)未定义模式（und）：例如执行了一个cpu没有定义的指令。
+	当执行到一个cpu没有定义的指令的时候，会进入这个模式，然后我们可以通过给这个模式注册一个处理函数来进行相应的动作。如何执行一个cpu没有定义的指令呢？可以在cpu加载程序之后修改程序的代码段。其实调试的时候就用到了这个模式。
+	以上的模式中，可以这样分类：usr是正常模式，其他的是特殊权限模式。正常模式无法进行cpsr操作，特权模式可以。还可以分类成usr是普通模式，其他为异常模式，异常模式中利用spsr中保留的cpsr复本，可以进行恢复cpsr。cpsr只有一个，spsr可以有多个，例如每个模式一个。
+
+2，中断控制器
+	这里的中断控制器，是cpu片子中的一个部分（不是cpu core），由厂商来确定其具体的情况。例如支持多少个中断等等。每个厂商其名字不同，例如armv11的可能名为avic，armv9的可能为gic等，这里就将中断控制器简称为intc了。用来控制cpu片子上面各种设备产生的中断（可知中断是和cpu相关的，并不是和系统相关）。
+	intc中有多个寄存器，这些寄存器可以控制不同的中断的行为。重要的寄存器如下：
+	a)使能寄存器组：
+	这些寄存器中用每一位表示一个中断号对应的中断；假设有120个中断，32位cpu，那么至少4个32位的寄存器，每位表示是否屏蔽相应中断号的中断。
+
+	b)中断是否发生寄存器组：
+	这些寄存器中用每一位表示一个中断号对应的中断是否发生。
+
+	c)中断类型寄存器组：
+	这组组寄存器表示每种中断向量产生中断的类型,类型有：
+	上升沿产生中断(rasing edge)
+	下降沿产生中断(falling edge)
+	高电平产生中断(high level)
+	低电平产生中断(low level)
+	只要跳变时候就产生中断(pulse)。
+	因为类型有多种，所以每个中断向量的中断类型需要占用寄存器组中的多个位来表示。这个设置是在使能中断之前就设置好的，设置成什么样，中断就会根据相应的设置来产生了。所以这里的设置一定要根据硬件的设计初衷来进行设置。例如，硬件想要低电平产生中断，却设置成了高电平类型，那么每次产生中断的时候都是高电平了，和实际设计的硬件的初衷就不一样了。
+	另外，还有表示中断优先级别的寄存器组以及其它的寄存器组。
+
+3，中断发生的时候：
+	产生中断的时候，其实是：
+	a)首先检查cpu core中的cpsr(current program status register)寄存器，检查其中的I、F位（即irq或者fiq位，irq就是普通中断屏蔽位，fiq就是快速中断屏蔽位，一般是第6、7位并且设置为1表示屏蔽了所有的中断），从这两个位可以设置是否全局屏蔽所有中断。
+	b)如果没有屏蔽所有中断，那么再检查cpu片子上的intc(interrupt controller)，检查intc上面表示中断是否屏蔽的寄存器组，这个寄存器组中的相应于产生的中断的中断号对应的位如果设置为屏蔽的话，则屏蔽该中断；否则就表示没有屏蔽该中断。
+	c)如果没有屏蔽该中断，那么设置intc中的表示中断是否发生的寄存器组，设置相应于发生中断的中断号对应的位，表示该中断发生了。如果中断处理完毕，则再将该位清0（这点很重要）。
+
+4，中断注册
+	Linux内核中，使用request_irq注册中断，注册之前，中断相关信息（例如哪个中断号对应哪个中断类型等）在内核初始化的时候已经通过一个表项指定好了，当然可以注册之后再修改例如中断类型等信息。具体这个表中包含哪些内容，根据硬件而定。代码可以参见： Kernel/arch/arm/mach-diablo/irq.c中类似的文件中定义。
+	可以有如下类似代码：
+	static struct irq_info __initdata irq_info_array[NR_IRQS] = {
+	...
+	}
+	内核初始化intc相关信息的时候会用到这个表，例如
+	static struct irq_chip irq_chip_level = { 
+		.name    = "INTC-level",
+		.mask    = diablo_mask_irq,
+		.unmask  = diablo_unmask_irq,
+		.enable  = diablo_unmask_irq,
+		.disable = diablo_mask_irq,
+		.eoi     = diablo_ack_irq_level,
+	};
+表项。
+
+5，系统调用
+大致如下：
+a)系统调用通过软中断机制实现。具体在内核中有一个关于软中断向量的表，其中的每个表项对应一个系统调用。
+b)一般用户调用系统调用的时候，产生软中断，从usr模式切换到svc模式。例如用户调用的glibc中的read系统调用中应该有一条swi（software interrupt）类似的汇编指令，以及相应的系统调用号，产生软中断，导致进入内核中的相应部分。
+c)进入内核，根据swi指定的软中断号等确定到具体的系统调用，以及参数，最后执行内核的系统调用相关代码。
+
+6，调试
+	调试的时候，利用了cpu中的und模式。例如程序执行的时候，会一直运行下去，而调试的时候，需要设置断点等调试操作。 以gdb调试为例，本来没有设置断点(break)的指令的话，那么就在设置断点的时候:
+	a)将代码段中相应断点处的指令替换为一个没有的cpu指令（后面的指令偏移不要变化）
+	b)程序当运行到这里的时候，因为执行了一个不支持的cpu指令，所以cpu会进入und模式
+	c)然后调用在und模式的处理函数,调试器可以在其中打印调试的相关信息。然后等待用户输入continue等各种调试命令。
+	d)如果运行continue调试命令，则在und的处理函数中将刚才break处替换的cpu不支持的指令恢复成替换前的指令，然后修改PC(程序计数寄存器)，重新执行该处指令，cpu这时就又进入了正常的模式，跑完了程序，这就实现了continue。
+	e)如果step，则在und的处理函数中将刚才break处替换的cpu不支持的指令恢复成替换前的指令，然后修改PC(程序计数寄存器)重新执行该处指令，同时将下一条指令设置成一个cpu不支持的指令，这样cpu进入正常模式之后，执行一条语句之后，又遇到了不支持的指令，再进入und模式，进行类似b)中的过程，实现了单步调试执行。
+
+
+*同步互斥
+===========
+
+*系统调用
+===========
+
+
+5)关于系统调用：
+系统调用的学习总结：
+内核记录了系统调用表中的所有已注册过的系统调用的列表，存储在sys_call_table中。同时，每个系统调用对应一个号也就是这个表中的索引，这个号的小于NR_syscall宏（最大的系统调用号）也就是受表项数目的大小限制。
+sys_call_table是一张由指向实现各种系统调用的内核函数的函数指针组成的表。
+两个特别之处：首先，注意函数声明中的asmlinkage限定词，这是一个小戏法，用于通知编译器仅从栈中提取该函数的参数。所有的系统调用都需要这个限定词。其次，注意系统调用get_pid()在内核中被定义成sys_getpid。这是Linux中所有系统调用都应该遵守的命名规则。
+如果添加一个系统调用，那么就在这个表的结尾添加一个函数foo，然后为了保证不是module，在kernel/目录中某个文件添加系统调用foo的实现。foo的实现，安照linux规定应该是sys_foo，并且定义一个宏：
+#define NR foo 283
+_sysca110(long, foo)
+等等，具体有待研究。
+
+相关文件：
+arch/x86/kernel/syscall_table_32.S:sys_call_table
+内核记录了系统调用表中的所有已注册过的系统调用的列表，存储在sys_call_table中,这个表就在这个文件中进行了定义.定义形式为：
+ENTRY(sys_call_table)
+.long sys_restart_syscall   /* 0 - old "setup()" system call, used for restarting */
+.long sys_exit
+等等.
+
+arch/x86/kernel/entry_32.S
+这个文件不是很确定，每个版本都不一样，根据网上查阅的资料，其中：
+a)代码里定义了两个非常重要的宏,即SAVE_ALL和RESTORE_ALL
+SAVE_ALL先保存用户模式的寄存器和堆栈信息,然后切换到内核模式,宏__SWITCH_KERNELSPACE实现地址空间的转换RESTORE_ALL的过程过SAVE_ALL的过程正好相反。
+b)还有：
+syscall_call:
+call *sys_call_table(,%eax,4)
+...
+调用系统调用表函数
+
+arch/x86/include/asm/unistd.h
+这里定义了系统调用号，实际其中根据条件编译指令，包含了另外的文件进行具体的定义，例如：arch/x86/include/asm/unistd_32.h
+定义形式为：
+#define __NR_restart_syscall      0
+#define __NR_exit         1
+等等.
+同时，这里的#define NR_syscalls 337
+定义了系统调用的总个数.
+
+include/linux/syscalls.h
+这里声明了系统调用的接口，
+需要注意的是：
+a）声明的形式如下：
+asmlinkage long sys_read(unsigned int fd, char __user *buf, size_t count);
+asmlinkage是编译器参数，表示要从栈中取参数，系统调用必须用这个标记，另外系统调用函数名变成了sys_前缀的函数。
+b)有一些宏在实现系统调用的时候，将系统调用变成sys_前缀的名称并进行展开，其过程如下：
+以getcwd函数为例子：
+函数的实现：
+fs/dcache.c:SYSCALL_DEFINE2(getcwd, char __user *, buf, unsigned long, size)
+这里，2表示函数有两个参数。
+
+宏定义：
+在文件include/linux/syscalls.h中
+...
+#define SYSCALL_DEFINE2(name, ...)
+...
+查看这个宏的展开，最终会发现,它把name变成了sys_name...
+
+访问系统调用：
+用户空间访问系统调用，需要包含标准头文件并和c库链接，否则glibc不能支持直接调用系统调用。
+但是linux提供的宏可以用如下方式直接调用系统调用类似如下：
+直接调用此系统调用的宏的形式为:
+#define NR_open 5
+syscall3(long, open, const char*，filename, int, flags, int, mode)
+这样，应用程序就可以直接使用open() 
+具体有待研究
+
+系统调用过程：
+整个系统调用的过程可以总结如下：
+a． 执行用户程序(如:fork)
+b． 根据glibc中的函数实现，取得系统调用号并执行int $0x80产生中断。
+c． 进行地址空间的转换和堆栈的切换，执行SAVE_ALL。（进行内核模式）
+d． 进行中断处理，根据系统调用表调用内核函数。
+e． 执行内核函数。
+f． 执行RESTORE_ALL并返回用户模式
+解了系统调用的实现及调用过程，我们可以根据自己的需要来对内核的系统调用作修改或添加。
+
+
+*文件系统
+===========
+3)vfs文件系统最初始根目录创建需要先通过init_rootfs,调用过程如下:
+init/main.c:start_kernel->fs/dcache.c:vfs_caches_init->fs/namespace.c:mnt_init->fs/ramfs/inode.c:init_rootfs
+这个函数会把跟文件系统的结构(struct file_system_type)注册到一个其链表中(file_system_type结构本身是一个有next的链表)。同时我发现这个文件inode.c也有ramfs文件系统的注册。
+
+
+7)关于vfs,
+从某些角度看，vfs实际上是linux启动之后在内存中的目录树，用户空间中看到的根文件系统实际上是挂载到vfs中的某个目录节点上的。
+在vfs中mount时候有四个结构比较重要：dentry（目录项结构）,mnt(挂载点结构),inode结构，sb超级块结构。其关系比较复杂。inode结构中包含对特色定文件系统的操作函数指针。
+
+*设备管理
+===========
+12)关于usb架构
+参考：http://blog.csdn.net/fudan_abc/article/details/1791510
+以一个内核版本的内容来简要说明下usb结构中相关的内容：
+#ls linux-2.6.32/drivers/usb
+atm     class  early   host   Kconfig   misc  musb  README  storage         wusbcore
+c67x00  core   gadget  image  Makefile  mon   otg   serial  usb-skeleton.c
+这里，有几个关键的目录：
+core
+host
+gadget
+class
+...
+
+core这个目录存放一些核心的代码，比如初始化整个usb系统，初始化root hub，初始化host controller的代码等等，随着时间的发展，这个目录以及usb父目录的其他内容，会被存放到不同的更为合适的地方。
+
+host目录存放主机host controller驱动相关内容。所谓host controller就是控制usb设备的硬件，而主机的各个usb设备，又有它们自己的驱动。host目录下的内容，例如：ehci-pci.c用于该host controller是在基于ehci的pci上面的usb hostcontroller，其它的类似，还有基于某个cpu的usb host controller。反正，就是看成把硬件host controller挂接到它所基于的那个上面，然后又通过这个host controller来控制其上的usb设备。
+
+class这个目录存放关于某个类的usb设备信息，例如通信类，等等。
+
+gadget这个目录信息比较多。假设我们将一个本身运行linux系统的嵌入式板子插入到pc上面，通过pc访问插入到这个板子上面的某个usb设备（例如sd卡）。那么，首先pc的host controller将这个板子识别成为某种类型的设备，所以相关驱动代码大致在pc端的内核的与host目录同级的其它驱动目录上（例如storage对应的是海量存储类）。其次，插入到板子上面的usb设备（例如sd卡）被这个板子的host controller识别成usb设备(对应的驱动大致在板子端的内核的与host目录同级的其它驱动目录上（例如storage对应的是海量存储类)。然后，板子上又告诉它自己它被当做pc的usb设备来使用(对应的驱动大致在板子端的内核的gadget中的**udc驱动或者类似文件中的代码部分，)。然后板子又根据插入到板子上面的usb设备，让pc能够将这个板子识别成可以访问板子上面usb设备的设备（对应的驱动大致在板子端的内核的gadget中的其它gadget的文件中的代码部分）。描述的并不是特别精确，但是这是大致的框架结构。总之上面的那种情况，需要的驱动代码分别在pc和板子，对于pc上面，我们一般不会关心，主要是板子上面，三个地方比较关键：a)将板子可以做为usb设备的部分(gadget目录中的udc驱动部分) b)将板子识别成什么设备类型的部分（例如板子插入sd卡那么pc将板子识别成sd卡，插入到板子上的usb设备驱动和pc联接得通过它）c)插入板子上的usb设备的驱动部分（以便板子识别它自己身上的usb设备，就像pc识别板子一样为usb设备一样）。注意，这里板子和pc运行的两套系统。
+
+其他目录:就存放host controller所控制的各种usb设备驱动类。例如storage存放的就是海量存储类（u盘）设备的驱动等等。
+
+另外，并不是所有的usb设备驱动都在这个drivers/usb目录下面，其它地方也有，例如"linux-2.6.32/sound/usb"。
+

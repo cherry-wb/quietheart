@@ -1,0 +1,18 @@
+http://mecho.blog.51cto.com/853480/183703
+晚上cp录音文件 需要把1T的硬盘挂上 然后cp  cp完成后无法umount 。umount-f也不好使。
+然后google了下。使用fuser命令 看了下man 解决问题。
+
+下面说下怎么用。只针对我晚上的操作。
+使用fuser命令
+fuser 可以显示出当前哪个程序在使用磁盘上的某个文件、挂载点、甚至网络端口，并给出程序进程的详细信息
+假设无法卸载的设备为/dev/sdb1
+运行下面命令看一下哪个用户哪个进程占用着此设备
+fuser -m -v /dev/sdb1
+
+然后运行下面命令杀掉占用此设备的进程
+
+fuser -m -v -k /dev/sdb1
+
+或者fuser -m -v -k -i  /dev/sdb1(每杀掉一下进程会让你确认）
+然后再umount
+

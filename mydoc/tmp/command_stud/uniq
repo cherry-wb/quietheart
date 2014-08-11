@@ -1,0 +1,126 @@
+uniq [OPTION]... [INPUT [OUTPUT]]
+uniq [选项] 文件 
+
+[功能]
+忽略或者报告重复行。
+
+[描述]
+把所有连续重复的行删除，只留一个。
+文件经过处理后在它的输出文件中可能会出现重复的行。例如，使用cat命令将两个文件合并后，再使用sort命令进行排序，就可能出现重复行。这时可以使用uniq命令将这些重复行从输出文件中删除，只留下每条记录的唯一样本。
+个命令读取输入文件，并比较相邻的行。在正常情况下，第二个及以后更多个重复行将被删去，行比较是根据所用字符集的排序序列进行的。该命令加工后的结果写到输出文件中。输入文件和输出文件必须不同。如果输入文件用“- ”表示，则从标准输入读取。
+该命令各选项含义如下：
+- c 显示输出中，在每行行首加上本行在文件中出现的次数。它可取代- u和- d选项。
+- d 只显示重复行。
+- u 只显示文件中不重复的各行。
+- n 前n个字段与每个字段前的空白一起被忽略。一个字段是一个非空格、非制表符的字符串，彼此由制表符和空格隔开（字段从0开始编号）。
++n 前n个字符被忽略，之前的字符被跳过（字符从0开始编号）。
+- f n 与- n相同，这里n是字段数。
+- s n 与＋n相同，这里n是字符数。 
+
+[举例]
+假设文件内容如下：
+[quietheart@lv-k test]$ cat uniqtest 
+hello how are you?
+hello how are you?
+hello how are you?
+hello how are you?
+hello are you buzy?
+#include <stdio.h>
+int main()
+{
+{
+}
+        }
+        good();
+}
+hello are you buzy?
+
+int good()
+{
+        printf("good!\n");
+}
+
+*显示文件，去掉连续重复的行：
+$uniq uniqtest
+输入之后，输出如下：
+hello how are you?
+hello are you buzy?
+#include <stdio.h>
+int main()
+{
+}
+        }
+        good();
+}
+hello are you buzy?
+
+int good()
+{
+        printf("good!\n");
+}
+注意，如果有空行也不会被忽略。
+
+
+*只显示被重复的行：
+$uniq -d uniqtest
+输入之后，输出如下：
+hello how are you?
+{
+这里会把被重复的行打印出来（打印一次）.
+
+*只显示没有被重复的行：
+$uniq -u uniqtest
+输入之后，输出如下：
+hello are you buzy?
+#include <stdio.h>
+int main()
+}
+        }
+        good();
+}
+hello are you buzy?
+
+int good()
+{
+        printf("good!\n");
+}
+这里，重复的行都没有打印出来。
+
+*转换时，只比较一行的N个字符：
+$ uniq -w 3 uniqtest 
+输入之后，输出如下：
+hello how are you?
+#include <stdio.h>
+int main()
+{
+}
+        }
+        good();
+}
+hello are you buzy?
+
+int good()
+{
+        printf("good!\n");
+}
+这里，只比较每行的前3个字符。
+
+*不打印多重复的行，但是把重复的行被重复的次数统计出来：
+uniq -c uniqtest
+输入之后，输出如下：
+      4 hello how are you?
+      1 hello are you buzy?
+      1 #include <stdio.h>
+      1 int main()
+      2 {
+      1 }
+      1         }
+      1         good();
+      1 }
+      1 hello are you buzy?
+      1 
+      1 int good()
+      1 {
+      1         printf("good!\n");
+      1 }
+

@@ -1,0 +1,227 @@
+﻿QStorageManager send msg(mounting)
+  QStorageMetaInfo::cardMessage( const QString& message, const QByteArray& data )
+    QStorageMetaInfo::update(QString& mountpoint, bool connected)
+      QStorageMetaInfo::update() //根据/proc/mounts更新fileSystems
+      将mountpoint的connected设置为false
+      emit disksChanged();
+        QtopiaSqlPrivate::disksChanged(QtopiaSqlMigratePlugin *migratePlugin)
+          if(disconnected)
+            QtopiaSql::detachDB
+          if(connected)
+            test writable
+            QtopiaSql::attachDB(const QString& path, const QString& dbPath, QtopiaSqlMigratePlugin *plugin)
+            | QContentUpdateManager::requestRefresh()
+            |   emit refreshRequested();
+            |     if(DocumentSystemDirect) // QApplication::GuiServer 或者 QTOPIA_DIRECT_DOCUMENT_SYSTEM_CONNECTION(mediaserver)
+            |       QSqlContentSetEngine::contentChangedEvent()
+            |         m_contentChanged = true;
+            |     QContentSetEngine::update()
+            |       m_flushTimerId = startTimer(0);
+            |         QContentSetEngine::timerEvent(QTimerEvent *event)
+            |           if(DocumentSystemDirect)
+            |           | QSqlContentSetEngine::commitChanges()
+            |           |   QSqlContentSetEngine::performUpdate()
+            |           |     QSqlContentSetUpdateThread::run()
+            |           |       QSqlContentSetEngine::update()
+            |           |         if (sortChanged || contentChanged)
+            |           |           QSqlContentSetEngine::synchronizeSets(...)
+            |           |             QSqlContentSetEngine::synchronizeMultipleSets(...)
+            |           |             | QSqlContentSetEngine::synchronizeSingleSet()
+            |           |             |   if(insert)
+            |           |             |   | QSqlContentSetUpdateProxy::inster(...)
+            |           |             |   |   QSqlContentSetEngine::updateInsert(...)
+            |           |             |   |     emit contentAboutToBeInserted(...)
+            |           |             |   |       if(DocumentSystemDirect)
+            |           |             |   |         emit QContentSet::contentAboutToBeInserted(...)
+                                      |                QContentStoreServerSet::contentAboutToBeInserted( int start, int end )
+                                      |                 m_pendingStart = start;
+                                      |                 m_pendingEnd = end;
+            |           |             |   |       if(DocumentSystemClient)
+            |           |             |   |         QContentStoreServerSet::contentAboutToBeInserted(...)
+            |           |             |   |           m_pendingStart = start;
+            |           |             |   |           m_pendingEnd = end;
+            |           |             |   |     emit contentInserted();
+            |           |             |   |       if(DocumentSystemDirect)
+            |           |             |   |         emit QContentSet::contentInserted()
+                                      |               QContentStoreServerSet::contentInserted()
+                                      |                 emit insertContent( m_setId, m_pendingStart, m_pendingEnd )
+                                      |                   QContentStoreServer::insertContent( int setId, int start, int end )
+                                      |                     emitSignalWithArgumentList "insertContentIntoSet(int,int,int)"
+                                      |                       QDocumentServerContentStorePrivate::invokeSignal(...)
+                                      |                         QDocumentServerContentSetEngine::insertContent( int start, int end )
+            |           |             |   |       if(DocumentSystemClient)
+            |           |             |   |         QContentStoreServerSet::contentInserted()
+            |           |             |   |           emit insertContent( int setId, int start, int end );
+            |           |             |   |             QContentStoreServer::insertContent( int setId, int start, int end )
+            |           |             |   |               [QContentStoreServer Socket]emitSignalWithArgumentList( "insertContentIntoSet(int,int,int)")
+            |           |             |   |                 QDocumentServerContentStorePrivate::invokeSignal(...)
+            |           |             |   |                   QDocumentServerContentSetEngine::insertContent( int start, int end )
+            |           |             |   |                     emit contentAboutToBeInserted( start, end );
+            |           |             |   |                        emit QContentSet::contentAboutToBeInserted(...)
+            |           |             |   |                     emit contentInserted();
+            |           |             |   |                        emit QContentSet::contentInserted()
+            |           |             |   if(remove)
+            |           |             |     QSqlContentSetUpdateProxy::remove(...)
+            |           |             |       QSqlContentSetEngine::updateRemove(...)
+            |           |             |         emit contentAboutToBeRemoved(...)
+            |           |             |         emit contentRemoved();
+            |           |             |
+            |           |             QMetaObject::invokeMethod( this, "updateFinish", Qt::QueuedConnection );
+            |           |               QContentSetEngine::finishUpdate()
+            |           |                 emit updateFinished();
+            |           |                   emit contentChanged();
+            |           |                     emit QContentSet::changed();
+            |           |             
+            |           |             
+            |           |             
+            |           |             
+            |           |             
+            |           if(DocumentSystemClient)
+            |             QDocumentServerContentSetEngine::commitChanges()
+            |               QDocumentServerContentStore::commitContentSet(int setId)
+            |                 [QContentStoreServer Socket]callSlotWithArgumentList("commitContentSet(int)");
+            |                   QContentStoreServer::invokeSlot(...)
+            |                     QSqlContentSetEngine::commitChanges()
+            |
+            |
+            |
+            |
+            |
+            if (QApplication::GuiServer && fs->documents())
+              QContentSet::scan(fs->path())
+
+
+
+====================================================
+关于Document Server：
+    The Qt Extended Document Server provides applications with a mechanism to interact with the
+    \l{Document System}{Qt Extended Document System} without having direct access to the document databases or
+    even the file system.  A single instance of the document server runs in a server process, and client
+    applications connect to this server in order to gain access to the functionality provided by the document
+    system API.
+    The document server runs multiple threads and should be shut down before being destroyed in order to allow
+    the threads to exit cleanly.  A shut down can be initiated with the shutdown() slot, and the shutdownComplete()
+    signal will be emitted when this is complete.
+
+    DocumentServerTask 有一个 QtopiaDocumentServer 成员
+    QtopiaDocumentServerPrivate 有一个 QContentStoreServerTask 成员(QThread子类)
+    QContentStoreServerTask::run() 时会创建 QContentStoreSocketServer (QUnixSocketServer的子类)
+    QContentStoreSocketServer 会监听 "/tmp/.../QContentStoreServer"这个Socket
+    当有进来的connect时，incomingConnection()会创建一个QContentStoreServer (每一个连接会创建一个QContentStoreServer )
+    接收到的message由 QContentStoreServer::invokeMethod()处理。
+    
+    QDocumentServerContentStore::contentSet(...)
+      call "createContentSet(QContentFilter,QContentSortCriteria,QContentSet::UpdateMode)"
+        QContentStoreServer::invokeMethod(...)
+          create QSqlContentSetEngine by QSqlContentStore::contentSet(...)
+          create QContentStoreServerSet & insert to m_contentSets
+
+   只有QDocumentServerContentStore 会去 connect socket "QContentStoreServer"
+   所以server(DocumentSystemDirect)的ContentSet 没有 QContentStoreServerSet
+
+
+==================================================
+QContentSet::scan(...)
+  send scanPath to "QPE/DocAPI"
+    emit ContentServer::scan(path, priority)
+      DirectoryScanner::scan(path, priority)
+        DirectoryScanner::addPath(...)
+          emit scanning  ---> VS: /Documents/Scanning = True
+          DirectoryScanner::scan()
+            DirectoryScanner::scanPath(...)
+              install(QFileInfo)
+                QContent::installBatch(...)
+                  QSqlContentStore::batchCommitContent
+                    QSqlContentStore::commitContent(...)
+              uninstall(QContentId)
+                QContent::uninstallBatch(...)
+                  QSqlContentStore::batchUninstallContent(...)
+                    QSqlContentStore::uninstallContent
+                  
+
+
+
+==================================================
+QContent::commit(ChangeType)
+  QDocumentServerContentStore::commitContent( QContent )
+    call "commitContent(QContent)"
+      QContentStoreServer::invokeMethod(...)
+        QSqlContentStore::commitContent(QContent)
+          if( content->id() == QContent::InvalidId ) // New Content
+          | QSqlContentStore::installContent( QContent )
+          |   QContentFactory::installContent(...)
+          |     QContentPlugin::installContent(...)
+          | QSqlContentStore::insertContent(...)
+          |   write to database
+          |   QContentUpdateManager::addUpdated(QContentId, ChangeType)
+          |     QContentUpdateManager::sendUpdate()
+                  emit contentChanged(...)
+          |       send "QPE/DocAPI", "contentChanged(QContentIdList,QContent::ChangeType)"
+          |         QContentChangedChannel::contentChanged(...)
+          |           emit QtopiaApplication::contentChanged(...)
+          |             if(DocumentSystemDirect)
+          |               QSqlContentSetEngine::contentChangedEvent(...)
+          |             QContentSetEngine::update()
+          |             emit QContentSet::changed(QContentIdList,QContent::ChangeType)
+          else //update
+            QSqlContentStore::updateContent( QContentEngine *engine )
+              write to database
+              QContentUpdateManager::addUpdated(QContentId, ChangeType)
+              
+
+==================================================
+QContent::removeFiles()
+  QDocumentServerContentStore::removeContent( QContent *content )
+    call "removeContent(QContentId)"
+      QContentStoreServer::invokeMethod(...)
+        QSqlContentStore::removeContent( QContent *content )
+          QSqlContentStore::uninstallContent( QContentId contentId )
+            QFile::remove(...)
+            Remove files associated with this content
+            write to database
+            QContentUpdateManager::addUpdated(QContentId, ChangeType)
+            
+
+==================================================Create ContentSet
+QContentSet::QContentSet(...)
+  QDocumentServerContentStore::contentSet(...)
+  | call "createContentSet(QContentFilter,QContentSortCriteria,QContentSet::UpdateMode)"
+  |   QContentStoreServer::invokeMethod(...)
+  |     create QSqlContentSetEngine by QSqlContentStore::contentSet(...)
+  |       QSqlContentSetEngine::QSqlContentSetEngine(...)
+  |         m_contentChanged(filter.isValid())
+  |     create QContentStoreServerSet & insert to m_contentSets
+  | create QDocumentServerContentSetEngine(...)
+  |   QDocumentServerContentSetEngine::QDocumentServerContentSetEngine(...)
+  QContentSet::init()
+    QContentSetEngine::update()
+      m_flushTimerId = startTimer(0);
+        QContentSetEngine::timerEvent(QTimerEvent *event)
+          QDocumentServerContentSetEngine::commitChanges()
+            QDocumentServerContentStore::commitContentSet(int setId)
+              [QContentStoreServer Socket]callSlotWithArgumentList("commitContentSet(int)");
+                QContentStoreServer::invokeSlot(...)
+                  QSqlContentSetEngine::commitChanges()
+                    ... ... ...
+                    ... ... ...
+                    QSqlContentSetEngine::synchronizeSets(...)
+                      QSqlContentStore::matches(...)
+                        Sqlite query!!!!
+
+
+===================================================
+QContentSetEngine::setSortCriteria(...)
+  QDocumentServerContentSetEngine::sortCriteriaChanged(...)
+    QDocumentServerContentStore::setContentSetSortOrder(...)
+      call setContentSetSortOrder(int,QContentSortCriteria)
+        QContentStoreServer::invokeMethod(...)
+          QContentSetEngine::setSortCriteria(...)
+            QSqlContentSetEngine::sortCriteriaChanged(...)
+              m_sortChanged = true;
+QContentSetEngine::update()
+
+
+
+
+
+

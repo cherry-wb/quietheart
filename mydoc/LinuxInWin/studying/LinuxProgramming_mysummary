@@ -1,0 +1,1868 @@
+计划每次学习的时候，把这次学习时核心的东西给记下来，以前没有记过的，只有以后慢慢整理了。
+主要参考资料《Linux操作系统下C语言编程入门》
+####################################前面的内容################################################
+
+-------20090427,p7
+关于Makefile：
+Makefile 有三个非常有用的变量.分别是$@,$^,$<,它们能够简化Makefile的编写，代表的意义分别是:
+$@--目标文件,(Makefile里面冒号之前的名字)
+$^--所有的依赖文件,（Makefile里面冒号之后的文件名）
+$<--第一个依赖文件.
+例如如下简化后的 Makefile：
+main:main.o mytool1.o mytool2.o
+gcc -o $@ $^
+main.o:main.c mytool1.h mytool2.h
+gcc -c $<
+mytool1.o:mytool1.c mytool1.h
+gcc -c $<
+mytool2.o:mytool2.c mytool2.h
+gcc -c $<
+-------
+Makefile 的缺省规则可以使Makefile进一步简化，例如：
+..c.o:
+gcc -c $<
+这个规则表示所有的 .o 文件都是依赖与相应的.c 文件的.例如 mytool.o 依赖于 mytool.c
+这样 Makefile 还可以变为:
+# 这是再一次简化后的 Makefile
+main:main.o mytool1.o mytool2.o
+gcc -o $@ $^
+..c.o:
+gcc -c $<
+------------20090508,p8
+有时候虽然我们包括了正确的头文件,但是我们在编译的时候还是要连接确定的库(可能因为头文件和库不是一个东西的)，否则可能会提示找不到相关的定义。例如为了使用数学函数,我们必须和数学库(例如名字为：libm-2.1.2.so)连接,为此我们要加入 -lm 选项. gcc -o temp temp.c -lm 这样才能够正确的编译.
+我们在编译程序的时候要用到编译器的 -L 选项指定指定库的路径.比如说我们有一个库在 /home/hoyt/mylib 下,这样我们编译的时候还要加上 -L/home/hoyt/mylib.对于一些标准库来说,我们没有必要指出路径.只要它们在起缺省库的路径下就可以了.系统的缺省库的路径/lib /usr/lib /usr/local/lib 在这三个路径下面的库,我们可以不指定路径.
+如果我们不知道库名字，那么我们就只能用nm命令来查找了，暂时没有发现好的方法。
+-----------------20090519，p13
+关于进程和用户信息
+-------
+#include <unistd>;
+pid_t getpid(void);
+pid_t getppid(void);
+系统调用 getpid 可以得到进程的 ID,而 getppid 可以得到父进程(创建调用该函数进程的进程)的 ID.
+-------
+#include <unistd>;
+#include <sys/types.h>;
+uid_t getuid(void);
+uid_t geteuid(void);
+gid_t getgid(void);
+git_t getegid(void);
+getuid 可以得到进程的所有者的 ID;有效用户 ID和系统的资源使用有关,涉及到进程的权限. 通过系统调用 geteuid 我们可以得到进程的有效用户 ID.系统调用 getgid 和 getegid 可以分别得到组 ID 和有效组 ID.
+-------
+#include <pwd.h>;
+#include <sys/types.h>;
+struct passwd *getpwuid(uid_t uid);
+可以调用 getpwuid 来得到.用户的其他信息,如下：
+struct passwd {
+char *pw_name; /* 登录名称 */
+char *pw_passwd; /* 登录口令 */
+uid_t pw_uid; /* 用户 ID */
+gid_t pw_gid; /* 用户组 ID */
+char *pw_gecos; /* 用户的真名 */
+char *pw_dir; /* 用户的目录 */
+char *pw_shell; /* 用户的 SHELL */
+};
+-------
+举例：
+
+#include <unistd.h>;
+#include <pwd.h>;
+#include <sys/types.h>;
+#include <stdio.h>;
+int main(int argc,char **argv)
+{
+/*相关定义*/
+pid_t my_pid,parent_pid;
+uid_t my_uid,my_euid;
+gid_t my_gid,my_egid;
+struct passwd *my_info;
+
+/*$$$$$$$$$$$关键调用$$$$$$$$$$*/
+my_pid=getpid();/*获得进程id*/
+parent_pid=getppid();/*获得父进程id*/
+my_uid=getuid();/*用户id*/
+my_euid=geteuid();/*有效用户id*/
+my_gid=getgid();/*组id*/
+my_egid=getegid();/*有效组id*/
+my_info=getpwuid(my_uid);/*其他信息*/
+
+/*打印获取的信息*/
+printf("Process ID:%ld\n",my_pid);
+printf("Parent ID:%ld\n",parent_pid);
+printf("User ID:%ld\n",my_uid);
+printf("Effective User ID:%ld\n",my_euid);
+printf("Group ID:%ld\n",my_gid);
+printf("Effective Group ID:%ld\n",my_egid):
+if(my_info)
+{
+printf("My Login Name:%s\n" ,my_info->;pw_name);
+printf("My Password :%s\n" ,my_info->;pw_passwd);
+printf("My User ID :%ld\n",my_info->;pw_uid);
+printf("My Group ID :%ld\n",my_info->;pw_gid);
+printf("My Real Name:%s\n" ,my_info->;pw_gecos);
+printf("My Home Dir :%s\n", my_info->;pw_dir);
+printf("My Work Shell:%s\n", my_info->;pw_shell);
+}
+}
+
+----------
+关于进程创建
+#include <unistd.h>;
+pid_t fork();
+当 fork 掉用失败的时候(内存不足或者是用户的最大进程数已到)fork 返回-1,否则 fork 的返回值有重要的作用.对于父进程 fork 返回子进程的 ID,而对于 fork 子进程返回 0.我们就是根据这个返回值来区分父子进程的.
+--------
+#include <sys/types.h>;
+#include <sys/wait.h>;
+pid_t wait(int *stat_loc);
+pid_t waitpid(pid_t pid,int *stat_loc,int options);
+有时候我们希望子进程继续执行,而父进程阻塞直到子进程完成任务.这个时候我们可以调用 wait 或者 waitpid 系统调用.
+wait导致进程挂起，直到任何一个子进程结束。成功时(因一个子进程结束)wait 将返回子进程的 ID,否则返回-1,并设置全局变量 errno.stat_loc 是子进程的
+退出状态.子进程调用 exit,_exit 或者是 return 来设置这个值. 
+这个返回值如下：
+WIFEXITED:判断子进程退出值是非 0
+WEXITSTATUS:判断子进程的退出值(当子进程退出时非 0?????????man里面说子进程正常有返回值的时候这个宏返回true).
+WIFSIGNALED:子进程由于有没有获得的信号而退出（即由于信号的原因而退出）.
+WTERMSIG:子进程没有获得的信号号(在 WIFSIGNALED 为真时才有意义).
+
+waitpid 等待指定的子进程直到子进程返回.如果 pid 为正值则等待指定的进程(pid).如果为 0 则等待任何一个组 ID 和调用者的组 ID 相同的进程.为-1 时等同于 wait 调用.小于-1 时等待任何一个组 ID 等于 pid 绝对值的进程. stat_loc 和 wait 的意义一样. options 可以决定父 进 程 的 状 态 . 可 以 取 两 个 值 WNOHANG : 父 进 程 立 即 返 回 当 没 有 子 进 程 存 在 时 .WUNTACHED:当子进程结束时 waitpid 返回,但是子进程的退出状态不可得到。
+wait等价于：waitpid(-1, &status, 0);
+--------20090520,p15
+#include <unistd.h>;
+int execl(const char *path,const char *arg,...);
+int execlp(const char *file,const char *arg,...);
+int execle(const char *path,const char *arg,...);
+int execv(const char *path,char *const argv[]);
+int execvp(const char *file,char *const argv[]):
+父进程创建子进程后,子进程一般要执行不同的程序我们可以使用系统调用 exec 族.其具体的含义可以等用到的时候或者有时间的时候在研究。
+-----举例(注意编译的时候要加 -lm 以便连接数学函数库)：
+/*头文件*/
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/wait.h>;
+#include <stdio.h>;
+#include <errno.h>;
+#include <math.h>;
+void main(void)
+{
+/*相关定义*/
+pid_t child;
+int status;
+
+
+printf("This will demostrate how to get child status\n");
+if((child=fork())==-1)
+{/*创建子进程失败*/
+printf("Fork Error :%s\n",strerror(errno));
+exit(1);
+}
+else if(child==0)
+{/*创建子进程成功,这里是子进程执行的代码段，父进程不会执行到这里。如果子进程转而执行其他的程序，需要用excel*/
+int i;
+printf("I am the child:%ld\n",getpid());
+for(i=0;i<1000000;i++) sin(i);
+i=5;
+printf("I exit with %d\n",i);
+exit(i);/*子进程退出,退出的返回值存放到了wait的参数(status)里面*/
+}
+while(((child=wait(&status))==-1)&(errno==EINTR));/*阻塞，wait调用获取子进程返回值到status中；EINTR表示系统调用阻塞时，被信号中断*/
+if(child==-1)
+printf("Wait Error:%s\n",strerror(errno));/*wait调用失败*/
+
+else if(!status)
+printf("Child %ld terminated normally return status is zero\n",child);/*子进程返回0*/
+else if(WIFEXITED(status))/*子进程退出值是非0,WIFEXITED在子进程正常返回的情况返回值，这时它返回true*/
+printf("Child %ld terminated normally return status is %d\n",child,WEXITSTATUS(status));
+else if(WIFSIGNALED(status))/*如果子进程由于收到信号而结束*/
+printf("Child %ld terminated due to signal %d znot caught\n",child,WTERMSIG(status));
+}
+-------------------20090521,p19
+关于守护进程的创建：
+后台进程的创建思想: 首先父进程创建一个子进程.然后子进程杀死父进程,信号处理所有的工作由子进程来处理.
+
+/*****代码片段举例****/
+...
+pid_t child;
+if((child=fork())==-1)
+{/*创建子进程*/
+printf("Fork Error:%s\n",strerror(errno));
+exit(1);
+}
+else if(child>0)
+while(1);/*父进程进入死循环*/
+if(kill(getppid(),SIGTERM)==-1)
+{/*杀死父进程*/
+printf("Kill Parent Error:%s\n",strerror(errno));
+exit(1);
+}
+...
+---------
+文件的创建和读写:
+
+相关函数：
+#include <fcntl.h>;
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/stat.h>;
+
+int open(const char *pathname,int flags);
+int open(const char *pathname,int flags,mode_t mode);
+int close(int fd);
+这三个函数打开关闭文件，其中：
+1）pathname是文件名（包含路径名，缺省是在当前目录下面）
+
+2）flags 可以是下面的一个值或者是几个值的组合.
+O_RDONLY:以只读的方式打开文件.
+O_WRONLY:以只写的方式打开文件.
+O_RDWR:以读写的方式打开文件.
+O_APPEND:以追加的方式打开文件.
+O_CREAT:创建一个文件.
+O_EXEC:如果使用了 O_CREAT 而且文件已经存在,就会发生一个错误.
+O_NOBLOCK:以非阻塞的方式打开一个文件.
+O_TRUNC:如果文件已经存在,则删除文件的内容.
+前面三个标志只能使用任意的一个.如果使用了 O_CREATE 标志,那么我们要使用 open 的第二种形式.还要指定 mode 标志,用来表示文件的访问权限.
+
+3）mode 可以是以下情况的组合：
+S_IRUSR 用户可以读 
+S_IWUSR 用户可以写
+S_IXUSR 用户可以执行 
+S_IRWXU 用户可以读写执行
+----
+S_IRGRP 组可以读
+ S_IWGRP 组可以写
+S_IXGRP 组可以执行
+ S_IRWXG 组可以读写执行
+----
+S_IROTH 其他人可以读 
+S_IWOTH 其他人可以写
+S_IXOTH 其他人可以执行 
+S_IRWXO 其他人可以读写执行
+----
+S_ISUID 设置用户执行ID 
+S_ISGID 设置组的执行 ID
+也可用数字来代表各个位的标志.Linux 总共用 5 个数字来表示文件的各种权限(00000).
+第一位表示设置用户 ID.第二位表示设置组 ID,第三位表示用户自己的权限位,第四位表示组的权限,最后一位表示其他人的权限.每个数字可以取 1(执行权限),2(写权限),4(读权限),0(什么也没有)或者是这几个值的和.
+比如我们要创建一个用户读写执行,组没有权限,其他人读执行的文件.设置用户 ID 位
+那么我们可以使用的模式是:1(设置用户 ID),0(组没有设置),7(用户权限为1+2+4),0(组没有权限,使用缺省),5(其他者权限1+4).即 10705:
+open("temp",O_CREAT,10705);
+如果我们打开文件成功,open 会返回一个文件描述符.我们以后对文件的所有操作就可以对这个文件描述符进行操作了.当我们操作完成以后,我们要关闭文件了,只要调用 close 就可以了,其中 fd 是我们要关闭的文件描述符.
+#######################20090522,p23
+
+关于文件的读写：
+#include <unistd.h>;
+ssize_t read(int fd, void *buffer,size_t count);
+ssize_t write(int fd, const void *buffer,size_t count);
+这里，fd 是我们要进行读写操作的文件描述符,buffer 是我们要写入文件内容或读出文件内容的内存地址.count 是我们要读写的字节数.
+对于普通的文件 read 从指定的文件(fd)中读取 count 字节到 buffer 缓冲区中(记住我们必须提供一个足够大的缓冲区),同时返回 count.如果读到了文件的结尾或者被一个信号所中断,返回值会小于 count.如果是由信号中断引起返回,而且没有返回数据,read 会返回-1,且设置 errno 为 EINTR.当程序读到了文件结尾的时候,read 会返回 0.
+write 从 buffer 中写 count 字节到文件 fd 中,成功时返回实际所写的字节数.
+
+------不举例子了以后有时间再补,需要注意的是打开文件，操作之后要关闭文件-----
+
+----------
+关于文件的属性：
+#include <unistd.h>;
+int access(const char *pathname,int mode);
+这里，pathname:是文件名称,mode 是我们要判断的属性.可以取以下值或者是他们的组合.R_OK 文件可以读,W_OK 文件可以写,X_OK 文件可以执行,F_OK 文件存在.当我们测试成功时,函数返回 0,否则如果有一个条件不符时,返回-1.
+如果我们要获得文件的更多其他属性,我们可以使用函数 stat 或者 fstat.
+#include <sys/stat.h>;
+##include <unistd.h>;
+int stat(const char *file_name,struct stat *buf);
+int fstat(int filedes,struct stat *buf);
+这里，stat 用来判断没有打开的文件,而 fstat 用来判断打开的文件.
+关于stat的结构，如下：
+struct stat {
+dev_t st_dev; /* 设备 */
+ino_t st_ino; /* 节点 */
+mode_t st_mode; /* 模式 */
+nlink_t st_nlink; /* 硬连接 */
+uid_t st_uid; /* 用户 ID */
+gid_t st_gid; /* 组 ID */
+dev_t st_rdev; /* 设备类型 */
+off_t st_off; /* 文件字节数 */
+unsigned long st_blksize; /* 块大小 */
+unsigned long st_blocks; /* 块数 */
+time_t st_atime; /* 最后一次访问时间 */
+time_t st_mtime; /* 最后一次修改时间 */
+time_t st_ctime; /* 最后一次改变时间(指属性) */
+};
+stat 用来判断没有打开的文件,而 fstat 用来判断打开的文件.我们使用最多的属性是 st_
+mode.通过着属性我们可以判断给定的文件是一个普通文件还是一个目录,连接等等.可以
+使用下面几个宏来判断.
+S_ISLNK(st_mode):是否是一个连接.
+S_ISREG 是否是一个常规文件.
+S_ISDIR 是否是一个目录
+S_ISCHR 是否是一个字符设备.
+S_ISBLK 是否是一个块设备
+S_ISFIFO 是否 是一个 FIFO文件.
+S_ISSOCK 是否是一个 SOCKET 文件.
+
+--------
+关于目录操作
+函数简单，以后整理，先把后面的整理再回到这里整理
+------------------------------20090525,p25
+管道操作：
+相关函数：
+#include<unistd.h>;
+int pipe(int fildes[2]);
+系统调用 pipe 可以创建一个管道.pipe 调用可以创建一个管道(通信缓冲区).当调用成功时,我们可以访问文件描述符 fildes[0],fildes[1].其中 fildes[0]是用来读的文件描述符,而 fildes[1]是用来写的文件描述符.在实际使用中我们是通过创建一个子进程,然后一个进程写,一个进程读来使用的.
+------管道通信举例：
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#define BUFFER 255
+int main(int argc,char **argv)
+{
+char buffer[BUFFER+1];
+
+/*管道文件描述符号，fd[0]用于读，fd[1]用于写*/
+int fd[2];
+
+if(argc!=2)
+{
+fprintf(stderr,"Usage:%s string\n\a",argv[0]);
+exit(1);
+}
+
+if(pipe(fd)!=0)
+{/*$$$$$$$$$$$$$$$$$$$关键,创建管道的操作，返回读写文件描述符号到fd[0],fd[1]$$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Pipe Error:%s\n\a",strerror(errno));
+exit(1);
+}
+if(fork()==0)
+{/*子进程对管道进行写操作*/
+close(fd[0]);/*首先关闭无用的读文件描述符号。*/
+printf("Child[%d] Write to pipe\n\a",getpid());
+snprintf(buffer,BUFFER,"%s",argv[1]);
+write(fd[1],buffer,strlen(buffer));/*$$$$$$$$$关键，向管道写信息$$$$$$$$$$*/
+close(fd[1]);/*关闭写符号，原来没说，但我看man里面就是这样做的，所以我根据man改正*/
+printf("Child[%d] Quit\n\a",getpid());
+exit(0);
+}
+else
+{/*父进程负责读管道*/
+close(fd[1]);/*首先关闭写文件描述符号。为什么？？？？？*/
+printf("Parent[%d] Read from pipe\n\a",getpid());
+memset(buffer,'\0',BUFFER+1);
+read(fd[0],buffer,BUFFER);/*$$$$$$$$$关键，从管道读信息$$$$$$$$$$*/
+close(fd[0]);/*关闭读符号，原来没说，但我看man里面就是这样做的，所以我根据man改正*/
+printf("Parent[%d] Read:%s\n",getpid(),buffer);
+exit(1);
+}
+}
+
+-----------------20090526，p28
+关于重定向操作：
+
+相关函数：
+#include <unistd.h>;
+int dup2(int oldfd,int newfd);
+
+dup2 将用 oldfd 文件描述符来代替 newfd 文件描述符,同时关闭 newfd 文件描述符.也就是说,所有向 newfd 操作都转到 oldfd 上面.
+
+举例：
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#define BUFFER_SIZE 1024
+int main(int argc,char **argv)
+{
+int fd;
+char buffer[BUFFER_SIZE];
+if(argc!=2)
+{
+fprintf(stderr,"Usage:%s outfilename\n\a",argv[0]);
+exit(1);
+}
+if((fd=open(argv[1],O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1)
+{/*首先打开文件*/
+fprintf(stderr,"Open %s Error:%s\n\a",argv[1],strerror(errno));
+exit(1);
+}
+if(dup2(fd,STDOUT_FILENO)==-1)
+{/*$$$$$$$$$$$$$$$$$$$$关键操作，将标准输出重定向到fd文件描述符号上面$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Redirect Standard Out Error:%s\n\a",strerror(errno));
+exit(1);
+}
+fprintf(stderr,"Now,please input string");
+fprintf(stderr,"(To quit use CTRL+D)\n");
+while(1)
+{
+fgets(buffer,BUFFER_SIZE,stdin);
+if(feof(stdin))break;
+
+/*对标准输出的操作被重定向到fd文件描述符号上面了*/
+write(STDOUT_FILENO,buffer,strlen(buffer));
+}
+
+/*这里从标准输出的内容也被重定向到了文件中*/
+printf("this is from the standare output.\n");
+
+/*程序结束了，是不是应该关闭不用的文件呢？？？？？？？？？？？*/
+exit(0);
+}
+
+-----------关于时间的函数
+时间表示相关：
+#include <time.h>
+time_t time(time_t *tloc)
+char *ctime(const time_t *clock)
+time 函数返回从 1970 年 1 月 1 日 0 点以来的秒数.存储在 time_t 结构之中.不过这个函数的返回值对于我们来说没有什么实际意义.
+使用第二个函数将秒数转化为字符串. 这个函数的返回类型是固定的:一个可能值为. Thu Dec 7 14:58:59 2000 这个字符串的长度是固定的为 26.
+
+-------------------------------20090527,
+关于时间的计算：
+int gettimeofday(struct timeval *tv,struct timezone *tz);
+strut timeval
+{
+long tv_sec; /* 秒数 */
+long tv_usec; /* 微秒数,是一个零头p28 */
+};
+这里，gettimeofday 将时间获取并保存在结构 tv 之中.tz 一般我们使用 NULL 来代替.
+举例：
+#include <sys/time.h>
+#include <stdio.h>
+#include <math.h>
+void function()
+{
+...do some thing...
+}
+main()
+{
+struct timeval tpstart,tpend;/*开始时间和结束时间*/
+float timeuse;/*开始时间和结束时间之差，即使用的时间，以秒计算*/
+
+/*获得开始的时间*/
+gettimeofday(&tpstart,NULL);
+
+function();
+
+/*获得结束的时间*/
+gettimeofday(&tpend,NULL);
+
+/*将时间差以秒为单位存储到timeuse中*/
+timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+tpend.tv_usec-tpstart.tv_usec;
+timeuse/=1000000;
+
+/*打印*/
+printf("Used Time:%f\n",timeuse);
+exit(0);
+}
+
+------------------20090531,20090601,p33
+
+3 个内部间隔计时器.
+ITIMER_REAL:减少实际时间.到时的时候发出 SIGALRM 信号.
+ITIMER_VIRTUAL:减少有效时间(进程执行的时间).产生 SIGVTALRM 信号.
+ITIMER_PROF:减少进程的有效时间和系统时间(为进程调度用的时间).这个经常和上面一个使用用来计算系统内核时间和用户时间.产生 SIGPROF 信号.
+-----------
+操作函数:
+#include <sys/time.h>
+int getitimer(int which,struct itimerval *value);
+int setitimer(int which,struct itimerval *newval,struct itimerval *oldval);
+
+getitimer 函数得到间隔计时器的时间值.保存在 value 中 .
+setitimer 函数设置间隔计时器的时间值为 newval.并将旧值保存在 oldval 中.
+这两个函数中，which 表示使用三个计时器中的哪一个.
+
+----------
+相关结构：
+struct itimerval
+{
+/*时间间隔，它一般是不变的，当it_value的时间到达0之后，发送信号，然后再把it_value设置为it_interval的值，继续减少it_value*/
+struct timeval it_interval;
+/*it_value 是不断减少的时间,当这个值为 0 的时候就发出相应的信号了. 然后设置为 it_interval 值.*/
+struct timeval it_value;
+}
+-------
+举例(每执行两秒中之后会输出一个提示.)：
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+
+
+#define PROMPT "时间已经过去了两秒钟\n\a"
+char *prompt=PROMPT;
+unsigned int len;
+
+void prompt_info(int signo)
+{/*打印提示*/
+	write(STDERR_FILENO,prompt,len);
+}
+
+void init_sigaction(void)
+{/*ITIMER_PROF时间间隔相联的为SIGPROF信号设置相应的处理信息*/
+
+/*和信号处理相关的结构，该结构在后面有详细的描述*/
+	struct sigaction act;
+	act.sa_handler=prompt_info;
+	act.sa_flags=0;
+
+/*把信号集合act.sa_mask清空，使得它不包含任何信号*/
+	sigemptyset(&act.sa_mask);
+
+/*为SIGPROF信号设置相应的处理信息？？*/
+	sigaction(SIGPROF,&act,NULL);
+}
+
+void init_time()
+{/*设置时间间隔*/
+
+/*前面提到的时间间隔相关结构*/
+	struct itimerval value;
+
+/*不断减少的时间的初始值为2秒，2秒后它自动减小到0*/
+	value.it_value.tv_sec=2;
+	value.it_value.tv_usec=0;
+
+/*时间间隔为2秒，每两秒钟会自动的把减少到"零"的value.it_value(发送完信号之后)再设置为it_interval值*/
+	value.it_interval=value.it_value;
+
+/*利用这个函数，把时间间隔的信息设置为刚才赋值的value*/
+	setitimer(ITIMER_PROF,&value,NULL);
+}
+int main()
+{
+/*打印信息相关*/
+	len=strlen(prompt);
+/*设置信号处理函数相关*/
+	init_sigaction();
+/*设置时间间隔相关*/
+	init_time();
+/*死循环一直运行*/
+	while(1);
+	exit(0);
+}
+
+----
+信号处理：
+列出信号运行如下命令：
+$kill -l
+信号的详细解释请查看：
+$man 7 signal 
+信号事件的发生有两个来源:一个是硬件的原因(比如我们按下了键盘),一个是软件的原因(比如我们使用系统函数或者是命令发出信号). 
+下面是最常用的四个发送信号的函数：
+#include <sys/types.h>;
+#include <signal.h>
+#include <unistd.h>
+int kill(pid_t pid,int sig);
+int raise(int sig);
+unisigned int alarm(unsigned int seconds);
+
+setitimer:这个在计时器里面讲述了。
+
+kill 系统调用负责向进程发送信号 sig.
+如果 pid 是正数,那么向信号 sig 被发送到进程 pid.
+如果 pid 等于 0,那么信号 sig 被发送到所以和 pid 进程在同一个进程组的进程
+如果 pid 等于-1,那么信号发给所有的进程表中的进程,除了最大的哪个进程号.
+如果 pid 由于-1,和 0 一样,只是发送进程组是-pid.
+
+raise 系统调用向自己发送一个 sig 信号.我们可以用上面那个函数来实现这个功能的.
+
+alarm 函数和时间有点关系了,这个函数可以在 seconds 秒后向自己发送一个 SIGALRM 信号:
+alarm举例：
+#include <unistd.h>;
+main()
+{
+unsigned int i;
+alarm(1);
+for(i=0;1;i++)
+printf("I=%d",i);
+}
+SIGALRM 的缺省操作是结束进程,所以程序在 1 秒之后结束.
+
+####################################以上是之前的内容后来总结的###############################
+
+###############################################################################################
+
+//20090323
+p33-35,关于信号操作
+--------------------------------------
+1，关于信号屏蔽：
+#include <signal.h>;
+int sigemptyset(sigset_t *set);/*初始化信号集合 set,将 set 设置为空.*/
+int sigfillset(sigset_t *set);/*初始化信号集合,将信号集合设置为所有信号的集合.*/
+int sigaddset(sigset_t *set,int signo);/*将信号 signo 加入到信号集合之中.*/
+int sigdelset(sigset_t *set,int signo);/*将信号从信号集合中删除.*/
+int sigismember(sigset_t *set,int signo);/*查询信号是否在信号集合之中.*/
+
+/*下面是最为关键的一个函数.在使用之前要先设置好信号集合 set.作用是将指定的信号集合 set 加入到进程的信号阻塞集合之中去,如果提供了 oset 那么当前的进程信号阻塞集合将会保存在 oset 里面.参数 how 决定函数的操作方式.
+SIG_BLOCK:增加一个信号集合到当前进程的阻塞集合之中.
+SIG_UNBLOCK:从当前的阻塞集合之中删除一个信号集合.
+SIG_SETMASK:将当前的信号集合设置为信号阻塞集合.*/
+int sigprocmask(int how,const sigset_t *set,sigset_t *oset);
+
+举例：
+/*sigSet.c*/
+#include <signal.h>;
+#include <stdio.h>;
+#include <math.h>;
+#include <stdlib.h>;
+int main(int argc,char **argv)
+{
+double y;
+sigset_t intmask;
+int i,repeat_factor;
+int count = 300;
+if(argc!=2)
+{
+fprintf(stderr,"Usage:%s repeat_factor\n\a",argv[0]);
+exit(1);
+}
+if((repeat_factor=atoi(argv[1]))<1)repeat_factor=10;
+sigemptyset(&intmask); /* 将信号集合设置为空 */
+sigaddset(&intmask,SIGINT); /* 加入中断 Ctrl+C 信号*/
+while(count--)
+{
+/*把intmask信号集合添加到阻塞集合中，不用保存intmask，所以第3个参数设置为空*/
+sigprocmask(SIG_BLOCK,&intmask,NULL);
+fprintf(stderr,"SIGINT signal blocked\n");
+for(i=0;i<repeat_factor;i++)y=sin((double)i);
+fprintf(stderr,"Blocked calculation is finished\n");
+/* 下面被注释的是取消阻塞 */
+/*sigprocmask(SIG_UNBLOCK,&intmask,NULL);
+fprintf(stderr,"SIGINT signal unblocked\n");
+for(i=0;i<repeat_factor;i++)y=sin((double)i);
+fprintf(stderr,"Unblocked calculation is finished\n");*/
+}
+exit(0);
+}
+
+说明：这个程序的效果是，当它运行的时候，你按[ctrl]+C没有反应。除非kill.
+----------------------------------
+2,关于设置发出被屏蔽信号时系统的动作：
+有时候我们希望对信号作出及时的反映的,比如当拥护按下 Ctrl+C 时,我们不想什么事情也不做。
+相关函数和结构如下：
+#include <signal.h>;
+/*sigaction函数，
+signo 要处理的信号了,可以是任何的合法的信号.有两个信号不能够使用(SIGKILL 和 SIGSTOP). 
+act 包含这个信号进行如何处理的信息.
+oact 保存上次的act,一般用 NULL 就行了.
+*/
+int sigaction(int signo,const struct sigaction *act,
+struct sigaction *oact);
+
+struct sigaction {
+void (*sa_handler)(int signo);/*指向我们想要定义的屏蔽信号时的操作的函数*/
+void (*sa_sigaction)(int siginfo_t *info,void *act);/*同上，不常用*/
+/*为了处理在信号处理函数运行的时候信号的发生,我们需要设置 sa_mask 成员. 我们将我们要屏蔽的信号添加到 sa_mask 结构当中去,这样这些函数在信号处理的时
+候就会被屏蔽掉的.（？？？以后用到再琢磨）
+*/
+sigset_t sa_mask;/*设置执行新设置的函数时被屏蔽的信息，另外应该屏蔽触发新函数的信号，除非设置了??NODEFER??见man*/
+int sa_flags;/*设置信号情况，一般设为0*/
+void (*sa_restore)(void);/*同上，不常用*/
+}
+
+举例：
+/*sigAct.c*/
+#include <signal.h>;
+#include <stdio.h>;
+#include <string.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#define PROMPT "你想终止程序吗?"
+char *prompt=PROMPT;
+void ctrl_c_op(int signo)
+{
+write(STDERR_FILENO,prompt,strlen(prompt));
+}
+int main()
+{
+struct sigaction act;
+act.sa_handler=ctrl_c_op;
+sigemptyset(&act.sa_mask);
+act.sa_flags=0;
+if(sigaction(SIGINT,&act,NULL)<0)
+{
+fprintf(stderr,"Install Signal Action Error:%s\n\a",strerror(errno));
+exit(1);
+}
+while(1);
+}
+
+程序的效果是，当你按下[Ctrl]+C的时候，程序不会终止，但是会打印出一行提示信息。只能用kill来终止程序。
+#######################
+20090324
+20090327(p35-38)
+其他信号操作函数，现在了解的还不深，先不举例子，等之后在添加。
+/*pause 函数很简单,就是挂起进程直到一个信号发生了.*/
+int pause(void);
+/*而 sigsuspend 也是挂起进程只是在调用的时候用 sigmask 取代当前的信号阻塞集合.*/
+int sigsuspend(const sigset_t *sigmask);
+????????????????????????
+#################################
+20090330
+20090331
+20090407
+20090408
+关于semop系统调用的文章待整理：（p40-43）
+http://www.91linux.com/html/article/program/cpp/20081120/13890.html
+关于SystemV 信号量(和P,V操作有关的)：
+/*ftok 函数是根据 pathname 和 proj 来创建一个关键字。pathname文件路径的文件名必须是存在可访问的，proj是8位非零的
+pathname和proj一样的话，返回值应该是一样的（参照man）。
+*/
+key_t ftok(char *pathname,char proj);
+
+/*semget 创建一个信号量.成功时返回信号的 ID,key 是一个关键字,可以是用 ftok 创建的也可以是 IPC_PRIVATE 表明由系统选用一个关键字. nsems 表明我们创建的信号个数.semflg 是创建的权限标志,和我们创建一个文件的标志相同.
+*/
+int semget(key_t key,int nsems,int semflg);
+
+/*
+semctl 对信号量进行一系列的控制.semid 是要操作的信号标志,semnum 是信号的个数,cmd 是操作的命令.经常用的两个值是:SETVAL(设置信号量的值)和 IPC_RMID(删除信号灯).arg 是一个给 cmd 的参数.
+*/
+int semctl(int semid,int semnum,int cmd,union semun arg);
+
+/*下面是信号灯的结构*/
+struct sembuf {
+short sem_num; /* 信号编号*/
+short sem_op; /* 进行什么操作 */
+short sem_flg; /* 操作的标志 */
+};
+这三个字段的意义分别为：
+sem_num：操作信号在信号集中的编号，第一个信号的编号是0。
+sem_op：如果其值为正数，该值会加到现有的信号内含值中。通常用于释放所控资源的使用权；如果sem_op的值为负数，而其绝对值又大于信号的现值，操作将会阻塞，直到信号值大于或等于 sem_op的绝对值。通常用于获取资源的使用权；如果sem_op的值为0，则操作将暂时阻塞，直到信号的值变为0。
+sem_flg：信号操作标志，可能的选择有两种
+IPC_NOWAIT //对信号的操作不能满足时，semop()不会阻塞，并立即返回，同时设定错误信息。
+IPC_UNDO //程序结束时(不论正常或不正常)，保证信号值会被重设为semop()调用前的值。这样做的目的在于避免程序在异常情况下结束时未将锁定的资源解锁，造成该资源永远锁定。
+
+/*操作一个或一组信号*/
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+int semop(int semid, struct sembuf *sops, unsigned nsops);
+参数： 
+semid：信号集的识别码，可通过semget获取。
+sops：指向存储信号操作结构的数组指针，信号操作结构的原型如上。
+nsops：信号操作结构的数量，恒大于或等于1。
+返回说明： 
+成功执行时，两个系统调用都返回0。失败返回-1，errno被设为以下的某个值
+E2BIG：一次对信号的操作数超出系统的限制
+EACCES：调用进程没有权能执行请求的操作，并且不具有CAP_IPC_OWNER权能
+EAGAIN：信号操作暂时不能满足，需要重试
+EFAULT：sops或timeout指针指向的空间不可访问
+EFBIG：sem_num指定的值无效
+EIDRM：信号集已被移除
+EINTR：系统调用阻塞时，被信号中断
+EINVAL：参数无效
+ENOMEM：内存不足
+ERANGE：信号所允许的值越界
+?????????举例????
+
+######################################
+20090409
+20090410
+关于进程之间通信：(p44-46)
+SystemV消息队列可以实现进程之间通信。
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+int msgget(key_t key,int msgflg);
+int msgsnd(int msgid,struct msgbuf *msgp,int msgsz,int msgflg);
+int msgrcv(int msgid,struct msgbuf *msgp,int msgsz,
+long msgtype,int msgflg);
+int msgctl(Int msgid,int cmd,struct msqid_ds *buf);
+
+/*消息缓冲的结构
+如果 msgtype=0,接收消息队列的第一个消息.大于 0 接收队列中消息类型等于这个值的第一个消息.小于 0 接收消息队列中小于或者等于 msgtype 绝对值的所有消息中的最小一个消息. 
+*/
+struct msgbuf {/*消息缓冲的结构*/
+long msgtype; /* 消息类型必须要有的*/
+....... /* 其他数据类型自定义的*/
+}
+
+/*msgget 函数和 semget 一样,返回一个消息队列的标志,key 是一个关键字,可以是用 ftok 创建的也可以是其他。*/
+int msgget(key_t key,int msgflg);
+
+/*用来进行消息通讯时发送消息的
+msgid是要发送的消息队列的标志；
+msgp是要发送的消息缓冲内容（见前面消息缓冲的结构）；
+msgsz是消息的大小；
+msgflg指出缓冲区用完时候的操作.接受函数指出无消息时候的处理.一般0.
+*/
+int msgsnd(int msgid,struct msgbuf *msgp,int msgsz,int msgflg);
+
+/*用来进行消息通讯时接收消息的
+msgid是要发送的消息队列的标志；
+msgp是要发送的消息缓冲内容（见前面消息缓冲的结构）；
+msgsz是消息的大小；
+msgtype指定接收消息队列中的哪一个消息（0为第一个），见前面消息缓冲结构；
+msgflg指出缓冲区用完时候的操作.接受函数指出无消息时候的处理.一般0.
+*/
+int msgrcv(int msgid,struct msgbuf *msgp,int msgsz,
+           long msgtype,int msgflg);
+
+/*msgctl 和 semctl类似是对消息进行控制?????????????????????????????????????*/
+int msgctl(Int msgid,int cmd,struct msqid_ds *buf);
+
+举例说明一下消息发送和接收的过程：(注释中有"$$$$$$$$$$$"的是关键)
+/********************************/
+
+服务端 server.c
+#include <stdio.h>;
+#include <string.h>;
+#include <stdlib.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/stat.h>;
+#include <sys/msg.h>;
+#define MSG_FILE "server.c"
+#define BUFFER 255
+#define PERM S_IRUSR|S_IWUSR
+struct msgtype {
+long mtype;
+char buffer[BUFFER+1];
+};/*定义消息队列内容的结构*/
+int main()
+{
+struct msgtype msg;/*消息队列内容*/
+key_t key;/*用于创建消息的key*/
+int msgid;/*消息队列标识*/
+if((key=ftok(MSG_FILE,'a'))==-1)
+{/*获取key，以创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4*/
+fprintf(stderr,"Creat Key Error:%s\a\n",strerror(errno));
+exit(1);
+}
+if((msgid=msgget(key,PERM|IPC_CREAT|IPC_EXCL))==-1)
+{/*根据key创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Creat Message Error:%s\a\n",strerror(errno));
+exit(1);
+}
+while(1)
+{
+/*接收消息队列中msg.mtype为1的消息（根据第4个参数指定）到msg中$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+msgrcv(msgid,&msg,sizeof(struct msgtype),1,0);
+/*打印相应消息中的缓存*/
+fprintf(stderr,"Server Receive:%s\n",msg.buffer);
+/*设置msg的消息类型成员，以便发送时让另外一个程序的msgrcv能够识别$$$$$$$$$$$$$$$$$$$$$*/
+msg.mtype=2;
+/*把msg发送出去（反馈）$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+msgsnd(msgid,&msg,sizeof(struct msgtype),0);
+}
+exit(0);
+}
+----------------------------------------------------------------------------
+----
+客户端(client.c)
+#include <stdio.h>;
+#include <string.h>;
+#include <stdlib.h>;
+#include <errno.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/msg.h>;
+#include <sys/stat.h>;
+#define MSG_FILE "server.c"
+#define BUFFER 255
+#define PERM S_IRUSR|S_IWUSR
+struct msgtype {
+long mtype;
+char buffer[BUFFER+1];
+};
+int main(int argc,char **argv)
+{
+struct msgtype msg;/*定义消息队列内容的结构*/
+key_t key;
+int msgid;
+if(argc!=2)
+{
+fprintf(stderr,"Usage:%s string\n\a",argv[0]);
+exit(1);
+}
+if((key=ftok(MSG_FILE,'a'))==-1)
+{/*获取key，以创建消息队列，注意这里的key和server程序的key是一样的，这样创建的消息队列就一样了$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Creat Key Error:%s\a\n",strerror(errno));
+exit(1);
+}
+if((msgid=msgget(key,PERM))==-1)
+{/*根据key创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Creat Message Error:%s\a\n",strerror(errno));
+exit(1);
+}
+/*设置msg的消息类型成员，以便发送时让另外一个程序的msgrcv能够识别$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+msg.mtype=1;
+/*把要发送的消息拷贝到msg消息缓存中$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+strncpy(msg.buffer,argv[1],BUFFER);
+/*把消息发送出去$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+msgsnd(msgid,&msg,sizeof(struct msgtype),0);
+/*消息缓存清空*/
+memset(&msg,'\0',sizeof(struct msgtype));
+/*接收反馈$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+msgrcv(msgid,&msg,sizeof(struct msgtype),2,0);
+fprintf(stderr,"Client receive:%s\n",msg.buffer);
+exit(0);
+}
+
+}
+
+/********************************/
+记得使用完了要删除，删除的方法为：
+if( msgctl( qid, IPC_RMID, 0) == -1)
+{
+....
+}
+#######################################################################
+20090413
+20090414
+关于SystemV共享内存
+SystemV 提供了以下几个函数以实现共享内存.
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/shm.h>;
+int shmget(key_t key,int size,int shmflg);
+void *shmat(int shmid,const void *shmaddr,int shmflg);
+int shmdt(const void *shmaddr);
+int shmctl(int shmid,int cmd,struct shmid_ds *buf);
+
+/*shmget函数和 semget 一样,返回一个共享内存的标志,
+key 是一个关键字,可以是用 ftok 创建的也可以是其他,
+size是共享内存大小
+shmflg用????????????????*/
+int shmget(key_t key,int size,int shmflg);
+/*shmctl和semctl类似是对共享内存进行控制?????????????????????????????????????*/
+int shmctl(int shmid,int cmd,struct shmid_ds *buf);
+
+/*shmat是用来连接共享内存的,根据他它的返回地址指向共享内存的地址
+shmid是要连接的共享内存的标志
+shmaddr一般用0就可以了??????????
+shmflg一般用0就可以了??????????
+*/
+void *shmat(int shmid,const void *shmaddr,int shmflg);
+
+/*使用共享内存结束以后我们使用 shmdt 断开这个内存
+参数??????????????????????*/
+int shmdt(const void *shmaddr);
+
+举例：
+#include <stdio.h>;
+#include <string.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#include <sys/stat.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/shm.h>;
+#define PERM S_IRUSR|S_IWUSR
+int main(int argc,char **argv)
+{
+int shmid;
+char *p_addr,*c_addr;/*指向共享内存的指针*/
+if(argc!=2)
+{
+fprintf(stderr,"Usage:%s\n\a",argv[0]);
+exit(1);
+}
+if((shmid=shmget(IPC_PRIVATE,1024,PERM))==-1)
+{/*创建共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+fprintf(stderr,"Create Share Memory Error:%s\n\a",strerror(errno));
+exit(1);
+}
+if(fork())
+{/*0为子，非0为父*/
+p_addr=shmat(shmid,0,0);/*连接共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+memset(p_addr,'\0',1024);
+strncpy(p_addr,argv[1],1024);/*使用共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+exit(0);
+}
+else
+{/*子*/
+c_addr=shmat(shmid,0,0);/*连接共享内存*/
+printf("Client get %s",c_addr);/*使用共享内存*/
+exit(0);
+}
+}
+
+??????????????????????????
+使用完毕之后需要用ipcrm 释放资源的???????????????????????????????????????????????
+
+##########################################################################################
+20090415
+20090416
+关于线程
+?????????书上说的不全，可以参见如下网址????????????????????
+http://docs.huihoo.com/joyfire.net/11.html#I250
+/*pthread_create创建一个新的线程。
+thread保存线程的线程变量
+attr线程属性
+start_routine当线程执行时要调用的函数
+start_routine函数的参数.
+线程属性只指明了需要使用的最小的堆栈大小。在以后的程序中，线程的属性可以指定其他的值，但现在大部分的程序可以使用缺省值。
+*/
+int pthread_create(pthread_t *thread,pthread_attr_t *attr,
+			  void *(*start_routine)(void *),void *arg);
+
+pthread_exit
+
+pthread_delay_np
+
+
+举例：
+/*创建线程*/
+void print_message_function( void *ptr );
+main ( )
+{
+pthread_t thread1, thread2;
+char *message1 = "Hello”;
+char *message2 = "Wo r l d " ;
+/*注意各个参数的调用方法*/
+pthread_create( &thread1, pthread_attr_default,
+               (void *) &print_message_function, (void *) message1);
+
+/*在父线程中插入一个延迟程序，给子线程足够的时间完成打印的调用，可惜不行，见后面sleep*/
+sleep (10) ;
+pthread_create(&thread2, pthread_attr_default,
+(void *) &print_message_function, (void *) message2);
+/*sleep不行的原因：
+1）依靠时间的延迟执行同步是不可靠的
+2）sleep和exit一样和进程有关。当线程调用sleep时，整个的进程都处于睡眠状态，也就是说，所有的三个线程都进入睡眠状态。
+如果实在延迟，应该用pthread_delay_np
+*/
+sleep ( 10 ) ;
+
+/*exit将会退出进程，同时释放任务，它会结束所有的线程。任何线程(不论是父线程或者子线程)调用exit 都会终止所有其他线程。
+如果只退出线程，应该用pthread_exit*/
+exit (0) ;
+}
+void print_message_function( void *ptr )
+{
+char *message;
+message = (char *) ptr;
+printf("%s", message);
+pthread_exit(0) ;
+}
+/*让一个线程睡眠两秒钟应该如下：外部还是线程内部?????????????????????????*/
+struct timespec delay;
+delay.tv_sec = 2;
+delay.tv_nsec = 0;
+pthread_delay_np( &delay );
+??????????????????????????????????????????????????????????????
+########################################################################################################################
+关于网络编程(1)TCP
+p55-65
+20090421
+20090422
+20090423
+20090424
+20090428
+20090429
+20090430
+20090504
+杂乱函数等：
+bzero(&server_addr,sizeof(struct sockaddr_in));
+server_addr.sin_addr.s_addr=htonl(INADDR_ANY);
+server_addr.sin_port=htons(portnumber);
+inet_ntoa(client_addr.sin_addr));
+struct hostent *host;
+if((host=gethostbyname(argv[1]))==NULL)
+----------------------
+网络程序通过 socket 和其它几个函数的调用,会返回一个 通讯的文件描述符,我们可以将这个描述符看成普通的文件的描述符来操作,这就是 linux 的设备无关性的 好处.我们可以通过向描述符读写操作实现网络之间的数据交流.
+-------------------
+建立连接相关函数：
+int socket(int domain, int type,int protocol)
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
+int listen(int sockfd,int backlog)
+int accept(int sockfd, struct sockaddr *addr,int *addrlen)
+int connect(int sockfd, struct sockaddr * serv_addr,int addrlen)
+------
+字节转换相关函数：
+unsigned long int htonl(unsigned long int hostlong)
+unsigned short int htons(unisgned short int hostshort)
+unsigned long int ntohl(unsigned long int netlong)
+unsigned short int ntohs(unsigned short int netshort)
+
+struct hostent *gethostbyname(const char *hostname)
+struct hostent *gethostbyaddr(const char *addr,int len,int type)
+
+int inet_aton(const char *cp,struct in_addr *inp)
+char *inet_ntoa(struct in_addr in)
+
+-----
+服务信息函数:(端口.IP 和服务信息)
+int getsockname(int sockfd,struct sockaddr *localaddr,int *addrlen)/*不常用后面不详述了*/
+int getpeername(int sockfd,struct sockaddr *peeraddr, int *addrlen)/*不常用后面不详述了*/
+struct servent *getservbyname(const char *servname,const char *protoname)
+struct servent *getservbyport(int port,const char *protoname)
+
+------
+通信相关函数：（读、写）
+ssize_t write(int fd,const void *buf,size_t nbytes)
+ssize_t read(int fd,void *buf,size_t nbyte)
+
+-----------
+相关结构：
+struct sockaddr{
+unisgned short as_family;
+char sa_data[14];
+};
+不过由于系统的兼容性,我们一般不用这个头文件,而使用另外一个结构(struct sockaddr_in) 来代替.
+在<linux/in.h>中有sockaddr_in 的定义
+struct sockaddr_in{
+unsigned short sin_family;/*一般为 AF_INET因为主要使用 Internet*/
+unsigned short int sin_port;/*我们要监听的端口号*/
+struct in_addr sin_addr;/*只含一个32位整数成员的结构,设置为 INADDR_ANY 表示可以 和任何的主机通信*/
+unsigned char sin_zero[8];/*是用来填充的???*/
+
+-----
+
+在<netdb.h>;中有 struct hostent 的定义
+struct hostent{
+char *h_name; /* 主机的正式名称 */
+char *h_aliases; /* 主机的别名 */
+int h_addrtype; /* 主机的地址类型 AF_INET*/
+int h_length; /* 主机的地址长度 对于 IP4 是 4 字节 32 位*/
+char **h_addr_list; /* 主机的 IP 地址列表 */
+}
+#define h_addr h_addr_list[0] /* 主机的第一个 IP 地址*/
+
+-----
+struct servent
+{/*关于服务信息的定义*/
+char *s_name; /* 正式服务名 */
+char **s_aliases; /* 别名列表 */
+int s_port; /* 端口号 */
+char *s_proto; /* 使用的协议 */
+}
+
+
+-------------------
+网络程序是由两个部分组成的--客户端和服务器端.它们的建立步骤一般是:
+服务器端:
+socket-->bind-->listen-->accept
+客户端:
+socket-->connect
+这里很关键的是bind和connect，一个把套接字和本身的server“绑定”，一个把套接字和待连接的server“连接”
+--------------------
+/*创建通信终端，返回终端描述。
+domain:说明我们网络程序所在的主机采用的通讯协族(AF_UNIX 和 AF_INET 等). AF_UNIX 只能够用于单一的 Unix 系统进程间通信,而 AF_INET 是针对 Internet 的,因而可以允许在远程 主机之间通信(当我们 man socket 时发现 domain 可选项是 PF_*而不是 AF_*,因为glibc 是 posix 的实现 所以用 PF 代替了 AF,不过我们都可以使用的).
+type: 我们网络程序所采用的通讯协议(SOCK_STREAM,SOCK_DGRAM 等) SOCK_STREAM表明我们用的是 TCP 协议,这样会提供按顺序的,可靠,双向,面向连接的比特流. SOCK_DGRAM表明我们用的是 UDP 协议,这样只会提供定长的,不可靠,无连接的通信.
+protocol:由于我们指定了 type,所以这个地方我们一般只要用 0 来代替就可以了 socket 为网络通讯做基本的准备.成功时返回文件描述符,失败时返回-1,看errno 可知道出错的详细情况.
+*/
+int socket(int domain, int type,int protocol)
+
+/*将本地的端口同 socket 返回的文件描述符捆绑在一起.
+为sockfd描述的套接字绑定一个名字（指定一个由my_addr确定的地址）函数成功时返回 0,失败的情况和socket 一样。
+sockfd:是由 socket 调用返回的文件描述符.
+my_addr:是一个指向 sockaddr 的指针. 在<linux/socket.h>;中有 sockaddr 的定义(见前面).
+addrlen:是 sockaddr 结构的长度.
+*/
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
+
+
+/*listen 函数将 bind 的文件描述符变为监听套接字.返回的情况和 bind 一样.
+sockfd:是 bind 后的文件描述符.
+backlog:设置请求排队的最大长度.当有多个客户端程序和服务端相连时, 使用这个表示可以介绍的排队长度. 
+*/
+int listen(int sockfd,int backlog)
+
+
+/*accept 成功时返回最后的服务器端的文件描述符,这个时候服务器端可以向该描述符写信息了. 失败时返回-1.
+sockfd:是 listen 后的文件描述符.
+bind,listen 和 accept 是服务器端用的函数,accept 调用时,服务器端的程序会一直阻塞到有一个客户程序发出了连接. 
+addr,addrlen 是用来给客户端的程序填写的,服务器端只要传递指针就可以了.
+*/
+int accept(int sockfd, struct sockaddr *addr,int *addrlen)
+
+/*connect 函数是客户端用来同服务端连接的.成功时返回 0,失败时返回-1.
+sockfd:socket 返回的文件描述符.sockfd 是同服务端通讯的文件描述符 
+serv_addr:储存了服务器端的连接信息.其中 sin_add 是服务端的地址
+addrlen:serv_addr 的长度
+*/
+int connect(int sockfd, struct sockaddr * serv_addr,int addrlen)
+--------------------
+/*机器在表示数据的字节顺序是不同的为了统一起来,在 Linux 下面,有专门的字节转换函数.
+在下面四个转换函数中,h 代表 host, n 代表 network.s 代表 short l 代表 long 第一个函数的意义是将本机器上的 long 数据转化为网络上的 long. 其他几个函数的意义也差不多...
+*/
+unsigned long int htonl(unsigned long int hostlong)
+unsigned short int htons(unisgned short int hostshort)
+unsigned long int ntohl(unsigned long int netlong)
+unsigned short int ntohs(unsigned short int netshort)
+
+/*
+标志一台机器可以用 IP 或者是用域名.用下面两个函数进行转换.
+两个函数失败时返回 NULL 且设置 h_errno 错误变量,调用 h_strerror()可以得到详细的出错信息.
+在man中指出，这两个函数已经过时了用 getaddrinfo和getnameinfo替代了
+*/
+/*将机器名(如 linux.yessun.com)转换为一个结构指针.在这个结构里面储存了域名的信息*/
+struct hostent *gethostbyname(const char *hostname)
+/*将一个 32 位的 IP 地址(C0A80001)转换为结构指针.*/
+struct hostent *gethostbyaddr(const char *addr,int len,int type)
+
+/*
+IP 都是数字加点(192.168.0.1)构成的, 而在 struct in_addr 结构中用的是 32 位的 IP,使用下面两个函数转换
+a 代表 ascii n 代表 network.
+*/
+/*将 a.b.c.d 的 IP 转换为 32 位的 IP,存储在 inp指针里面.*/
+int inet_aton(const char *cp,struct in_addr *inp)
+/*将 32 位 IP 转换为 a.b.c.d 的格式.*/
+char *inet_ntoa(struct in_addr in)
+--------
+/*服务信息相关*/
+
+/*得到端口号*/
+struct servent *getservbyname(const char *servname,const char *protoname)
+/*得到指定的端口号的服务*/
+struct servent *getservbyport(int port,const char *protoname)
+
+--------
+/*通信相关函数：（读、写）*/
+/*
+建立了连接之后，只要往文件描述符里面读写东西就可以了。
+*/
+/*
+write将 buf中的 nbytes 字节内容写入文件描述符 fd.成功时返回写的字节数.失败时返回-1. 并设置 errno 变量. 
+1)返回值大于 0,表示写了部分或者是全部的数据.
+2)返回的值小于 0,此时出现了错误.
+如果错误为 EINTR 表示在写的时候出现了中断错误.
+如果为 EPIPE 表示网络连接出现了问题(对方已经关闭了连接).
+*/
+ssize_t write(int fd,const void *buf,size_t nbytes);
+
+/*
+read函数负责从fd中读取内容.当读成功时,read 返回实际所读的字节数,如果返回的值是 0 表示已经读到文件的结束了,小于0 表示出现了错误.
+如果错误为 EINTR 说明读是由中断引起的, 如果是 ECONNREST 表示网络连接出了问题.
+*/
+ssize_t read(int fd,void *buf,size_t nbyte)
+
+---------------------
+第一个例子代码片段：（建立连接并通信）
+/*******服务器端代码片段*******/
+/*头文件*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+/*相关定义*/
+int sockfd,new_fd;/*两个文件描述符,后者是被接受的套接字的文件描述符*/
+struct sockaddr_in server_addr;/*服务器相关*/
+struct sockaddr_in client_addr;/*客户机相关*/
+int sin_size,portnumber;
+char hello[]="Hello! Are You Fine?\n";
+......
+/* 服务器端开始建立 socket 描述符 */
+if((sockfd=socket(AF_INET,SOCK_STREAM,0))==-1)
+{/*三个参数表示：是internet,是TCP，默认的0*/
+fprintf(stderr,"Socket error:%s\n\a",strerror(errno));
+exit(1);
+}
+......
+/* 服务器端填充 sockaddr 结构 */
+bzero(&server_addr,sizeof(struct sockaddr_in));/*先把结构里面所有的数据都清零*/
+server_addr.sin_family=AF_INET;/*表示internet*/
+server_addr.sin_addr.s_addr=htonl(INADDR_ANY);/*表示可以和任何主机通信*/
+server_addr.sin_port=htons(portnumber);/*表示要监听的端口号*/
+......
+/* 捆绑 sockfd 描述符 */
+if(bind(sockfd, (struct sockaddr *)(&server_addr), sizeof(struct sockaddr))==-1)
+{
+fprintf(stderr,"Bind error:%s\n\a",strerror(errno));
+exit(1);
+}
+......
+/* 监听 sockfd 描述符 */
+if(listen(sockfd,5)==-1)
+{/*参数：监听的描述符号,允许的排队长度*/
+fprintf(stderr,"Listen error:%s\n\a",strerror(errno));
+exit(1);
+}
+......
+/*接收客户请求*/
+while(1)
+{
+/* 服务器阻塞,直到客户程序建立连接 */
+sin_size=sizeof(struct sockaddr_in);
+if((new_fd=accept(sockfd,(struct sockaddr *)(&client_addr),&sin_size))==-1)
+{/*参数：套接字，客户信息(会自动获得,如果不关心可以设为空)，信息结构的大小，返回接受的套接字文件描述符*/
+fprintf(stderr,"Accept error:%s\n\a",strerror(errno));
+exit(1);
+}
+fprintf(stderr,"Server get connection from %s\n",inet_ntoa(client_addr.sin_addr));
+......
+/*向接受的套接字描述符写，以发送信息*/
+if(write(new_fd,hello,strlen(hello))==-1)
+{
+fprintf(stderr,"Write Error:%s\n",strerror(errno));
+exit(1);
+}
+/* 这个通讯已经结束 */
+close(new_fd);
+/* 循环下一个 */
+}
+close(sockfd);
+
+
+/*******客户端代码片段*******/
+/*头文件*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+/*相关定义*/
+int sockfd;
+char buffer[1024];/*存放接收到的信息*/
+struct sockaddr_in server_addr;/*描述服务器的结构*/
+struct hostent *host;/*存放server的地址*/
+int portnumber,nbytes;/*想要连接的端口号，和read的返回值*/
+
+
+/*获取待连接的服务器信息*/
+if((host=gethostbyname(argv[1]))==NULL)
+{/*根据argv[1]指示的服务器主机名字字符串(如 linux.yessun.com)，获得主机结构（其中存放了域名信息）,host描述的是server的*/
+fprintf(stderr,"Gethostname error\n");
+exit(1);
+}
+if((portnumber=atoi(argv[2]))<0)
+{/*获取待连接的服务器端口*/
+fprintf(stderr,"Usage:%s hostname portnumber\a\n",argv[0]);
+exit(1);
+}
+
+/* 客户程序开始建立 sockfd 描述符 */
+if((sockfd=socket(AF_INET,SOCK_STREAM,0))==-1)
+{/*参数意义同前*/
+fprintf(stderr,"Socket Error:%s\a\n",strerror(errno));
+exit(1);
+}
+/* 客户程序填充服务端的资料 */
+bzero(&server_addr,sizeof(server_addr));/*先清零*/
+server_addr.sin_family=AF_INET;/*网络类型internet*/
+server_addr.sin_port=htons(portnumber);/*把请求的端口添到服务器信息的结构中*/
+server_addr.sin_addr=*((struct in_addr *)host->h_addr);/*一个字符串地址,server的*/
+
+/* 客户程序发起连接请求 */
+if(connect(sockfd,(struct sockaddr *)(&server_addr),sizeof(struct sockaddr))==-1)
+{
+fprintf(stderr,"Connect Error:%s\a\n",strerror(errno));
+exit(1);
+}
+
+/* 连接成功读取接收到的信息 */
+if((nbytes=read(sockfd,buffer,1024))==-1)
+{/*把sockfd当作文件描述符来读取其中的信息（来自server的信息）*/
+fprintf(stderr,"Read Error:%s\n",strerror(errno));
+exit(1);
+}
+buffer[nbytes]='\0';
+printf("I have received:%s\n",buffer);
+/* 结束通讯 */
+close(sockfd);
+
+---------------------
+第二个例子代码片段：(获取主机信息)
+/*头文件*/
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+/*相关定义*/
+struct sockaddr_in addr;
+struct hostent *host;
+char **alias;
+
+
+/*根据ip或者域名获取主机信息*/
+if(inet_aton(*argv,&addr.sin_addr)!=0)
+{/*这里我们假设是 IP，把argv中的ip地址（a.b.c.d）,获取32位到&addr.sin_addr中*/
+
+host=gethostbyaddr((char *)&addr.sin_addr,4,AF_INET);/*根据刚刚转换的ip获得服务器主机信息*/
+
+printf("Address information of Ip %s\n",*argv);
+}
+else
+{
+/* 失败,难道是域名?*/
+host=gethostbyname(*argv);/*若不是ip根据域名形式获得服务主机信息*/
+printf("Address informationof host %s\n",*argv);
+}
+if(host==NULL)
+{
+/* 都不是 ,算了不找了*/
+fprintf(stderr,"No address information of %s\n",*arg
+v);
+}
+
+/*打印主机信息*/
+printf("Official host name %s\n",host->h_name);/*打印主机名字*/
+
+/*打印主机别名*/
+printf("Name aliases:");
+for(alias=host->h_aliases;*alias!=NULL;alias++)
+printf("%s ,",*alias);
+
+/*打印IP地址*/
+printf("\nIp address:");
+for(alias=host->h_addr_list;*alias!=NULL;alias++)
+printf("%s ,",inet_ntoa(*(struct in_addr *)(*alias)));
+
+---------------------
+第三个例子代码片段：(数据的传递)
+
+......
+/* 客户端向服务端写 */
+struct my_struct my_struct_client;
+write(fd,(void *)&my_struct_client,sizeof(struct my_struct);
+/* 服务端的读*/
+/*在网络上传递数据时我们一般都是把数据转化为 char 类型的数据传递.*/
+char buffer[sizeof(struct my_struct)];
+struct *my_struct_server;
+read(fd,(void *)buffer,sizeof(struct my_struct));
+my_struct_server=(struct my_struct *)buffer;
+......
+
+########################################
+关于网络编程(2)UDP
+p65-68
+20090504
+20090505
+20090506
+20090507
+20090508
+基于UDP的通信：
+
+int recvfrom(int sockfd,void *buf,int len,unsigned int flags,struct sockaddr * from int *fromlen)
+int sendto(int sockfd,const void *msg,int len,unsigned int flags,struct sockaddr *to int tolen)
+
+--------------
+/*
+recvfrom 负责从 sockfd 接收数据,如果 from 不是 NULL,那么在 from 里面存储了信息来源(发送者)的情况,如果对信息的来源不感兴趣,可以将 from 和 fromlen 设置为 NULL，buf里面存储的是接收到的信息,flags标志可以置0，也可以表示是否等待，是否是否确认等，可以查看man。
+*/
+int recvfrom(int sockfd,void *buf,int len,unsigned int flags,struct sockaddr * from int *fromlen)
+
+/*
+sendto 负责向 to 发送信息.此时在 to 里面存储了收信息方的详细资料.msg是要发送的信息,flags标志可以置0，也可以表示是否等待，是否是否确认等，可以查看man。
+*/
+int sendto(int sockfd,const void *msg,int len,unsigned int flags,struct sockaddr *to int tolen)
+
+-----------------
+UDP通信代码片段举例：
+/************* 服务端程序(先接收信息然后反馈给客户方) server.c ******************/
+/*包含头文件*/
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+
+/*相关定义*/
+int sockfd;
+struct sockaddr_in addr;/*用来描述服务器信息*/
+struct sockaddr_in addr1;/*发送消息方的信息(客户)*/
+int addrlen,n;/*发送方信息结构的长度,和消息的长度*/
+char msg[MAX_MSG_SIZE];/*发送方发送过来的消息*/
+
+/*创建并绑定套接字*/
+sockfd=socket(AF_INET,SOCK_DGRAM,0);/*SOCK_DGRAM是指固定大小的无连接非可靠数据报，其他参数同前*/
+if(sockfd<0)
+{
+fprintf(stderr,"Socket Error:%s\n",strerror(errno));
+exit(1);
+}
+bzero(&addr,sizeof(struct sockaddr_in));/*将addr的前sizeof(struct sockaddr_in)置零*/
+
+addr.sin_family=AF_INET;
+addr.sin_addr.s_addr=htonl(INADDR_ANY);
+addr.sin_port=htons(SERVER_PORT);
+if(bind(sockfd,(struct sockaddr *)&ddr,sizeof(struct sockaddr_in))<0
+)
+{
+fprintf(stderr,"Bind Error:%s\n",strerror(errno));
+exit(1);
+}
+
+/*接收消息并回馈消息*/
+while(1)
+{ /* 从网络上度,写到网络上面去 */
+/*从发送者接收消息
+  第一个参数:套接字文件描述符.
+  第二个参数:存放接收的消息
+  第三个参数:存放发送消息者的信息
+  第四个参数:存放相应的长度(注意这里不是自己指定的长度)
+ */
+n=recvfrom(sockfd,msg,MAX_MSG_SIZE,0,(struct sockaddr*)&addr1,&addrlen);
+msg[n]=0;
+/* 显示服务端已经收到了信息 */
+fprintf(stdout,"I have received %s",msg);
+/*相接收者发送回馈信息
+  第一个参数:套接字文件描述符.
+  第二个参数:存放回馈的消息
+  第三个参数:存放消息的长度
+  第四个参数:flag可以置零也可以是表示是否确认信息等的值，需要查看man手册
+  第五个参数:存放发送消息者的信息
+  第六个参数:存放相应的长度(注意这里不是自己指定的长度)
+ */
+sendto(sockfd,msg,n,0,(struct sockaddr*)&addr1,addrlen);
+}
+
+/*关闭套接字*/
+close(sockfd);
+
+/********************客户端程序(先发送信息到服务器端然后接收反馈信息)client.c****************/
+/*头文件定义*/
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>;
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+/*相关变量定义*/
+int sockfd,port;/*套接字和服务器端的端口*/
+struct sockaddr_in addr;/*描述服务器端(接收方)信息的结构*/
+char buffer[MAX_BUF_SIZE];/*存放待发送的字符*/
+int n;/*存放服务器端反馈信息的长度*/
+/*创建套接字SOCK_DGRAM是指固定大小的无连接非可靠数据报，其他参数同前*/
+sockfd=socket(AF_INET,SOCK_DGRAM,0);
+if(sockfd<0)
+{
+fprintf(stderr,"Socket Error:%s\n",strerror(errno));
+exit(1);
+}
+/* 填充服务端(接收方)的资料 */
+bzero(&addr,sizeof(struct sockaddr_in));
+addr.sin_family=AF_INET;
+addr.sin_port=htons(port);
+
+if(inet_aton(argv[1],&addr.sin_addr)<0)
+{/*这里argv[1]是服务器端的ip地址*/
+fprintf(stderr,"Ip error:%s\n",strerror(errno));
+exit(1);
+}
+
+/*发送信息到服务器端并且接收服务器端的反馈信息*/
+while(1)
+{ /* 从键盘读入,写到服务端 */
+fgets(buffer,MAX_BUF_SIZE,stdin);
+/*利用套接字描述符sockfd，发送buffer的内容到服务器方（接收方）,可以置零也可以是表示是否确认信息等的值，需要查看man手册.*/
+sendto(sockfd,buffer,strlen(buffer),0,&addr,sizeof(struct sockaddr_in));
+bzero(buffer,MAX_BUF_SIZE);/*准备接收信息之前先把缓存清零*/
+
+/* 从网络上读取服务器发送回来的反馈信息,写到屏幕上 */
+n=recvfrom(sockfd,buffer,MAX_BUF_SIZE,0,NULL,NULL);
+buffer[n]=0;
+fputs(buffer,stdout);
+}
+
+/*使用完毕释放套接字文件描述符*/
+close(sockfd);
+##########################################
+20090511
+关于高级套接字函数
+p68-70
+
+
+---------相关函数
+int recv(int sockfd,void *buf,int len,int flags)
+int send(int sockfd,void *buf,int len,int flags)
+
+int recvfrom(int sockfd,void *buf,int len,unsigned int flags,struct sockaddr * from int *fromlen)/*一般用在UDP前面有描述*/
+int sendto(int sockfd,const void *msg,int len,unsigned int flags,struct sockaddr *to int tolen)/*一般用在UDP前面有描述*/
+
+int recvmsg(int sockfd,struct msghdr *msg,int flags)
+int sendmsg(int sockfd,struct msghdr *msg,int flags)
+
+int shutdown(int sockfd,int howto)
+
+---------相关结构
+struct msghdr
+{
+void *msg_name;/*当套接字是非面向连接时(UDP),它们存储接收和发送方的地址，是一个指向 struct sockaddr 的指针。套接字面向连接时为NULL*/
+int msg_namelen;/*当套接字是非面向连接时(UDP),它们存储接收和发送方的地址,是上面结构的长度.套接字面向连接时为0*/
+struct iovec *msg_iov;/*一个结构指针，见后面*/
+int msg_iovlen;/*上面结构数组的大小(数目还是单个元素的大小???????????????)*/
+void *msg_control;/*用来接收和发送控制数据*/
+int msg_controllen;/*用来接收和发送控制数据*/
+int msg_flags;/*与recv和send的一样，见下面描述*/
+}；
+/*关于msg_flags,如果为0则和read，write是一样的操作其它取值如下（可以man）：
+MSG_DONTROUTE: send 函数使用的标志.这个标志告诉 IP 协议.目的主机在本地网络上是面,没有必要查找路由表.这个标志一般用网络诊断和路由程序里面.
+MSG_OOB:表示可以接收和发送带外的数据.关于带外数据我们以后会解释的.
+MSG_PEEK: recv 函数的使用标志,表示只是从系统缓冲区中读取内容,而不清楚系统缓冲是区的内容.这样下次读的时候,仍然是一样的内容.一般在有多个进程读写数据时可以使用这个标志.
+MSG_WAITALL 是 recv 函数的使用标志,表示等到所有的信息到达时才返回.使用这个标志的时候 recv 回一直阻塞,直到指定的条件满足,或者是发生了错误. 1)当读到了指定的字节时,函数正常返回.返回值等于 len 2)当读到了文件的结尾时,函数正常返回.返回值小于len 3)当操作发生错误时,返回-1,且设置错误为相应的错误号(errno)。
+*/
+
+
+struct iovec
+{
+void *iov_base; /* 缓冲区开始的地址 */
+size_t iov_len; /* 缓冲区的长度 */
+}
+
+--------函数描述
+/*类似read不过提供了第四个参数，含义见前面*/
+int recv(int sockfd,void *buf,int len,int flags)
+
+/*类似write不过提供了第四个参数，含义见前面*/
+int send(int sockfd,void *buf,int len,int flags)
+
+/*下面这两个函数实现了前面所有读写函数的功能*/
+int recvmsg(int sockfd,struct msghdr *msg,int flags)
+int sendmsg(int sockfd,struct msghdr *msg,int flags)
+
+/*可以提供选择性的关闭，不像close会把读写通道全部关闭。
+TCP 连接是双向的(是可读写的),当我们使用 close 时,会把读写通道都关闭,有时侯我们希望只关闭一个方向,这个时候我们可以使用 shutdown.针对不同的 howto,系统回采取不同的关闭方式.
+参数howto意义：
+howto=0 这个时候系统会关闭读通道.但是可以继续往接字描述符写.
+howto=1 关闭写通道,和上面相反,着时候就只可以读了.
+howto=2 关闭读写通道,和 close 一样 在多进程程序里面,如果有几个子进程共享一个套接字时,如果我们使用 shutdown, 那么所有的子进程都不能够操作了,这个时候我们只能够使用 close 来关闭子进程的套接字描述符.
+*/
+int shutdown(int sockfd,int howto)
+
+---------举例子?????????????????????????
+
+###################################################
+20090512
+20090513
+20090514
+20090515
+关于TCP/IP协议可以参见相关计算机网络的书籍。
+关于服务起模型：
+p77-p82
+目前最常用的服务器模型：
+循环服务器:循环服务器在同一个时刻只可以响应一个客户端的请求。
+并发服务器:并发服务器在同一个时刻可以响应多个客户端的请求。 
+-----------
+UDP 循环服务器可以用下面的算法来实现:
+socket(...);
+bind(...);
+while(1)
+{
+recvfrom(...);
+process(...);
+sendto(...);
+}
+UDP 是非面向连接的,没有一个客户端可以老是占住服务端. 只要处理过程不是死循环, 服务器对于每一个客户机的请求总是能够满足.
+----------
+TCP循环服务器可以用下面的算法来实现:
+socket(...);
+bind(...);
+listen(...);
+while(1)
+{
+accept(...);
+while(1)
+{
+read(...);
+process(...);
+write(...);
+}
+close(...);
+}
+TCP 循环服务器一次只能处理一个客户端的请求.只有在这个客户的所有请求都满足后,服务器才可以继续后面的请求.这样如果有一个客户端占住服务器不放时,其它的客户机都不能工作了.因此,TCP 服务器一般很少用循环服务器模型的.
+----------
+TCP 并发服务器可以用下面的算法来实现:
+socket(...);
+bind(...);
+listen(...);
+while(1)
+{
+accept(...);
+if(fork(..)==0)
+{
+while(1)
+{
+read(...);
+process(...);
+write(...);
+}
+close(...);
+exit(...);
+}
+close(...);
+}
+TCP 并发服务器可以解决 TCP 循环服务器客户机独占服务器的情况. 不过为了响应客户机的请求,服务器要创建子进程来处理. 而创建子进程非常消耗资源.
+
+----------
+关于多路复用I/O:
+为了解决创建子进程带来的系统资源消耗,人们又想出了多路复用 I/O 模型.
+一般的来说当我们在向文件读写时,进程有可能在读写出阻塞.如果我们不 希望阻塞,我们的一个选择是用 select 系统调用. 只要我们设置好 select 的各个参数,那么当文件可以读写的时候 select 回"通知"我们 说可以读写了.  在我们调用 select 时进程会一直阻塞直到以下的一种情况发生. 1)有文件可以读.2)有文件可以写.3)超时所设置的时间到.
+-------
+相关函数：
+int select(int nfds,fd_set *readfds,fd_set *writefds,fd_set *except fds,struct timeval *timeout)
+void FD_SET(int fd,fd_set *fdset)
+void FD_CLR(int fd,fd_set *fdset)
+void FD_ZERO(fd_set *fdset)
+int FD_ISSET(int fd,fd_set *fdset)
+-------
+函数描述：
+/*监视多个文件描述符，直到其中之一准备好了可以读写。
+readfds 所有要读的文件文件描述符的集合，空表示不监视
+writefds 所有要的写文件文件描述符的集合，空表示不监视
+exceptfds 其他的服要向我们通知的文件描述符，空表示不监视
+timeout 超时设置.设置为空表示没有延迟，意思是可以无限的阻塞。(man 2 select可以看到其具体的结构定义)
+nfds 所有我们监控的文件描述符中(数字)最大的那一个加 1
+*/
+int select(int nfds,fd_set *readfds,fd_set *writefds,fd_set *except fds,struct timeval *timeout)
+
+/*将 fd 加入到 fdset*/
+void FD_SET(int fd,fd_set *fdset)
+
+/*将 fd 从 fdset 里面清除*/
+void FD_CLR(int fd,fd_set *fdset)
+
+/*从 fdset 中清除所有的文件描述符*/
+void FD_ZERO(fd_set *fdset)
+
+/*判断 fd 是否在 fdset 集合中*/
+int FD_ISSET(int fd,fd_set *fdset)
+-----------
+举例：(例子可能有点错误还不太懂???????????????)
+int use_select(int *readfd,int n)
+{
+    fd_set my_readfd;
+    int maxfd;
+    int i;
+    maxfd=readfd[0];
+    for(i=1;i<n;i++)
+        if(readfd>;maxfd) maxfd=readfd;
+    while(1)
+    {
+        /* 将所有的文件描述符加入 */
+        FD_ZERO(&my_readfd);
+        for(i=0;i<n;i++)
+            FD_SET(readfd,*my_readfd);
+        /* 进程阻塞 */
+        select(maxfd+1,& my_readfd,NULL,NULL,NULL);
+        /* 有东西可以读了 */
+        for(i=0;i<n;i++)
+            if(FD_ISSET(readfd,&my_readfd))
+            {
+                /* 原来是我可以读了 */
+                we_read(readfd);
+            }
+    }
+}
+----------
+使用 select 后我们的服务器程序就变成了.
+初始话(socket,bind,listen);
+while(1)
+{
+设置监听读写文件描述符(FD_*);
+调用 select;
+如果是倾听套接字就绪,说明一个新的连接请求建立
+{
+建立连接(accept);
+加入到监听文件描述符中去;
+}
+否则说明是一个已经连接过的描述符
+{
+进行操作(read 或者 write);
+}
+}
+多路复用 I/O 可以解决资源限制的问题.着模型实际上是将 UDP 循环模型用在了 TCP 上面. 有可能带来一些问题，比如：由于服务器依次处理客户的请求,所以可能会导致有的客户会等待很久.
+
+----------------------------------------------------
+UDP并发服务器：
+人们把并发的概念用于 UDP 就得到了并发 UDP 服务器模型.算法和并发的 TCP 模型一样,除非服务器在处理客户端的请求所用的时间比较长以外,人们实际上很少用这种模型.
+
+-----------------------------
+并发 TCP 服务器实例:(不多作解释了)
+
+#include <sys/socket.h>;
+#include <sys/types.h>;
+#include <netinet/in.h>;
+#include <string.h>;
+#include <errno.h>;
+#define MY_PORT 8888
+int main(int argc ,char **argv)
+{
+int listen_fd,accept_fd;
+struct sockaddr_in client_addr;
+int n;
+if((listen_fd=socket(AF_INET,SOCK_STREAM,0))<0)
+{
+printf("Socket Error:%s\n\a",strerror(errno));
+exit(1);
+}
+bzero(&client_addr,sizeof(struct sockaddr_in));
+client_addr.sin_family=AF_INET;
+client_addr.sin_port=htons(MY_PORT);
+client_addr.sin_addr.s_addr=htonl(INADDR_ANY);
+n=1;
+/* 如果服务器终止后,服务器可以第二次快速启动而不用等待一段时间 ?????????????????*/
+setsockopt(listen_fd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(int));
+if(bind(listen_fd,(struct sockaddr *)&client_addr,sizeof(client_addr))<0)
+{
+printf("Bind Error:%s\n\a",strerror(errno));
+exit(1);
+}
+listen(listen_fd,5);
+while(1)
+{
+accept_fd=accept(listen_fd,NULL,NULL);
+if((accept_fd<0)&&(errno==EINTR))
+continue;
+else if(accept_fd<0)
+{
+printf("Accept Error:%s\n\a",strerror(errno));
+continue;
+}
+if((n=fork())==0)
+{
+/* 子进程处理客户端的连接 */
+char buffer[1024];
+close(listen_fd);
+n=read(accept_fd,buffer,1024);
+write(accept_fd,buffer,n);
+close(accept_fd);
+exit(0);
+}
+else if(n<0)
+printf("Fork Error:%s\n\a",strerror(errno));
+close(accept_fd);
+}
+}
+
+######################################################
+20090515
+20090518
+~p87
+关于原始套接字：
+前面已经学习过了网络程序的两种套接字(SOCK_STREAM,SOCK_DRAGM).在这里我们学习另外一种套接字--原始套接字(SOCK_RAW). 应用原始套接字,
+我们可以编写出由 TCP 和 UDP 套接字不能够实现的功能. 注意原始套接字只能够由有 root 权限的人创建.
+/***********例子比较复杂，也没有弄懂，这里就省略了，有时间再琢磨。*************/
+/*????????????????????????????????????????????????????????????????????????????????*/
+原始套接字和一般的套接字不同的是以前许多由系统做的事情,现在要由我们自己来做了。当我们创建了一个 TCP 套接字的时候,我们只是负责把我们要发送的内容(buffer)传递给了系统. 系统在收到我们的数据后,回自动的调用相应的模块给数据加上 TCP 头部,然后加上 IP 头部. 再发送出去.而现在是我们自己创建各个的头部,系统只是把它们发送出去. 在实例中,由于我们要修改我们的源 IP 地址,所以我们使用了 setsockopt 函数,如果我们只是修改 TCP 数据,那么 IP 数据一样也可以由系统来创建的.
+
+---------------------
+一些工具：
+~p103
+关于GCC选项
+GCC 选项包括一个以上的字符. 因此你必须为每个选项指定各自的连字符, 并且就象大多数 Linux 命令一样你不能在一个单独的连字符后跟一组选项.
+
+xxgdb
+xxgdb 是 gdb 的一个基于 X Window 系统的图形界面. xxgdb 包括了命令行版的 gdb上的所有特性. xxgdb 使你能通过按按钮来执行常用的命令. 设置了断点的地方也用图形来显示.
+
+cproto
+cproto 读入 C 源程序文件并自动为每个函数产生原型申明. 用 cproto 可以在写程序时为你节省大量用来定义函数原型的时间.
+
+
+indent
+indent 实用程序是 Linux 里包含的另一个编程实用工具. 这个工具简单的说就为你的代码产生美观的缩进的格式. indent 也有很多选项来指定如何格式化你的源代码.这些选项的更多信息请看 indent 的指南页, 在命令行上键入 indent -h .
+
+gprof
+gprof 是安装在你的 Linux 系统的 /usr/bin 目录下的一个程序. 它使你能剖析你的程序从而知道程序的哪一个部分在执行时最费时间.
+?????????????
+
+
+
+
+
+

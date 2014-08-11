@@ -1,0 +1,16 @@
+
+根据,SampleCode/voWMA_D_SAMPLE.c:
+发现，在初始化之前，读取输入音频文件信息的时候出现错误，导致后面无法进行下去。
+具体问题是：读取的文件信息长度和预先分配的内存大小不一致，内存拷贝越界，
+
+代码如下:
+213    if((temp = (char *)malloc(0x100)) == NULL)
+214        printf("temp is not distributed buffer!\n");//<===1,分配256大小空间
+...		...
+236     memcpy(&(inData.Length), fileBuffer, 4);//<===2,读取前四个字节
+237     inData.Buffer = temp;
+238     fileBuffer += 4;
+239     memcpy(temp, fileBuffer, inData.Length);//<===3,拷贝数据到temp中
+这里，执行到238行之后，查看inData.Length是一个非常大的数(例如:1974609456,我试过了三个文件都是这个数字), 远远超过了temp的大小。这样在执行239的时候，就出现了问题,后面的语句就执行不到了,导致后面的代码执行不下去了。
+
+总结：sample的例子无法使用，关键在于开始inData.Length的含义以及如何初始化。

@@ -1,0 +1,17 @@
+在文件/etc/hildon-desktop/desktop.conf以及~/.osso/hildon-desktop/desktop.conf
+中有关于statusbar的相关配置，但是这样修改statusbar宽度长度以及位置是不管用的，需要更改的是：
+/usr/share/themes/plankton/matchbox/theme.xml
+这里面有一句：
+  <!-- Define the status bar applet panel -->
+    <panel x="-800" y="0" w="800" h="50" />
+x指定横坐标位置，w是宽度。这里的坐标有点特殊。按照上面的设置，statusbar宽度800，坐标正好在最左面。如果是-700那么就在100的位置上，由此可见-800是相对右面来说的。
+
+
+另外，如果不启动hildon-desktop(在/usr/bin/af-sb-init.sh指定)则启动的程序也有标题栏是由matchbox来控制的。
+....
+<!-- Main windows title bar. You need to define its height -->
+<frame id="main" height="10">
+
+  <layer x="0" y="0" w="800" h="10"
+...
+这里后面的h=10表示仅改变启动程序标题栏中图片的高度，例如关闭按钮等等，但是整个标题栏还是height指定的高度。但是整个标题栏宽度需要更改上面的height=10.

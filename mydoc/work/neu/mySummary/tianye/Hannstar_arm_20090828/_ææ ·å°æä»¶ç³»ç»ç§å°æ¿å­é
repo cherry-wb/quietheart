@@ -1,0 +1,197 @@
+没有实践过猜测的步骤：
+将文件系统烧制到板子flash上，利用板子flash的文件系统进行启动的方法：
+==========
+资料一：
+==========
+
+一、创建UBI镜像
+========================
+1,使用mkfs.ubifs工具，创建你的根文件系统的一个volume：
+#mkfs.ubifs -m 2KiB -e 258048 -x lzo -c 8000 -d rootfs/ -o system_ubifs.img
+注意，上面的命令必须用根用户的权限来运行。
+2.然后使用ubinize工具把所有你需要的volume合并到一个UBI镜像中：
+#ubinize -o system_ubi.img -m 2KiB -p 256KiB -s 2KiB ubinize.cfg
+这里，你可以改变在ubinize.cfg中的大小配置。
+
+二、把UBifs镜像烧制到NAND中
+========================
+1.从NFS或者MMC上面启动。
+2.使用预先建立的UBIFS镜像进行格式化(这一步就是把镜像烧到板子里了):
+#/opt/marvell/ubifs/ubi_tools_arm/ubiformat /dev/mtd0 -f system_ubi.img
+这里/dev/mtd0应该就是板子的flash.如果不好用可以试试其他的如/dev/mtd5
+3设置从NAND(UBIFS)中启动。
+setenv bootcmd 'cp.b 0xf80a0000 0x200000 250000;setenv bootargs console=ttyS0,115200n8 mem=512M ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs); bootm 0x200000'
+
+
+==========
+资料二：
+==========
+
+Building the mtd-utils
+======================
+For Debian distribution, you need the following packages installed for building the head snapshot of mtd-utils,
+
+		 uuid-dev
+		 liblzo2-dev
+		 libz-dev
+ Extract the latest snapshot of mtd-utils and go into the sub directory of 'mkfs.ubifs' and then type 'make' to build the mkfs.ubifs utility. Once it is done, go up one directory and then go into the sub directory 'ubi-tuils'.
+ Inside that directory, type 'make' again to make the rest of ubi utilities (ubinfo, ubinize, ubiformat, etc.).
+
+ How to find out min. I/O unit size, sub-page size, etc
+ ======================================================
+ The easiest way to find this out is to attach your MTD device to UBI and glance to the syslog/dmesg output (erase the MTD device before doing this).
+
+ The newest UBI prints something like this:
+
+	UBI: attaching mtd0 to ubi0
+	UBI: physical eraseblock size:   262144 bytes (256 KiB)
+	UBI: logical eraseblock size:    258048 bytes
+	UBI: smallest flash I/O unit:    2048
+	UBI: VID header offset:          2048 (aligned 2048)
+	UBI: data offset:                4096
+	UBI: empty MTD device detected
+	UBI: create volume table (copy #1)
+	UBI: create volume table (copy #2)
+	UBI: attached mtd0 to ubi0
+	UBI: MTD device name:            "rootfs"
+	UBI: MTD device size:            2048 MiB
+	UBI: number of good PEBs:        8183
+	UBI: number of bad PEBs:         9
+	UBI: max. allowed volumes:       128
+	UBI: wear-leveling threshold:    4096
+	UBI: number of internal volumes: 1
+	UBI: number of user volumes:     0
+	UBI: available PEBs:             8098
+	UBI: total number of reserved PEBs: 85
+	UBI: number of PEBs reserved for bad PEB handling: 81
+	UBI: max/mean erase counter: 0/0
+	UBI: background thread "ubi_bgt0d" started, PID 254
+
+
+How to attach an MTD device
+===========================
+	If UBI is compiled into the kernel, the mtd device to attach may be specified
+
+	in the ubi.mtd=kernel boot parameter, e.g.,
+
+
+
+	ubi.mtd=0
+
+
+
+(For attaching the first MTD device)
+
+
+
+
+
+	How to Mount a UBI device
+
+	=========================
+
+
+
+	First, you need to create a user volume on the UBI device.
+
+
+
+	ubimkvol /dev/ubi0 -n 0 -N rootfs -s 4096MiB
+
+
+
+	The above commands will only work after the correct kernel boot parameter is
+
+	specified. Once the user volume is created, you may use the following command
+
+	to mount it,
+
+
+
+	mount -t ubifs ubi0:rootfs /mnt
+
+
+
+	If there is no need to keep the user volume, you may use the following command
+
+	to delete it,
+
+
+
+	ubirmvol /dev/ubi0 -n 0
+
+
+
+
+
+	How to create UBI images
+	========================
+	First, you need to use the mkfs.ubifs utility to create a volume for your root file system,
+	mkfs.ubifs -m 2KiB -e 258048 -x lzo -c 8000 -d foxes-rootfs-20081128/ -o system_ubifs.img
+(The above command must have root previledge)
+	Then use the ubinize utility to combine all the volumes you need into a UBI
+	image,
+	ubinize -o system_ubi.img -m 2KiB -p 256KiB -s 2KiB ubinize.cfg
+	In the ubinize.cfg, the following items are specified,
+
+# Section header
+
+	[rootfs]
+
+# Volume mode (other option is static)
+
+	mode=ubi
+
+# Source image
+
+	image=system_ubifs.img
+
+# Volume ID in UBI image
+
+	vol_id=0
+
+# Volume size
+
+	vol_size=1900MiB
+
+# Allow for dynamic resize
+
+	vol_type=dynamic
+
+# Volume name
+
+	vol_name=rootfs
+
+# Autoresize volume at first mount
+
+	vol_flags=autoresize
+
+How to flash UBI images (and preserve erase counters)
+怎样烧制UBI镜像(并且保存擦除counters)
+=====================================================
+First, you need to detach the ubi device by using the follwing command if the ubi device is attached,
+首先，如果ubi设备连接着，需要用下面的命令将它断开：
+#ubidetach /dev/ubi_ctrl -d 0
+然后，使用ubiformat工具:
+#ubiformat /dev/mtd0 -f system_ubi.img
+
+怎样将UBIFS作为根文件系统
+========================================
+必须设置如下的内核启动参数：
+ubi.mtd=0 root=ubi0:rootfs rootfstype=ubifs rw mtdparts=cafe_nand:2G(rootfs)
+
+
+More Infromation
+================
+You may obtain more information at the following web sites,
+(1) UBI FAQ and HOWTO (Memory Technology Device (MTD) Subsystem for Linux)
+http://www.linux-mtd.infradead.org/faq/ubi.html
+(2) UBIFS initial experiments (OLPC)
+http://wiki.laptop.org/go/UBIFS_initial_experiments
+
+
+
+相关术语解释
+=========
+NAND:闪存
+MMC:多功能存储卡

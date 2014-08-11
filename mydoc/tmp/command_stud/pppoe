@@ -1,0 +1,275 @@
+Ubuntu 12.04上PPPoe服务的搭建和使用
+
+这里简单介绍Linux下搭建PPPOE服务，实现拨号上网的过程。
+服务器系统: Ubuntu 12.04
+客户端: Linux嵌入式开发板
+
+主要内容：
+一、实现前的网络拓扑
+二、服务端搭建PPPOE的过程
+三、客户端连接PPPOE服务端
+四、应用
+五、其它补充
+
+
+一、实现前的网络拓扑
+========================================
+1、PPPOE服务端是笔记本电脑，运行Ubuntu12.04系统，有一个网卡，和一个无线网卡。
+2、PPPOE客户端是一个测试板，运行嵌入式linux系统MontaVista(R) Linux(R) Professional Edition 5.0.0，有一个网卡 。
+3、笔记本和测试板网卡口直连互通（便于测试板挂载笔记本的nfs根文件系统，若不直连通过路由器和笔记本同网段互联也行），网段：192.168.0.0/24 。
+4、笔记本的无线网卡和无线路由连接，网段：192.168.1.0/24。
+5、网络接口情况
+(1)服务端：
+quietheart@quietheart-ThinkPad-E420:~/work$ ifconfig
+eth0      Link encap:以太网  硬件地址 f0:de:f1:f0:08:60  
+          inet 地址:192.168.0.116  广播:192.168.0.255  掩码:255.255.255.0
+          inet6 地址: fe80::f2de:f1ff:fef0:860/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:2270 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:4735 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:377210 (377.2 KB)  发送字节:5218298 (5.2 MB)
+          中断:41 基本地址:0x6000 
+
+lo        Link encap:本地环回  
+          inet 地址:127.0.0.1  掩码:255.0.0.0
+          inet6 地址: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  跃点数:1
+          接收数据包:129 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:129 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:0 
+          接收字节:12349 (12.3 KB)  发送字节:12349 (12.3 KB)
+
+wlan0     Link encap:以太网  硬件地址 44:6d:57:5e:28:6c  
+          inet 地址:192.168.1.100  广播:192.168.1.255  掩码:255.255.255.0
+          inet6 地址: fe80::466d:57ff:fe5e:286c/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:165 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:218 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:71986 (71.9 KB)  发送字节:34459 (34.4 KB)
+
+(2)客户端：
+# ifconfig
+eth0      Link encap:Ethernet  HWaddr 74:37:2F:20:20:14  
+          inet addr:192.168.0.120  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::7637:2fff:fe20:2014/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:4718 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:2303 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:5259832 (5.0 MiB)  TX bytes:383574 (374.5 KiB)
+          Interrupt:52 Base address:0x7000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:1 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:148 (148.0 B)  TX bytes:148 (148.0 B)
+
+
+二、服务端搭建PPPOE的过程
+========================================
+1、安装pppoe服务软件
+#sudo apt-get install ppp
+
+2、配置服务
+2.1、设置验证信息
+#vim /etc/ppp/pppoe-server-options
+#使用chap验证协议，如果使用pap验证协议，则此行为 require-pap
+require-chap
+
+#vim /etc/ppp/options
+#(设置验证方式)
+-pap
++chap
+#(允许本地验证)
+local
+这里：
+（1）、如果使用pap验证方式，windowsxp以上系统自带的pppoe拨号，无法拨通。可能原因是pap使用明文密码验证，而windows保存的密码是加密的，而且是不可恢复的加密，所以windows无法提供密码明文。
+（2）、/etc/ppp/pppoe-server-options和/etc/ppp/options，配置无论写在哪个文件中，都能够起到作用
+
+2.2、添加用户信息
+#vim /etc/ppp/chap-secrets
+#添加用户名和密码
+# client  server  secret    IP addresses
+myuser    *        mypassword           *
+
+3、启动和关闭PPPOE服务
+3.1、启动pppoe服务
+#pppoe-server -I eth0 -L 172.168.0.1 -R 172.168.0.210 -N 20
+-I eth0 指定pppoe服务器在哪个网卡接口监听连接请求
+-L 172.168.0.1 指定pppoe服务器的ip地址。（注意：此IP地址不是网卡的IP地址，而是PPPOE服务器的虚拟IP，和网卡eth0的地址无关，实际网卡eth0没有IP也可以）
+-R 172.168.0.210 pppoe服务器分配给客户端的IP地址，从192.168.27.210开始，递增。
+-N 20 指定最多可以连接pppoe服务器的客户端数量
+
+3.2、关闭PPPOE服务器
+killall pppoe-server
+
+
+三、客户端连接PPPOE服务端
+========================================
+安装：
+1、使用pppoe拨号链接：
+#pppoe-setup
+...
+USER NAME
+>>> ...:myuser
+...
+INTERFACE
+>>>...:eth0
+...
+PASSWORD
+>>>...:mypassword
+>>>...:mypassword
+...
+这里，"pppoe-setup"进入交互操作，具体选择如上，其它默认（如dns为server，防火墙为0等），"pppoe-setup"是一个脚本，用于生成连接服务所需的配置信息。
+
+#pppoe-start
+. Connected!
+这样，连接之后，客户端会有一个ppp0的设备如下：
+# ifconfig
+eth0      Link encap:Ethernet  HWaddr 74:37:2F:20:20:14  
+          inet addr:192.168.0.120  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::7637:2fff:fe20:2014/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:6763 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:3576 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:6045812 (5.7 MiB)  TX bytes:674773 (658.9 KiB)
+          Interrupt:52 Base address:0x7000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:1 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:148 (148.0 B)  TX bytes:148 (148.0 B)
+
+ppp0      Link encap:Point-to-Point Protocol  
+          inet addr:172.168.0.210  P-t-P:172.168.0.1  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1492  Metric:1
+          RX packets:6 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:6 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:3 
+          RX bytes:45 (45.0 B)  TX bytes:45 (45.0 B)
+
+
+同时，服务端也多出一个ppp0，如下：
+root@quietheart-ThinkPad-E420:/home/quietheart/work# ifconfig
+eth0      Link encap:以太网  硬件地址 f0:de:f1:f0:08:60  
+          inet 地址:192.168.0.116  广播:192.168.0.255  掩码:255.255.255.0
+          inet6 地址: fe80::f2de:f1ff:fef0:860/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:3580 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:6890 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:676540 (676.5 KB)  发送字节:6055600 (6.0 MB)
+          中断:41 基本地址:0x6000 
+
+lo        Link encap:本地环回  
+          inet 地址:127.0.0.1  掩码:255.0.0.0
+          inet6 地址: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  跃点数:1
+          接收数据包:536 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:536 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:0 
+          接收字节:49149 (49.1 KB)  发送字节:49149 (49.1 KB)
+
+ppp0      Link encap:点对点协议  
+          inet 地址:172.168.0.1  点对点:172.168.0.210  掩码:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1492  跃点数:1
+          接收数据包:6 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:6 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:3 
+          接收字节:45 (45.0 B)  发送字节:45 (45.0 B)
+
+wlan0     Link encap:以太网  硬件地址 44:6d:57:5e:28:6c  
+          inet 地址:192.168.1.100  广播:192.168.1.255  掩码:255.255.255.0
+          inet6 地址: fe80::466d:57ff:fe5e:286c/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  跃点数:1
+          接收数据包:273 错误:0 丢弃:0 过载:0 帧数:0
+          发送数据包:229 错误:0 丢弃:0 过载:0 载波:0
+          碰撞:0 发送队列长度:1000 
+          接收字节:110356 (110.3 KB)  发送字节:36760 (36.7 KB)
+
+         
+这样我们可见，两者的ppp0设备互相有对方的网址，这里可能都是ppp0，也可能不都是。
+
+3、断开链接
+#pppoe-stop
+
+
+四、应用
+========================================
+1、利用pppoe链接共享上网
+假设采用以上的设置，通过上面配置信息我们可知：ppp服务器和客户端（板子）通过eth0直连，服务器有wlan0无线网卡。这里，无线网卡wlan0可以连接外网，那么，我们可以如下设置，使得pppoe客户端也能通过服务器的无线网卡共享上网。
+
+（1）服务器上
+首先，给pppoe服务添加默认网关使之能访问外网：
+root@quietheart-ThinkPad-E420:/home/quietheart# route add default gw 192.168.1.1 dev wlan0
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+default         192.168.1.1     0.0.0.0         UG    0      0        0 wlan0
+......
+这里，因为可能笔记本默认网关不是无线路由而是eth0对应的192.168.0.1，这个不能访问外网（因为它和测试板直连了），所以添加一个网关，这样笔记本能访问外网了，（注意，如果此时优先匹配eth0的网关的话，笔记本还是不能上网，所以最好先将eth0的网关在路由表中删除）192.168.1.1是无线网卡所使用的网关一般就是无线路由的网址 。
+
+其次，打开服务端的ip转发：
+root@quietheart-ThinkPad-E420:/home/quietheart# echo "1">/proc/sys/net/ipv4/ip_forward
+或/et/sysctl.conf的net.ipv4.ip_forward = 1
+
+最后，只添加路由还是不够的，还要转发pppoe上的数据到无线网卡上：
+iptables -t nat -A POSTROUTING -s 172.168.0.0/24 -o wlan0 -j MASQUERADE
+至此，可以用板子链接上外网了。
+
+
+（2）客户端上
+添加ppp0为默认路由网关出口：
+#route add default gw 172.168.0.1 dev ppp0
+这里同样注意，如果此时优先匹配其它网口的网关的话，还是不能经过pppoe上网，所以最好先将其它网口的网关在路由表中删除。
+
+至此，测试板访问外网，会经过ppp0，到达笔记本的ppp0，然后笔记本又将其转发给能够连接外网的wlan0，实现通过pppoe访问外网。
+
+
+五、其它补充
+========================================
+1.iptables
+关于iptables，是一个内核防火墙模块，可以实现数据包的过滤和转发，具体请参见iptables的man手册。
+可以以如下命令以及上述设置路由的相关命令为起点研究。
+root@quietheart-ThinkPad-E420:/home/quietheart/work# iptables -A INPUT -i eth0 -s 172.168.0.0/24 -j DROP
+root@quietheart-ThinkPad-E420:/home/quietheart/work# iptables -t nat -A POSTROUTING -s 172.168.0.0/24 -j SNAT --to-source 172.168.0.1
+
+
+2.关闭ICMP，防止别人Ping。 
+echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_all 
+
+
+3.内核的支持
+注意需要对内核相应配置以支持pppoe，如下：
+开发板内核配置中应当支持所有的ppp选项，如下修改内核配置---使内核支持PPP
+   修改的地方：
+   (1)，Device Drivers-->
+      Network device driver-->
+      PPP下面所有的选项
+   (2)，Device Drivers-->
+      Networking-->
+      Universal TUN/TAP 
+
+4.数据包大小
+以太网帧最大长度为1518个字节，其中14个字节是帧头的长度，4个字节是校验码，所以1500个字节是数据载荷也就是说以太帧最大传输单元MTU为1500个字节，而pppoe头有6个字节，封装ppp协议时ppp协议域又占2个字节，所以pppoe接口MTU为1492个字节。一般连接时会自动设置，如果手动设置，请参见ifconfig的手册。
+
+
+参考：
+http://blog.sina.com.cn/s/blog_a481de5701015gdo.html
+http://blog.csdn.net/linweig/article/details/5481355
+http://blog.csdn.net/liangyamin/article/details/7092358
+http://www.enet.com.cn/article/2004/0930/A20040930348997.shtml
+
+
+作者：QuietHeart
+Email：quiet_heart000@126.com
+日期：2013年10月23日

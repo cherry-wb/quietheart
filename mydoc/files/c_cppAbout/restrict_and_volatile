@@ -1,0 +1,78 @@
+http://blog.csdn.net/iamybj/archive/2010/03/24/5412560.aspx
+一、类型限定词volatile
+限定词volatile告诉编译器该变量除了可以被程序改变以外还可被其他代理改变。
+它通常被用于硬件地址和与其它并行运行的程序共享的数据。
+如：
+volatile int locl; 
+volatile int *ploc;
+你可能会奇怪为什么ANSI觉得有必要把volatile作为一个关键字。
+原因是它可以方便编译器优化。
+例如
+val1 = x;
+/* 一些不使用x的代码 */
+val2 = x;
+一个聪明的编译器可能注意到你使用了两次x,而没有改变它的值。那么，它有可能把x临时存储在一个寄存器中。
+接着，当val2需要x时，可以通过从寄存器而非初始的内存位置中读取该值以节省时间。
+这个过程被称为缓存(caching)。
+通常，缓存是一个好的优化方式，但是如果在两个语句间其他代理改变了x的话就不是这样了。
+如果没有规定volatile关键字，那么编译器将无从得知这种改变是否可能发生。
+在ANSI中，如果声明中没有volatile关键字，那么编译器就可以假定一个值在使用过程中没有被修改，它就可以试着优
+化代码。
+一个值可以同时是const 和 volatile。
+例如，硬件时钟一般设定为不能由程序改变，这一点使它成为const;
+但它被程序以外的代理改变，这使它成为volatile.
+那么我们可以这么声明：
+volatile const int loc;
+const volatile int *ploc;
+
+二、类型限定词restrict
+关键字restrict用来消除数据间的相关性，编译器从而可以安排语句的并行执行。
+它只可以用于指针，并表明指针是访问一个数据对象的唯一且初始的方式。
+我们通过一个例子来看看：
+int ar[10];
+int * par = ar;
+int * restrict restar = (int *)malloc (10 * sizeof (int));
+注意，指针restar是访问由malloc ()分配的内存的唯一且初始的方式。
+因此，它可以由关键字restrict限定。
+而指针par既不是初始的，也不是访问数组ar中数据的唯一方式，因此不可以把它限定为restrict。
+考虑下面的语句：
+for (n = 0; n < 10; n++)
+{
+   par[n] += 5;
+   restar[n] += 5;
+   ar[n] *= 2;
+   par[n] += 3;
+   restar[n] += 3;
+}
+知道了restar是放问它所指向数据块的唯一初始化方式，编译器就可以用具有同样效果的一条语句来代替包含restar的
+两个语句。
+resatr [n] += 8;
+然而，编译器将两个包含par的语句精简为一个语句将导致计算错误。
+par[n] +=8;
+原因是ar[n] *= 2;这条语句在par[n] += 3之前已经改变了par指针所指向数据的值。
+restrict的作用：帮助编译器确定使指针进行数值计算时，是否可以进行优化。
+可以将关键字restrict作为指针型函数参量的限定词使用。
+这意味着编译器可以假定在函数体内没有其它标识符修改指针指向的数据，因而可以试着优化代码，反之则不然。
+voie * memcpy (void * restrict s1, const void * restrict s2, size_t n);
+关键字restrict有两个读者。
+一个是编译器，它告诉编译器可以自由地去做一些有关优化的假定。
+一个是用于，它告诉用户仅使用满足restrict要求的参数。
+
+补充：
+注意，如下的代码：
+  1 #include <stdio.h>
+  2 void func(int * restrict a, int * restrict b)
+  3 {
+  4     *a += 1;
+  5     *b += 2;
+  6     return 0;
+  7 }
+  8 int main(int argc, char *argv[])
+  9 {
+ 10     int a = 0;
+ 11     int b = 1;
+ 12     func(&a,&a);
+ 13     printf("%d,%d\n",a,b);
+ 14     return 0;
+ 15 }
+理论上不应编译通过，但是实际上实践发现竟然编译通过了。

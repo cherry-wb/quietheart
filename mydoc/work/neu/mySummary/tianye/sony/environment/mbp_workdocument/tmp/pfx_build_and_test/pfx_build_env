@@ -1,0 +1,42 @@
+对PFX与IA侧联调需要的文档：
+
+以下是一个阶段性的文档：
+日期 20110916
+svn路径：
+http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/PowerOn
+http://10.1.3.252/subversion/PFX_CODE/repos/03.ProjectTeam/ES/Wrapper/FromIA
+1、PFXBase_C7_IACP/PFXSoft目录执行
+make clean-libraires
+make libraries
+
+2、IP修改
+gedit PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/capability/instances/allocation.xml
+gedit PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/gui/instances/allocation.xml
+gedit PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/socket/instances/allocation.xml
+gedit PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/instances/allocation.xml
+
+改动后：
+allocation.xml中的
+SocketProcess 改为：servip ip
+MBPProcess改为： 板子ip
+
+3、把自己新生成的libdiablo.a拷贝到PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/
+
+4、PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP目录执行
+make clean
+make
+
+5、将生成的PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/objects/arm-sony-linux-gnueabi/mbp
+可执行程序拷贝至Rootfs下.
+运行过程中可能后缺少一部分库文件，查找一下拷贝到自己的Rootfs目录下。
+find . -name "libexpat.so.1"
+注：从/usr/local/arm-sony-linux-gnueabi/target/下面找
+
+6、把附件放到PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP目录下，连接到板子等设备（启动Kernel），
+ 执行附件的run.sh，然后再启动diablo的可执行程序（mbp）
+
+ 7、环境编译完成后差分编译方法：
+ rm -rf PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/objects/arm-sony-linux-gnueabi/Objects/
+ rm -rf PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/libdiablo.a
+ 把自己新生成的libdiablo.a拷贝到PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/
+ 在PFXBase_C7_IACP/PFXSoft/Products/Prototype/PFXBaseIACP/executables/mbp/路径下make就OK了

@@ -1,0 +1,23 @@
+tools on new machine.
+12.04
+
+
+apt-get remove ia32-sun-java6-bin
+apt-get install eclipse
+
+
+apt-get install python-setuptools
+apt-get install python-pip
+apt-get install python-dev
+apt-get install libevent-dev
+
+apt-get install curl
+easy_install virtualenv
+
+
+
+sudo pip install -U selenium
+apt-get install python-django
+
+$ sudo apt-get install python-zope.component python-zope.event python-zope.hookable
+$ sudo apt-get install python-BeautifulSoup

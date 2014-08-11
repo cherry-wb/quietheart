@@ -1,0 +1,25 @@
+0x00920000: zImage
+
+1. Copy "zImage" into MicroSD card
+2. Plug-in MicroSD card into device
+3. Power-on device & boot up into Uboot 
+4. enter following commands to burn "zImage" 
+      
+/* check SD card */
+Wayland_M_EBOOK>> mmcinfo 0
+Wayland_M_EBOOK>> fatls mmc 0
+		
+/* burn "zImage" */
+Wayland_M_EBOOK>> fatload mmc 0 0x1000000 zImage
+
+/* out:  reading zimage       2157552 bytes read  */
+/* size=0x20ebf0 (2157552)    please add 1 to the fifth number from the end of size and replace the last four number with 0000 */
+/* for example, 0x20ebf0 will be changed to 0x210000 */
+这里描述了如何计算好内核大小，并烧写到板子中去，因为每一个块的大小是固定的,所以要以这样的大小来对齐。
+
+Wayland_M_EBOOK>> nand erase 0x920000 0x210000
+Wayland_M_EBOOK>> nand write 0x1000000 0x920000 0x210000 
+
+/*if you burn ok, it will show:*/
+NAND write: device 0 offset 0x920000, size 0x210000
+Writing data at 0xb30000 -- 100% complete. 2162688 bytes written: OK

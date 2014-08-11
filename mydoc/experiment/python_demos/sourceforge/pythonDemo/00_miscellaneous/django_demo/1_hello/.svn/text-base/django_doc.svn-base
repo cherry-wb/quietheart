@@ -1,0 +1,104 @@
+http://djangobook.py3k.cn/2.0/chapter02/
+
+my install:
+
+(1)install
+#apt-get install python-django
+This is on ubuntu.
+
+(2)test install
+$python
+>>> import django
+>>> django.VERSION
+
+if there's no error, it's ok!
+
+(3)a simple site
+$django-admin startproject mysite
+$cd mysite
+$ ls
+__init__.py  __init__.pyc  manage.py  settings.py  settings.pyc  urls.py
+$./manage.py runserver 0.0.0.0:8000
+Then, we can use "yourip:8000" to see the website.
+
+(4)our own page:
+(4.1)helloworld:
+$vim view.py
+from django.http import HttpResponse
+
+def myHello(request):
+    return HttpResponse("My Hello World")
+
+$vim urls.py
+...
+...add "(r'^hello/$', 'view.myHello')," to urlpatterns.
+...
+
+$python manage.py runserver
+
+Then you can get My Hello World page when type "127.0.0.1:8000/hello/" on your local machine.
+
+(4.2)root page:
+$vim root_page.py
+from django.http import HttpResponse
+
+def rootPageTip(request):
+    return HttpResponse("My Hello World")
+$vim urls.py
+...
+...add "(r'^$', 'root_page.rootPageTip')," to urlpatterns
+...
+
+(4.3)dynamic content:
+$vim view.py
+...
+...add the following:
+def showTime(request):
+    now = datetime.datetime.now()
+    html = "<html><body>The time now is: %s</body></html>" %now
+    return HttpResponse(html)
+...
+
+$vim urls.py
+...
+...add "(r'^showtime/$', 'view.showTime')," to urlpatterns.
+...
+
+$python manage.py runserver
+
+Then you can use "127.0.0.1:8000/showtime/" to show current time on your local machine browser.
+
+(5)use argument for view
+$vim view.py
+...
+...add the following:
+def showArg(request,arg):
+    html = "<html><body>The argument is: %s</body></html>" %arg
+    return HttpResponse(html)
+...
+
+$vim urls.py
+...
+...add "(r'^showarg/(\d{1,2})$', 'view.showArg')," to urlpatterns.
+...
+
+$python manage.py runserver
+
+Then we can use "http://127.0.0.1:8000/showarg/xx/" to show 'xx' on local browser(here 'xx' is a digit below 100).The url character in "()" is recognize as argument and passed .
+
+(6)Note now
+*the '/' in urls' code should be involved, but whether type '/' in browser determined by 'APPEND_SLASH' setting.
+
+*the urls.py is URLconf, and it is configured in 'settings.py' by 'ROOT_URLCONF' variable.
+
+*the first part in urlpatterns is regular expression.
+
+*the timezone show default by django is America/Chicago, we can set it in settings.py.
+
+*the error message is beautiful, and we can use 'assert False' in code to trigger error page in browser.
+
+*the server can only process one request at one time.
+
+refer to
+http://djangobook.py3k.cn/2.0/chapter02/
+http://djangobook.py3k.cn/2.0/chapter03/

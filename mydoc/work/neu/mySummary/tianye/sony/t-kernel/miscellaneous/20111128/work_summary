@@ -1,0 +1,94 @@
+目前，根据早上会议，整理了一下，大致分为如下部分：
+1，将mind<->通信driver之间的交互接口封装出来。
+cpu1和cpu0上面都要做，并且具体接口形式等待IA发送的规范。
+
+2，将t-kernel+mind+codec整合的base。
+目前，先将t-kernel+mind整合成base，在此base基础上面进行工作。
+之后，可能需要根据王亮做好的内容，将codec部分也整合进来。
+
+3，其它待考虑。
+
+所以，目前建议
+峦－重点调查2)这个部分，看如何编译，如何整合，以及如何使用编译好的东西。
+聂－重点看1）部分的内容，大体了解通信机制之后，看接下来重点考虑的事情。
+
+需要先了解情况，才能知道具体工作内容，下面是之前我调查的结果，可以在此基础上展开。
+一、对于之前宝哥发的邮件的base，tkkernel部分内容，
+编译框架：zhaohp以前做的，
+1)通信逻辑主题的部分：
+t-kernelport/tkbase/tkernel/diablo/MainCpuSimulator(zhaotq,gaoyf)<--- cpu1
+和Source/Rootfs/diablo/diabloMainCpu/zou3Codec/CodecSimulator(zhaotq，gaoyf)<---cpu0
+2)逻辑调用的通信的具体实现部分：
+t-kernelport/tkbase/tkernel/diablo/cpuComm(liuxingb,gaoyf)
+启动入口函数部分:tkernel/main(liuxingb)
+3)linux-->tkernel一些接口的转化
+tkernel/diablo/wrapper(qi-t,luhl)
+
+二、cpu0->cpu1收发数据相关，以及cpu1->cpu0收发数据相关。
+跟踪过程：
+1，Cpu1上面：
+1)cpuComm/CpuComm.c:void start_app(void)：
+使用taskspawn调用到codeccommApp。
+
+2)MainCpuSimulator/MainCpuSimulator.c:VOID codeccommApp
+大致如下：
+while(1)
+{
+	...
+		rcvByte = msgQReceive(app_MbxId
+				, &msgbuff
+				, sizeof(MSGQSENDTOAPP)
+				, WAIT_FOREVER );//接收（可能来自cpu0）
+	...
+		switch( nMessageID ) 
+		{//根据接收的信息，发送消息(cpu1->cpu0)。
+			case***:
+			pMsg=***;
+			status =cpuCodecCommMessageSend (DSP_WINDOW_RESET_RETURN,
+					nSequenceNum,
+					pMsg);	
+			...
+			或者
+			status =cpuCodecCommMessageSend (DSP_WINDOW_RESET_RETURN,
+					nSequenceNum,
+					cpu1_virt_to_phys(pMsg, sizeof(pMsg)));//gaoyf说用这个方式发送从宏控制中也可以看得出来。
+		}
+}
+这里，其实nSequenceNum为0。
+可知，发送消息的函数就是:cpuComm/CpuComm.c:cpuCodecCommMessageSend
+最终实际是调用：
+CPU1STATUS  cpuCommMessageSend ( IN UINT8    nModuleID, IN UINT8    nMessageID,
+    IN UINT16   nSequenceNum,
+    IN VOID*    pParameter)
+
+
+2，Cpu0上面
+1，实际cpu0从cpu1收，或者cpu0向cpu1发消息，上层的大致代码形式如下：
+参考：zou3Codec/CodecSimulator/CodecSimulator.c
+{
+	...
+		int devFD = getCodecFD();
+	...
+		ioctl( devFD, CODEC_PROXY_CODEC_CONFIG, &codec_config_parm );
+	...
+}
+具体的动作就落实在那个ioctl中，也就是内核中通信的驱动部分。
+
+3，Kernel中通信的驱动:Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c
+
+根据之前的调查结果，总结如下：
+1)cpu1上面消息的收发：
+通过调用cpuComm/CpuComm.c:cpuCodecCommMessageSend来发送。
+通过调用msgQReceive来接收。
+
+2）cpu0上面消息的收发：
+通过打开设备文件，然后调用ioctl系统调用接口来实现消息的收发。大致代码结构如下：
+int devFD = getCodecFD();
+...;
+ioctl( devFD, CODEC_PROXY_CODEC_CONFIG, &codec_config_parm );
+而系统调用ioctl接口的实现在Kernel/arch/arm/mach-diablo/avp13/CodecSimulatorDriver/CodecSimulatorDriver.c
+
+三、从代码上看的问题
+综上过程，问题是，接收什么样的消息，以及接收的消息格式。
+难点在于cpu0上面ioctl的实现，需要和codec相关人员具体协商所需的参数形式。
+

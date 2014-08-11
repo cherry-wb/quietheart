@@ -1,0 +1,47 @@
+1.概念
+1). 什么是core dump
+	core dump即是内存dump（现在通常是写在一个叫core的file 里面），core也许来自远古时候，那时候人们使用线圈制作内存，而线圈就叫做core。
+	在使用半导体作为内存的材料前，人类是利用线圈当作内存的材料，线圈就叫作core ，用线圈做的内存就叫作“core memory”。如今，半导体工业澎勃发展，已经没有人用线圈当内存了，不过，在许多情况下，人们还是把内存叫作 “core”。所以注意：这里的core不是核心，而是内存。不过结合实际来看，好像也有点“内核所占内存”的意思。
+	对于core dump我们在开发（或使用）一个程序时，最怕的就是程序莫明其妙地挂掉。虽然系统没事，但我们下次仍可能遇到相同的问题。于是，这时操作系统就会把程序挂掉时的内存内容写入一个叫做core的文件里（这个写入的动作就叫dump，dump的英语意思是垃圾、倾倒。从这里来看，这些内存的内容是程序错误运行的结果，所以算是垃圾，把他弄出来就好比从大的内存池里“倾倒”。），以便于我们调试。这个过程，因此叫做core dump。
+
+2). 什么是map文件
+	MAP 文件是程序的全局符号、源文件和代码行号信息的唯一的文本表示方法，是整个程序工程信息的静态文本，通常由linker生成(注：map文件在各种编译器中都可以使用，不限于gcc)。它可以在任何地方、任何时候使用，不需要有额外的程序进行支持，仅仅通过一个文本阅读工具就可以打开了。采用MAP文件，是一种辅助查找程序崩溃代码行的好方法。
+
+2.使用简介
+1). core dump
+a)生成core dump
+如果用的是bash的话, 在/etc/profile里加上(或者修改)一条: 
+#ulimit -c 0
+这样会禁止core dump.而使用"core dump -c"可以指定限制core dump的文件大小，或者"ulimit -c unlimited"不限制大小。
+2)使用core dump文件调试
+#gcc -g xxxxx.c -o xxxx
+这里，-g是必须的，否则找不到符号，只能显示栈调用信息。(-g则可以显示到哪一行出错)
+#gdb execute-file core-file
+这样，进入gdb命令交互界面可以运行类似"where" "bt" "print ...  detail see gdb.
+
+2). map文件的生成
+在linker阶段生成，是程序链接的内存映像，表示了某个符号(函数和全局变量等)的地址。
+#ld -Map map-file
+或者
+#gcc -Wl,-Map,map-file
+如果没有-g选项，在栈调用信息中，不能打印出具体到某一行的源码，但是，根据栈调用时的地址，可以根据map文件来找到相应的函数。
+
+3，举例
+2)gcc/g++中生成map文件
+在通过gcc/g++间接调用链接程序ld时，所有的ld选项前必须加上“-Wl,”,因为-Map是ld的选项。所以，要让gcc生成mapfile，需要增加编译参数“ -Wl,-Map,mapfile”。
+例：
+#gcc -o helloworld helloworld.c -Wl,-Map,helloworld.map
+直接使用linux，生成的map文件格式比较复杂，如果查看变量和函数大小，使用"readelf -s"生成的信息更可读一些。
+例如：
+#readelf -s main
+生成的信息中包含数据、函数等标号的大小，以及入口。
+ 
+参考资料：
+http://www.cnblogs.com/alexyuyu/articles/map_file.html
+http://blog.csdn.net/solmyr_biti/article/details/6601257
+http://hi.baidu.com/%E5%8D%81%E4%B8%83%E6%97%A5%E6%9C%88/blog/item/35e14d2b5af0d0f6e7cd409a.html
+
+======================
+实践：
+ gcc -Wl,--cref main.c myfile.c -o main >reftes
+ 

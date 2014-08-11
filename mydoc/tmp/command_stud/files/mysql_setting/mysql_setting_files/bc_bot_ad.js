@@ -1,0 +1,1 @@
+document.write('<a href="http://s.jb51.net/" alt="服务器安全设置" target="_blank"><img src="http://img.jb51.net/imgby/s468.gif" border="0" width=468 height=60 /></a>');

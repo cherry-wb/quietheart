@@ -1,0 +1,16 @@
+使用说明：
+1,编译方法：
+1）编译：
+make
+2）清除编译结果：
+
+2，运行方法：
+1）查看帮助：
+./testapp
+
+2）测试的使用：
+a)write:
+./testapp -w <offset> <size> <intputfile>
+
+b)read:
+./testapp -r <offset> <size> <outputfile>

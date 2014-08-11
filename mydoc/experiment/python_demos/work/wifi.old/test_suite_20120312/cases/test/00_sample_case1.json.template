@@ -1,0 +1,20 @@
+{
+	"name":"00_sample_case1",
+	"type":{"name":"seq"},
+	"description":"an example.",
+	"scenarios":[
+    {
+        "scenarios1":
+        {
+            "fname":"sample_scenario1.json", 
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}

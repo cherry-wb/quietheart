@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/amazon/!svn/ver/1339/Management/wifi/test_suite
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/amazon/!svn/ver/686/Management/wifi/test_suite/LICENSE
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/amazon/!svn/ver/932/Management/wifi/test_suite/.project
+END
+AUTHORS
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/amazon/!svn/ver/687/Management/wifi/test_suite/AUTHORS
+END
+TODO
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/amazon/!svn/ver/692/Management/wifi/test_suite/TODO
+END
+main.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/amazon/!svn/ver/1241/Management/wifi/test_suite/main.py
+END
+.pydevproject
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/amazon/!svn/ver/816/Management/wifi/test_suite/.pydevproject
+END

@@ -1,0 +1,64 @@
+#########################################
+三、关于Matchbox Desktop
+desktop处于window栈的最底层，提供最原始的程序运行方式，但是能够扩展。
+1，关于用法和配置：
+当DISPLAY环境变量和X server启动之后，通过如下命令运行matchbox-desktop:
+$matchbox-desktop [options]
+
+关于[options]选项:
+
+-display	 	指定连接的窗口号
+--bg	后面细说
+--icon-size	图标大小
+--icon-padding	图标之间的像素间距
+....其它不说了，看文档....
+下面是关于bg的：
+不同的背景用如下格式描述：
+    *
+
+      img-stretched:[filename]
+    *
+
+      img-tiled:[filename]
+    *
+
+      img-centered:[filename]
+    *
+
+      col-solid:[color definition]
+    *
+
+      col-gradient-vertical:[start color],[end color]
+    *
+
+      col-gradient-horizontal:[start color],[end color]
+
+desktop的主题也是可以配置的，并且它follow当前的window管理器（翻译不好，不太明白？？？）。
+
+2，关于插件模块：
+matchbox-desktop通过动态加载模块实体形成。
+matchbox从三个模块开始：主程序运行模块（它使用.desktop文件）、简单的任务管理模块，和简单文件浏览器。
+使用的模块在：(安装目录)/lib/matchbox/mbdesktop_modules 或者 ~/.matchbox/mbdesktop_modules中设置。
+可以参考desktop/modules 目录的例子，很容易的编写自己的模块。
+
+3，添加图标和文件夹：
+
+属于初始化类型的.desktop文件将会检测：(安装目录)/share/applications 和 ~/applications，这里.desktop文件包括程序实体的信息比如：名称，图标，执行的命令等。
+举例：
+ [Desktop Entry]
+	  Name=Figment
+	  Comment=An Outliner
+	  Exec=figment
+	  Icon=figment.png
+	  Type=Application
+	  Categories=Application;Core;
+这里Icon实体不应该指定路径，应该直接指定文件名字，相应的图片在：(安装目录)/share/pixmaps 里面。如果需要别的图标，需要附加一个[contry_code]到相应的键。关于matchbox－desktop如何上述实体创建文件夹的信息存放在：(安装目录)/share/matchbox/vfolder 和 ~/.matchbox/vfolders/ 中。
+目录中应该包括一个root.order文件，一个root.directory文件，和一些.directory文件（这些文件可有可无，用来描述每一个文件夹）。
+
+.directory文件和.desktop文件类似，但是它是用来描述文件夹的，而.desktop文件描述应用程序。root.order文件指定了哪些以及用什么次序来显示目录文件。
+
+.directory应该有一个配置的键，这个键的值和.desktop文件的类别键比较。这决定了.desktop文件在那个文件夹里面结束。如果匹配键设置为'fallback'那么所有没有被匹配的目录都将在这里结束。(含义不太明白？？？？？？？？)
+
+［参考文献］
+[1] http://matchbox-project.org/documentation/manual/mbdesktop.html
+

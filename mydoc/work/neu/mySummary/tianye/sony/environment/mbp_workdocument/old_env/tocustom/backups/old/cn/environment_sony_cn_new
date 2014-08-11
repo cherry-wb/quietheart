@@ -1,0 +1,170 @@
+=========================
+编译环境和编译
+=========================
+1,环境搭建：
+1.1)centeros 安装.（省略）
+1.2)安装交叉编译工具链(SONY-CE-Linux-5.0.4.1-ARM.iso)
+#cd SONY-CE-Linux-5.0.4.1-ARM/Tools_Userland/arm
+#rpm -e $(rpm -qa "arm-sony-linux-gnueabi-*")
+#rm -rf /usr/local/arm-sony-linux-gnueabi/
+#rpm -Uvh --ignorearch *.rpm
+其中SONY-CE-Linux-5.0.4.1-ARM/doc/install_en.txt里面有相关得文档。
+1.3)安装内核头文件
+#cd <latest kernel path>
+#export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+#make avp13_defconfig
+#make
+#make kernel_headers_install
+
+2,代码编译：
+2.1)release时：
+2.1.1)编译内核：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+$cd <latest kernel path>
+$ make avp13_defconfig
+$ make
+生成的内核avp13Build/arch/arm/boot/Image
+
+2.1.2)编译app以及生成文件系统镜像：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH
+$cd <latest rootfs path>
+$cd makerootfs
+$./makerootfs.sh all
+注意，
+生成的镜像名称为target/*.img
+对于该脚本具体信息，最好参考下makerootfs/readme
+
+2.2)开发时：
+每次修改完代码，编译过程如下：
+$export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH
+$cd <latest rootfs path>
+$cd diablo/diabloMainCpu
+$cd build
+$./build.sh
+这样会根据时间戳编译最新得内容。在第一次编译前或者增删文件时需要运行./build.sh depend.
+编译得全部log信息存放在build_Diablo.log
+编译如果出错，那么错误信息存放在error.log
+上次得编译log以及编译错误分别存放在：build_Diablo.old.log和error.old.log
+清除之前的编译中间文件：
+$./build.sh clean
+
+=========================
+运行环境和运行
+=========================
+一、pc机端配置
+1,配置nfs服务：
+配置nfs服务得目的是让板通过网络把nfs的目录当做板子环境中得根目录。
+(1)编辑/etc/exports
+添加类似如下一行：
+<your nfs directory> *(rw,sync,no_root_squash)
+在配置NFS之前先查看“rpm -q nfs-utils portmap“两个软件包是否安装，默认都是安装的。
+这里，'<your nfs directory>'是你本地的nfs目录，可以随意设置。具体含义参见"info exports".
+(2)重启服务：
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3)关闭防火墙：
+这一步有的人可以不用做。
+具体在："系统"->"管理"->"安全级别和防火墙"
+至此nfs服务搭建完毕，测试方法如下：
+在其它机器上运行：
+#mkdir nfstest
+#mount -t nfs <你的ip>:<你的nfs目录> nfstest
+如果成功则完毕。
+
+2,配置tftp服务：
+配置tftp服务得目地是让板子通过tftp下载内核并启动。
+(1)安装tftp客户/服务端:
+#yum install tftp.i386
+#yum install tftp-server.i386
+这里，如果不行就先运行"#yum makecache"试试。
+(2)编辑/etc/xinetd.d/tftp
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+这里，disable是指关闭还是打开tftp服务，取值yes/no.
+server_args指定tftp服务在本地机器上的导出目录。其它参数具体含义参见“info xinetd.conf”.
+(3)重启服务：
+#/etc/init.d/xinetd restart
+至此tftp服务搭建完毕，测试方法如下：
+在本地机器上运行：
+#>>/tftpboot/mytest
+在其它机器上运行：
+#tftp <你的ip地址>
+#get mytest
+然后"[Ctrl]D"退出，如果在那个其他机器得当前目录看到mytest说明成功。
+
+3,配置minicom:
+配置minicom的目的是让pc机可以通过minicom连接开发板。
+(1)#minicom -s
+(2)选择"Serial port setup"
+配置其中的如下配置选项：
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4,准备内核
+将编译好得内核(arch/arm/boot/Image)放到tftp的导出目录。
+导出目录按前面配置应该是:/tftpboot
+#cp arch/arm/boot/Image /tftpboot/vmlinux.bin
+
+5，准备文件系统
+为release使用，将文件系统镜像(ramdisk.img)拷贝到tftp导出目录(/tftpboot)。
+为开发使用，将文件系统中所有内容拷贝到nfs导出目录(<your nfs directory>)。
+编译时候生成的文件系统以及镜像在目录"Rootfs/makerootfs/target/"中.
+
+二、开发板设置
+pc端配置好之后，启动minicom，再启动开发板，会自动进入bootloader。
+1,release时，
+需先将文件系统和内核写到flash rom中,配置如下：
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv myip 10.1.29.180
+NBL> setenv servip 10.1.29.44
+NBL> sdm init
+NBL> sdm create -n -l 0x600000 kernel
+NBL> sdm create -n -l 0x600000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+NBL> bootprof init
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux0
+
+最后，将开发板断电并设置s1902跳线组第一号开关为"on".
+这里，10.1.29.xx1是开发板ip.如上设置如果正确，上电之后即可实现自动启动。
+注意：上述命令中vmlinux.bin文件名可以更改但是必须以"*.bin"为扩展名。
+
+2,开发时，
+基于nfs文件系统，从tftp下载内核，配置如下：
+NBL> setenv myip 10.1.29.180
+NBL> setenv console on
+NBL> setenv servip 10.1.29.44
+NBL> diag ethaddr 00:11:22:33:44:55
+NBL> setenv gateip 10.1.29.1
+注意，这里servip是tftp服务器地址,myip是板子ip，ethaddr是板的mac,这根据自己情况设置。gateip只为保留用，可以不设置。
+
+最后，下电，再上电并启动开发板:
+NBL> boot -r -t binary -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:<your nfs directory> ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+这里，"nfsroot=10.1.29.44:<your nfs directory>"对应你机器的nfs服务目录，“ip=10.1.29.180::10.1.29.1:255.255.255.0“对应你板子的ip地址，需要修改。
+这样，就可以启动开发了。如果在开发板和pc之间通过你的nfs目录相关联，可以通过这个目录在pc和你开发板间传递数据。
+===================
+三、程序运行
+===================
+
+这样，即可通过“/diablo/diabloMainCpu/diablo.bin”运行程序了。
+注意：如果上电后没有自动启动，则断电后将s1902跳线组第一号开关为"off"，然后上电运行：
+NBL> aboot -n
+成功启动后将开发板断电并设置s1902跳线组第一号开关为"on"，再次上电即可。

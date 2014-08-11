@@ -1,0 +1,10 @@
+这里是一些砸碎实用的工作经验：
+1）文件名最好不要用中文，内容有时为了便于阅读，用中文的可以。
+2）优化工具，为了减少编译出来得库或者可执行程序大小，可以使用strip工具，例如：
+arm-linux-strip bin/*
+arm-linux-strip sbin/*
+arm-linux-strip lib/*
+arm-linux-strip usr/lib/*
+arm-linux-strip usr/bin/*
+arm-linux-strip diablo/diabloMainCpu/*
+arm-linux-strip devel/lib/*

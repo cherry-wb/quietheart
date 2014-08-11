@@ -1,0 +1,76 @@
+电话会议问题：
+一、关于wma
+==============================
+1，如何初始化?
+在用VO_CODECBUFFER inData;进行初始化之前，如何从文件中获取inData的最初值？
+
+参考：
+voWMA_D_SAMPLE.c文件：228-242行。
+代码：
+memcpy(&(inData.Length), fileBuffer, 4);<===读取前四个字节做为缓存长度
+inData.Buffer = temp;
+fileBuffer += 4;
+memcpy(temp, fileBuffer, inData.Length);<====拷贝那个长度到缓存中，此时越界，因为缓存的大小和读取的需要拷贝长度不符，导致越界。
+
+2，如何解码？
+通过Sample发现，解码是在一个二重循环中进行的，那么第一次循环读取的原始数据是在文件什么位置是开始的？
+
+参考：
+voWMA_D_SAMPLE.c文件：307-313行
+
+3,视频的一些属性的获取问题：
+1）有一些宏定义例如：
+#define VO_PID_AUDIO_SAMPLEREATE
+#define VO_PID_AUDIO_CHANNELS 
+#define VO_PID_AUDIO_BITRATE
+分别是什么含义？
+
+参考：
+voAudio.h文件：28-34行
+关系是否是：bitrate/samplerate=samplebits?
+
+2)它们作为GetParam的第二个参数，然后结果返回到第三个参数，那么：
+结果的第三个参数的类型是否根据请求的参数而变化？如果是，如何确定第三个参数的类型？
+
+参考：
+voWMADecoderSDK.pdf，第13页。
+
+
+3)
+
+
+pDecHandle.GetParam(hCodec, VO_PID_AUDIO_CHANNELS, &channel);
+以及pDecHandle.GetParam(hCodec, VO_PID_AUDIO_FORMAT, &pcmformat);
+两种方法都可以得到一个channel值，这两个结果一样吗？
+
+参考：
+voWMADecoderSDK.pdf，第13页。
+voWMA_D_SAMPLE.c文件：52行，295行。
+voAudio.h文件：124-147行。
+
+
+二，关于MP3
+==============================
+1,初始化时候，没有用到mp3文件的信息，解码的时候才开始读取mp3文件，是这样吗？
+(voMP3DecoderSDK.pdf p5中的流程却用到了setParam.)
+参考：
+MP3_D_SAMPLE.c文件：112-160行（初始化?），161－205行（解码？）。
+
+2,typedef struct {
+    VO_PBYTE Buffer;
+    VO_U32       Length;
+    VO_S64       Time;
+} VO_CODECBUFFER;
+Time是什么时间？(对于inData和outData)
+
+参考：
+voType.h文件：184－188行。
+MP3_D_SAMPLE.c文件：83－84行。
+
+3,如何获得文件总播放时间，当前播放时间，以及指定播放时间所在的文件位置？
+
+
+三、另外，
+1，已经确定了可以在arm 处理器 Linux系统下面使用吗？
+2，目前手中只有lib*.so的库，是否可以提供lib*.a的库？
+

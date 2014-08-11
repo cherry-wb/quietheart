@@ -1,0 +1,184 @@
+总结完了找个地方存放。
+############################################################################################################
+hildon-games-wrapper-1.9.4
+相关命令的选项(查看man解决的一般就可以省略了)：
+1),make -C
+2)install
+-d, --directory
+              treat all arguments as directory names; create all components of the specified directories
+-m, --mode=MODE
+              set permission mode (as in chmod), instead of rwxr-xr-x
+
+
+
+/*
+ install - copy files and set attributes
+*/
+/****************/
+关于编译：
+make
+然后会在hildon-games-wrapper-1.9.4/libhgw和hildon-games-wrapper-1.9.4/wrapper2里面生成相应的文件。
+/******************/
+关于安装：
+编译好了之后，按照Makefile里面的说明，进行如下步骤安装wrapper程序：
+1)对于hildon-games-wrapper-1.9.4/libhgw里面编译生成的目标文件：
+把libhgw.so.1.9.2 拷贝到$(DESTDIR)/usr/lib/，并更改属性为755
+(以下4个建立软连接强制移除存在的文件）
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libshawapp.so.0
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libshawapp.so
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libhgw.so.1
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libhgw.so
+2)对于hildon-games-wrapper-1.9.4/wrapper2里面生成的目标文件：
+把hgw.h拷贝到$(DESTDIR)/usr/include/hgw/，并更改属性为644
+把shadowapp.h拷贝到$(DESTDIR)/usr/include/hgw/，并更改属性为644
+
+下面是将这个过程分析出来的过程：
+######
+hildon-games-wrapper-1.9.4/ 里面的主Makefile指出：
+install:
+	make -C wrapper2 install
+	make -C libhgw install
+指出要运行hildon-games-wrapper-1.9.4/libhgw和hildon-games-wrapper-1.9.4/wrapper2里面Makefile的install
+########
+hildon-games-wrapper-1.9.4/libhgw里面的Makefile相关内容：
+install -d $(DESTDIR)$(PREFIX)/lib
+	install -m755 libhgw.so.$(VERSION) $(DESTDIR)$(PREFIX)/lib
+	ln $(PREFIX)/lib/libhgw.so.$(VERSION) -sf \
+	$(DESTDIR)$(PREFIX)/lib/libshadowapp.so.0
+	ln $(PREFIX)/lib/libhgw.so.$(VERSION) -sf \
+	$(DESTDIR)$(PREFIX)/lib/libshadowapp.so
+	ln $(PREFIX)/lib/libhgw.so.$(VERSION) -sf \
+	$(DESTDIR)$(PREFIX)/lib/libhgw.so.$(MAJOR)
+	ln $(PREFIX)/lib/libhgw.so.$(VERSION) -sf \
+	$(DESTDIR)$(PREFIX)/lib/libhgw.so
+	install -d $(DESTDIR)$(PREFIX)/include/hgw/
+	install -m644 hgw.h $(DESTDIR)$(PREFIX)/include/hgw/
+	install -m644 shadowapp.h $(DESTDIR)$(PREFIX)/include/
+这里：$(VERSION) $(DESTDIR) $(PREFIX) $(MAJOR)分别是：
+VERSION = $(MAJOR).$(MINOR).$(RELEASE)
+MAJOR = 1
+MINOR = 9
+RELEASE = 2
+PREFIX = /usr
+DESTDIR 我还没有找到,估计应该是空？
+****但是根据上述内容，可以推得install所做的工作应该是:
+1)install -d $(DESTDIR)/usr/lib/ (修改目录属性？或者创建目录？)
+把libhgw.so.1.9.2 拷贝到$(DESTDIR)/usr/lib/，并更改属性为755
+(以下4个建立软连接强制移除存在的文件）
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libshawapp.so.0
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libshawapp.so
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libhgw.so.1
+建立$(DESTDIR)/usr/lib/libhgw.so.1.9.2的软链接$(DESTDIR)/usr/lib/libhgw.so
+2)install -d $(DESTDIR)/usr/include/hgw/(修改目录属性？或者创建目录？)
+把hgw.h拷贝到$(DESTDIR)/usr/include/hgw/，并更改属性为644
+把shadowapp.h拷贝到$(DESTDIR)/usr/include/hgw/，并更改属性为644
+#########
+hildon-games-wrapper-1.9.4/wrapper2里面的Makefile指出：
+
+install:
+	install -d $(DESTDIR)$(PREFIX)/games/wrapper/
+	install -m755 wrapper $(DESTDIR)$(PREFIX)/games/wrapper/
+
+****根据上述内容，推断所做的工作：
+install -d $(DESTDIR)/usr/games/wrapper/ (修改目录属性？或者创建目录？):
+把编译好的wrapper拷贝到$(DESTDIR)/usr/games/wrapper/ 目录里面，并且修改其属性为：755
+
+
+
+...
+先运行make编译一下，然后到wrapper找到可执行文件，
+发现这个game运行不了。
+########################################################################################################
+http://maemo.org/downloads/product/OS2008/maemosweeper/
+一、源代码的下载：
+1,根据install找到连接：
+http://repository.maemo.org/extras/dists/chinook/free/binary-armel/Packages
+2,根据其内容搜索：maemosweeper,找到：
+Package: maemosweeper
+Priority: optional
+Section: user/games
+Installed-Size: 1552
+Maintainer: Talita Menezes <talita.menezes@indt.org.br>
+Architecture: armel
+Version: 0.2.0-7
+Depends: hildon-games-wrapper0 (>= 1.9.3), libatk1.0-0 (>= 1.12.2), libc6 (>= 2.5.0-1), libcairo2 (>= 1.4.10), libdbus-1-3 (>= 0.94), libdbus-glib-1-2 (>= 0.74), libfreetype6 (>= 2.2.1), libgconf2-6 (>= 2.13.5), libglib2.0-0 (>= 2.12.12-1osso3), libgtk2.0-0 (>= 2:2.10.12-0osso15), libhildon1 (>= 1.0.11), libhildonfm2 (>= 1:1.9.46), libhildonhelp0 (>= 1.9.6), libosso1 (>= 2.13), libpango1.0-0 (>= 1.16.4), libsdl-mixer1.2, libsdl1.2, zlib1g (>= 1:1.2.1), osso-games-startup, maemo-select-menu-location
+Filename: pool/chinook/free/m/maemosweeper/maemosweeper_0.2.0-7_armel.deb
+Size: 668236
+MD5sum: 41eedcd9e6ad1ce68e2bd02b3c0f33a8
+SHA1: cbb535be7e63928c27cfd57de6c4a184d80f3879
+SHA256: 6bad309ecc6cfd38892e135ff858c2f94ae7f127b3dea42b791294d9baf3fb85
+Description: Maemosweeper game
+Maemo-Icon-26: 
+  iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAAwFBMVEUhIyAg
+  IR8iJCEkJSMlJyQmKCUnKCYoKScqKyksLSsuLy0xMzA0NjM3OTY5Ojg6Ozk7
+  PTs+Pz1CREFJSkhMTktSVFJVVlRXWVZbXVpeYF1hY2BjZWJkZWNlZmRmZ2Vn
+  aWZoamdpa2hrbWp0dXJ4end8fnt+gH1/gX6Bg4CChIGKjImUlpOWmJWZm5ig
+  op+ipKGkpqOnqaapq6ixs7C1t7S7vbm9v7zExsPJy8jc3tve4N3f4d7h4+Dn
+  6eby9PHz9fKKg0vfAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZ
+  cwAACxMAAAsTAQCanBgAAAAHdElNRQfWCBcVByySeerKAAABNklEQVQoz6WS
+  226DMAyGiSwlodNC06pIk4I19Qw9AFu71SDg/d9qFqxQdb3qLO4+fz+OE8/7
+  XzVEvn6M6HDQ/n17UbxarznPQY5GXk2k7RUVx50xL2cJoNVkYhMLfW6xw8RX
+  IIUEaxFNhEPgJUEEJRSMjUOMsBl+Vn2gZEsFxrnVOo7fby0lQcpx4NwypSof
+  WLl3ApQMxuwcicoyj3+d8qQB2LIsrdK0KLI8j7etky6BZ5AdYpZmm822Q9nC
+  haDZa6dguI6QroHLEEDwJIYZ0wix7o/8NgPNkR1D7Pfk1V+LGbTL4EwTRLa+
+  RYEQQvLHXmCtvT2xb8OpECAAwKxtv3nervJPKxdNWVTZNkyEvF7hcXdp6DOL
+  wxB8qr6TPQ03SY3XVNV5jiDbd1D/fQBD+13VD9qfqB/D9Siw5UxrPgAAAABJ
+  RU5ErkJggg==
+3,根据上面的内容：
+进入pool/chinook/free/m/maemosweeper/
+找到软件的deb安装包。
+进入http://repository.maemo.org/extras/pool/chinook/free/source/m/maemosweeper/
+找到源代码，其中的dsc后缀名的文件指出了这个源代码所依赖的库，如果缺什么的话可以参考它进行安装。
+4，关于编译：
+1)./configure
+2)make
+如果没有configure尝试一下./autogen.sh
+
+5，关于安装：
+
+maemosweeper.desktop：
+[Desktop Entry]
+Encoding=UTF-8
+Version=0.2.0-7
+Type=Application
+Name=MaemoSweeper
+Exec=/usr/local/bin/maemosweeper.sh
+Icon=maemosweeper_32
+X-Window-Icon=maemosweeper_32
+X-Window-Icon-Dimmed=maemosweeper_32
+X-Osso-Service=br.org.indt.maemosweeper_startup
+X-HildonDesk-ShowInToolbar=true
+StartupWMClass=maemosweeper
+
+maemosweeper.sh:
+
+#!/bin/sh
+
+/usr/bin/osso_games_startup /usr/local/share/maemosweeper/maemosweeper.conf
+
+exit 0
+
+maemosweeper.conf
+
+[Startup Entry]
+Name=maemosweeper
+Version=0.2.0-7
+Title=MaemoSweeper
+GettextPackage=maemosweeper
+Image=/usr/local/share/maemosweeper/pixmaps/maemosweeper.png
+PluginPath=/usr/local/share/maemosweeper/maemosweeper_plugin.so
+ServiceName=br.org.indt.maemosweeper
+PathName=/br/org/indt/maemosweeper
+InterfaceName=br.org.indt.maemosweeper
+
+br.org.indt.maemosweeper.service
+#Sample service description file
+[D-BUS Service]
+Name=br.org.indt.maemosweeper
+Exec=/usr/games/wrapper/games/maemosweeper.l
+
+br.org.indt.maemosweeper_startup.service
+#Sample service description file
+[D-BUS Service]
+Name=br.org.indt.maemosweeper_startup
+Exec=/usr/local/bin/maemosweeper.sh

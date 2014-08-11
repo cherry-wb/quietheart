@@ -1,0 +1,22 @@
+http://www.linuxidc.com/Linux/2011-08/41740.htm
+    并行化处理目前很受重视， 因为在很多时候，并行计算能大大的提高系统吞吐量，尤其在现在多核多处理器的时代， 所以像lisp这种古老的语言又被人们重新拿了起来， 函数式编程也越来越流行。 这里，我介绍一个python的并行处理的一个库： greenlet。 python 有一个非常有名的库叫做 stackless ，用来做并发处理， 主要是弄了个叫做tasklet的微线程的东西， 而greenlet 跟stackless的最大区别是， 他很轻量级？不够， 最大的区别是greenlet需要你自己来处理线程切换， 就是说，你需要自己指定现在执行哪个greenlet再执行哪个greenlet。 废话不说，贴个demo：
+    参考：http://www.linuxidc.com/Linux/2011-08/41740p2.htm
+
+    from greenlet import greenlet  
+      
+    def test1():  
+        print 12  
+        gr2.switch()  
+        print 34  
+
+    def test2():  
+        print 56  
+        gr1.switch()  
+        print 78  
+
+    gr1 = greenlet(test1)  
+    gr2 = greenlet(test2)  
+    gr1.switch() 
+   这里，默认的这个环境是一个main greenlet， 在它的内部创建了gr1， gr2 两个子greenlet， gr1.switch 让gr1开始执行， gr1 首先打印12 然后主动将控制权交给 gr2 ，打印 56 然后，gr2又将控制权交给了gr1， 打印34， gr1执行完了后会产生 GreenletExit 时间退回到父greenlet，这里是main， 执行完毕。 不会打印 78.
+
+

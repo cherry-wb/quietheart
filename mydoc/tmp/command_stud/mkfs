@@ -1,0 +1,14 @@
+如何格式化u盘？
+注意的是格式化之前首先要卸载
+
+
+mkfs
+mkfs -t vfat /dev/sda1
+这就把/dev/sda1盘格式化成fat的了。
+
+mke2fs
+ext2 : mke2fs /dev/hdXX
+
+ext3:
+mke2fs -j /dev/hdXX
+或者mkfs.ext3 /dev/sdb1

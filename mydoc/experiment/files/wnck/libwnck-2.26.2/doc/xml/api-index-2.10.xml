@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="wnck-selector-new"><link linkend="wnck-selector-new">wnck_selector_new</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-activate"><link linkend="wnck-window-activate">wnck_window_activate</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-activate-transient"><link linkend="wnck-window-activate-transient">wnck_window_activate_transient</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-get-sort-order"><link linkend="wnck-window-get-sort-order">wnck_window_get_sort_order</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-activate"><link linkend="wnck-workspace-activate">wnck_workspace_activate</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

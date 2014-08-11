@@ -1,0 +1,265 @@
+各位：
+
+Onsite这几天都在不停地编译PFX BASE。最近终于可以编译通过。现已整理了手顺（如附件），可能对国内需要全编译PFX Base的同事也有参考价值。
+
+之前IA的何志波说，用吕凯的8.0.1.4升级手顺搭建的编译环境，能编译PFX Feature源码，但不能编译EMMA内核（我没有验证过）。不过用附件中的手顺（刘杰san提供）升级到8.0.1.4的编译环境，就可以顺利编译 EMMA内核。附件中总结的8.0.1.4升级手顺只安装了编译工具链，没有安装其他optional的rpm包，并且每一步升级都确保成功后再开始升到下一级。
+
+从国内release给Onsite的代码来看，目前PFX BASE的编译问题大部分问题出在IA侧。我们Diablo的代码只有makerootfs.sh还有问题。主要原因是依赖diablo.bin、依赖 Kernel中的*.ko、依赖PFX BASE其他路径的地方报错，只需稍作修改即可。
+看情况还得有一段时间才能验证到Diablo上的 APP。据我所知，Diablo上的设备节点似乎有些变化，例如sfmem的主设备号的修改，以及sysconif和sc2p_nod的修改等等。请国内相关担当再帮忙check一下，我们makerootfs生成的文件系统下的设备节点是否都是正确的，非常感谢！
+
+
+赵惠鹏
+
+
+﻿本文所述的手顺，在全新安装的、安装时全部选择默认选项的CentOS5.5操作系统上，验证通过。
+
+
+本文涉及到的安装包：
+===============================================================================
+（以下安装包用于安装arm-elf-gcc工具链）
+arm-elf-binutils-2.21-1.i386.rpm
+gmp-5.0.2-1.i386.rpm
+mpfr-3.0.1-1.i386.rpm
+libmpc-0.9-1.i386.rpm
+arm-elf-gcc-g++-4.5.3-2.i386.rpm
+补充说明：
+arm-elf-gcc用来编译FakeDiablo上的T-Kernel源码。
+
+（以下安装包用于安装Sony CELinux编译环境8.0.1.1版，并升级到8.0.1.4版）
+SONY-CE-Linux-8.0.1.1-ARMv5.iso
+CE-Linux-8.0.1.2.tgz
+CE-Linux-8.0.1.3.tgz
+CE-Linux-8.0.1.4.tgz
+
+
+本文涉及到的源码包：
+===============================================================================
+C12_EU11_Release_20111014.tar.gz
+
+
+升级系统和安装Sony CELinux 8.0.1.0编译环境：
+===============================================================================
+# wget --no-proxy http://development-server1.pfx.sony.co.jp/pfx/install/install.sh -O - | sh
+# cd
+# ./pfx-update.sh
+# export PATH=$PATH:/usr/local/scel8.0/arm-sony-linux-gnueabi/cross/devel/bin:/usr/local/scel8.0/arm-sony-linux-gnueabi/cross/bin
+现在操作系统中已经安装了8.0.1.0的编译环境。
+（该步骤需访问sony服务器，在品川Onsite侧可以顺利通过，但未知国内是否也能执行）
+
+
+安装arm-elf-gcc工具链：
+===============================================================================
+# rpm -i arm-elf-binutils-2.21-1.i386.rpm
+# rpm -i gmp-5.0.2-1.i386.rpm
+# rpm -i mpfr-3.0.1-1.i386.rpm
+# rpm -i libmpc-0.9-1.i386.rpm
+# rpm -i arm-elf-gcc-g++-4.5.3-2.i386.rpm
+
+
+安装Sony CELinux编译环境到8.0.1.1版本：
+===============================================================================
+# rpm -e `rpm -qa 'arm-sony-linux-gnueabi-*'`
+# rm -rf /usr/local/scel8.0/
+# mkdir -p iso
+# mount -o loop /where/you/put/SONY-CE-Linux-8.0.1.1-ARMv5.iso iso/
+# cp iso/Scripts/scel-cmds.sh /usr/bin/
+# cd iso/Tools_Userland/arm/
+# scel-cmds.sh --install *.rpm arm/*.rpm
+# cd ../../../
+# umount iso
+# rm -rf iso
+（此时我们已经全新安装了Sony CELinux编译环境8.0.1.1版）
+补充说明：
+5.0编译环境的默认安装路径是/usr/local/arm-sony-linux-gnueabi/
+8.0编译环境的默认安装路径是/usr/local/scel8.0/
+8.0.1.0是armv7a编译器，因此只能编译EMMA源码，不能编译Diablo源码。
+8.0.1.1是armv5编译器，因此只能编译Diablo源码，不能编译EMMA源码。
+8.0.1.4是既可以编译EMMA源码，也可以编译Diablo源码的PFX统合版。
+8.0.1.0和8.0.1.1是彼此独立安装的完整的编译器（有.iso）
+8.0.1.2至8.0.1.4是8.0.1.1的升级补丁包（只有.tgz包）。
+
+
+升级Sony CELinux编译环境到8.0.1.2版本：
+===============================================================================
+# tar xf /where/you/put/CE-Linux-8.0.1.2.tgz
+# cd CE-Linux-8.0.1.2/Tools_Userland/arm/
+# scel-cmds.sh --install arm/*.rpm armv7a/*.rpm
+# cd -
+
+
+升级Sony CELinux编译环境到8.0.1.3版本：
+===============================================================================
+# tar xf /where/you/put/CE-Linux-8.0.1.3.tgz
+# cd CE-Linux-8.0.1.3/Tools_Userland/arm/
+# rm -f arm/arm-sony-linux-gnueabi-arm-srel-libpng-1.2.44-08000101.arm.rpm
+# rm -f arm/arm-sony-linux-gnueabi-arm-dev-libpng-1.2.44-08000101.arm.rpm
+# scel-cmds.sh --install arm/*.rpm armv7a/*.rpm
+# cd -
+补充说明：
+删除这两个libpng的rpm是因为它们与系统中已经存在的版本相冲突（系统中的版本高），不必再安装它们。
+如果不删掉，会导致安装过程终止，本次升级失败。
+
+
+升级Sony CELinux编译环境到8.0.1.4版本：
+===============================================================================
+# tar xf /where/you/put/CE-Linux-8.0.1.4.tgz
+# cd CE-Linux-8.0.1.4/Tools_Userland/arm/
+# scel-cmds.sh --install arm/*.rpm armv7a/*.rpm
+# cd -
+（现在系统中的Sony CELinux编译环境已经升级至8.0.1.4版本）
+
+
+查看编译环境版本：
+===============================================================================
+# scel-cmds.sh -l
+CE Linux 5.0.4.1 motd sonyfs
+CE Linux 5.0.4.1 arm 
+CE Linux 8.0.1.4 arm arm
+CE Linux 8.0.1.4 arm armv7a
+CE Linux 8.0.1.0 arm armv7a
+（以上是我的编译环境信息。系统中可以同时存在多个编译器版本，只要它们安装在不同路径下。例如，如果在安装8.0.1.1时不删除8.0.1.0而是把它重命名，则8.0.1.0版也会保留。因此执行该命令后，每台PC都可能有不同的输出）
+
+-------------------------------------------------------------------------------
+以上是编译环境的安装步骤。
+-------------------------------------------------------------------------------
+
+
+PFX BASE之前的准备工作：
+===============================================================================
+建立/usr/local/scel8.0-EMMA软链接：
+# ln -s /usr/local/scel8.0 /usr/local/scel8.0-EMMA
+补充说明：
+以前Diablo和EMMA的源码必须分别使用8.0.1.1和8.0.1.0的编译器，因此安装8.0.1.1之前，将原有的8.0.1.0重命名为/usr/local/scel-EMMA，专用于编译EMMA相关源码，并且在EMMA源码的Makefile中强制了编译器的绝对路径。
+现在8.0.1.4编译器已经对Diablo和EMMA都提供支持，因此只需建立一个软链接。当IA侧EMMA相关源码也改为使用默认的/usr/local/scel8.0路径下的编译器时，则不再需要创建软链接。
+
+
+拷贝链接库：
+===============================================================================
+拷贝
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonydl.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonyrt.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonygcc_s.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonyc.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonygcc_s.so.1
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonyld.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/lib/libsonypthread.so
+/usr/local/scel8.0-EMMA/arm/target/armv7a/tool/usr/lib/libsonygcc.a
+到
+/usr/local/scel8.0-EMMA/arm/target/armv7a/devel/lib/
+
+（以上两个步骤，只做一次即可）
+
+
+PFX BASE的编译步骤：
+===============================================================================
+# tar xvf /where/you/put/C12_EU11_Release_20111014.tar.gz
+# cd C12_EU11_Release_20111014
+# export PFX_BASE=`pwd`
+# tar xvf -C ./APP ./APP/PFXBase_C12_EU11-20111014.tar.bz2
+# tar xvf -C ./mind ./mind/mind_eu11_src.tar.gz
+
+
+准备libdiablo.a静态库
+===============================================================================
+skip...
+
+
+make libraries
+===============================================================================
+# cd $PFX_BASE/APP/PFXBase_C12_EU11-20111014/PFXSoft
+# make all-clean
+# make libraries
+(pray and wait...)
+
+
+make
+===============================================================================
+# cd $PFX_BASE/APP/PFXBase_C12_EU11-20111014/PFXSoft/Products/Prototype/PFXBaseEU11
+(we need edit some lines in ./GNUMakefile)
+--> comment off the following 2 line
+	#$(MAKE) -C executables/EMMA/systemtest -f swig.mk
+	#$(MAKE) -C executables/EMMA/systemtest
+(now we can make, finally)
+# make all-clean
+# make
+(pray hard and wait long...)
+
+
+幸运的话，即可顺利编译通过。
+
+
+可执行二进制文件
+===============================================================================
+将下面两条横线之间的代码保存为shell脚本(get_bins.sh)。
+将该脚本放在$PFX_BASE路径下，执行：
+# mkdir -p bins
+# ./get_bins.sh bins
+-------------------------------------------------------------------------------
+#!/bin/bash
+
+_dir="APP/PFXBase_C12_EU11-20111014/PFXSoft/Products/Prototype/PFXBaseEU11/executables"
+pc_bins="
+$_dir/PC/userinterface/objects/host/userinterface
+$_dir/PC/panelsimulator/objects/host/panelsimulator
+$_dir/PC/PCSocket/objects/host/PCSocket
+"
+diablo_bins="
+$_dir/Diablo/AVPCsi/objects/arm-sony-linux-gnueabi/AVPCsi
+$_dir/Diablo/avpprocess/objects/arm-sony-linux-gnueabi/avpprocess
+$_dir/Diablo/AVPSc2i/objects/arm-sony-linux-gnueabi/AVPSc2i
+"
+emma_bins="
+$_dir/EMMA/attachaccessory/objects/arm-sony-linux-gnueabi-armv7a-dev/attachaccessory
+$_dir/EMMA/capture/objects/arm-sony-linux-gnueabi-armv7a-dev/capture
+$_dir/EMMA/EMMAEmif/objects/arm-sony-linux-gnueabi-armv7a-dev/EMMAEmif
+$_dir/EMMA/EMMASocket/objects/arm-sony-linux-gnueabi-armv7a-dev/EMMASocket
+$_dir/EMMA/EMMASPIC/objects/arm-sony-linux-gnueabi-armv7a-dev/EMMASPIC
+$_dir/EMMA/externalin/objects/arm-sony-linux-gnueabi-armv7a-dev/externalin
+$_dir/EMMA/externalout/objects/arm-sony-linux-gnueabi-armv7a-dev/externalout
+$_dir/EMMA/itnernalmonitor/objects/arm-sony-linux-gnueabi-armv7a-dev/itnernalmonitor
+$_dir/EMMA/operateclip/objects/arm-sony-linux-gnueabi-armv7a-dev/operateclip
+$_dir/EMMA/playing/objects/arm-sony-linux-gnueabi-armv7a-dev/playing
+$_dir/EMMA/powermanaging/objects/arm-sony-linux-gnueabi-armv7a-dev/powermanaging
+$_dir/EMMA/recording/objects/arm-sony-linux-gnueabi-armv7a-dev/recording
+$_dir/EMMA/registry/objects/arm-sony-linux-gnueabi-armv7a-dev/registry
+$_dir/EMMA/streamgates/objects/arm-sony-linux-gnueabi-armv7a-dev/streamgates
+$_dir/EMMA/subfeature/objects/arm-sony-linux-gnueabi-armv7a-dev/subfeature
+"
+rosetta_bins="
+$_dir/FakeRosetta/FakeRosetta/objects/arm-elf-arm11/FakeRosetta.bin
+"
+
+[ $# -ne 1 ] && echo "Give a dirpath to copy to." && exit 1
+[ ! -d $1 ] && echo "Param is not a dirpath." && exit 1
+
+_target_dir=`dirname $1`/`basename $1`
+mkdir -p $_target_dir/pc;
+mkdir -p $_target_dir/diablo;
+mkdir -p $_target_dir/emma;
+mkdir -p $_target_dir/rosetta;
+
+for f in $pc_bins
+do
+	cmd="cp $f $_target_dir/pc"
+	echo $cmd
+	$cmd
+done
+for f in $diablo_bins
+do
+	cmd="cp $f $_target_dir/diablo"
+	echo $cmd
+	$cmd
+done
+for f in $emma_bins
+do
+	cmd="cp $f $_target_dir/emma"
+	echo $cmd
+	$cmd
+done
+for f in $rosetta_bins
+do
+	cmd="cp $f $_target_dir/rosetta"
+	echo $cmd
+	$cmd
+done
+-------------------------------------------------------------------------------

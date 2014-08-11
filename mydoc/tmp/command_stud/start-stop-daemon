@@ -1,0 +1,37 @@
+start-stop-daemon [options] command
+start-stop-daemon [选项] 命令
+
+[功能]
+启动和停止系统的守护程序.
+
+[描述]
+start-stop-daemon用来控制创建和终止系统级别的进程。
+使用一个匹配的选项，start-stop-daemon可以配置来寻找一个运行进程的存在的实例。
+注意：除非--pidfile 被指定了， 否则start-stop-daemon的行为类似于killall.start-stop-daemon将会扫描进程表，寻找匹配指定了进程名称、进程uid、gid等的进程，所有匹配的进程将会阻止--start来启动这个守护进程；如果指定了--stop,那么所有的匹配进程将被发送KILL信号。对于一些进程，若它们具有长期运行的子进程而这些子进程需要通过指定--stop来度过其生命周期,那么你必须指定一个pidfile.
+命令：
+-S,--start [--] arguments
+	检查指定的程序的实例,如果存在这样的程序实例，那么不做任何事情，并且以1退出；如果不存在这样的程序实例，那么就执行--exec指定的或者--startas指定的程序实例。在命令行中--后面的所有参数都会传递给将要被启动的程序。
+-K,--stop
+	检查指定的程序实例，如果存在这样的程序实例，会发送--signal指定的信号，然后以0退出；如果不存在这样的实例进程，那么以错误1退出（若指定了--oknodo就以0退出）；如果指定了--retry那么已经终止的那些进程。
+-H,--help
+	显示使用帮助信息并且退出。
+-V,--version
+	打印程序版本号码并且退出。
+
+匹配选项：
+-p,--pidfile pid-file
+-x,--exec executable
+-n,--name process-name
+-u,--user username|uid
+
+选项：
+
+
+[其他]
+这个命令可以保证一个程序只有一个进程的实例在运行着。
+经过实践，发现exec选项指定的可执行文件的路径必须是绝对路径。如果是脚本文件，那么那个脚本文件如果调用了可执行文件的话也要用绝对路径来进行调用。如果已经运行了一个程序，例如：
+start-stop-daemon --start --exec /mnt/myOwn_all/experiment/program/qtTest/06_dragEvent/06_dragEvent
+运行过了，那么第二次运行这个命令的时候，不会再启动06_dragEvent了。但是可以运行./06_dragEvent来启动另一个进程。可是运行./06_dragEvent之后，也不能运行
+start-stop-daemon --start --exec /mnt/myOwn_all/experiment/program/qtTest/06_dragEvent/06_dragEvent
+来启动另一个进程,会提醒已经存在。
+当然如果是脚本的话，脚本启动多个程序的话，用start-stop-daemon就无法保证脚本启动的程序是只有一个了。

@@ -1,0 +1,32 @@
+avc是什么格式
+AVC格式（加强版MP4）
+AVC/H.264是一种最新且技术含量最高的视频编码格式，由MPEG-4标准进行定义的、由ISO的MPEG和ITU的VCEG 两个组织于2003 年最终定稿。而AVC/H.264 标准本身则是由包括来自MPEG 和VCEG 专家的Joint Video Team（JVT）开发。H.264/AVC项目最初的目标是希望新的编解码器能够在比相对以前的视频标准（比如MPEG-2或者H.263）低很多的码率下提供很好的视频质量，同时，并不增加很多复杂的编码工具。
+具体参考：http://zhidao.baidu.com/question/241815520.html
+
+
+杂乱术语：
+=======
+mxf
+MXF 是英文 Material Exchange Format（文件交换格式）的词头缩写， 这个名字本身就道出了它的作用是为数据的发送者和接收者 建立不同数据格式转换的通用标准。 它可在专业广播电视环境下 转换媒体文件， 本质上是一种外壳格式。 为什么这样说呢？象PC平台的AVI多媒体格式， 它是一种对音视频 进行中等压缩和打包， 介乎于压缩和无压缩之间的 文件格式。 但MXF超出了一般AVI的范畴。例如： MXF被设计可用于 包装MPEG2数据流、 DV数据流、 YUV数据流、 PCM音频文件 以及几种格式的数据库文件（同步或非同步模式）。 MXF可以同时处理打包多条轨道的 音视频和数据库文件， 它被设计为既支持流媒体传输 又支持文件的传输。所以它可以改善网络环境 因缺乏标准的文件格式 而受阻碍的局面。 实际上， 在MXF出现之前， 有过类似的格式， 例如OMF（Open Media Frame） 开放媒体框架格式， 它就是一个包含多轨媒体信息的 文件格式， 但OMF更象是AVI是为了编辑而设计，缺少MXF的网络流动性。
+具体参考：http://baike.baidu.com/view/1652726.htm
+
+SMPTE
+SMPTE(The Society of Motion Picture and Television Engineers)。它是目前在影音工业中得到广泛应用的一个时间码概念。该码用于设备间驱动的时间同步，计数方式 ，主要参数格式是：Hours：Minutes：Second ： Frames。其中SMPTE 24 Film Sync： 以每秒24帧的速度播放，通常用于电影工业；SMPTE 30 Non-Drop： 该标准适用于音频领域。
+具体参考：http://baike.baidu.com/view/32171.htm
+
+AVC
+AVC——视频编解码技术
+AVC——音频输出控制技术
+具体参考：http://baike.baidu.com/view/1000016.htm#2
+
+关于PAL
+具体参考：http://baike.baidu.com/view/40205.htm
+PAL制式是电视广播中色彩编码的一种方法。全名为 Phase Alternating Line 逐行倒相。除了北美，东亚部分地区使用 NTSC制式 ，中东、法国及东欧采用 SECAM制式 以外，世界上大部份地区都是采用 PAL。PAL 由德国人 Walter Bruch 在1967年提出，当时他是为德律风根(Telefunken)工作。“PAL”有时亦被用来指625 线，每秒25格，隔行扫瞄，PAL色彩编码的电视制式。
+
+参考： http://www.douban.com/note/96278651/
+很多人都知道有NTSC和PAL两大制式，那到底什么是NTSC制式？什么是PAL制式呢？简单的说，NTSC和PAL属于全球两大主要的电视广播制式，但是由于系统投射颜色影像的频率而有所不同。NTSC是National Television System Committee的缩写，其标准主要应用于日本、美国，加拿大、墨西哥等等，PAL 则是Phase Alternating Line的缩写，主要应用于中国，香港、中东地区和欧洲一带。 
+这两种制式是不能互相兼容的，如果在PAL制式的电视上播放NTSC的影响，画面将变成黑白，NTSC制式的也是一样。而做为视频拍摄工具的数码摄像机，也同样有制式的问题，比如我国使用PAL制式，在我国销售的数码摄像机都是PAL制式的，如果是NTSC制式的摄像机拍摄出来的图象不能在PAL制式的电视机上正常播放。因此，可以肯定的说，在我国销售的数码摄像机行货一定是PAL制式的，如果是NTSC制式的数码摄像机，则一定是水货。
+PAL制式和NTSC的分辨率也有所不同，PAL制式使用的是720*576，而NTSC制式使用的是720*480，在分辨率上PAL稍稍占有优势。而PAL制式的画面解析度720*576，约40万象素，也决定了PAL制式的数码摄像机的CCD大小应该为40万的倍数或者半倍数，比如2倍或者1.5倍，所以PAL制式数码摄像机都是80万，或者107万（接近100万，40万的2.5倍）、155万（接近160万，40万的4倍）。而NTSC制式的画面解析度为720*480，约34万象素，所以NTSC制式的数码摄像机一般为68万象素等等。
+PAL制电视的供电频率为50Hz、场频为每秒50场、帧频为每秒25帧、扫描线为625行、图像信号带宽分别为4.2,5.5,5.6MHz等。NTSC制电视的供电频率为60Hz，场频为每秒60场，帧频为每秒30帧，扫描线为525行，图像信号带宽为6.2MHz。
+目前的视频采集软件都支持PAL和NTSC制式，但是在编辑过程中是不能同时使用NTSC制式的素材和PAL制式的素材，必须用过转换才能在同一时间轴上使用两个素材。
+目前世界上彩色电视主要有三种制式，即NTSC、PAL和SECAM制式，三种制式目前尚无法统一。有人昵称 NTSC 为 Never The Same Color (不会出现一样的色彩)、称 PAL 为 Perfect At Last 、称 SECAM 为 System Essentially Contrary to American Method(本质上有别与美国的系统)或 Shows Every Color All Murky (把每一个颜色显示得模糊)。

@@ -1,0 +1,67 @@
+本文没有太多的内容，只是一个指导性的文章，提供了如何学习qt的一些高级特性。
+文章来源是官方文档：
+http://doc.qt.nokia.com
+主要是http://doc.qt.nokia.com/4.5/index.html中的Core Features系列,以及工作遇到的其他。
+大致的内容应该进入其中阅读，这里给出一些简单的提醒，或者感觉有用的东西的记录。
+
+Signals and Slots
+==================
+比较深入地说明了qt中信号和槽的机制。
+参考网址：http://doc.qt.nokia.com/4.5/signalsandslots.html
+
+Qt Object Model
+==================
+介绍Qt扩展了C++的对象机制，增加了哪些特殊的地方。
+参考网址：http://doc.qt.nokia.com/4.5/object.html
+
+这里有一点比较重要的是添加了Qt's Property System，主要是说：
+qt通过一个特殊的宏，可以在对象声明的时候添加对象的属性，这些属性可以在运行的时候设置它们的value以及它们的名字等。甚至在不知道有任何属性的情况下，遍历地列出所有的属性名。并且还可以在运行的期间，动态地给对象增加属性。这里的属性就像是c++类中的成员一样，不过在qt中它们更为灵活。
+具体参考网址：http://doc.qt.nokia.com/4.5/properties.html
+
+Layout Management
+==================
+介绍了Qt的Layout机制，包括构件的SizePolicy,Stretch以及如何自定义Layout等信息。
+具体参考网址：http://doc.qt.nokia.com/4.5/layout.html
+
+Qt Style Sheets
+==================
+这里介绍了qt的style sheet。
+主要参考的文档就是:
+http://doc.qt.nokia.com/4.5/stylesheet.html
+
+这里不可能全部都说，只是指导性质地说说：
+根据目录中的内容，应该从over view看，但是内容很少。
+关键的地方是：
+http://doc.qt.nokia.com/4.5/stylesheet-syntax.html
+主要介绍了：
+Style Rules:风格遵循的一些语法规则,参考例子大致可以知道。
+
+Selector Types,Sub-Controls,Pseudo-States:介绍了被设置风格者的类型，子控件，以及状态。
+其中：子控件用"::"指定，状态用":"指定,另外qobject对象名用"类名#对象名"指定。参照例子。
+
+Conflict:
+介绍了一些如何处理优先级之类的内容。
+
+其他：根据文档说的:
+qApp->setStyleSheet("QPushButton { color: white }");//影响子控件
+myPushButton->setStyleSheet("* { color: blue }");//只影响自己
+知道了前面的基础，往后就当字典查看吧。
+另外看看QStyle类也有用。
+
+Qt Style
+==================
+参考:http://doc.qt.nokia.com/4.5/qstyle.html#details
+这个类里面的资料很值得参考，主要说了：
+1)在paint中绘制的时候，如何用指定的风格以及各种属性进行绘制。
+实际应该使用特定的绘制函数进行绘制，其中以一种绘制函数为例：
+该绘制函数需要的四个参数：绘制哪个属性的枚举，怎样绘制（参数），绘制的painter,绘制到哪里。
+其中，重要的是怎样绘制这个参数和枚举要匹配，参数相应的类例如：QStyleOption及其子类等。
+有两种代码实现方式，一种使用painter,qwidget,styleoption,以及style类型枚举。
+另一种使用stylepainter,以及style枚举，后一种是为了方便，将painter,styleoption以及qwidget合并.
+2）如何创建一个自定义的风格。
+主要是重载实现绘制对应风格的绘制函数，或者编译一个风格的插件。
+3）如何使用一个自定义的风格。
+可以通过启动程序参数指定,另外这里还说了一些其他的程序启动参数，如从左到右显示等等。
+4）说了各种item的style相关。好像和delegate相关了，不太清楚这里。需要继续学习。
+
+这个类中，后面列出了相应风格每个属性的枚举列表，在列表后面一个seealso中指明了对应的styleoption类，可以供查阅。

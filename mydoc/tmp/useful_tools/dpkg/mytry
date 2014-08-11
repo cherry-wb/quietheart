@@ -1,0 +1,243 @@
+如何构建debian包？
+参考：
+http://www.debian.org/doc/manuals/maint-guide/
+http://www.ibm.com/developerworks/cn/linux/l-debpkg/
+http://linux.chinaunix.net/techdoc/system/2007/08/14/965303.shtml
+http://debian.linuxsir.org/doc/inthedebianway/debian_build_package.html
+
+
+dpkg 常用命令
+==============
+*查看一个软件包的状态：
+$dpkg -s <packagename>
+这样，会查询packagename软件包的安装状态。
+例如对于已经安装的软件：
+$ dpkg -s meld
+输出如下：
+Package: meld
+Status: install ok installed
+Priority: optional
+Section: gnome
+Installed-Size: 2260
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Architecture: all
+Version: 1.5.2-1ubuntu2
+Depends: python (>= 2.7.1-0ubuntu2), python-gtk2 (>= 2.14), python-glade2 (>= 2.14), python-gobject (>= 2.16), patch
+Recommends: yelp, python-gnome2, python-gconf, python-gtksourceview2 (>= 2.4)
+Description: graphical tool to diff and merge files
+ Meld is a tool which allows the user to see the changes in, and merge between,
+  either two files, two directories, or two files with a common ancestor.
+  Original-Maintainer: Ross Burton <ross@debian.org>
+再如对于没有安装的软件：
+$ dpkg -s aaa
+输出如下：
+Package `aaa' is not installed and no info is available.
+Use dpkg --info (= dpkg-deb --info) to examine archive files,
+and dpkg --contents (= dpkg-deb --contents) to list their contents.
+
+*查询列出符合指定名字的软件包：
+lv-k@quietheart:~/mydoc/tmp/useful_tools/dpkg$ dpkg -l *mysql-*
+输出如下
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name                 Version              Description
++++-====================-====================-========================================================
+ii  libdbd-mysql-perl    4.019-1              Perl5 database interface to the MySQL database
+un  mysql-client         <none>               (no description available)
+un  mysql-client-4.1     <none>               (no description available)
+un  mysql-client-5.0     <none>               (no description available)
+ii  mysql-client-5.1     5.1.58-1ubuntu1      MySQL database client binaries
+ii  mysql-client-core-5. 5.1.58-1ubuntu1      MySQL database core client binaries
+ii  mysql-common         5.1.58-1ubuntu1      MySQL database common files, e.g. /etc/mysql/my.cnf
+un  mysql-common-4.1     <none>               (no description available)
+ii  mysql-server         5.1.58-1ubuntu1      MySQL database server (metapackage depending on the late
+un  mysql-server-4.1     <none>               (no description available)
+un  mysql-server-5.0     <none>               (no description available)
+ii  mysql-server-5.1     5.1.58-1ubuntu1      MySQL database server binaries and system database setup
+un  mysql-server-core    <none>               (no description available)
+un  mysql-server-core-5. <none>               (no description available)
+ii  mysql-server-core-5. 5.1.58-1ubuntu1      MySQL database server binaries
+un  virtual-mysql-client <none>               (no description available)
+un  virtual-mysql-server <none>               (no description available)
+这里，ii表示安装，un表示没有安装。
+
+*列出一个deb包包含的内容：
+$ dpkg -c apt-file_2.4.0_all.deb 
+输入之后，输出如下：
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./etc/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./etc/bash_completion.d/
+-rw-r--r-- root/root       748 2010-05-27 04:59 ./etc/bash_completion.d/apt-file
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./etc/apt/
+-rw-r--r-- root/root      2207 2010-05-27 04:59 ./etc/apt/apt-file.conf
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./var/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./var/cache/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./var/cache/apt/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./var/cache/apt/apt-file/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/bin/
+-rwxr-xr-x root/root       155 2010-05-27 04:59 ./usr/bin/rapt-file
+-rwxr-xr-x root/root     23647 2010-05-27 04:59 ./usr/bin/apt-file
+-rwxr-xr-x root/root      8762 2010-05-27 04:59 ./usr/bin/diffindex-rred
+-rwxr-xr-x root/root     10584 2010-05-27 04:59 ./usr/bin/diffindex-download
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/doc/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/doc/apt-file/
+-rw-r--r-- root/root       464 2009-11-02 01:06 ./usr/share/doc/apt-file/copyright
+-rw-r--r-- root/root      7771 2010-05-27 04:58 ./usr/share/doc/apt-file/changelog.gz
+-rw-r--r-- root/root       401 2008-05-31 15:24 ./usr/share/doc/apt-file/README
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/apt-file/
+-rwxr-xr-x root/root      6132 2010-05-27 04:59 ./usr/share/apt-file/rapt-file
+-rwxr-xr-x root/root       370 2010-05-27 04:59 ./usr/share/apt-file/is-cache-empty
+-rwxr-xr-x root/root        98 2010-05-27 04:59 ./usr/share/apt-file/do-apt-file-update
+-rw-r--r-- root/root       290 2010-05-27 04:59 ./usr/share/apt-file/apt-file-update.update-notifier
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/man/
+drwxr-xr-x root/root         0 2010-05-27 04:59 ./usr/share/man/man1/
+-rw-r--r-- root/root       906 2010-05-27 04:59 ./usr/share/man/man1/diffindex-download.1.gz
+-rw-r--r-- root/root       646 2010-05-27 04:59 ./usr/share/man/man1/diffindex-rred.1.gz
+-rw-r--r-- root/root      2649 2010-05-27 04:59 ./usr/share/man/man1/apt-file.1.gz
+
+*显示package中的相关信息：
+$ dpkg -I apt-file_2.4.0_all.deb 
+ new debian package, version 2.0.
+ size 32016 bytes: control archive= 1497 bytes.
+      55 bytes,     2 lines      conffiles            
+     629 bytes,    14 lines      control              
+     927 bytes,    14 lines      md5sums              
+     726 bytes,    29 lines   *  postinst             #!/bin/sh
+     178 bytes,    10 lines   *  postrm               #!/bin/sh
+ Package: apt-file
+ Version: 2.4.0
+ Architecture: all
+ Maintainer: Stefan Fritsch <sf@debian.org>
+ Installed-Size: 188
+ Depends: perl, curl, libconfig-file-perl, libapt-pkg-perl, liblist-moreutils-perl, libregexp-assemble-perl, libfile-temp-perl
+ Recommends: python
+ Suggests: openssh-client, sudo
+ Section: admin
+ Priority: optional
+ Description: search for files within Debian packages (command-line interface)
+  apt-file is a command line tool for searching files contained in packages
+  for the APT packaging system. You can search in which package a file is
+  included or list the contents of a package without installing or fetching it.
+
+
+*创建一个deb包(只能安装，不能删除，不能指定路径安装)：
+============
+*将一个debian软件安装包解压：
+#ar -x apt-file_2.4.0_all.deb
+这样之后，一般从包中解压出三个文件：
+control.tar.gz  data.tar.gz  debian-binary
+其中，
+debian-binary 文本文件包含二进制软件包的版本号，该版本号应该是2.0(查看debian-binary可以看到里面内容是"2.0")。
+control.tar.gz 文件包含控制文件、postinst 文件和 prerm 文件，postinst 文件包含了有关在安装了该软件包后如何做的指令，而 prerm 文件则包含了除去指令。control.tar.gz 可能还包括另外两个文件：一个文件名为 conffiles，包含有关软件包配置文件的信息，另一个名为 md5sums，包含软件包的 MD5 校验和。
+data.tar.gz 包含软件包的实际“有效载荷”。即，它包含一个带有您程序全部相关文件的文件系统，这些文件在安装时会被放到您系统的文件系统中适当的位置。
+下载apt-file_2.4.0_all.deb(http://www.debian.org/distrib/packages)
+
+*查看更多帮助：
+#man 5 deb
+
+*
+#pwd
+/home/lv-k/temp/dpkg/test/dpkg_test
+#tree fakeroot
+fakeroot/
+├── DEBIAN
+│   ├── conffiles
+│   ├── control
+│   ├── debian-binary
+│   ├── md5sums
+│   ├── postinst
+│   └── postrm
+├── etc
+│   └── myconfig.conf
+└── usr
+    ├── bin
+    │   └── myapplication
+    └── lib
+        └── libmy.so
+
+5 directories, 9 files
+文件内容依次如下：
+
+*制做软件包：
+$ chmod 0775 fakeroot/DEBIAN/postinst
+$ chmod 0775 fakeroot/DEBIAN/postrm
+$ dpkg -b fakeroot/ myapplication_1.0-1_i386.deb
+dpkg-deb: building package `myapplication:i386' in `myapplication_1.0-1_i386.deb'.
+这里，如果不运行chmod来修改权限则会提示如下：
+dpkg-deb: building package `myapplication:i386' in `myapplication_1.0-1_i386.deb'.
+另外，Debian软件包命名遵循下列约定: <软件包名称>_<版本>-<Debian修订号>_<平台>.deb（如nano_1.3.10-2_i386.deb）。
+
+*查看制作的软件包：
+v-k@quietheart:~/temp/dpkg/test/dpkg_test$ dpkg -I myapplication_1.0-1_i386.deb 
+ new debian package, version 2.0.
+ size 6224 bytes: control archive= 1176 bytes.
+      19 bytes,     1 lines      conffiles            
+     557 bytes,    26 lines      control              
+   12288 bytes,     0 lines      .control.swp         
+       4 bytes,     1 lines      debian-binary        
+     159 bytes,     3 lines      md5sums              
+      35 bytes,     4 lines   *  postinst             #!/bin/sh
+      32 bytes,     3 lines   *  postrm               #!/bin/sh
+ Package: myapplication
+ Version: 1.0
+ Maintainer: QuietHeart <quiet_heart000@126.com>
+ Architecture: i386
+ Homepage: quietheart.sf.net
+ Description: The description can contain free-form text
+  describing the function of the program, what kind of features it has, and so on.
+  More descriptive text see 'man 5 deb-control'.
+  (1)Must include are:
+  Package: 
+  Version: 
+  Maintainer: 
+  Description:
+  (2)Option Fields such as:
+  Architecture:
+  Homepage:
+  Section:
+  Priority:
+  Essential:
+  Depends:
+  Pre-Depends:
+  Recommends:
+  Suggests:
+  Installed-Size:
+  Conflicts:
+  ...
+
+*查看制作的软件包将要安装的内容
+$ dpkg -c myapplication_1.0-1_i386.deb 
+drwxrwxr-x lv-k/lv-k         0 2012-03-20 15:05 ./
+drwx------ lv-k/lv-k         0 2012-03-20 13:42 ./etc/
+-rw-r--r-- lv-k/lv-k        18 2012-03-20 13:42 ./etc/myconfig.conf
+drwx------ lv-k/lv-k         0 2012-03-20 13:41 ./usr/
+drwx------ lv-k/lv-k         0 2012-03-20 13:41 ./usr/bin/
+-rwxrwxr-x lv-k/lv-k      9143 2012-03-20 13:41 ./usr/bin/myapplication
+drwx------ lv-k/lv-k         0 2012-03-20 13:42 ./usr/lib/
+-rwxrwxr-x lv-k/lv-k      8581 2012-03-20 13:42 ./usr/lib/libmy.so
+
+*安装软件包：
+root@quietheart:/home/lv-k/temp/dpkg/test/dpkg_test# dpkg -i myapplication_1.0-1_i386.deb 
+(Reading database ... 160998 files and directories currently installed.)
+Preparing to replace myapplication:i386 1.0 (using myapplication_1.0-1_i386.deb) ...
+Unpacking replacement myapplication:i386 ...
+postrm
+upgrade
+Setting up myapplication:i386 (1.0) ...
+begin postinst.
+the parameter $1 is: configure
+the parameter $2 is: 1.0
+the parameter $3 is:
+end postinst.
+
+*指定路径安装：
+#dpkg -i --instdir=<dir> package
+
+*卸载软件包：
+#dpkg -r myapplication_1.0-1
+好象不好用。
+
+

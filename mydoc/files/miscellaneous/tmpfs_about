@@ -1,0 +1,97 @@
+http://cache.baidu.com/c?m=9d78d513d99d1af31fa7837e7c5088244d1594247c89df4f3992d15f9217465c1738beee30226707d7c46b6776fe1403f7a86d2e67507ce2c593951a83e6c7356ece74722b4d9b4211d41dafcc4722c1209258e2ae19e6b0f03590abd1d4dc49&p=8b2a9415d9c217e618aeca234d&user=baidu
+tmpfs文件系统
+概述
+
+    * tmpfs是一种虚拟内存的文件系统.它既可以使用 RAM,也可以使用交换分区,但自己并不知道使用的页面是在交换分区还是在 RAM 中,由VM(virtual memory，VM)子系统工作机制来决定的.tmpfs 文件系统所知道的就是它正在使用某种形式的虚拟内存.
+    * 因为典型的 tmpfs 文件系统会完全驻留在 RAM 中,读写几乎可以是瞬间的.并且具有很大的灵活性,可以动态调整自身大小:当RAM资源紧张时,tmpfs部分内容会被移动到交换分区.tmpfs 数据在重新启动之后不会保留.
+    * tmpfs是文件系统,是通过mount来挂载的.我们先通过$mount来查看下我们当前操作系统挂载的文件系统. 
+
+/dev/sda2 on / type ext3 (rw,relatime,errors=remount-ro)
+proc on /proc type proc (rw,noexec,nosuid,nodev)
+/sys on /sys type sysfs (rw,noexec,nosuid,nodev)
+varrun on /var/run type tmpfs (rw,noexec,nosuid,nodev,mode=0755)
+varlock on /var/lock type tmpfs (rw,noexec,nosuid,nodev,mode=1777)
+udev on /dev type tmpfs (rw,mode=0755)
+devshm on /dev/shm type tmpfs (rw)
+devpts on /dev/pts type devpts (rw,gid=5,mode=620)
+lrm on /lib/modules/2.6.24-16-generic/volatile type tmpfs (rw)
+/dev/sda3 on /home type ext3 (rw,relatime)
+securityfs on /sys/kernel/security type securityfs (rw)
+
+发现在/dev/shm下,操作系统已经为我们挂载了一个可使用的tmpfs文件系统;在/var下,操作系统也正是使用tmpfs文件系统来存放各种系统变量.
+创建
+
+    * 建立一个目录/mnt/tmpfs
+    * 以tmpfs文件系统格式mount到/mnt/tmpfs,指定使用最大内存,"-o size=50M" 
+
+mount -t tmpfs -o size=50M tmpfs /mnt/tmpfs/
+
+    * 用df -h 来检查是否正确.如果mount成功后,该目录大小是50M
+    * 使用free 来查看内存使用情况 
+
+注:其实系统已经为我们创建了一个可供使用的tmpfs文件系统,/dev/shm.
+测试
+
+通过对比普通的磁盘文件和tmpfs文件来比较其读写性能.
+
+    * /mnt/tmp为普通的文件目录,/mnt/tmpfs为tmpfs文件系统目录,/dev/shm也为tmpfs文件系统.
+          o 写普通文件到普通文件,速率:15.3 MB/秒 
+
+root@lijinbang-desktop:/mnt/tmpfs# time dd if=/home/lijinbang/A/SrData0722/722_1mstrip11.0005 of=/mnt/tmp/zero bs=1M count=128
+记录了 128+0 的读入
+记录了 128+0 的写出
+134217728 bytes (134 MB) copied，8.7819 秒，15.3 MB/秒
+
+real 0m8.832s
+user 0m0.008s
+sys 0m1.096s
+
+    *
+          o 写普通文件到tmpfs文件,速率:32.7 MB/秒 
+
+root@lijinbang-desktop:/mnt/tmpfs# time dd if=/home/lijinbang/A/SrData0722/722_1mstrip11.0014 of=/mnt/tmpfs/zero bs=1M count=128
+dd: 正在写入 “/mnt/tmpfs/zero”: 设备上没有剩余空间
+记录了 128+0 的读入
+记录了 127+0 的写出
+134082560 bytes (134 MB) copied，4.10379 秒，32.7 MB/秒
+
+real 0m4.134s
+user 0m0.004s
+sys 0m0.812s
+
+    *
+          o 写tmpfs文件到普通文件,速率:32.2 MB/秒 
+
+root@lijinbang-desktop:/mnt/tmpfs# time dd if=/mnt/tmpfs/zero of=/mnt/tmp/zero bs=1M count=128
+记录了 127+1 的读入
+记录了 127+1 的写出
+134082560 bytes (134 MB) copied，4.16382 秒，32.2 MB/秒
+
+real 0m4.170s
+user 0m0.004s
+sys 0m1.036s
+
+    *
+          o 写tmpfs文件到tmpfs文件,速率:64.2 MB/秒 
+
+root@lijinbang-desktop:/mnt/tmpfs# time dd if=/mnt/tmpfs/zero of=/dev/shm/zero bs=1M count=128
+记录了 127+1 的读入
+记录了 127+1 的写出
+134082560 bytes (134 MB) copied，2.08752 秒，64.2 MB/秒
+
+real 0m2.220s
+user 0m0.004s
+sys 0m0.732s
+
+小结
+
+由于tmpfs既使用内存,又可能使用了部分交换分区,所以不能指望使用tmpfs提高的读写速率倍数就等于(内存读写速率/磁盘读写速率).但从测试来看,使用tmpfs确实使读写速率翻了两倍.现在是在单机环境下做的测试,接下来会在glusterfs环境下测试.
+
+    * 补充:经测试,glusterfs对tmpfs支持并不是很好.一个存储结点一个客户端情况正常，但多个结点stripe到一个客户端时，就报错， 
+
+[stripe.c:3283:stripe_check_xattr_cbk] stripe0: [CRITICAL]: 'remote3' doesn't support Extended attribute for users: Operation not supported
+
+参考
+
+    * <<Linux操作系统之奥秘>> 邱世华 著
+    * 通用线程: 高级文件系统实现者指南，第 3 部分   http://www.ibm.com/developerworks/cn/linux/filesystem/l-fs3/

@@ -1,0 +1,123 @@
+wordpress简易安装过程
+
+主要内容：
+一、简介
+二、安装
+三、其它
+
+一、简介
+===================
+WordPress是一种使用PHP语言开发的博客平台，用户可以在支持PHP和MySQL 数据库的服务器上架设自己的网志。也可以把 WordPress 当作一个内容管理系统（CMS）来使用。WordPress 是一个免费的开源项目，在GNU通用公共许可证下授权发布。
+总之，我们可以利用wordpress来建立自己站点。
+更为具体的内容可以参考：
+http://baike.baidu.com/view/23618.htm
+
+二、安装
+===================
+Wordpress非常容易安装，安装过程不足5分钟。有许多网站提供了自动安装工具（例如Fantastico），下面将会介绍我们自己安装的过程。当然，使用自动升级的方法，升级会更加容易。
+主要参考：
+http://codex.wordpress.org.cn/Installing_WordPress
+以及下载的wordpress中的readme.html文档。
+
+1，安装前的准备
+具体参考：http://codex.wordpress.org.cn/Installing_WordPress#Things_to_Know_Before_Installing_WordPress
+1)检查你的主机，确保它有能够运行wordpress所需的最小条件.
+*PHP4.3以上
+*MySQL4.1.2以上
+*用于运行wordpress的网络服务程序（例如Apache或者Nginx等只要支持php或者mysql就行）
+具体参考：http://wordpress.org/about/requirements/
+
+2)下载最新版本的wordpress
+下载地址：http://wordpress.org/download/
+
+3)解压下载的文件到你硬盘上面的一个文件夹中
+
+参考：http://codex.wordpress.org.cn/Editing_wp-config.php
+
+2，安装过程
+下面介绍本人安装wordpress的具体过程。
+机器环境:CentOS release 5.5 (Final)
+
+主要分为两个部分：LAMP(Linux+Apache+PHP+MySQL)配置，Wordpress安装。具体如下：
+1)安装Apache+PHP+MySQL:
+[root@lv-k etc]#yum -y install httpd php mysql mysql-server php-mysql httpd-manual mod_ssl mod_perl mod_auth_mysql php-mcrypt php-gd php-xml php-mbstring php-ldap php-pear php-xmlrpc mysql-connector-odbc mysql-devel libdbi-dbd-mysql
+参考：http://liyuan462.iteye.com/blog/679015
+
+2)启动httpd服务
+[root@lv-k etc]#service httpd start
+这里，配置的apache访问路径可以修改/etc/httpd/conf/httpd.conf文件，默认DocumentRoot "/var/www/html"意思是访问的文件在/var/www/html中。使用chkconfig httpd on设置apache为自启动.假设本地ip地址为10.1.2.213，那么直接敲入10.1.2.213即可访问配置路径中的index.html文件了。
+
+3)添加mysql帐号：
+[root@lv-k etc]#service mysqld start
+[root@lv-k etc]#mysqladmin -u root password '123'
+这里首先启动mysqld服务，然后设置mysql数据库root帐号密码,密码为123。
+通过"chkconfig mysqld on"设置mysqld服务为自启动。
+
+4)创建一个用于wordpress的数据库，以及可以修改它的用户：
+(a)使用root用户登录mysql：
+[root@lv-k html]#mysql --user=root --password=123
+这里，假设root用户的密码是123。这样会有 "mysql>"提示符号，提示你和mysql进行交互。
+(b)运行mysql下面的命令，创建一个超级用户：
+mysql>grant all privileges on *.* to 'quietheart'@'localhost'
+-> identified by '123' with grant option;
+这里，创建了一个用户"quietheart",其密码是"123".注意，这里第一行"@"字符的左右没有空格，之后回车就会有第二行的"-> "提示符号了。
+(c)运行mysql命令创建一个wordpress使用的数据库：
+mysql> create database wordpress_db;
+Query OK, 1 row affected (0.00 sec)
+
+(d)退出mysql:
+退出直接按[Ctrl]d，或者mysql>exit. 
+
+5)将下载的最新wordpress解压到web路径。
+[root@lv-k html]#tar -xzvf wordpress-3.1.2.tar.gz -C /var/www/html/
+这里，解压的wordpress目录中有一个readme.html文件，里面有大致的安装文档。
+
+6)打开浏览器，运行wp-admin/install.php:
+在地址栏输入：http://10.1.2.213/wordpress/wp-admin/install.php
+这样会提示，没有wp-config.php文件，是否选择创建一个，一般来说，自己手动创建一个会更好，所以我们应该先手动创建一个wp-config.php文件，设置好数据库之后再进行install.php.
+
+7)创建并编辑wp-config.php
+[root@lv-k html]#cd /var/www/html/wordpress
+[root@lv-k wordpress]# mv wp-config-sample.php wp-config.php
+[root@lv-k wordpress]# vim wp-config.php
+文件内容如下：
+<?php
+define('DB_NAME', 'wordpress_db');
+define('DB_USER', 'quietheart');
+define('DB_PASSWORD', '123');
+define('DB_HOST', 'localhost');
+define('DB_CHARSET', 'utf8');
+define('DB_COLLATE', '');
+define('AUTH_KEY',         'put your unique phrase here');
+define('SECURE_AUTH_KEY',  'put your unique phrase here');
+define('LOGGED_IN_KEY',    'put your unique phrase here');
+define('NONCE_KEY',        'put your unique phrase here');
+define('AUTH_SALT',        'put your unique phrase here');
+define('SECURE_AUTH_SALT', 'put your unique phrase here');
+define('LOGGED_IN_SALT',   'put your unique phrase here');
+define('NONCE_SALT',       'put your unique phrase here');
+$table_prefix  = 'wp_';
+define('WPLANG', '');
+define('WP_DEBUG', false);
+if ( !defined('ABSPATH') )
+	define('ABSPATH', dirname(__FILE__) . '/');
+require_once(ABSPATH . 'wp-settings.php');
+这里，我们只要把一个现成的模板文件wp-config-sample.php重新命名为wp-config.php就行了，然后将前面设置的mysql信息添加到对应的位置。
+
+8)打开浏览器，运行wp-admin/install.php:
+在地址栏输入：http://10.1.2.213/wordpress/wp-admin/install.php
+这样会转到一个界面，填入必要的信息（网站名称，用户，密码，Email等），然后点击install就行了。
+
+9)访问我的网站：
+在地址栏输入：http://10.1.2.213/wordpress/
+这样会自动执行index.php文件，然后就访问到自己的网站了。
+至此，最简单的建立wordpress站点的过程描述完毕，我们可以在这个站点上面发布自己的文章了。
+
+三、其它
+===================
+补充的内容，
+目前也是刚刚接触wordpress不久，以上是在我的机器上的实践过程，如果有其它问题或者建议，可以通过下面的方式联系我，谢谢。
+
+作者：QuietHeart
+Email:quiet_heart000@126.com
+Blog:quietheart.cublog.cn

@@ -1,0 +1,175 @@
+######20090728
+1,看hal有没有相关的接口：
+lshal
+看其中的udi有没有相关的接口。
+
+2，看hal提供的接口好不好用：
+standby:
+suspend:
+参考：
+dbus-send --system --type=method_call --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Suspend 
+
+hibernate:
+
+如果hal接口不可用，那么可能需要apm来实现。
+apm -s(可用)
+
+3,看看源代码中给定的接口好不好用：
+standby:
+suspend:
+参考：
+hibernate:
+
+
+看源代码中是怎样调用接口的。
+根据文档可以知道源代码程序中提供的dbus接口。
+看看这个接口好不好用，(也就是是否正确调用了hal的接口)
+
+######20090729
+正确在三星板子上编译并运行源代码的方法：
+========================================
+1,首先运行的方法：
+过程：
+1）首先建立一个目录，
+mkdir /usr/share/gnome-power-manager
+如果没有这个目录，安装的时候会出错。
+2）安装，也就是直接在 package好的包里面运行
+./install.sh x86_x11 .
+这里面可能会有一个警告，说拷贝了相同的文件，不用管它。
+3)安装运行需要的库：
+apt-get install libgnome-menu2
+这样，才能运行gnome-screensaver
+
+apt-get install libgstreamer0.10-0
+apt-get install libwnck22
+apt-get install libpanel-applet2-0
+这样才能够运行gnome-power-manager
+3)运行程序：
+gnome-screensaver
+gnome-power-manager
+这两个相当于守护程序，监听用户请求。
+
+gnome-power-preferences
+这个使用户配置时候的界面，由它来向守护进程发送请求。
+
+至此，程序可以运行。
+
+2，编译powermanager的方法：
+1）首先安装编译需要的库：
+apt-get install gnome-doc-utils
+apt-get install libgstreamer0.10-dev
+apt-get install libwnck-dev
+apt-get install libpanelappletmm-2.6-dev
+2)编译：
+./build x86_x11
+
+至此，可以编译通过，接下来可以修改源代码然后测试了。例如主要修改2.22*目录中的文件，修改完了直接在这里make就行了，要不./build太慢了。
+
+测试D-Bus发送消息是否成功
+=========================
+这里，有可能D-Bus机制有问题导致无法发送消息，因为其他模块利用D-Bus的时候无法使用，并且电源管理程序刚刚运行的时候也说找不到D-Bus服务。
+自己编写了一个测试程序，测试的结果是：
+??????
+
+测试Hal用D-Bus发送消息,看电源管理是否好用的方法：
+========================================
+1)首先登录板子，运行
+lshal
+该命令列出hal相关信息。
+
+2）在hal信息中找到关于电源管理的udi,提取出dbus的相关接口信息为：
+D-Bus服务名字：org.freedesktop.Hal
+设备对象路径：/org/freedesktop/Hal/devices/computer
+电源管理接口:org.freedesktop.Hal.Device.SystemPowerManagement
+
+电源管理接口函数：
+Suspend,参数为：num_seconds_to_sleep
+SuspendHybrid,参数为：num_seconds_to_sleep
+Hibernate,无参数。
+Shutdown，无参数
+Reboot，无参数
+SetPowerSave,参数为：enable_power_save
+
+可以使用的函数情况：
+  power_management.can_hibernate = false  (bool)
+  power_management.can_suspend = true  (bool)
+  power_management.can_suspend_hybrid = false  (bool)
+  power_management.can_suspend_to_disk = false  (bool)
+  power_management.can_suspend_to_ram = true  (bool)
+  power_management.is_powersave_set = false  (bool)
+
+3)根据hal信息，测试相应接口是否好用：
+测试suspend功能，输入以下命令：
+dbus-send --system --print-reply --type=method_call --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Suspend
+结果，不好用,提示没有相应的函数。换一个命令：
+
+dbus-send --system --print-reply --type=method_call --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Suspend int32:0
+结果，好用，但是似乎屏幕没有关闭，屏幕白色了。
+
+测试apm命令实现电源管理是否好用的方法
+=================
+首先，
+root@mojo:~# modprobe apm_power
+root@mojo:~# lsmod
+加载apm模块。
+
+1,测试standby功能：
+apm -S
+结果，不好用。
+
+2,测试suspend功能：
+apm -s
+结果，
+和前面hal测试suspend的效果一样，屏幕变白，然后没有响应了。
+
+测试gnome-power-manager是否好用的方法
+=====================================
+1,测试Suspend:
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.Suspend
+结果???
+
+2,测试Hibernate
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.Hibernate
+结果???
+
+3,测试Shutdown
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.Shutdown
+结果???
+
+4,测试Reboot
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.Reboot
+结果???
+
+5,测试CanSuspend
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.CanSuspend
+结果???
+
+6,CanHibernate
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.CanHibernate
+结果???
+
+7,GetOnBattery
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.GetOnBattery
+结果???
+
+8,GetLowBattery
+dbus-send --print-reply --type=method_call --dest=org.freedesktop.PowerManagement /org/freedesktop/PowerManagement org.freedesktop.PowerManagement.GetLowBattery
+结果???
+
+
+杂项
+======
+一个关闭屏幕的方法：
+xset dpms force off
+可以是standby,suspend,off这样都会“关闭屏幕”，移动鼠标会恢复屏幕。
+
+其他信息：
+root@mojo:~# apm -v
+APM BIOS 1.2 (kernel driver 1.13)
+
+root@mojo:~# apm -V
+apm version 3.2.1
+
+######20090803
+测试屏保程序是否好用的方法：
+=========================

@@ -1,0 +1,59 @@
+
+
+6)标准输入输出的效率
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec8.html
+这一节，将使用标准输入输出和直接使用系统调用进行输入输出的时间进行了对比，主要是对：char的std I/O，line的std I/O，系统调用设置最优缓存的I/O，以及系统调用没有设置缓存的I/O 进行了对比，对比的表格如下：
+	Figure 5.6. Timing results using standard I/O routines
+
+ ┌──────────────────────────────┬──────────────────┬────────────────────┬────────────────────┬─────────────────────┐
+ │           Function           │     User CPU     │     System CPU     │     Clock time     │  Bytes of program   │
+ │                              │    (seconds)     │     (seconds)      │     (seconds)      │        text         │
+ ├──────────────────────────────┼──────────────────┼────────────────────┼────────────────────┼─────────────────────┤
+ │ best time from Figure 3.5    │             0.01 │               0.18 │               6.67 │                     │
+ ├──────────────────────────────┼──────────────────┼────────────────────┼────────────────────┼─────────────────────┤
+ │ fgets, fputs                 │             2.59 │               0.19 │               7.15 │         139         │
+ ├──────────────────────────────┼──────────────────┼────────────────────┼────────────────────┼─────────────────────┤
+ │ getc, putc                   │            10.84 │               0.27 │              12.07 │         120         │
+ ├──────────────────────────────┼──────────────────┼────────────────────┼────────────────────┼─────────────────────┤
+ │ fgetc, fputc                 │            10.44 │               0.27 │              11.42 │         120         │
+ ├──────────────────────────────┼──────────────────┼────────────────────┼────────────────────┼─────────────────────┤
+ │ single byte time from Figure │           124.89 │             161.65 │             288.64 │                     │
+ │ 3.5                          │                  │                    │                    │                     │
+ └──────────────────────────────┴──────────────────┴────────────────────┴────────────────────┴─────────────────────┘
+We show this data when operating on the same file (98.5 MB with 3 million lines) 。
+	
+	发现：
+	直接使用库函数，并不比最优缓存的系统调用I/O差很多。使用库函数，我们不用考虑系统最优缓存了，有时候只是考虑buffer大小就行了,这比系统调用考虑最优缓存方便多了。如果line的std I/O使用char的std I/O实现的话，其消耗的时间要比char的std I/O要大，但是由于line的std I/O是用高效率的memccopy实现的，所以快。
+	使用char的std I/O比没有缓存的系统调用I/O要快，尽管循环次数差不多，而且char的还额外增加了一点sys的循环，但是一次系统调用的代价，比一次函数调用的代价大很多，所以，char的std I/O比纯粹没有缓存系统调用的I/O代价要小。
+	使用std I/O需要增加一些system time用来拷贝。一般重要的程序，I/O应该占用user time更多。
+
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec9.html
+	注意：fread和fwrite的一个问题是：fread的数据必须是fwrite从同一个系统上面写的。大致因为：
+	1）不同系统上面，编译环境有可能不同，结构的字节对齐因素等也不同。
+	2）不同的系统，二进制文件格式可能不同，可能还包含了平台相关的信息。
+
+==================
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec12.html
+	想要查看流对应的文件描述符号，使用如下函数：
+	#include <stdio.h>
+	int fileno(FILE *fp);
+	这样就可使用dup和fcntl了。
+7)关于流的定位：
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec10.html
+	有三组方法在I/O流中进行定位：
+	1)ftell和fseek:在大约version7时开始，它们把位置存放在一个长整型中去。
+	2)ftello和fseeko:在Single UNIX Specification是里面被引入，允许文件的偏移是off_t类型的。
+	3)fgetpos和fsetpos:由ISO C引入，它使用一个fpos_t类型来存放文件的位置，这个类型可以记载需要的文件大小。
+	需要移植到非Unix的程序，最好用fgetpos和fsetpos。
+
+8)关于创建临时文件
+	#include <stdio.h>
+	char *tmpnam(char *ptr);
+	FILE *tmpfile(void);
+
+9)其他输入输出库：
+	除了标准输入输出库(stdio)之外，还有其他的可选的输入输出库用于特定的目的。
+	标准输入输出库并不是完美的，例如在我们使用line的buffer流进行标准输入输出时候，需要拷贝两次数据：一次是从内核到标准输入输出流的buffer,另外一次是从流buffer拷贝到我们的linebuffer。fast i/o(fio)库解决了这个问题。
+	sfio库的速度类似fio库，通常都比stdio快。还有适合嵌入式占用内存较少的uClibc和newLibc等。
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec14.html
+

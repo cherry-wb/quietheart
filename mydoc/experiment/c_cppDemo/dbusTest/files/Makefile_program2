@@ -1,0 +1,2 @@
+program2:program2.c
+	gcc -o program2 program2.c `pkg-config --cflags --libs gtk+-2.0 dbus-glib-1`

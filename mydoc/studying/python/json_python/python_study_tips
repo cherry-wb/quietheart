@@ -1,0 +1,71 @@
+一些技巧
+一些问题
+
+
+1,help and documents
+Assume I have type 'python' under shell:
+*basic help
+>>>help()
+shows some help tips.
+
+*get help of a module:
+>>>help(os)
+or
+>>>os
+this will get the help document of 'os' module, you should 'import os' first.
+
+2,special tips
+*'pass' means an empty block.
+for example:
+class person:
+	pass
+
+*'__name__' is name of the module.
+if it run by itself then __name__ is '__main__' , or it will be the module name.
+
+*'dir()' shows the module symbols.
+
+*'__init__' function is similar with constructor in C++/Java class. While the '__del__' is similar with destructor in C++/Java class.
+
+*'__doc__' is document string of function, this module, class and other objects .
+
+*lambda:
+returns a function, for example:
+>>> t=lambda s:s+5
+>>> t(10)
+15
+>>> t=lambda s:s+'hello'
+>>> t('word')
+'wordhello'
+>>> t=lambda s:s*s
+>>> t(5+5)
+100
+
+Here, function argument should be one and is 's' in lambda.
+lambda value must be expression not function call(this example is "s*s" etc.).
+
+*查看keyword:
+import keyword
+dir(keyword)
+由此可知有哪些函数可以查询关键字。
+
+*一首比较好的描述python的诗歌：
+import this
+
+一些技巧
+===========
+1,什么是pyc文件：
+参考：http://zhidao.baidu.com/question/8262142.html?an=0&si=1
+	输入一个模块相对来说是一个比较费时的事情，所以Python做了一些技巧，以便使输入模块更加快一些。一种方法是创建 字节编译的文件 ，这些文件以.pyc作为扩展名。字节编译的文件与Python变换程序的中间状态有关（是否还记得Python如何工作的介绍？）。当你在下次从别的程序输入这个模块的时候，.pyc文件是十分有用的——它会快得多，因为一部分输入模块所需的处理已经完成了。另外，这些字节编译的文件也是与平台无关的。所以，现在你知道了那些.pyc文件事实上是什么了。
+
+2,如何生成pyc文件：
+参考：http://zhidao.baidu.com/question/291690061.html?an=0&si=1
+没有直接的命令，import之后会自动生成，另外有如下语句：
+import py_compile
+py_compile.compile('abc.py') 
+"好象"dis"可以解开字节码，另外开源工具decompyle也可以反编译。"
+
+一些问题
+===========
+如何有类似宏的调试控制开关，控制打印的语句？
+如何调用其他的python脚本同时传入本脚本中定义的变量？以及环境(例如搜索路径)？

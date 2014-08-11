@@ -1,0 +1,133 @@
+参考资料：
+smb://10.1.29.125/SonyFS/Documents/TechnologyDoc
+nbl-5_0_DIABLO_20100326-docs.tar.gz
+
+简介
+NBL (Nor Flash? Boot Loader)是一个bootloader,它具有以下特点：
+* Closed source
+	不是GPL的。
+* linux启动
+    这是为linux内核设计的。
+* shell
+    有一些类似shell的命令。
+* Boot profile 功能
+    可以把启动内核参数，内核参数，initrd相关参数做为一个集合"Profile"进行管理。
+* Boot selection function
+	启动时候出现问题的时间，  升级系统时候，可以自动选择切换内核启动.
+* daiagu功能
+	这是制造时候必须的功能。
+* 文件系统功能
+    可以管理和访问uvfat文件系统。
+* SDM device
+    可以管理和设置环境变量，log，维护各种设置信息。
+*Network access
+    BOOTP and TFTP and SYSLOG所获取的网络地址来传输文件登记日志的功能。 
+* NUP(NBL User Program)
+    可以在NBL上面执行一个特殊目的的程序。
+* BIOS call
+	可以从NUP程序和linux内核从bios调用nbl功能.
+
+
+主要内容：
+1,烧写方法
+2,启动设置
+3,制作镜像
+参考资料
+
+1,烧写方法
+NBL烧写：借助ICE(advicePro)程序，通过串口; 通过minicom基于tftp在已有NBL上升级。（省略）
+
+内核和文件系统烧写：
+NBL> setenv gateip 10.1.29.1
+NBL> set servip 10.1.29.44
+NBL> diag ethaddr 00:11:22:33:44:55
+
+NBL> sdm init
+NBL> sdm create -n -l 0x600000 kernel
+NBL> sdm create -n -l 0x600000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+
+NBL> sdm list
+sdma: nblconfig
+    device      : 0
+    start sect  : 0x88
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmb: sdmreg
+    device      : 0
+    start sect  : 0xa8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmc: sdmlog
+    device      : 0
+    start sect  : 0xc8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmd: kernel
+    device      : 0
+    start sect  : 0xe8
+    image size  : 0x400000 bytes(0x400 sectors)
+    protect     : No
+sdme: initrd_fat
+    device      : 0
+    start sect  : 0x4e8
+    image size  : 0x800000 bytes(0x800 sectors)
+    protect     : No
+NBL>sdm devlist
+
+2,启动设置
+2.1环境变量方式：
+NBL> print
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+servip=10.1.29.44
+initrd=sdme1:uvfat:/boot/ramdisk.img
+boot_option=console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.180::10.1.29.1:255.255.255.0
+console=on
+
+NBL> print
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+servip=10.1.29.44
+initrd=
+boot_option=console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0
+console=on
+
+NBL> boot -r sdmd:raw:vmlinux.bin
+NBL> boot -t binary sdmd:raw:vmlinux.bin
+NBL> boot sdmd:raw:vmlinux.bin
+NBL> boot -r net:tftp:vmlinux.bin
+NBL> boot -r -d sdmd:raw:vmlinux.bin.gz
+
+2.2BOOTPROFILE方式：
+NBL管理一些和启动相关的参数，叫做Profile.
+设置profile需要使用bootprof命令，或者上传profile文件到特定的区域。
+
+NBL> bootprof init
+NBL> bootprof list
+[global]
+  normal    : Linux
+  recovery  : Linux0
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL>aboot -n
+NBL>aboot -r
+或更改跳线自动启动。
+启动模式有normal和recover模式，一般从normal模式启动，如果上次出现问题那么从recovery模式启动。
+
+无法通过选项指定启动内核的类型，所以文件名后缀必不可少。
+
+3,制作镜像
+$cd rootfs
+$find . |cpio --quiet -c -o | gzip -9 -n >../ramdisk.img
+
+解压镜像：
+$mv ramdisk.img ramdisk.img.gz
+$gunzip ramdisk.img
+$mkdir rootfs && cd $_
+$cpio -i <ramdisk.img

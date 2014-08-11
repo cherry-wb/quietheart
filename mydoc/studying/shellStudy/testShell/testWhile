@@ -1,0 +1,10 @@
+#!/bin/sh
+echo compute the sum from 1 to 10
+var=1
+sum=0
+echo 'right'
+while [$var -le 10]; do
+let sum = sum + var
+let var = var + 1
+done
+echo "the sum is $sum"

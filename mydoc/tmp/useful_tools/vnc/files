@@ -1,0 +1,197 @@
+参考资料：
+http://www.51testing.com/?uid-64098-action-viewspace-itemid-142803
+http://club.topsage.com/thread-1222636-1-1.html
+
+http://blog.163.com/gl_jiang@126/blog/static/761009722010614649825/
+Ubuntu下VNC配置
+文章分类:操作系统
+通过将服务器配置成VNC SERVER，可以让其他主机使用图形方式登录这台服务器。
+在ubuntu下配置vnc server很简单，方法如下：
+
+服务器端：
+1、先安装VNC服务程序：
+Shell代码 复制代码
+
+    $ sudo apt-get install vnc4-common vnc4server  
+
+
+
+2、给当前用户设置vnc登录密码：
+Shell代码 复制代码
+
+    $ vncpasswd   
+
+
+
+3、修改vnc的默认设置，使启动时运行gnome作为X的桌面（如果不设置，vnc将使用twm，你可以试试，相信你会很不习惯的）：
+Shell代码 复制代码
+
+    $ vncserver :1  
+    $ vncserver -kill :1  
+
+
+注意：里面的":1"代表display号，客户登录的时候得写相同的display号才能登录（见后面客户端部分）。
+修改~/.vnc/xstartup文件，建议拷贝系统中Xsession的配置文件：
+Shell代码 复制代码
+
+    $ cp /etc/X11/Xsession ~/.vnc/xstartup  
+
+
+
+然后再次启动VNC SERVER：
+Shell代码 复制代码
+
+        
+    $ vncserver -geometry 1280x800 :1  
+
+
+
+客户端：
+1、安装VNC客户程序：
+Shell代码 复制代码
+
+    $ sudo apt-get install vnc4-common xvnc4viewer  
+
+
+
+2、然后你就通过Terminal Server Client登录了：Applications -> Internet -> Terminal Server Client；Computer为：服务器IP:display#，例如：192.168.10.36:1；protocol选择：VNC。
+或者命令行：
+Shell代码 复制代码
+
+    $ vncviewer 192.168.10.36:1  
+
+============================================================
+
+用VNC远程登录Ubuntu桌面
+最近一直在用putty+pagent远程登录ubuntu，用命令行来操作和配置Ubuntu系统。
+不过老是觉得缺少了什么，觉得图形界面也不错，特别是安装了ubuntu-joES以后，想法更是强烈。
+以前的时候，可以在putty+xming来运行图形界面的程序，但是字体比较小。
+看了一下，可以用VNC来远程操纵ubuntu界面。
+我试用了两种VNC服务器软件：vnc4server和vncserver，客户端使用ultravnc，当然也可以使用tightvnc等其他的VNC客户端软件。
+VNC4Server篇
+服务器：
+vnc4server-免费软件，可以从源里面找到。
+sudo apt-get install vnc4server
+客户端：
+UltraVNC for Windows
+也是一个免费软件。UltraVNC包含Server和Client，不过我只安装了Client.
+特别值得一提的是，这个软件的插件里面有一个DSMplugin，可以实现加密传输，非常的好。
+UltraVNC下载：
+http://ultravnc.sourceforge.net/
+DSMPlugin下载（这里用不上了）：
+http://msrc4plugin.home.comcast.net/~msrc4plugin/index.html
+配置：
+1、生成一个passwd文件
+vnc4passwd
+在$HOME/.vnc目录下面生成一个passwd文件。
+$HOME/.vnc是一个vnc4server的关键目录。
+2、开启vnc4server
+输入：vnc4server
+会得到：desktop的名称，这个名称在客户端连接的时候用到。如果是desktop:1,在客户端连接的时候就填写：ip:5901，依此类推，如果是Desktop 2，在客户端的时候填写：ip:5902....
+首次运行会提示生成了.vnc/xstartup文件，这个文件里面包含着登录启动X时的一下配置。
+特别注意：
+现在从UltraVNC登录，可能得到一个比较简单的窗口，因为VNC4Server缺省启动的WM是twm，如果希望启动gnome，需要改动.vnc/xstartup ,我的配置如下：
+#!/bin/sh
+# Uncomment the following two lines for normal desktop:
+# unset SESSION_MANAGER
+# exec /etc/X11/xinit/xinitrc
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+xsetroot -solid grey
+vncconfig -iconic &
+xterm -geometry 1024x768+10+10 -ls -title \"$VNCDESKTOP Desktop\" &
+gnome-session &
+这样登录的时候，会自动启动gnome
+如果实在不是非常明白原理，或者出现问题，可以查看/usr/bin/vnc4server文件，这是一个Perl文件，你将非常明白其中的运作原理。
+VNCServer篇：
+如果使用vncserver，那么缺省的配置文件在$HOME/.vncrc里面，vncserver系统全局的配置文件在/etc/vnc.conf里面，从/usr/bin/vncserver（也是一个Perl文件）可以看到它的运作原理。
+另外，还需要改动/etc/vnc.conf，因为vncserver默认使用的是xfree系统，需要修改一下配置文件，大体如下：
+$XFConfigPath = \"/etc/X11/xorg.conf\";
+当然在这里还可以看到其他变量，如vncStartup，如果想启动默认的X系统，可以配置如下：
+$vncStartup = \"/etc/X11/Xsession\";
+如果在$HOME/.vncrc里面进行如下配置：
+#配置X系统为xorg
+$XFconfigPath = \"/etc/X11/xorg.conf\";
+# 启动默认Xsession
+$vncStartup = \"/etc/X11/Xsession\";
+#分辨率
+$geometry =\"800x600\";
+登录以后，会自动到默认桌面，如Gnome等，如果Ubuntu本机登录一样。
+另外还看到用xinited和vncserver来实现后台服务，不过我觉得风险还是比较大，因为它缺省使用root来运行，需要谨慎。
+Linux的VNC充分理由了Xorg的C/S体系，非常好用啊！
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://jerry051635.iteye.com/blog/1140463
+一直都用CentOS，最近开始用Ubuntu，配置了下vnc发现配置还有点不一样。 
+在安装上vnc，做了一些配置(vnc使用gnome-seeion启动)后，使用时出了两个问题： 
+1. 从远端使用vncviewer连接上后，只有一个终端，没有图形界面，有”could not acquire name on session bus”字样； 
+2. 上面的问题解决，vnc上后，按键”d”不能使用。 
+
+从网上找到解决办法，记录下来，以供后用。 
+
+1. 在ubuntu上安装： 
+sudo apt-get install vnc4server 
+
+2. 启动vncserver： 
+vncserver 
+首次启动会要求设置密码，后面可以使用vncpasswd修改； 
+看到 New ‘****:1 (****)’ desktop is ****:1 (****代表主机名）即表示启动vnc成功，在用户主目录下产生一个.vnc目录； 
+此时可以远程连接，注意上面的数字”1″,代表终端号，使用网页登陆即http://ip:5901, 使用vncviewer即ip:1； 
+
+3. 关闭vnc： 
+vncserver -kill :1 
+注意看kill后有空格； 
+
+4. 本来想像centos中修改vnc启动的图形界面调用gnome-session就算完事了，但不幸发生了，问题如上描述。解决办法如下(来自网络)，修改vnc启动文件： 
+备份原有xstartup文件: 
+mv ~/.vnc/xstartup ~/.vnc/xstartup.bak 
+复制一份新的xstartup文件: 
+cp /etc/X11/Xsession ~/.vnc/xstartup 
+
+上面两步还有一种方法： 
+sudo gedit ~/.vnc/xstartup 
+原文件内容： 
+#!/bin/sh 
+# Uncomment the following two lines for normal desktop: 
+# unset SESSION_MANAGER 
+# exec /etc/X11/xinit/xinitrc 
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup 
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources 
+xsetroot -solid grey 
+vnccon** -iconic & 
+x-terminal-emulator -geometry 80×24+10+10 -ls -title “$VNCDESKTOP Desktop” & 
+x-window-manager & 
+
+修改后： 
+#!/bin/sh 
+# Uncomment the following two lines for normal desktop: 
+unset SESSION_MANAGER 
+exec /etc/X11/xinit/xinitrc  (也可以修改为/etc/X11/Xsession, xinitrc在没有修改权限时远程桌面可能是一片雪花) 
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup 
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources 
+#xsetroot -solid grey 
+#vnccon** -iconic & 
+#x-terminal-emulator -geometry 80×24+10+10 -ls -title “$VNCDESKTOP Desktop” & 
+#x-window-manager & 
+
+修改/etc/X11/xinit/xinitrc文件权限，使起可执行： 
+sudo chmod 755 /etc/X11/xinit/xinitrc 
+
+5. 第一个问题在经过上面的配置后即可解决，下面是第二个问题： 
+ubuntu 10.10下有对Windows键的定义，在里面被定义为Super键，当用户在vnc下按下字母”d”时，会被错误的当做返回桌面的快捷方式导致”d”无法输入，此时可修改快捷键方式来避免此bug，新打开一个终端，在里面输入： 
+gconf-editor 
+弹出对话框，到“Apps->Metacity->Global keybingdings”中找“show desktop”，将其默认值<Super>D改为<Ctl>D即可 
+
+6、启动：vncserver -geometry 1440x900 :1 
+设置windows 和 linux的复制功能：vncconfig -nowin& 

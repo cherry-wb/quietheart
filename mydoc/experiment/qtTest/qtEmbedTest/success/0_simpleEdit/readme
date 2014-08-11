@@ -1,0 +1,10 @@
+程序功能：一个输入框，一个退出按钮。
+编译的方法是：
+$qmake -project
+$qmake
+$make
+运行的方法是：
+1）确保使用的是qt/e库。
+2)运行qvfb程序（虚拟framebuffer显示用，否则程序起不来。）
+3)./0_simpleEdit -qws
+这里，好像运行了一个之后，以后再运行就不用-qws了。

@@ -1,0 +1,125 @@
+http://www.cnbeta.com/articles/68549.htm
+
+感谢Zms的投递
+新闻来源:原创
+随着Ubuntu 8.10  正式版的推出，各个8.10衍生版本也相继放出。包括:Kubuntu，Xubuntu，Edubuntu，Mythbuntu，Ubuntu Studio ，Ubuntu Server，Ubuntu-MID。
+本 人搜集了全部官方下载地址。速度较慢，建议用BT，或者迅雷下载。每个版本提供64-Bit，32-Bit和BT，HTTP两种下载方式。Ubuntu 和Kubuntu 的CD版本还提供文字安装版(Alternative)和LiveCD图形安装版(Desktop)两种安装方式的光盘下载（仅仅是安装过程不一样，装完后都一样）。
+
+DVD版本包含了两种安装模式。Wubi下载即为Windows下的安装程序。建议大家：使用P2P下载以减轻官方服务器的负担。
+这里提供的Ubuntu、Kubuntu和Edubuntu的CD均为中国大陆服务器下载链接。如需要中国台湾地区的下载地址，请将cn.releases.ubuntu.com改为tw.releases.ubuntu.com。
+
+-Ubuntu CD(CD)
+i386 Desktop HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-desktop-i386.iso
+i386 Desktop BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-desktop-i386.iso.torrent
+AMD64 Desktop HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-desktop-amd64.iso
+AMD64 Desktop BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-desktop-amd64.iso.torrent
+i386 Alternate HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-alternate-i386.iso
+i386 Alternate BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-alternate-i386.iso.torrent
+AMD64 Alternate HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-alternate-amd64.iso
+AMD64 Alternate BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-alternate-amd64.iso.torrent
+i386 Server HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-server-i386.iso
+i386 Server BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-server-i386.iso.torrent
+AMD64 Server HTTP:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-server-amd64.iso
+AMD64 Server BT:
+http://cn.releases.ubuntu.com/8.10/ubuntu-8.10-server-amd64.iso.torrent
+Wubi:
+http://cn.releases.ubuntu.com/8.10/wubi.exe
+
+-Ubuntu DVD(DVD)
+i386 HTTP:
+http://cdimage.ubuntu.com/dvd/current/intrepid-dvd-i386.iso
+AMD64 HTTP:
+http://cdimage.ubuntu.com/dvd/current/intrepid-dvd-amd64.iso
+
+-Kubuntu DVD(KDE桌面,DVD)
+i386 BT:
+http://torrent.ubuntu.com/kubuntu/releases/intrepid/release/dvd/kubuntu-8.10-dvd-i386.iso.torrent
+AMD64 BT:
+http://torrent.ubuntu.com/kubuntu/releases/intrepid/release/dvd/kubuntu-8.10-dvd-amd64.iso.torrent
+
+-Kubuntu CD(KDE桌面,CD)
+i386 Desktop HTTP:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-desktop-i386.iso
+i386 Desktop BT:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-desktop-i386.iso.torrent
+AMD64 Desktop HTTP:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-desktop-amd64.iso
+AMD64 Desktop BT:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-desktop-amd64.iso.torrent
+i386 Alternate HTTP:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-alternate-i386.iso
+i386 Alternate BT:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-alternate-i386.iso.torrent
+AMD64 Alternate HTTP:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-alternate-amd64.iso
+AMD64 Alternate BT:
+http://cn.releases.ubuntu.com/kubuntu/8.10/kubuntu-8.10-alternate-amd64.iso.torrent
+
+-Edubuntu CD(教育版,CD)
+i386 HTTP:
+http://cn.releases.ubuntu.com/edubuntu/8.10/edubuntu-8.10-addon-i386.iso
+i386 BT:
+http://cn.releases.ubuntu.com/edubuntu/8.10/edubuntu-8.10-addon-i386.iso.torrent
+AMD64 HTTP:
+http://cn.releases.ubuntu.com/edubuntu/8.10/edubuntu-8.10-addon-amd64.iso
+AMD64 BT:
+http://cn.releases.ubuntu.com/edubuntu/8.10/edubuntu-8.10-addon-amd64.iso.torrent
+
+-Xubuntu CD(Xfce桌面,CD)
+i386 Desktop HTTP:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-desktop-i386.iso
+i386 Desktop BT:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-desktop-i386.iso.torrent
+AMD64 Desktop HTTP:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-desktop-amd64.iso
+AMD64 Desktop BT:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-desktop-amd64.iso.torrent
+i386 Alternate HTTP:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-alternate-i386.iso
+i386 Alternate BT:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-alternate-i386.iso.torrent
+AMD64 Alternate HTTP:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-alternate-amd64.iso
+AMD64 Alternate BT:
+http://cdimage.ubuntu.com/xubuntu/releases/8.10/release/xubuntu-8.10-alternate-amd64.iso.torrent
+
+-Mythbuntu CD(媒体中心版,CD)
+i386 HTTP:
+http://cdimage.ubuntu.com/mythbuntu/releases/8.10/release/mythbuntu-8.10-alternate-i386.iso
+i386 BT:
+http://cdimage.ubuntu.com/mythbuntu/releases/8.10/release/mythbuntu-8.10-alternate-i386.iso.torrent
+AMD64 HTTP:
+http://cdimage.ubuntu.com/mythbuntu/releases/8.10/release/mythbuntu-8.10-alternate-amd64.iso
+AMD64 BT:
+http://cdimage.ubuntu.com/mythbuntu/releases/8.10/release/mythbuntu-8.10-alternate-amd64.iso.torrent
+
+-Ubuntu Server CD(服务器版,CD)
+i386 HTTP:
+http://cdimage.ubuntu.com/ubuntu-server/daily/current/intrepid-server-i386.iso
+AMD64 HTTP:
+http://cdimage.ubuntu.com/ubuntu-server/daily/current/intrepid-server-amd64.iso
+
+-Ubuntu Studio DVD(多媒体编辑、图像工作等,DVD)
+i386 HTTP:
+http://cdimage.ubuntu.com/ubuntustudio/releases/8.10/release/ubuntustudio-8.10-alternate-i386.iso
+i386 BT:
+http://cdimage.ubuntu.com/ubuntustudio/releases/8.10/release/ubuntustudio-8.10-alternate-i386.iso.torrent
+AMD64 HTTP:
+http://cdimage.ubuntu.com/ubuntustudio/releases/8.10/release/ubuntustudio-8.10-alternate-amd64.iso
+AMD64 BT:
+http://cdimage.ubuntu.com/ubuntustudio/releases/8.10/release/ubuntustudio-8.10-alternate-amd64.iso.torrent
+
+-Ubuntu-MIDUMPC IMG(小型设备专用)
+i386 HTTP:
+http://cdimage.ubuntu.com/ubuntu-mid/intrepid/current/ubuntu-mid.img

@@ -1,0 +1,2032 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="WnckWindow">
+<refmeta>
+<refentrytitle role="top_of_page" id="WnckWindow.top_of_page">WnckWindow</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBWNCK Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>WnckWindow</refname>
+<refpurpose>an object representing a window.</refpurpose>
+</refnamediv>
+<refsect1 id="WnckWindow.stability-level">
+<title>Stability Level</title>
+Unstable, unless otherwise indicated
+</refsect1>
+
+<refsynopsisdiv id="WnckWindow.synopsis" role="synopsis">
+<title role="synopsis.title">Synopsis</title>
+
+<synopsis>
+#include &lt;libwnck/libwnck.h&gt;
+
+                    <link linkend="WnckWindow-struct">WnckWindow</link>;
+<link linkend="WnckWindow">WnckWindow</link>*         <link linkend="wnck-window-get">wnck_window_get</link>                     (<link linkend="gulong">gulong</link> xwindow);
+<link linkend="WnckScreen">WnckScreen</link>*         <link linkend="wnck-window-get-screen">wnck_window_get_screen</link>              (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-has-name">wnck_window_has_name</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+const <link linkend="char">char</link>*         <link linkend="wnck-window-get-name">wnck_window_get_name</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-has-icon-name">wnck_window_has_icon_name</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+const <link linkend="char">char</link>*         <link linkend="wnck-window-get-icon-name">wnck_window_get_icon_name</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-get-icon-is-fallback">wnck_window_get_icon_is_fallback</link>    (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="GdkPixbuf">GdkPixbuf</link>*          <link linkend="wnck-window-get-icon">wnck_window_get_icon</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="GdkPixbuf">GdkPixbuf</link>*          <link linkend="wnck-window-get-mini-icon">wnck_window_get_mini_icon</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="WnckApplication">WnckApplication</link>*    <link linkend="wnck-window-get-application">wnck_window_get_application</link>         (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="WnckWindow">WnckWindow</link>*         <link linkend="wnck-window-get-transient">wnck_window_get_transient</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gulong">gulong</link>              <link linkend="wnck-window-get-group-leader">wnck_window_get_group_leader</link>        (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gulong">gulong</link>              <link linkend="wnck-window-get-xid">wnck_window_get_xid</link>                 (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="WnckClassGroup">WnckClassGroup</link> *    <link linkend="wnck-window-get-class-group">wnck_window_get_class_group</link>         (<link linkend="WnckWindow">WnckWindow</link> *window);
+const <link linkend="char">char</link>*         <link linkend="wnck-window-get-session-id">wnck_window_get_session_id</link>          (<link linkend="WnckWindow">WnckWindow</link> *window);
+const <link linkend="char">char</link>*         <link linkend="wnck-window-get-session-id-utf8">wnck_window_get_session_id_utf8</link>     (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="int">int</link>                 <link linkend="wnck-window-get-pid">wnck_window_get_pid</link>                 (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gint">gint</link>                <link linkend="wnck-window-get-sort-order">wnck_window_get_sort_order</link>          (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-sort-order">wnck_window_set_sort_order</link>          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gint">gint</link> order);
+enum                <link linkend="WnckWindowType">WnckWindowType</link>;
+<link linkend="WnckWindowType">WnckWindowType</link>      <link linkend="wnck-window-get-window-type">wnck_window_get_window_type</link>         (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-window-type">wnck_window_set_window_type</link>         (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWindowType">WnckWindowType</link> wintype);
+enum                <link linkend="WnckWindowState">WnckWindowState</link>;
+<link linkend="WnckWindowState">WnckWindowState</link>     <link linkend="wnck-window-get-state">wnck_window_get_state</link>               (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-minimized">wnck_window_is_minimized</link>            (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-maximized-horizontally">wnck_window_is_maximized_horizontally</link>
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-maximized-vertically">wnck_window_is_maximized_vertically</link> (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-maximized">wnck_window_is_maximized</link>            (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-shaded">wnck_window_is_shaded</link>               (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-pinned">wnck_window_is_pinned</link>               (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-sticky">wnck_window_is_sticky</link>               (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-above">wnck_window_is_above</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-below">wnck_window_is_below</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-skip-pager">wnck_window_is_skip_pager</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-skip-tasklist">wnck_window_is_skip_tasklist</link>        (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-fullscreen">wnck_window_is_fullscreen</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-needs-attention">wnck_window_needs_attention</link>         (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-or-transient-needs-attention">wnck_window_or_transient_needs_attention</link>
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);
+enum                <link linkend="WnckWindowActions">WnckWindowActions</link>;
+<link linkend="WnckWindowActions">WnckWindowActions</link>   <link linkend="wnck-window-get-actions">wnck_window_get_actions</link>             (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-minimize">wnck_window_minimize</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unminimize">wnck_window_unminimize</link>              (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);
+<link linkend="void">void</link>                <link linkend="wnck-window-maximize-horizontally">wnck_window_maximize_horizontally</link>   (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unmaximize-horizontally">wnck_window_unmaximize_horizontally</link> (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-maximize-vertically">wnck_window_maximize_vertically</link>     (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unmaximize-vertically">wnck_window_unmaximize_vertically</link>   (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-maximize">wnck_window_maximize</link>                (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unmaximize">wnck_window_unmaximize</link>              (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-shade">wnck_window_shade</link>                   (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unshade">wnck_window_unshade</link>                 (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-pin">wnck_window_pin</link>                     (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unpin">wnck_window_unpin</link>                   (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-stick">wnck_window_stick</link>                   (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unstick">wnck_window_unstick</link>                 (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-make-above">wnck_window_make_above</link>              (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unmake-above">wnck_window_unmake_above</link>            (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-make-below">wnck_window_make_below</link>              (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-unmake-below">wnck_window_unmake_below</link>            (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-skip-pager">wnck_window_set_skip_pager</link>          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> skip);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-skip-tasklist">wnck_window_set_skip_tasklist</link>       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> skip);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-fullscreen">wnck_window_set_fullscreen</link>          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> fullscreen);
+<link linkend="void">void</link>                <link linkend="wnck-window-close">wnck_window_close</link>                   (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);
+<link linkend="WnckWorkspace">WnckWorkspace</link>*      <link linkend="wnck-window-get-workspace">wnck_window_get_workspace</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-on-workspace">wnck_window_is_on_workspace</link>         (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-visible-on-workspace">wnck_window_is_visible_on_workspace</link> (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);
+<link linkend="void">void</link>                <link linkend="wnck-window-move-to-workspace">wnck_window_move_to_workspace</link>       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-in-viewport">wnck_window_is_in_viewport</link>          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);
+<link linkend="void">void</link>                <link linkend="wnck-window-activate">wnck_window_activate</link>                (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-active">wnck_window_is_active</link>               (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-is-most-recently-activated">wnck_window_is_most_recently_activated</link>
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-activate-transient">wnck_window_activate_transient</link>      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);
+<link linkend="gboolean">gboolean</link>            <link linkend="wnck-window-transient-is-most-recently-activated">wnck_window_transient_is_most_recently_activated</link>
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-icon-geometry">wnck_window_set_icon_geometry</link>       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y,
+                                                         <link linkend="int">int</link> width,
+                                                         <link linkend="int">int</link> height);
+enum                <link linkend="WnckWindowGravity">WnckWindowGravity</link>;
+enum                <link linkend="WnckWindowMoveResizeMask">WnckWindowMoveResizeMask</link>;
+<link linkend="void">void</link>                <link linkend="wnck-window-get-client-window-geometry">wnck_window_get_client_window_geometry</link>
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> *xp,
+                                                         <link linkend="int">int</link> *yp,
+                                                         <link linkend="int">int</link> *widthp,
+                                                         <link linkend="int">int</link> *heightp);
+<link linkend="void">void</link>                <link linkend="wnck-window-get-geometry">wnck_window_get_geometry</link>            (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> *xp,
+                                                         <link linkend="int">int</link> *yp,
+                                                         <link linkend="int">int</link> *widthp,
+                                                         <link linkend="int">int</link> *heightp);
+<link linkend="void">void</link>                <link linkend="wnck-window-set-geometry">wnck_window_set_geometry</link>            (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWindowGravity">WnckWindowGravity</link> gravity,
+                                                         <link linkend="WnckWindowMoveResizeMask">WnckWindowMoveResizeMask</link> geometry_mask,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y,
+                                                         <link linkend="int">int</link> width,
+                                                         <link linkend="int">int</link> height);
+<link linkend="void">void</link>                <link linkend="wnck-window-keyboard-move">wnck_window_keyboard_move</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+<link linkend="void">void</link>                <link linkend="wnck-window-keyboard-size">wnck_window_keyboard_size</link>           (<link linkend="WnckWindow">WnckWindow</link> *window);
+</synopsis>
+</refsynopsisdiv>
+<refsect1 id="WnckWindow.object-hierarchy" role="object_hierarchy">
+<title role="object_hierarchy.title">Object Hierarchy</title>
+<synopsis>
+  <link linkend="GObject">GObject</link>
+   +----WnckWindow
+</synopsis>
+</refsect1>
+<refsect1 id="WnckWindow.signals" role="signal_proto">
+<title role="signal_proto.title">Signals</title>
+<synopsis>
+  &quot;<link linkend="WnckWindow-actions-changed">actions-changed</link>&quot;                                : Run Last
+  &quot;<link linkend="WnckWindow-geometry-changed">geometry-changed</link>&quot;                               : Run Last
+  &quot;<link linkend="WnckWindow-icon-changed">icon-changed</link>&quot;                                   : Run Last
+  &quot;<link linkend="WnckWindow-name-changed">name-changed</link>&quot;                                   : Run Last
+  &quot;<link linkend="WnckWindow-state-changed">state-changed</link>&quot;                                  : Run Last
+  &quot;<link linkend="WnckWindow-workspace-changed">workspace-changed</link>&quot;                              : Run Last
+</synopsis>
+</refsect1>
+
+<refsect1 id="WnckWindow.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+The <link linkend="WnckWindow"><type>WnckWindow</type></link> objects are always owned by libwnck and must not be
+referenced or unreferenced.</para>
+<para>
+</para>
+</refsect1>
+<refsect1 id="WnckWindow.details" role="details">
+<title role="details.title">Details</title>
+<refsect2 id="WnckWindow-struct" role="struct">
+<title>WnckWindow</title>
+<indexterm zone="WnckWindow-struct"><primary>WnckWindow</primary></indexterm>
+<programlisting>typedef struct _WnckWindow WnckWindow;</programlisting>
+<para>
+The <link linkend="WnckWindow"><type>WnckWindow</type></link> struct contains only private fields and should not be
+directly accessed.</para>
+<para>
+</para></refsect2>
+<refsect2 id="wnck-window-get" role="function">
+<title>wnck_window_get ()</title>
+<indexterm zone="wnck-window-get"><primary>wnck_window_get</primary></indexterm>
+<programlisting><link linkend="WnckWindow">WnckWindow</link>*         wnck_window_get                     (<link linkend="gulong">gulong</link> xwindow);</programlisting>
+<para>
+Gets a preexisting <link linkend="WnckWindow"><type>WnckWindow</type></link> for the X window <parameter>xwindow</parameter>. This will not
+create a <link linkend="WnckWindow"><type>WnckWindow</type></link> if none exists. The function is robust against bogus
+window IDs.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>xwindow</parameter>&#160;:</term>
+<listitem><simpara> an X window ID.
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> for <parameter>xwindow</parameter>. The returned <link linkend="WnckWindow"><type>WnckWindow</type></link> is
+owned by libwnck and must not be referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-screen" role="function">
+<title>wnck_window_get_screen ()</title>
+<indexterm zone="wnck-window-get-screen"><primary>wnck_window_get_screen</primary></indexterm>
+<programlisting><link linkend="WnckScreen">WnckScreen</link>*         wnck_window_get_screen              (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the <link linkend="WnckScreen"><type>WnckScreen</type></link> <parameter>window</parameter> is on.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckScreen"><type>WnckScreen</type></link> <parameter>window</parameter> is on. The returned <link linkend="WnckScreen"><type>WnckScreen</type></link> is
+owned by libwnck and must not be referenced or unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-has-name" role="function" condition="since:2.16">
+<title>wnck_window_has_name ()</title>
+<indexterm zone="wnck-window-has-name" role="2.16"><primary>wnck_window_has_name</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_has_name                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Checks whether or not <parameter>window</parameter> has a name. <link linkend="wnck-window-get-name"><function>wnck_window_get_name()</function></link>
+will always return some value, even if <parameter>window</parameter> has no name set;
+<link linkend="wnck-window-has-name"><function>wnck_window_has_name()</function></link> can be used to tell if that name is
+real or not.
+</para>
+<para>
+For icons titles, use <link linkend="wnck-window-has-icon-name"><function>wnck_window_has_icon_name()</function></link> instead.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <link linkend="wnck-window-get-name"><function>wnck_window_get_name()</function></link> returns <parameter>window</parameter><!-- -->'s
+name, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> if it returns a fallback name.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.16</para></refsect2>
+<refsect2 id="wnck-window-get-name" role="function">
+<title>wnck_window_get_name ()</title>
+<indexterm zone="wnck-window-get-name"><primary>wnck_window_get_name</primary></indexterm>
+<programlisting>const <link linkend="char">char</link>*         wnck_window_get_name                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the name of <parameter>window</parameter>, as it should be displayed in a pager
+or tasklist. Always returns some value, even if <parameter>window</parameter> has no name
+set; use <link linkend="wnck-window-has-name"><function>wnck_window_has_name()</function></link> if you need to know whether the returned
+name is "real" or not.
+</para>
+<para>
+For icons titles, use <link linkend="wnck-window-get-icon-name"><function>wnck_window_get_icon_name()</function></link> instead.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the name of <parameter>window</parameter>, or a fallback name if no name is
+available.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-has-icon-name" role="function" condition="since:2.16">
+<title>wnck_window_has_icon_name ()</title>
+<indexterm zone="wnck-window-has-icon-name" role="2.16"><primary>wnck_window_has_icon_name</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_has_icon_name           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Checks whether or not <parameter>window</parameter> has an icon name.
+<link linkend="wnck-window-get-icon-name"><function>wnck_window_get_icon_name()</function></link> will always return some value, even if
+<parameter>window</parameter> has no icon name set; <link linkend="wnck-window-has-icon-name"><function>wnck_window_has_icon_name()</function></link> can
+be used to tell if that icon name is real or not.
+</para>
+<para>
+(Note that if <link linkend="wnck-window-has-icon-name"><function>wnck_window_has_icon_name()</function></link> returns <link linkend="FALSE:CAPS"><literal>FALSE</literal></link>, but
+<link linkend="wnck-window-has-name"><function>wnck_window_has_name()</function></link> returns <link linkend="TRUE:CAPS"><literal>TRUE</literal></link>, then the name returned by
+<link linkend="wnck-window-get-icon-name"><function>wnck_window_get_icon_name()</function></link> is <parameter>window</parameter><!-- -->'s name. Only when both
+methods return <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> does <link linkend="wnck-window-get-icon-name"><function>wnck_window_get_icon_name()</function></link> return a
+generic fallback name.)</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow"><type>WnckWindow</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <link linkend="wnck-window-get-icon-name"><function>wnck_window_get_icon_name()</function></link> returns
+<parameter>window</parameter><!-- -->'s icon name, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> if it returns a fallback name.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.16</para></refsect2>
+<refsect2 id="wnck-window-get-icon-name" role="function">
+<title>wnck_window_get_icon_name ()</title>
+<indexterm zone="wnck-window-get-icon-name"><primary>wnck_window_get_icon_name</primary></indexterm>
+<programlisting>const <link linkend="char">char</link>*         wnck_window_get_icon_name           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the icon name of <parameter>window</parameter>, as it should be displayed for an icon
+(minimized state). Always returns some value, even if <parameter>window</parameter> has no icon
+name set; use <link linkend="wnck-window-has-icon-name"><function>wnck_window_has_icon_name()</function></link> if you need to know whether the
+returned icon name is "real" or not.
+</para>
+<para>
+Contrast with <link linkend="wnck-window-get-name"><function>wnck_window_get_name()</function></link>, which returns <parameter>window</parameter><!-- -->'s
+title, not its icon title.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow"><type>WnckWindow</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the icon name of <parameter>window</parameter>, or a fallback icon name if no icon
+name is available.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-icon-is-fallback" role="function">
+<title>wnck_window_get_icon_is_fallback ()</title>
+<indexterm zone="wnck-window-get-icon-is-fallback"><primary>wnck_window_get_icon_is_fallback</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_get_icon_is_fallback    (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether a default fallback icon is used for <parameter>window</parameter> (because none
+was set on <parameter>window</parameter>).</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if the icon for <parameter>window</parameter> is a fallback, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-icon" role="function">
+<title>wnck_window_get_icon ()</title>
+<indexterm zone="wnck-window-get-icon"><primary>wnck_window_get_icon</primary></indexterm>
+<programlisting><link linkend="GdkPixbuf">GdkPixbuf</link>*          wnck_window_get_icon                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the icon to be used for <parameter>window</parameter>. If no icon was found, a fallback
+icon is used. <link linkend="wnck-window-get-icon-is-fallback"><function>wnck_window_get_icon_is_fallback()</function></link> can be used to tell if the
+icon is the fallback icon.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the icon for <parameter>window</parameter>. The caller should reference the
+returned <classname>GdkPixbuf</classname> if it needs to keep the icon
+around.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-mini-icon" role="function">
+<title>wnck_window_get_mini_icon ()</title>
+<indexterm zone="wnck-window-get-mini-icon"><primary>wnck_window_get_mini_icon</primary></indexterm>
+<programlisting><link linkend="GdkPixbuf">GdkPixbuf</link>*          wnck_window_get_mini_icon           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the mini-icon to be used for <parameter>window</parameter>. If no mini-icon was found, a
+fallback mini-icon is used. <link linkend="wnck-window-get-icon-is-fallback"><function>wnck_window_get_icon_is_fallback()</function></link> can be used
+to tell if the mini-icon is the fallback mini-icon.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the mini-icon for <parameter>window</parameter>. The caller should reference the
+returned <classname>GdkPixbuf</classname> if it needs to keep the icon
+around.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-application" role="function">
+<title>wnck_window_get_application ()</title>
+<indexterm zone="wnck-window-get-application"><primary>wnck_window_get_application</primary></indexterm>
+<programlisting><link linkend="WnckApplication">WnckApplication</link>*    wnck_window_get_application         (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the <link linkend="WnckApplication"><type>WnckApplication</type></link> to which <parameter>window</parameter> belongs.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckApplication"><type>WnckApplication</type></link> to which <parameter>window</parameter> belongs. The returned
+<link linkend="WnckApplication"><type>WnckApplication</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-transient" role="function" condition="since:2.12">
+<title>wnck_window_get_transient ()</title>
+<indexterm zone="wnck-window-get-transient" role="2.12"><primary>wnck_window_get_transient</primary></indexterm>
+<programlisting><link linkend="WnckWindow">WnckWindow</link>*         wnck_window_get_transient           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the <link linkend="WnckWindow"><type>WnckWindow</type></link> for which <parameter>window</parameter> is transient.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> for which <parameter>window</parameter> is transient, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if
+<parameter>window</parameter> is not transient for any <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-window-get-group-leader" role="function">
+<title>wnck_window_get_group_leader ()</title>
+<indexterm zone="wnck-window-get-group-leader"><primary>wnck_window_get_group_leader</primary></indexterm>
+<programlisting><link linkend="gulong">gulong</link>              wnck_window_get_group_leader        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the group leader of the group of windows to which <parameter>window</parameter> belongs.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the group leader of the group of windows to which <parameter>window</parameter>
+belongs, or the X window ID of <parameter>window</parameter> if <parameter>window</parameter> does not belong to any
+group.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-xid" role="function">
+<title>wnck_window_get_xid ()</title>
+<indexterm zone="wnck-window-get-xid"><primary>wnck_window_get_xid</primary></indexterm>
+<programlisting><link linkend="gulong">gulong</link>              wnck_window_get_xid                 (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the X window ID of <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the X window ID of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-class-group" role="function" condition="since:2.2">
+<title>wnck_window_get_class_group ()</title>
+<indexterm zone="wnck-window-get-class-group" role="2.2"><primary>wnck_window_get_class_group</primary></indexterm>
+<programlisting><link linkend="WnckClassGroup">WnckClassGroup</link> *    wnck_window_get_class_group         (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> to which <parameter>window</parameter> belongs.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> to which <parameter>window</parameter> belongs. The returned
+<link linkend="WnckClassGroup"><type>WnckClassGroup</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.2</para></refsect2>
+<refsect2 id="wnck-window-get-session-id" role="function">
+<title>wnck_window_get_session_id ()</title>
+<indexterm zone="wnck-window-get-session-id"><primary>wnck_window_get_session_id</primary></indexterm>
+<programlisting>const <link linkend="char">char</link>*         wnck_window_get_session_id          (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the session ID for <parameter>window</parameter> in Latin-1 encoding.
+NOTE: this is invalid UTF-8. You can't display this
+string in a GTK+ widget without converting to UTF-8.
+See <link linkend="wnck-window-get-session-id-utf8"><function>wnck_window_get_session_id_utf8()</function></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the session ID for <parameter>window</parameter> in Latin-1, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if <parameter>window</parameter> has
+no session ID.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-session-id-utf8" role="function">
+<title>wnck_window_get_session_id_utf8 ()</title>
+<indexterm zone="wnck-window-get-session-id-utf8"><primary>wnck_window_get_session_id_utf8</primary></indexterm>
+<programlisting>const <link linkend="char">char</link>*         wnck_window_get_session_id_utf8     (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the session ID for <parameter>window</parameter> in UTF-8 encoding.
+The session ID should be in Latin-1 encoding, so the conversion should work,
+but a broken client could set a session ID that might not be convertable to
+UTF-8.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the session ID for <parameter>window</parameter> in UTF-8, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if <parameter>window</parameter> has
+no session ID.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-pid" role="function">
+<title>wnck_window_get_pid ()</title>
+<indexterm zone="wnck-window-get-pid"><primary>wnck_window_get_pid</primary></indexterm>
+<programlisting><link linkend="int">int</link>                 wnck_window_get_pid                 (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the process ID of <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the process ID of <parameter>window</parameter>, or 0 if none is available.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-sort-order" role="function" condition="since:2.10">
+<title>wnck_window_get_sort_order ()</title>
+<indexterm zone="wnck-window-get-sort-order" role="2.10"><primary>wnck_window_get_sort_order</primary></indexterm>
+<programlisting><link linkend="gint">gint</link>                wnck_window_get_sort_order          (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the sort order of <parameter>window</parameter>, used for ordering of <parameter>window</parameter> in
+<link linkend="WnckSelector"><type>WnckSelector</type></link> and <link linkend="WnckTasklist."><type>WnckTasklist.</type></link> The sort order is an internal state in
+libwnck. The initial value is defined when the window is created.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the sort order of <parameter>window</parameter>, or G_MAXINT if none is available.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.10</para></refsect2>
+<refsect2 id="wnck-window-set-sort-order" role="function" condition="since:2.20">
+<title>wnck_window_set_sort_order ()</title>
+<indexterm zone="wnck-window-set-sort-order" role="2.20"><primary>wnck_window_set_sort_order</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_sort_order          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gint">gint</link> order);</programlisting>
+<para>
+Sets the sort order of <parameter>window</parameter>. The sort order is used for ordering of
+<parameter>window</parameter> in <link linkend="WnckSelector"><type>WnckSelector</type></link> and <link linkend="WnckTasklist."><type>WnckTasklist.</type></link></para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>order</parameter>&#160;:</term>
+<listitem><simpara> new sort order for <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="WnckWindowType" role="enum">
+<title>enum WnckWindowType</title>
+<indexterm zone="WnckWindowType"><primary>WnckWindowType</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_WINDOW_NORMAL,       /* document/app window */
+  WNCK_WINDOW_DESKTOP,      /* desktop background */
+  WNCK_WINDOW_DOCK,         /* panel */
+  WNCK_WINDOW_DIALOG,       /* dialog */
+  WNCK_WINDOW_TOOLBAR,      /* tearoff toolbar */
+  WNCK_WINDOW_MENU,         /* tearoff menu */
+  WNCK_WINDOW_UTILITY,      /* palette/toolbox window */
+  WNCK_WINDOW_SPLASHSCREEN  /* splash screen */
+} WnckWindowType;
+</programlisting>
+<para>
+Type describing the semantic type of a <link linkend="WnckWindow."><type>WnckWindow.</type></link></para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-WINDOW-NORMAL:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_NORMAL</literal></term>
+<listitem><simpara> the window is a normal window.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-DESKTOP:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_DESKTOP</literal></term>
+<listitem><simpara> the window is a desktop.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-DOCK:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_DOCK</literal></term>
+<listitem><simpara> the window is a dock or a panel.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-DIALOG:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_DIALOG</literal></term>
+<listitem><simpara> the window is a dialog window.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-TOOLBAR:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_TOOLBAR</literal></term>
+<listitem><simpara> the window is a tearoff toolbar.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-MENU:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_MENU</literal></term>
+<listitem><simpara> the window is a tearoff menu.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-UTILITY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_UTILITY</literal></term>
+<listitem><simpara> the window is a small persistent utility window, such
+as a palette or toolbox.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-SPLASHSCREEN:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_SPLASHSCREEN</literal></term>
+<listitem><simpara> the window is a splash screen displayed as an
+application is starting up.
+</simpara></listitem>
+</varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-window-type" role="function">
+<title>wnck_window_get_window_type ()</title>
+<indexterm zone="wnck-window-get-window-type"><primary>wnck_window_get_window_type</primary></indexterm>
+<programlisting><link linkend="WnckWindowType">WnckWindowType</link>      wnck_window_get_window_type         (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the semantic type of <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the semantic type of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-set-window-type" role="function" condition="since:2.12">
+<title>wnck_window_set_window_type ()</title>
+<indexterm zone="wnck-window-set-window-type" role="2.12"><primary>wnck_window_set_window_type</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_window_type         (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWindowType">WnckWindowType</link> wintype);</programlisting>
+<para>
+Sets the semantic type of <parameter>window</parameter> to <parameter>wintype</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>wintype</parameter>&#160;:</term>
+<listitem><simpara> a semantic type.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="WnckWindowState" role="enum">
+<title>enum WnckWindowState</title>
+<indexterm zone="WnckWindowState"><primary>WnckWindowState</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_WINDOW_STATE_MINIMIZED              = 1 &lt;&lt; 0,
+  WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY = 1 &lt;&lt; 1,
+  WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY   = 1 &lt;&lt; 2,
+  WNCK_WINDOW_STATE_SHADED                 = 1 &lt;&lt; 3,
+  WNCK_WINDOW_STATE_SKIP_PAGER             = 1 &lt;&lt; 4,
+  WNCK_WINDOW_STATE_SKIP_TASKLIST          = 1 &lt;&lt; 5,
+  WNCK_WINDOW_STATE_STICKY                 = 1 &lt;&lt; 6,
+  WNCK_WINDOW_STATE_HIDDEN                 = 1 &lt;&lt; 7,
+  WNCK_WINDOW_STATE_FULLSCREEN             = 1 &lt;&lt; 8,
+  WNCK_WINDOW_STATE_DEMANDS_ATTENTION      = 1 &lt;&lt; 9,
+  WNCK_WINDOW_STATE_URGENT                 = 1 &lt;&lt; 10,
+  WNCK_WINDOW_STATE_ABOVE                  = 1 &lt;&lt; 11,
+  WNCK_WINDOW_STATE_BELOW                  = 1 &lt;&lt; 12
+} WnckWindowState;
+</programlisting>
+<para>
+Type used as a bitmask to describe the state of a <link linkend="WnckWindow."><type>WnckWindow.</type></link></para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-WINDOW-STATE-MINIMIZED:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_MINIMIZED</literal></term>
+<listitem><simpara> the window is minimized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-MAXIMIZED-HORIZONTALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY</literal></term>
+<listitem><simpara> the window is horizontically
+maximized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-MAXIMIZED-VERTICALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY</literal></term>
+<listitem><simpara> the window is vertically maximized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-SHADED:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_SHADED</literal></term>
+<listitem><simpara> the window is shaded.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-SKIP-PAGER:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_SKIP_PAGER</literal></term>
+<listitem><simpara> the window should not be included on pagers.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-SKIP-TASKLIST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_SKIP_TASKLIST</literal></term>
+<listitem><simpara> the window should not be included on
+tasklists.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-STICKY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_STICKY</literal></term>
+<listitem><simpara> the window is sticky (see
+<link linkend="wnck-window-is-sticky"><function>wnck_window_is_sticky()</function></link>).
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-HIDDEN:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_HIDDEN</literal></term>
+<listitem><simpara> the window is not visible on its <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>
+and viewport (when minimized, for example).
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-FULLSCREEN:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_FULLSCREEN</literal></term>
+<listitem><simpara> the window is fullscreen.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-DEMANDS-ATTENTION:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_DEMANDS_ATTENTION</literal></term>
+<listitem><simpara> the window needs attention (because
+the window requested activation but the window manager refused it, for
+example).
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-URGENT:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_URGENT</literal></term>
+<listitem><simpara> the window requires a response from the user.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-ABOVE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_ABOVE</literal></term>
+<listitem><simpara> the window is above other windows (see
+<link linkend="wnck-window-make-above"><function>wnck_window_make_above()</function></link>).
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-STATE-BELOW:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_STATE_BELOW</literal></term>
+<listitem><simpara> the window is below other windows (see
+<link linkend="wnck-window-make-below"><function>wnck_window_make_below()</function></link>).
+</simpara></listitem>
+</varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-state" role="function">
+<title>wnck_window_get_state ()</title>
+<indexterm zone="wnck-window-get-state"><primary>wnck_window_get_state</primary></indexterm>
+<programlisting><link linkend="WnckWindowState">WnckWindowState</link>     wnck_window_get_state               (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the state of <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> bitmask of active states for <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-minimized" role="function">
+<title>wnck_window_is_minimized ()</title>
+<indexterm zone="wnck-window-is-minimized"><primary>wnck_window_is_minimized</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_minimized            (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is minimized. Minimization state may change anytime
+a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is minimized, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-maximized-horizontally" role="function">
+<title>wnck_window_is_maximized_horizontally ()</title>
+<indexterm zone="wnck-window-is-maximized-horizontally"><primary>wnck_window_is_maximized_horizontally</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_maximized_horizontally
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is maximized horizontally. Horizontal maximization
+state may change anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is maximized horizontally, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-maximized-vertically" role="function">
+<title>wnck_window_is_maximized_vertically ()</title>
+<indexterm zone="wnck-window-is-maximized-vertically"><primary>wnck_window_is_maximized_vertically</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_maximized_vertically (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is maximized vertically. vertiVal maximization
+state may change anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is maximized vertically, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-maximized" role="function">
+<title>wnck_window_is_maximized ()</title>
+<indexterm zone="wnck-window-is-maximized"><primary>wnck_window_is_maximized</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_maximized            (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is maximized. Maximization state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.
+</para>
+<para>
+As for GDK, "maximized" means both vertically and horizontally. If <parameter>window</parameter>
+is maximized in only one direction, then <parameter>window</parameter> is not considered
+maximized.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is maximized in both directions, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link>
+otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-shaded" role="function">
+<title>wnck_window_is_shaded ()</title>
+<indexterm zone="wnck-window-is-shaded"><primary>wnck_window_is_shaded</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_shaded               (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is shaded. Shade state may change anytime
+a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is shaded, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-pinned" role="function">
+<title>wnck_window_is_pinned ()</title>
+<indexterm zone="wnck-window-is-pinned"><primary>wnck_window_is_pinned</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_pinned               (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is on all workspace. Pinned state may change
+anytime a <link linkend="WnckWindow-workspace-changed"><type>"workspace-changed"</type></link> signal gets emitted, but not when
+a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is on all workspaces, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-sticky" role="function">
+<title>wnck_window_is_sticky ()</title>
+<indexterm zone="wnck-window-is-sticky"><primary>wnck_window_is_sticky</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_sticky               (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is sticky. Sticky state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.
+</para>
+<para>
+Sticky here means "stuck to the glass", i.e. does not scroll with the
+viewport. In GDK/GTK+ (e.g. <link linkend="gdk-window-stick"><function>gdk_window_stick()</function></link>/<link linkend="gtk-window-stick"><function>gtk_window_stick()</function></link>), sticky
+means "stuck to the glass" and <emphasis>also</emphasis> that the window is
+on all workspaces. But here it only means the viewport aspect of it.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is "stuck to the glass", <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-above" role="function" condition="since:2.14">
+<title>wnck_window_is_above ()</title>
+<indexterm zone="wnck-window-is-above" role="2.14"><primary>wnck_window_is_above</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_above                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is above other windows. This state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.
+</para>
+<para>
+See <link linkend="wnck-window-make-above"><function>wnck_window_make_above()</function></link> for more details on this state.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is above other windows, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-window-is-below" role="function" condition="since:2.20">
+<title>wnck_window_is_below ()</title>
+<indexterm zone="wnck-window-is-below" role="2.20"><primary>wnck_window_is_below</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_below                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is below other windows. This state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.
+</para>
+<para>
+See <link linkend="wnck-window-make-below"><function>wnck_window_make_below()</function></link> for more details on this state.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is below other windows, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-window-is-skip-pager" role="function">
+<title>wnck_window_is_skip_pager ()</title>
+<indexterm zone="wnck-window-is-skip-pager"><primary>wnck_window_is_skip_pager</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_skip_pager           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is included on pagers. This state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is included on pagers, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-skip-tasklist" role="function">
+<title>wnck_window_is_skip_tasklist ()</title>
+<indexterm zone="wnck-window-is-skip-tasklist"><primary>wnck_window_is_skip_tasklist</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_skip_tasklist        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is included on tasklists. This state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is included on tasklists, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-fullscreen" role="function" condition="since:2.8">
+<title>wnck_window_is_fullscreen ()</title>
+<indexterm zone="wnck-window-is-fullscreen" role="2.8"><primary>wnck_window_is_fullscreen</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_fullscreen           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is fullscreen. Fullscreen state may change
+anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is fullscreen, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.8</para></refsect2>
+<refsect2 id="wnck-window-needs-attention" role="function" condition="since:2.12">
+<title>wnck_window_needs_attention ()</title>
+<indexterm zone="wnck-window-needs-attention" role="2.12"><primary>wnck_window_needs_attention</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_needs_attention         (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> needs attention. This state may change anytime
+a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.
+</para>
+<para>
+This state depends on flags such as the demands_attention and is_urgent
+hints.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> needs attention, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-window-or-transient-needs-attention" role="function" condition="since:2.12">
+<title>wnck_window_or_transient_needs_attention ()</title>
+<indexterm zone="wnck-window-or-transient-needs-attention" role="2.12"><primary>wnck_window_or_transient_needs_attention</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_or_transient_needs_attention
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> or one of its transients needs attention. This state
+may change anytime a <link linkend="WnckWindow-state-changed"><type>"state-changed"</type></link> signal gets emitted.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> or one of its transients needs attention,
+<link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="WnckWindowActions" role="enum">
+<title>enum WnckWindowActions</title>
+<indexterm zone="WnckWindowActions"><primary>WnckWindowActions</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_WINDOW_ACTION_MOVE                    = 1 &lt;&lt; 0,
+  WNCK_WINDOW_ACTION_RESIZE                  = 1 &lt;&lt; 1,
+  WNCK_WINDOW_ACTION_SHADE                   = 1 &lt;&lt; 2,
+  WNCK_WINDOW_ACTION_STICK                   = 1 &lt;&lt; 3,
+  WNCK_WINDOW_ACTION_MAXIMIZE_HORIZONTALLY   = 1 &lt;&lt; 4,
+  WNCK_WINDOW_ACTION_MAXIMIZE_VERTICALLY     = 1 &lt;&lt; 5,
+  WNCK_WINDOW_ACTION_CHANGE_WORKSPACE        = 1 &lt;&lt; 6, /* includes pin/unpin */
+  WNCK_WINDOW_ACTION_CLOSE                   = 1 &lt;&lt; 7,
+  WNCK_WINDOW_ACTION_UNMAXIMIZE_HORIZONTALLY = 1 &lt;&lt; 8,
+  WNCK_WINDOW_ACTION_UNMAXIMIZE_VERTICALLY   = 1 &lt;&lt; 9,
+  WNCK_WINDOW_ACTION_UNSHADE                 = 1 &lt;&lt; 10,
+  WNCK_WINDOW_ACTION_UNSTICK                 = 1 &lt;&lt; 11,
+  WNCK_WINDOW_ACTION_MINIMIZE                = 1 &lt;&lt; 12,
+  WNCK_WINDOW_ACTION_UNMINIMIZE              = 1 &lt;&lt; 13,
+  WNCK_WINDOW_ACTION_MAXIMIZE                = 1 &lt;&lt; 14,
+  WNCK_WINDOW_ACTION_UNMAXIMIZE              = 1 &lt;&lt; 15,
+  WNCK_WINDOW_ACTION_FULLSCREEN              = 1 &lt;&lt; 16,
+  WNCK_WINDOW_ACTION_ABOVE                   = 1 &lt;&lt; 17,
+  WNCK_WINDOW_ACTION_BELOW                   = 1 &lt;&lt; 18
+} WnckWindowActions;
+</programlisting>
+<para>
+Type used as a bitmask to describe the actions that can be done for a
+<link linkend="WnckWindow."><type>WnckWindow.</type></link></para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-WINDOW-ACTION-MOVE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_MOVE</literal></term>
+<listitem><simpara> the window may be moved around the screen. 
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-RESIZE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_RESIZE</literal></term>
+<listitem><simpara> the window may be resized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-SHADE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_SHADE</literal></term>
+<listitem><simpara> the window may be shaded.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-STICK:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_STICK</literal></term>
+<listitem><simpara> the window may be sticked.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-MAXIMIZE-HORIZONTALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_MAXIMIZE_HORIZONTALLY</literal></term>
+<listitem><simpara> the window may be maximized
+horizontally.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-MAXIMIZE-VERTICALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_MAXIMIZE_VERTICALLY</literal></term>
+<listitem><simpara> the window may be maximized
+vertically.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-CHANGE-WORKSPACE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_CHANGE_WORKSPACE</literal></term>
+<listitem><simpara> the window may be moved between
+workspaces, or (un)pinned.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-CLOSE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_CLOSE</literal></term>
+<listitem><simpara> the window may be closed.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNMAXIMIZE-HORIZONTALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNMAXIMIZE_HORIZONTALLY</literal></term>
+<listitem><simpara> the window may be unmaximized
+horizontally.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNMAXIMIZE-VERTICALLY:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNMAXIMIZE_VERTICALLY</literal></term>
+<listitem><simpara> the window may be maximized
+vertically.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNSHADE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNSHADE</literal></term>
+<listitem><simpara> the window may be unshaded.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNSTICK:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNSTICK</literal></term>
+<listitem><simpara> the window may be unsticked.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-MINIMIZE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_MINIMIZE</literal></term>
+<listitem><simpara> the window may be minimized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNMINIMIZE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNMINIMIZE</literal></term>
+<listitem><simpara> the window may be unminimized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-MAXIMIZE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_MAXIMIZE</literal></term>
+<listitem><simpara> the window may be maximized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-UNMAXIMIZE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_UNMAXIMIZE</literal></term>
+<listitem><simpara> the window may be unmaximized.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-FULLSCREEN:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_FULLSCREEN</literal></term>
+<listitem><simpara> the window may be brought to fullscreen.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-ABOVE:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_ABOVE</literal></term>
+<listitem><simpara> the window may be made above other windows.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-ACTION-BELOW:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_ACTION_BELOW</literal></term>
+<listitem><simpara> the window may be made below other windows.
+</simpara></listitem>
+</varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-get-actions" role="function">
+<title>wnck_window_get_actions ()</title>
+<indexterm zone="wnck-window-get-actions"><primary>wnck_window_get_actions</primary></indexterm>
+<programlisting><link linkend="WnckWindowActions">WnckWindowActions</link>   wnck_window_get_actions             (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the actions that can be done for <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> bitmask of actions that can be done for <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-minimize" role="function">
+<title>wnck_window_minimize ()</title>
+<indexterm zone="wnck-window-minimize"><primary>wnck_window_minimize</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_minimize                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Minimizes <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unminimize" role="function">
+<title>wnck_window_unminimize ()</title>
+<indexterm zone="wnck-window-unminimize"><primary>wnck_window_unminimize</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unminimize              (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);</programlisting>
+<para>
+Unminimizes <parameter>window</parameter> by activating it or one of its transients. See
+<link linkend="wnck-window-activate-transient"><function>wnck_window_activate_transient()</function></link> for details on how the activation is done.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>timestamp</parameter>&#160;:</term>
+<listitem><simpara> the X server timestamp of the user interaction event that caused
+this call to occur.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-maximize-horizontally" role="function">
+<title>wnck_window_maximize_horizontally ()</title>
+<indexterm zone="wnck-window-maximize-horizontally"><primary>wnck_window_maximize_horizontally</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_maximize_horizontally   (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to maximize horizontally <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unmaximize-horizontally" role="function">
+<title>wnck_window_unmaximize_horizontally ()</title>
+<indexterm zone="wnck-window-unmaximize-horizontally"><primary>wnck_window_unmaximize_horizontally</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unmaximize_horizontally (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to unmaximize horizontally <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-maximize-vertically" role="function">
+<title>wnck_window_maximize_vertically ()</title>
+<indexterm zone="wnck-window-maximize-vertically"><primary>wnck_window_maximize_vertically</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_maximize_vertically     (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to maximize vertically <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unmaximize-vertically" role="function">
+<title>wnck_window_unmaximize_vertically ()</title>
+<indexterm zone="wnck-window-unmaximize-vertically"><primary>wnck_window_unmaximize_vertically</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unmaximize_vertically   (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to unmaximize vertically <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-maximize" role="function">
+<title>wnck_window_maximize ()</title>
+<indexterm zone="wnck-window-maximize"><primary>wnck_window_maximize</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_maximize                (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to maximize <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unmaximize" role="function">
+<title>wnck_window_unmaximize ()</title>
+<indexterm zone="wnck-window-unmaximize"><primary>wnck_window_unmaximize</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unmaximize              (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to unmaximize <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-shade" role="function">
+<title>wnck_window_shade ()</title>
+<indexterm zone="wnck-window-shade"><primary>wnck_window_shade</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_shade                   (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to shade <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unshade" role="function">
+<title>wnck_window_unshade ()</title>
+<indexterm zone="wnck-window-unshade"><primary>wnck_window_unshade</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unshade                 (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to unshade <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-pin" role="function">
+<title>wnck_window_pin ()</title>
+<indexterm zone="wnck-window-pin"><primary>wnck_window_pin</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_pin                     (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to put <parameter>window</parameter> on all workspaces.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unpin" role="function">
+<title>wnck_window_unpin ()</title>
+<indexterm zone="wnck-window-unpin"><primary>wnck_window_unpin</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unpin                   (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to put <parameter>window</parameter> only in the currently active
+workspace, if <parameter>window</parameter> was previously pinned. If <parameter>window</parameter> was not pinned,
+does not change <parameter>window</parameter><!-- -->'s workspace. If the active workspace
+is not known for some reason (it should not happen much), sets
+<parameter>window</parameter><!-- -->'s workspace to the first workspace.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-stick" role="function">
+<title>wnck_window_stick ()</title>
+<indexterm zone="wnck-window-stick"><primary>wnck_window_stick</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_stick                   (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to keep the <parameter>window</parameter><!-- -->'s position fixed on the
+screen, even when the workspace or viewport scrolls.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-unstick" role="function">
+<title>wnck_window_unstick ()</title>
+<indexterm zone="wnck-window-unstick"><primary>wnck_window_unstick</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unstick                 (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to not have <parameter>window</parameter><!-- -->'s position fixed on the
+screen when the workspace or viewport scrolls.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-make-above" role="function" condition="since:2.14">
+<title>wnck_window_make_above ()</title>
+<indexterm zone="wnck-window-make-above" role="2.14"><primary>wnck_window_make_above</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_make_above              (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to put <parameter>window</parameter> on top of most windows (<parameter>window</parameter> will
+not be on top of focused fullscreen windows, of other windows with this
+setting and of dock windows).</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-window-unmake-above" role="function" condition="since:2.14">
+<title>wnck_window_unmake_above ()</title>
+<indexterm zone="wnck-window-unmake-above" role="2.14"><primary>wnck_window_unmake_above</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unmake_above            (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to not put <parameter>window</parameter> on top of most windows, and to
+put it again in the stack with other windows.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.14</para></refsect2>
+<refsect2 id="wnck-window-make-below" role="function" condition="since:2.20">
+<title>wnck_window_make_below ()</title>
+<indexterm zone="wnck-window-make-below" role="2.20"><primary>wnck_window_make_below</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_make_below              (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to put <parameter>window</parameter> below most windows.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-window-unmake-below" role="function" condition="since:2.20">
+<title>wnck_window_unmake_below ()</title>
+<indexterm zone="wnck-window-unmake-below" role="2.20"><primary>wnck_window_unmake_below</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_unmake_below            (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to not put <parameter>window</parameter> below most windows, and to
+put it again in the stack with other windows.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-window-set-skip-pager" role="function">
+<title>wnck_window_set_skip_pager ()</title>
+<indexterm zone="wnck-window-set-skip-pager"><primary>wnck_window_set_skip_pager</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_skip_pager          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> skip);</programlisting>
+<para>
+Asks the window manager to make <parameter>window</parameter> included or not included on pagers.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>skip</parameter>&#160;:</term>
+<listitem><simpara> whether <parameter>window</parameter> should be included on pagers.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-set-skip-tasklist" role="function">
+<title>wnck_window_set_skip_tasklist ()</title>
+<indexterm zone="wnck-window-set-skip-tasklist"><primary>wnck_window_set_skip_tasklist</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_skip_tasklist       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> skip);</programlisting>
+<para>
+Asks the window manager to make <parameter>window</parameter> included or not included on
+tasklists.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>skip</parameter>&#160;:</term>
+<listitem><simpara> whether <parameter>window</parameter> should be included on tasklists.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-set-fullscreen" role="function" condition="since:2.8">
+<title>wnck_window_set_fullscreen ()</title>
+<indexterm zone="wnck-window-set-fullscreen" role="2.8"><primary>wnck_window_set_fullscreen</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_fullscreen          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="gboolean">gboolean</link> fullscreen);</programlisting>
+<para>
+Asks the window manager to set the fullscreen state of <parameter>window</parameter> according to
+<parameter>fullscreen</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>fullscreen</parameter>&#160;:</term>
+<listitem><simpara> whether to make <parameter>window</parameter> fullscreen.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.8</para></refsect2>
+<refsect2 id="wnck-window-close" role="function" condition="since:2.6">
+<title>wnck_window_close ()</title>
+<indexterm zone="wnck-window-close" role="2.6"><primary>wnck_window_close</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_close                   (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);</programlisting>
+<para>
+Closes <parameter>window</parameter>.
+</para>
+<para>
+This function existed before 2.6, but the <parameter>timestamp</parameter> argument was missing
+in earlier versions.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>timestamp</parameter>&#160;:</term>
+<listitem><simpara> the X server timestamp of the user interaction event that caused
+this call to occur.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.6</para></refsect2>
+<refsect2 id="wnck-window-get-workspace" role="function">
+<title>wnck_window_get_workspace ()</title>
+<indexterm zone="wnck-window-get-workspace"><primary>wnck_window_get_workspace</primary></indexterm>
+<programlisting><link linkend="WnckWorkspace">WnckWorkspace</link>*      wnck_window_get_workspace           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets the current workspace <parameter>window</parameter> is on. If the window is pinned (on all
+workspaces), or not on any workspaces, <link linkend="NULL:CAPS"><literal>NULL</literal></link> may be returned.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> the single current workspace <parameter>window</parameter> is on, or <link linkend="NULL:CAPS"><literal>NULL</literal></link>. The
+returned <link linkend="WnckWorkspace"><type>WnckWorkspace</type></link> is owned by libwnck and must not be referenced or
+unreferenced.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-on-workspace" role="function">
+<title>wnck_window_is_on_workspace ()</title>
+<indexterm zone="wnck-window-is-on-workspace"><primary>wnck_window_is_on_workspace</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_on_workspace         (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> appears on <parameter>workspace</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>workspace</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> appears on <parameter>workspace</parameter>, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-visible-on-workspace" role="function">
+<title>wnck_window_is_visible_on_workspace ()</title>
+<indexterm zone="wnck-window-is-visible-on-workspace"><primary>wnck_window_is_visible_on_workspace</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_visible_on_workspace (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);</programlisting>
+<para>
+Like <link linkend="wnck-window-is-on-workspace"><function>wnck_window_is_on_workspace()</function></link>, but also checks that
+the window is in a visible state (i.e. not minimized or shaded).</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>workspace</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> appears on <parameter>workspace</parameter> in normal state, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link>
+otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-move-to-workspace" role="function">
+<title>wnck_window_move_to_workspace ()</title>
+<indexterm zone="wnck-window-move-to-workspace"><primary>wnck_window_move_to_workspace</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_move_to_workspace       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *space);</programlisting>
+<para>
+Asks the window manager to move <parameter>window</parameter> to <parameter>space</parameter>.
+</para>
+<para>
+FIXME: what happens if <parameter>window</parameter> is pinned?</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-in-viewport" role="function" condition="since:2.4">
+<title>wnck_window_is_in_viewport ()</title>
+<indexterm zone="wnck-window-is-in-viewport" role="2.4"><primary>wnck_window_is_in_viewport</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_in_viewport          (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWorkspace">WnckWorkspace</link> *workspace);</programlisting>
+<para>
+Gets <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> appears in the current viewport of <parameter>workspace</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>workspace</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWorkspace."><type>WnckWorkspace.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> appears in current viewport of <parameter>workspace</parameter>,
+<link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.4</para></refsect2>
+<refsect2 id="wnck-window-activate" role="function" condition="since:2.10">
+<title>wnck_window_activate ()</title>
+<indexterm zone="wnck-window-activate" role="2.10"><primary>wnck_window_activate</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_activate                (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);</programlisting>
+<para>
+Asks the window manager to make <parameter>window</parameter> the active window. The
+window manager may choose to raise <parameter>window</parameter> along with focusing it, and may
+decide to refuse the request (to not steal the focus if there is a more
+recent user activity, for example).
+</para>
+<para>
+This function existed before 2.10, but the <parameter>timestamp</parameter> argument was missing
+in earlier versions.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>timestamp</parameter>&#160;:</term>
+<listitem><simpara> the X server timestamp of the user interaction event that caused
+this call to occur.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.10</para></refsect2>
+<refsect2 id="wnck-window-is-active" role="function">
+<title>wnck_window_is_active ()</title>
+<indexterm zone="wnck-window-is-active"><primary>wnck_window_is_active</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_active               (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is the active window on its <link linkend="WnckScreen."><type>WnckScreen.</type></link></para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> is the active window on its <link linkend="WnckScreen"><type>WnckScreen</type></link>,
+<link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-is-most-recently-activated" role="function" condition="since:2.8">
+<title>wnck_window_is_most_recently_activated ()</title>
+<indexterm zone="wnck-window-is-most-recently-activated" role="2.8"><primary>wnck_window_is_most_recently_activated</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_is_most_recently_activated
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether <parameter>window</parameter> is the most recently activated window on its
+<link linkend="WnckScreen."><type>WnckScreen.</type></link>
+</para>
+<para>
+The most recently activated window is identical to the active
+window for click and sloppy focus methods (since a window is always
+active in those cases) but differs slightly for mouse focus since
+there often is no active window.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if <parameter>window</parameter> was the most recently activated window on its
+<link linkend="WnckScreen"><type>WnckScreen</type></link>, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.8</para></refsect2>
+<refsect2 id="wnck-window-activate-transient" role="function" condition="since:2.10">
+<title>wnck_window_activate_transient ()</title>
+<indexterm zone="wnck-window-activate-transient" role="2.10"><primary>wnck_window_activate_transient</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_activate_transient      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="guint32">guint32</link> timestamp);</programlisting>
+<para>
+If <parameter>window</parameter> has transients, activates the most likely transient
+instead of the window itself. Otherwise activates <parameter>window</parameter>.
+</para>
+<para>
+FIXME the ideal behavior of this function is probably to activate
+the most recently active window among <parameter>window</parameter> and its transients.
+This is probably best implemented on the window manager side.
+</para>
+<para>
+This function existed before 2.10, but the <parameter>timestamp</parameter> argument was missing
+in earlier versions.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>timestamp</parameter>&#160;:</term>
+<listitem><simpara> the X server timestamp of the user interaction event that caused
+this call to occur.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.10</para></refsect2>
+<refsect2 id="wnck-window-transient-is-most-recently-activated" role="function" condition="since:2.12">
+<title>wnck_window_transient_is_most_recently_activated ()</title>
+<indexterm zone="wnck-window-transient-is-most-recently-activated" role="2.12"><primary>wnck_window_transient_is_most_recently_activated</primary></indexterm>
+<programlisting><link linkend="gboolean">gboolean</link>            wnck_window_transient_is_most_recently_activated
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Gets whether one of the transients of <parameter>window</parameter> is the most
+recently activated window. See
+<link linkend="wnck-window-is-most-recently-activated"><function>wnck_window_is_most_recently_activated()</function></link> for a more complete
+description of what is meant by most recently activated.  This
+function is needed because clicking on a <link linkend="WnckTasklist"><type>WnckTasklist</type></link> once will
+activate a transient instead of <parameter>window</parameter> itself
+(wnck_window_activate_transient), and clicking again should
+minimize <parameter>window</parameter> and its transients.  (Not doing this can be
+especially annoying in the case of modal dialogs that don't appear
+in the <link linkend="WnckTaslist"><type>WnckTaslist</type></link>).</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&#160;:</term><listitem><simpara> <link linkend="TRUE:CAPS"><literal>TRUE</literal></link> if one of the transients of <parameter>window</parameter> is the most recently
+activated window, <link linkend="FALSE:CAPS"><literal>FALSE</literal></link> otherwise.
+
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.12</para></refsect2>
+<refsect2 id="wnck-window-set-icon-geometry" role="function">
+<title>wnck_window_set_icon_geometry ()</title>
+<indexterm zone="wnck-window-set-icon-geometry"><primary>wnck_window_set_icon_geometry</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_icon_geometry       (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y,
+                                                         <link linkend="int">int</link> width,
+                                                         <link linkend="int">int</link> height);</programlisting>
+<para>
+Sets the icon geometry for <parameter>window</parameter>. A typical use case for this is the
+destination of the minimization animation of <parameter>window</parameter>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>x</parameter>&#160;:</term>
+<listitem><simpara> X coordinate in pixels.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>y</parameter>&#160;:</term>
+<listitem><simpara> Y coordinate in pixels.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>width</parameter>&#160;:</term>
+<listitem><simpara> width in pixels.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>height</parameter>&#160;:</term>
+<listitem><simpara> height in pixels.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="WnckWindowGravity" role="enum" condition="since:2.16">
+<title>enum WnckWindowGravity</title>
+<indexterm zone="WnckWindowGravity" role="2.16"><primary>WnckWindowGravity</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_WINDOW_GRAVITY_CURRENT   = 0,
+  WNCK_WINDOW_GRAVITY_NORTHWEST = 1,
+  WNCK_WINDOW_GRAVITY_NORTH     = 2,
+  WNCK_WINDOW_GRAVITY_NORTHEAST = 3,
+  WNCK_WINDOW_GRAVITY_WEST      = 4,
+  WNCK_WINDOW_GRAVITY_CENTER    = 5,
+  WNCK_WINDOW_GRAVITY_EAST      = 6,
+  WNCK_WINDOW_GRAVITY_SOUTHWEST = 7,
+  WNCK_WINDOW_GRAVITY_SOUTH     = 8,
+  WNCK_WINDOW_GRAVITY_SOUTHEAST = 9,
+  WNCK_WINDOW_GRAVITY_STATIC    = 10
+} WnckWindowGravity;
+</programlisting>
+<para>
+Flag used when changing the geometry of a <link linkend="WnckWindow."><type>WnckWindow.</type></link> This is the gravity
+point to use as a reference for the new position.</para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-WINDOW-GRAVITY-CURRENT:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_CURRENT</literal></term>
+<listitem><simpara> keep the current gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-NORTHWEST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_NORTHWEST</literal></term>
+<listitem><simpara> use the left top corner of the frame window
+as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-NORTH:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_NORTH</literal></term>
+<listitem><simpara> use the center of the frame window's top side as
+gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-NORTHEAST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_NORTHEAST</literal></term>
+<listitem><simpara> use the right top corner of the frame window
+as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-WEST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_WEST</literal></term>
+<listitem><simpara> use the center of the frame window's left side as
+gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-CENTER:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_CENTER</literal></term>
+<listitem><simpara> use the center of the frame window as gravity
+point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-EAST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_EAST</literal></term>
+<listitem><simpara> use the center of the frame window's right side
+as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-SOUTHWEST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_SOUTHWEST</literal></term>
+<listitem><simpara> use the left bottom corner of the frame
+window as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-SOUTH:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_SOUTH</literal></term>
+<listitem><simpara> use the center of the frame window's bottom side
+as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-SOUTHEAST:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_SOUTHEAST</literal></term>
+<listitem><simpara> use the right bottom corner of the frame
+window as gravity point.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-GRAVITY-STATIC:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_GRAVITY_STATIC</literal></term>
+<listitem><simpara> use the left top corner of the client window as
+gravity point.
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.16</para></refsect2>
+<refsect2 id="WnckWindowMoveResizeMask" role="enum" condition="since:2.16">
+<title>enum WnckWindowMoveResizeMask</title>
+<indexterm zone="WnckWindowMoveResizeMask" role="2.16"><primary>WnckWindowMoveResizeMask</primary></indexterm>
+<programlisting>typedef enum
+{
+  WNCK_WINDOW_CHANGE_X      = 1 &lt;&lt; 0,
+  WNCK_WINDOW_CHANGE_Y      = 1 &lt;&lt; 1,
+  WNCK_WINDOW_CHANGE_WIDTH  = 1 &lt;&lt; 2,
+  WNCK_WINDOW_CHANGE_HEIGHT = 1 &lt;&lt; 3
+} WnckWindowMoveResizeMask;
+</programlisting>
+<para>
+Flag used as a bitmask when changing the geometry of a <link linkend="WnckWindow."><type>WnckWindow.</type></link> This
+indicates which part of the geometry should be changed.</para>
+<para>
+</para><variablelist role="enum">
+<varlistentry id="WNCK-WINDOW-CHANGE-X:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_CHANGE_X</literal></term>
+<listitem><simpara> X coordinate of the window should be changed.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-CHANGE-Y:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_CHANGE_Y</literal></term>
+<listitem><simpara> Y coordinate of the window should be changed.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-CHANGE-WIDTH:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_CHANGE_WIDTH</literal></term>
+<listitem><simpara> width of the window should be changed.
+</simpara></listitem>
+</varlistentry>
+<varlistentry id="WNCK-WINDOW-CHANGE-HEIGHT:CAPS" role="constant">
+<term><literal>WNCK_WINDOW_CHANGE_HEIGHT</literal></term>
+<listitem><simpara> height of the window should be changed.
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.16</para></refsect2>
+<refsect2 id="wnck-window-get-client-window-geometry" role="function" condition="since:2.20">
+<title>wnck_window_get_client_window_geometry ()</title>
+<indexterm zone="wnck-window-get-client-window-geometry" role="2.20"><primary>wnck_window_get_client_window_geometry</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_get_client_window_geometry
+                                                        (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> *xp,
+                                                         <link linkend="int">int</link> *yp,
+                                                         <link linkend="int">int</link> *widthp,
+                                                         <link linkend="int">int</link> *heightp);</programlisting>
+<para>
+Gets the size and position of <parameter>window</parameter>, as last received
+in a ConfigureNotify event (i.e. this call does not round-trip
+to the server, just gets the last size we were notified of).
+The X and Y coordinates are relative to the root window.
+</para>
+<para>
+The window manager usually adds a frame around windows. If
+you need to know the size of <parameter>window</parameter> with the frame, use
+<link linkend="wnck-window-get-geometry"><function>wnck_window_get_geometry()</function></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>xp</parameter>&#160;:</term>
+<listitem><simpara> return location for X coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>yp</parameter>&#160;:</term>
+<listitem><simpara> return location for Y coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>widthp</parameter>&#160;:</term>
+<listitem><simpara> return location for width in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>heightp</parameter>&#160;:</term>
+<listitem><simpara> return location for height in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.20</para></refsect2>
+<refsect2 id="wnck-window-get-geometry" role="function">
+<title>wnck_window_get_geometry ()</title>
+<indexterm zone="wnck-window-get-geometry"><primary>wnck_window_get_geometry</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_get_geometry            (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="int">int</link> *xp,
+                                                         <link linkend="int">int</link> *yp,
+                                                         <link linkend="int">int</link> *widthp,
+                                                         <link linkend="int">int</link> *heightp);</programlisting>
+<para>
+Gets the size and position of <parameter>window</parameter>, including decorations. This
+function uses the information last received in a ConfigureNotify
+event and adjusts it according to the size of the frame that is
+added by the window manager (this call does not round-trip to the
+server, it just gets the last sizes that were notified). The
+X and Y coordinates are relative to the root window.
+</para>
+<para>
+If you need to know the actual size of <parameter>window</parameter> ignoring the frame
+added by the window manager, use <link linkend="wnck-window-get-client-window-geometry"><function>wnck_window_get_client_window_geometry()</function></link>.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>xp</parameter>&#160;:</term>
+<listitem><simpara> return location for X coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>yp</parameter>&#160;:</term>
+<listitem><simpara> return location for Y coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>widthp</parameter>&#160;:</term>
+<listitem><simpara> return location for width in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>heightp</parameter>&#160;:</term>
+<listitem><simpara> return location for height in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-set-geometry" role="function" condition="since:2.16">
+<title>wnck_window_set_geometry ()</title>
+<indexterm zone="wnck-window-set-geometry" role="2.16"><primary>wnck_window_set_geometry</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_set_geometry            (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                         <link linkend="WnckWindowGravity">WnckWindowGravity</link> gravity,
+                                                         <link linkend="WnckWindowMoveResizeMask">WnckWindowMoveResizeMask</link> geometry_mask,
+                                                         <link linkend="int">int</link> x,
+                                                         <link linkend="int">int</link> y,
+                                                         <link linkend="int">int</link> width,
+                                                         <link linkend="int">int</link> height);</programlisting>
+<para>
+Sets the size and position of <parameter>window</parameter>. The X and Y coordinates should be
+relative to the root window.
+</para>
+<para>
+Note that the new size and position apply to <parameter>window</parameter> with its frame added
+by the window manager. Therefore, using <link linkend="wnck-window-set-geometry"><function>wnck_window_set_geometry()</function></link> with
+the values returned by <link linkend="wnck-window-get-geometry"><function>wnck_window_get_geometry()</function></link> should be a no-op, while
+using <link linkend="wnck-window-set-geometry"><function>wnck_window_set_geometry()</function></link> with the values returned by
+<link linkend="wnck-window-get-client-window-geometry"><function>wnck_window_get_client_window_geometry()</function></link> should reduce the size of <parameter>window</parameter>
+and move it.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>gravity</parameter>&#160;:</term>
+<listitem><simpara> the gravity point to use as a reference for the new position.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>geometry_mask</parameter>&#160;:</term>
+<listitem><simpara> a bitmask containing flags for what should be set.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>x</parameter>&#160;:</term>
+<listitem><simpara> new X coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>y</parameter>&#160;:</term>
+<listitem><simpara> new Y coordinate in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>width</parameter>&#160;:</term>
+<listitem><simpara> new width in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>height</parameter>&#160;:</term>
+<listitem><simpara> new height in pixels of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.16</para></refsect2>
+<refsect2 id="wnck-window-keyboard-move" role="function">
+<title>wnck_window_keyboard_move ()</title>
+<indexterm zone="wnck-window-keyboard-move"><primary>wnck_window_keyboard_move</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_keyboard_move           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to start moving <parameter>window</parameter> via the keyboard.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2 id="wnck-window-keyboard-size" role="function">
+<title>wnck_window_keyboard_size ()</title>
+<indexterm zone="wnck-window-keyboard-size"><primary>wnck_window_keyboard_size</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_window_keyboard_size           (<link linkend="WnckWindow">WnckWindow</link> *window);</programlisting>
+<para>
+Asks the window manager to start resizing <parameter>window</parameter> via the keyboard.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> a <link linkend="WnckWindow."><type>WnckWindow.</type></link>
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+<refsect1 id="WnckWindow.signal-details" role="signals">
+<title role="signals.title">Signal Details</title>
+<refsect2 id="WnckWindow-actions-changed" role="signal"><title>The <literal>&quot;actions-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-actions-changed"><primary>WnckWindow::actions-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link>       *window,
+                                                        <link linkend="WnckWindowActions">WnckWindowActions</link> changed_mask,
+                                                        <link linkend="WnckWindowActions">WnckWindowActions</link> new_state,
+                                                        <link linkend="gpointer">gpointer</link>          user_data)         : Run Last</programlisting>
+<para>
+Emitted when the actions availabilities for <parameter>window</parameter> change.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>changed_mask</parameter>&#160;:</term>
+<listitem><simpara> the bitmask containing bits set for all actions
+availabilities for <parameter>window</parameter> that have changed.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_state</parameter>&#160;:</term>
+<listitem><simpara> the new actions availabilities for <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckWindow-geometry-changed" role="signal"><title>The <literal>&quot;geometry-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-geometry-changed"><primary>WnckWindow::geometry-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the geometry of <parameter>window</parameter> changes.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckWindow-icon-changed" role="signal"><title>The <literal>&quot;icon-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-icon-changed"><primary>WnckWindow::icon-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the icon of <parameter>window</parameter> changes.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckWindow-name-changed" role="signal"><title>The <literal>&quot;name-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-name-changed"><primary>WnckWindow::name-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the name of <parameter>window</parameter> changes.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckWindow-state-changed" role="signal"><title>The <literal>&quot;state-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-state-changed"><primary>WnckWindow::state-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link>     *window,
+                                                        <link linkend="WnckWindowState">WnckWindowState</link> changed_mask,
+                                                        <link linkend="WnckWindowState">WnckWindowState</link> new_state,
+                                                        <link linkend="gpointer">gpointer</link>        user_data)         : Run Last</programlisting>
+<para>
+Emitted when the state of <parameter>window</parameter> changes. This can happen when <parameter>window</parameter> is
+(un)minimized, (un)maximized, (un)sticked, (un)shaded, (un)made above,
+(un)made below, (un)set fullscreen, when it needs attention, etc. See
+<link linkend="WnckWindowState"><type>WnckWindowState</type></link> for the complete list of states that might have changed.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>changed_mask</parameter>&#160;:</term>
+<listitem><simpara> the bitmask containing bits set for all states of <parameter>window</parameter>
+that have changed. 
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_state</parameter>&#160;:</term>
+<listitem><simpara> the new state of <parameter>window</parameter>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2><refsect2 id="WnckWindow-workspace-changed" role="signal"><title>The <literal>&quot;workspace-changed&quot;</literal> signal</title>
+<indexterm zone="WnckWindow-workspace-changed"><primary>WnckWindow::workspace-changed</primary></indexterm>
+<programlisting><link linkend="void">void</link>                user_function                      (<link linkend="WnckWindow">WnckWindow</link> *window,
+                                                        <link linkend="gpointer">gpointer</link>    user_data)      : Run Last</programlisting>
+<para>
+Emitted when the current workspace of <parameter>window</parameter> changes, or if <parameter>window</parameter> has
+been pinned or unpinned.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&#160;:</term>
+<listitem><simpara> the <link linkend="WnckWindow"><type>WnckWindow</type></link> which emitted the signal.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&#160;:</term>
+<listitem><simpara>user data set when the signal handler was connected.</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+</refsect1>
+<refsect1 id="WnckWindow.see-also">
+<title>See Also</title>
+<link linkend="WnckWorkspace"><type>WnckWorkspace</type></link>, <link linkend="WnckApplication"><type>WnckApplication</type></link>, <link linkend="WnckClassGroup"><type>WnckClassGroup</type></link>
+</refsect1>
+
+</refentry>

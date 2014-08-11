@@ -1,0 +1,50 @@
+摘自：http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763105392230e54f73c61878b4b2893cf19cd334c413037bee43a644a4484962a7001d94a5de8f02172410037b7edcb9f4aaae1d477719c6269304a89044d8c53b8ca3625&p=803bc54ad5c850f413be9b7a5a07&user=baidu
+
+k3可以说是现在中国的骄傲，但是现在k3的性能被夸大了，k3的性价比也并没有外国的处理器高。
+. c) b9 z) Y5 i2 S之前有一个帖子说k3的累计性能相当于 2000+mhz，并且与pxa3xx    s3c24xx做了对比，从那个帖子中给人一种感觉就是k3已经比外国的主流手机cpu强了很多倍。但是我可以很负责任的说：“作者不是枪手就是白痴！” 以pxa3xx系列中最低端中的pxa300为例，pxa300的浮点运算性能大概是360mhzk3的220%（实测k3 360mhz无论浮点运算还是整数运算都不如pxa270 312mhz）。并且pxa300同样拥有2d加速。k3优势在于视频的硬件解码，pxa300的独特之处在于wmmx2指令集，这个指令集使得3d性能和视频播放性能都有不少的提升，虽然是软件解码但是也有强悍的视频播放能力（但是和k3有一点差距）。
+; p: D5 b- d6 e+ B6 p3 Z总结一下：k3的优势在于视频播放和功耗，但是在运算，3d,软解rmvb 等方面都比pxa300差了很远。因为现在都是q屏的机器，所以视频播放的优势也没有了。同价位的viva和touch 3g比起来实在想不到viva有什么优势。
+7 F! o. k9 M7 d# N/ ?我还是希望华为争点气做出来真正有性价比的智能手机平台
+
+-------------------------
+
+摘自：http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763104687270e54f7357c8c94423f82c40cc43a0603506694ea7a7d0d45889a3e3956b21200bca77c65377462edd9df893e9bb891292e822423706bdc074d8d0dea960673ce65cf05a3b81897bae733e3b9a4d2c82453dd23746df4879c5b7003bb1ce76230f4d79d5f655807bb9d27158e4e0128885230a131f2f7331e10f0f2ca2849d42ba07661e4b844c62913c54be6484e3345d05bc07e465641f73e23e8374c13939b4a972c6e3327a139b1aeb6c0fc49fccb9b358f8ece&p=c261c64ad2934eac5cb68c355b41&user=baidu
+
+PXA310处理器的主要特性包括：
+低功耗、高性能的处理器:624Mhz，256K内部SRAM，WMMX2
+硬件视频加速器和JPEG图片处理器，支持MPEG-2，MPEG-4，H。264解码， 能够支持 DVB-T/ISDB-T，及国内的DMB-T/H的解码。
+支持260M 16位DDR的内存
+支持8位和16位 Nand Flash启动，支持Nor Flash启动
+具有叠加和混合的功能的LCD控制器
+2D图形加速引擎
+500万像素摄像头接口
+USB2.0（ULPI）支持更高的下载速度和更加灵活的连接
+3个SD/MMC接口
+8X8 矩阵键盘接口
+3个串口（3.6M）
+AC97接口
+4个SSP接口
+4个PWM接口
+RTC模块
+I2C接口
+400 -PBGA封装
+温度范围：0 to 70 oC
+操作系统支持：Linux/WinCE6.0/WM6.0 
+
+
+------------
+摘自：
+http://cache.baidu.com/c?m=9f65cb4a8c8507ed4fece763105392230e54f76437d7984968d4e419ce3b46071d26b4e871351072d3cf776001b8492ae9e73604341420c0c18ed714c9fecf687987626b2f56914062d3&p=c63fda1f80904ea808e2962413&user=baidu
+
+http://www.592zn.com/thread-28952-1-1.html
+
+PXA300 Processor Series PXA300处理器系列
+
+The PXA300 processor, with scalable performance to 624 MHz and video performance capabilities, enables the development of cost-efficient smartphones, industrial embedded solutions, and handheld devices such as portable navigation devices (PNDs).的PXA300处理器，可扩展的性能，以624 MHz和视频性能的能力，使发展具有成本效益的智能手机，工业嵌入式解决方案，和手持设备，如便携式导航设备（ PND ）的全包。 Built on a low-power 90nm process technology, and with the ability to dynamically scale voltage and frequency on demand, the PXA300 supports today’s stringent requirements for longer battery life.建立在低功耗的90nm制造工艺，并能够动态规模电压和频率的需求， PXA300支持今天的严格要求更长的电池寿命。
+
+Key Features and Platform Benefits主要功能和平台的优点
+The PXA300 processor and its derivatives, with options for stacked NAND ﬂash and mobile DDR memory, integrate the following features:该PXA300处理器及其衍生物，并选择堆叠NAND闪存和移动DDR内存，集成了以下功能：
+
+Scalable, general-purpose processing up to 624 MHz with a 16-bit DDR memory interface for a richer end-user experience, such as browsing Web content or streaming video.可扩展性，通用处理高达624 MHz的16位DDR内存接口，更丰富的终端用户体验，如浏览网页内容或视频流。
+Dynamic CPU frequency and voltage scaling technology for MIPs/mW power efficiency, delivering long battery life and enabling consumers to spend more time enjoying the rich features their offered by their devices and service providers.动态CPU频率和电压缩放技术，聚合物/兆瓦的功率效率，提供超长电池寿命，使消费者花更多的时间享受其丰富的功能所提供的设备和服务提供商。
+WMMX2 accelerating technology, a 2D graphics accelerator and a 256 KB frame buffer designed to support video codecs, enhances the user’s experience of popular usage models like video playback, video conferencing, video telephony, and digital TV. WMMX2加速技术， 2D图形加速器和一个提供256 KB帧缓冲设计支持视频编解码器，增强了用户体验的民众使用模式像视频播放，视频会议，视频电话和数字电视。
+An enhanced set of peripherals eases connectivity to technologies like Wi-Fi, WiBro, WiMAX, and Bluetooth v2.0, and support for camera sensors up to 2 MP.增强的外设集简化连接技术，如Wi - Fi网络，无线宽带， WiMAX和蓝牙v2.0 ，支持摄像传感器高达200万像素。

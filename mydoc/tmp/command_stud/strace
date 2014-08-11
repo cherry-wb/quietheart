@@ -1,0 +1,67 @@
+strace
+
+[功能]
+跟踪系统调用和信号的工具。
+
+[描述]
+在最简单的情况下，strace运行指定的命令，直到这个命令退出。它会截取和记录进程调用的系统调用或者进程收到的信号。系统调用的名称，参数以及返回值都会被打印到标准错误输出上，或者通过-o选项指定到一个文件中。
+
+strace是一个非常有用的诊断、跟踪、调试工具。这个工具在解决程序中存在的一些问题的时候非常有用，尤其是应用程序的源代码无法获取的时候，我们可以不用重新编译源代码却能跟踪程序运行。
+输出的每一行包含系统调用名称，参数，以及函数的返回值。例如跟踪"cat /dev/null"命令，会有一个如下的输出：
+open("/dev/null", O_RDONLY) = 3
+
+出现错误（一般都返回-1）的时候会将错误标志以及相应的错误字符串追加到后面
+open("/foo/bar", O_RDONLY) = -1 ENOENT (No such file or directory)
+
+信号会打印信号标志以及信号字符串。下面是对"sleep 666"进行中断的跟踪的摘录：
+sigsuspend([] <unfinished ...>
+--- SIGINT (Interrupt) ---
++++ killed by SIGINT +++
+
+参数会以变量的方式被打印。下面的例子显示了shell执行">>xyzzy"输出重定向：
+open("xyzzy", O_WRONLY|O_APPEND|O_CREAT, 0666) = 3
+	   这里，open的三个参数通过将标记参数用按位或分隔的方式解码，并打印模式参数的10进制值。这里的传统以及本地的使用和ANSI或者POSIX有所不同，后面的形式更常用。有些时候，strace的输出比源代码更容易阅读。
+
+结构体指针会被解引用并且显示其成员。在所有的情况下，参数以c的风格被格式化。例如"ls -l /dev/null"命令对应如下：
+lstat("/dev/null", {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 3), ...}) = 0
+
+       Notice how the ‘struct stat’ argument is dereferenced and how each member is  displayed  symboli-
+       cally.   In  particular, observe how the st_mode member is carefully decoded into a bitwise-OR of
+       symbolic and numeric values.  Also notice in this example that the first argument to lstat is  an
+       input  to  the  system call and the second argument is an output.  Since output arguments are not
+       modified if the system call fails, arguments may not always be dereferenced.  For example, retry-
+       ing the ‘‘ls -l’’ example with a non-existent file produces the following line:
+
+       lstat("/foo/bar", 0xb004) = -1 ENOENT (No such file or directory)
+
+       In this case the porch light is on but nobody is home.
+
+       Character pointers are dereferenced and printed as C strings.  Non-printing characters in strings
+       are normally represented by ordinary C escape codes.  Only the  first  strsize  (32  by  default)
+       bytes  of  strings  are  printed;  longer strings have an ellipsis appended following the closing
+       quote.  Here is a line from ‘‘ls -l’’ where the getpwuid library routine is reading the  password
+       file:
+
+       read(3, "root::0:0:System Administrator:/"..., 1024) = 422
+
+       While  structures  are annotated using curly braces, simple pointers and arrays are printed using
+       square brackets with commas separating elements.  Here is an example from the command ‘‘id’’ on a
+       system with supplementary group ids:
+
+       getgroups(32, [100, 0]) = 2
+
+       On  the  other hand, bit-sets are also shown using square brackets but set elements are separated
+       only by a space.  Here is the shell preparing to execute an external command:
+
+       sigprocmask(SIG_BLOCK, [CHLD TTOU], []) = 0
+
+       Here the second argument is a bit-set of two signals, SIGCHLD and SIGTTOU.   In  some  cases  the
+       bit-set is so full that printing out the unset elements is more valuable.  In that case, the bit-
+       set is prefixed by a tilde like this:
+
+       sigprocmask(SIG_UNBLOCK, ~[], NULL) = 0
+
+       Here the second argument represents the full set of all signals.
+
+
+[举例]

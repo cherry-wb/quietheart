@@ -1,0 +1,134 @@
+这里内容是猜测，因为不太懂日语，有待实践验证。
+
+overview.txt
+==================
+NBL具有的功能
+NBL 是一个bootloader,它具有以下特点：
+* Closed source
+不是GPL的。
+* linux启动
+   这是为linux内核设计的。
+* shell
+   有一些类似shell的命令。
+* Boot profile 功能
+   可以把启动内核参数，内核参数，initrd相关参数做为一个集合"Profile"进行管理。
+* Boot selection function
+启动时候出现问题的时间，  升级系统时候，可以自动选择切换内核启动.
+* daiagu功能
+这是制造时候必须的功能。
+* 文件系统功能
+   可以管理和访问uvfat文件系统。
+* SDM device
+   可以管理和设置环境变量，log，维护各种设置信息。
+*Network access
+   BOOTP and TFTP and SYSLOG所获取的网络地址来传输文件登记日志的功能。 
+* NUP(NBL User Program)
+  可以在NBL上面执行一个特殊目的的程序。
+* BIOS call
+可以从NUP程序和linux内核从bios调用nbl功能?
+
+
+bootprof.txt
+========================
+这里说：
+[BootProfile]
+NBL管理一些和启动相关的参数，叫做Profile.
+shell命令，加载initrd镜像，加载内核镜像，内核能够通过使用"aboot"命令，和boot selection功能注册boot profile来自动事先启动。
+
+[Boot profile definition file]
+boot profile可以通过特定格式的文本配置文件来进行设置，也可以通过"bootprof param"命令来设置。
+后面提到了文件的具体格式，期间用到了一个go命令可能需要注意。
+
+
+命令：bootprof.txt
+========================
+usage: bootprof <command> [arg...]
+  bootprof init 
+      Initialize boot profile
+  bootprof load [-u] <file>
+      Load boot profile list from file
+  bootprof save <file>
+      Save boot profile list to file
+  bootprof list 
+      Show boot profile list
+  bootprof bootname [-r] [<name>]
+      Set or show normal/recovery boot profile name
+  bootprof delete <name>
+      Delete boot profile
+  bootprof param [-k <kernel image>    ] [-c <command line>    ]
+                 [-i <initrd image>    ] [-t <timeout value>   ]
+                 [-n <max retry count> ] [-p <preboot command> ]
+                 <name>
+      Add boot profile or set boot profile parameters
+
+
+
+aboot.txt
+========================
+aboot [-s | -n | -r | -h]
+
+-s The kernel is started in the boot selection mode. 
+-n The profile for a normal start is used and the kernel is started. 
+-r The profile for the recovery start is used and the kernel is started. 
+-h The profile for the Hot Boot start is used and the kernel is started. 
+举例：
+用normal模式来启动：
+NBL> aboot -n
+
+nblconfig.txt
+========================
+
+[我的实践]
+========================
+1,bootprof相关实践：
+运行bootprof会提示相应的帮助信息。
+我实践步骤如下：
+1)初始化：
+NBL> bootprof init
+NBL> bootprof list
+输出：
+[global]
+  normal    : Linux
+  recovery  : Linux0
+这里，可以用“bootprof bootname [-r] [<name>]”设置normal和recovery名字。
+
+2)根据输出，设置 Linux和 Linux0:
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux0
+这里，实际是用Linux0启动的。
+
+3)利用bootprof的normal启动：
+NBL> aboot -n
+
+
+从代码看，似乎有个autoboot，设置为on就可以自动启动，但是编译的时候没有把这个选项给添加进去???
+
+
+举例子：
+1)在启动NBL之前就执行命令：
+NBL>bootprof param -p "bootprof list" Linux
+这样，会将"bootprof list"中列出的名字为[Linux]的profile的preboot字段设置为"bootprof list"，含义就是，启动NBL之前，执行"bootprof list"命令。
+
+2)使用bootprof加载指定的配置文件：
+NBL>bootprof load net:tftp:myprof
+这里， myprof文件的内容如下：
+[MyProf] 
+kernel    : net:tftp:vmlinux.bin
+cmdline   : 
+initrd    : ramdisk.img
+timeout   : 3
+retry     : 3
+运行这条命令之后，检查加载的情况：
+NBL>bootprof list
+[global]
+  normal    : 
+  recovery  : 
+
+[MyProf]
+  kernel    : net:tftp:vmlinux.bin
+  cmdline   : 
+  initrd    : ramdisk.img
+  preboot   : 
+  timeout   : 3
+  retry     : 3
+

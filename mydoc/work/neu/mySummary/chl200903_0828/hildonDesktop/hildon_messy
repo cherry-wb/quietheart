@@ -1,0 +1,35 @@
+1,有两个信号："active-window-update"和"entry_info_stack_changed"
+这里，第二个信号应该是当窗口关闭或者窗口的栈发生变化的时候发生，因为已经实践过了。第一个信号应该是打开窗口的时候，这是初步的推断(实践了，不是？？)。
+g_signal_connect (close_plugin->hdwm, "active-window-update",  
+		              G_CALLBACK (active_window_update), (gpointer)close_plugin);
+    g_signal_connect (close_plugin->hdwm, "entry_info_stack_changed", G_CALLBACK (update_window_icon), (gpointer)close_plugin);
+
+2.关于模块加载：
+ vi hello-world-statusbar.c
+里面有一个宏定义：
+  HD_DEFINE_PLUGIN(HildonStatusBarHelloWorld,
+          hildon_status_bar_helloworld,
+          STATUSBAR_TYPE_ITEM);
+是关于插件加载的。
+
+--------- 
+然后：
+ cd hildon-desktop-2.0.18
+
+
+cd libhildondesktop/
+ grep -riI HD_DEFINE_PLUGIN *
+
+
+grep -rI HD_DEFINE_TYPE_MODULE_EXTENDED *
+vi libhildondesktop/libhildondesktop.h 
+
+
+grep -rI HILDON_DESKTOP_PLUGIN_SYMBOLS *
+ vi libhildondesktop/hildon-desktop-plugin.h
+
+
+grep -rI hildon_desktop_plugin_load *
+
+vi libhildondesktop/hildon-desktop-plugin.c
+--------

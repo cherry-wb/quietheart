@@ -1,0 +1,23 @@
+resource:http://www.soft6.com/tech/17/173109.html
+
+curl
+
+
+[举例]
+*下载网页：
+lv-k@quietheart:~/test/curl$ curl www.baidu.com >baidu.html
+这样,会将www.baidu.com的主页保存到baidu.html中。
+
+*网页上传文件：
+lv-k@quietheart:~/test/curl$curl -F 'file=@./belkin_n+_router.cfg;type=multipart/form-data' '10.126.1.22/UploadCfgFile.cgi'
+这里，目的是将一个路由器（belkin n+_fbc6f4型号）恢复成原来的配置，而原来配置对应的配置文件保存在本地的"./belkin_n+_router.cfg"路径中。选项"-F"指定使用form提交；'file=@./belkin_n+_router.cfg"中的"file“是html页面中表单对应的输入文件名输入框的html变量名称；@./belkin_n+_router.cfg使用"@"指定使用文件（否则不用"@"，例如变量）；";type=..."这部分内容指定发送http请求时候的内容类型，如果是上传文件则是multipart类型；否则(如直接提交表单变量值)是别的类型，因为这里上传文件，所以指定multipart类型，实际这里这个类型指定可以省略，因为当curl看到前面使用@开头引出的文件名称就自动认为是文件名称了。'10.126.1.22/UploadCfgFile.cgi'是上传html页面中对应<form>中的action。提交request之后，会将response返回到标准输出。
+
+[其他]
+lv-k@quietheart:~/work/doc$ curl 172.18.2.1
+<HTML><HEAD><TITLE>401 Unauthorized</TITLE></HEAD>
+<BODY BGCOLOR="#cc9999"><H4>401 Unauthorized</H4>
+Authorization required.
+</BODY></HTML>
+
+
+curl -F 'delay=0' -F 'target=5' -F 'RestoreFile=@./WRT120N_V1.00.01.bin;type=application/octet-stream' -F 'restart_time=0' -F 'reload=0' -F 'restart_page=' -F 'location_page=ACC.stm?rule_idx='  'admin:admin@10.126.1.53/cgi-bin/restore.cgi'

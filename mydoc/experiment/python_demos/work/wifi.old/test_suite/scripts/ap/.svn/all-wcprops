@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/amazon/!svn/ver/1335/Management/wifi/test_suite/scripts/ap
+END
+cisco_wrt54gl.py
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/amazon/!svn/ver/1335/Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+END
+cisco_e3200.py
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/amazon/!svn/ver/1272/Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+END
+base.py
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/amazon/!svn/ver/1333/Management/wifi/test_suite/scripts/ap/base.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/amazon/!svn/ver/816/Management/wifi/test_suite/scripts/ap/__init__.py
+END
+dlink_dir655.py
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/amazon/!svn/ver/1333/Management/wifi/test_suite/scripts/ap/dlink_dir655.py
+END
+cisco_wrt160n.py
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scripts/ap/cisco_wrt160n.py
+END
+netgear_wndr3700v3.py
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/amazon/!svn/ver/1333/Management/wifi/test_suite/scripts/ap/netgear_wndr3700v3.py
+END
+cisco_e3000.py
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/amazon/!svn/ver/1334/Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+END

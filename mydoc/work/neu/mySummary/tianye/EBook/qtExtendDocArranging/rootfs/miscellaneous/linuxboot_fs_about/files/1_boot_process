@@ -1,0 +1,162 @@
+内容：
+*这里简单介绍linux启动的总体过程。
+*/etc/inittab文件的字段及其说明
+*嵌入式设备的inittab
+
+*这里简单介绍linux启动的总体过程。
+===========================================================
+参考：http://nmc.nchu.edu.tw/linux/Linux_boot.htm
+一、Linux的啟動
+linux启动流程参考图片Linux_boot.jpg
+
+二、Linux Runlevel
+7 RunLevel
+因應不同需求，Linux(UNIX)可以分為七種不同啟動模式，或七種不同執行等級，一般正常使用的系統多開啟為Level 3 或5
+Runlevel 	
+
+代表意義
+0 	關機
+1 	單人模式(Single User Mode)
+2 	多人使用模式，無NFS功能(網路是啟動的)
+3 	完整多人使用模式
+4 	unused
+5 	完整多人使用模式，xdm啟動(圖形Login畫面)
+6 	重新開機(Reboot)
+
+	
+
+三、/etc/inittab內容解讀
+
+/etc/inittab內容(Just For RedHAT Linux)
+
+id : 3 : initdefault :
+si : : sysinit: /etc/rc.d/rc.sysinit
+
+l0 : 0 : wait: /etc/rc.d/rc 0
+l1 : 1 : wait: /etc/rc.d/rc 1
+l2 : 2 : wait: /etc/rc.d/rc 2
+l3 : 3 : wait: /etc/rc.d/rc 3
+l4 : 4 : wait: /etc/rc.d/rc 4
+l5 : 5 : wait: /etc/rc.d/rc 5
+l6 : 6 : wait: /etc/rc.d/rc 6
+
+ud : : once : /sbin/update
+ca : : ctrlaltdel : /sbin/shutdown -t3 -r now
+pf : : powerfail :/sbin/shutdown -f -h +2 "Power Failure; System Shutting Down"
+pr : 12345 : powerokwait:/sbin/shutdown -c "Power Restored; Shutdown Cancelled"
+
+1 : 2345 : respawn : /sbin/mingetty tty1
+2 : 2345 : respawn : /sbin/mingetty tty2
+3 : 2345 : respawn : /sbin/mingetty tty3
+4 : 2345 : respawn : /sbin/mingetty tty4
+5 : 2345 : respawn : /sbin/mingetty tty5
+6 : 2345 : respawn : /sbin/mingetty tty6
+
+x : 5 : respawn : /etc/X11/prefdm -nodaemon
+
+	
+
+/etc/inittab每一行的意義
+Format: code:runlevels:action:process
+
+code: 這是每"項目"(行)的識別碼，他的格式可以是一個字元或兩個字元，某些特殊動作必須搭配特酥識別碼，系統預定的識別碼建議不要更動它。
+
+runlevels:這是這個"項目"(行)指定的Run Level，他的格式可以是0~6任何數目字元的組合，只要系統目前Run Level符合這個項目指定的層級，則這行的內容會自動生效，這行所指定的Command也將會被執行。
+例如：當系統開機至Run Level 5時，項目『x : 5 : respawn : /etc/X11/prefdm -nodaemon』就會被執行，當系統開機至Run Level 2、3、4、5時，項目『1 : 2345 : respawn : /sbin/mingetty tty1』都會生效。
+
+action:這個欄位告訴"init"如何處理這個項目，可用選項有：initdefault、wait、respawn等共15種不同的值，他們所代表的意義請用"man initttab"一窺究竟。
+
+process:要執行的命令與參數。
+
+id : 3 : initdefault :
+action "initdefault"告訴 init 將系統開至Run Level 3
+
+si : : sysinit: /etc/rc.d/rc.sysinit
+runlevel 欄位空白告訴init不管系統開到哪一個Run Level都要執行這一項目(rc.sysinit)
+action "sysinit"告訴init優先執行這個項目。"sysinit"將忽略runlevel欄位。
+
+ ca : : ctrlaltdel : /sbin/shutdown -t3 -r now
+action "ctrlaltdel"告訴init當系統收到SIGINT(or User同時按下Alt+Ctrl+Del時)，執行這個項目(/sbin/shutdown -t3 -r now)。如果你不希望你的系統因為有人在Console按下Alt+Ctrl+Del而重新開機時，你可以修改這個項目。
+
+5 : 2345 : respawn : /sbin/mingetty tty5
+表示在進入RunLevel 2/3/4/5/6時執行 "/sbin/mingetty tty5 "，action "respawn"表示在一個session結束後(User由logout Console tty5)，在執行一次"/sbin/mingetty tty5 "，如果此處不用repawn的話，當User Logout tty5，這個Virtual Terminal將一去不復返，也就是"Alt+F5"將不再發生作用。
+	
+
+Run Level的改變
+root可以使用init或telinit切換到不同Run Level
+init 0 = shutdown -h 
+init 6 = reboot
+
+*/etc/inittab文件的字段及其说明
+===========================================================
+参考：http://www.linuxdiyf.com/bbs/thread-6027-1-1.html
+这个参考资料很好，相关的内容也很好。
+/etc/inittab文件中每个登记项的结构都是一样的，共分为以冒号“：”分隔的4个字段。具体如下：
+     identifier :  run_level  :  action  :  process
+其中，各字段以及与其相关的说明如下：
+identifier　　登记项标识符，最多为4个字符。用于惟一地标识/etc/inittab文件中的每一个登记项
+
+run_level　　系统运行级，即执行登记项的init级别。用于指定相应的登记项适用于哪一个运行级，即在哪一个运行级中被处理。如果该字段为空，那么相应的登记项将适用于所有的运行级。在该字段中，可以同时指定一个或多个运行级，其中各运行级分别以数字0.1.2.3.4.5.6或字母a、b、c 表示，且无需对其进行分隔。
+
+action　　　　动作关键字。用于指定init(M)命令或进程对相应进程（在“process”字段定义）所实施的动作。具体动作包括：
+　　1、boot：只有在引导过程中，才执行该进程，但不等待该进程的结束；当该进程死亡时，也不重新启动该进程。
+　　2、bootwait：只有在引导过程中，才执行该进程，并等待进程的结束：当该进程死亡时，也不重新启动该进程。实际上，只有在系统被引导后，并从单用户方式进入多用户方式时，这些登记项才被处理；如果系统的默认运行级设置为2（即多用户方式），那么这些登记项在系统引导后将马上被处理。
+　　3、initdefault：指定系统的默认运行级。系统启动时，init将首先查找该登记项。如果存在init将据此决定系统最初要进入的运行级。具体来说，init将指定登记项“run_level"字段中的最大数字（即最高运行级）为当前系统的默认运行级；如果该字段为空，那么将其解释为 “0123456”，并以“6”作为默认运行级。如果不存在该登记项，那么init将要求用户在系统启动时指定一个最初的运行级。
+　　4、off：如果相应的进程正在运行，那么就发出一个警告信号，等待20秒后，再通过杀死信号强行终止该进程。如果相应的进程并不存在那么就忽略该登记项。
+　　5、once：启动相应的进程，但不等待该进程结束便继续处理/etc/inittab文件中的下一个登记项；当该进程死亡时，init也不重新启动该进程。注意：在从一个运行级进入另一个运行级时，如果相应的进程仍然在运行，那么init就不重新启动该进程。
+　　6、ondemand：与“respawn”的功能完全相同，但只用于运行级为a、b或c的登记项。
+　　7、powerfail：只在init接收到电源失败信号时执行相应的进程，但不等待该进程结束。
+　　8、powerwait：只在init接收到电源失败信号时执行相应的进程，并在继续对/etc/inittab文件进行任何处理前等待该进程结束。
+　　9、respawn：如果相应的进程还不存在，那么init就启动该进程，同时不等待该进程的结束就继续扫描/etc/inittab文件；当该进程死亡时，init将重新启动该进程。如果相应的进程已经存在，那么init将忽略该登记项并继续扫描/etc/inittab文件。
+　　10、sysinit：只有在启动或重新启动系统并首先进入单用户时，init才执行这些登记项。而在系统从运行级1－6进入单用户方式时，init 并不执行这些登记项。"action”字段为“sysinit”的登记项在“run_level”字段不指定任何运行级。
+　　11、wait：启动进程并等待其结束，然后再处理/etc/inittab文件中的下一个登记项。
+
+　　
+　　process　　　所要执行的shell命令。任何合法的shell语法均适用于该字段。
+
+
+*嵌入式设备的inittab
+===========================================================
+参考：http://book.51cto.com/art/200910/158718.htm
+启动init进程时会试着读取系统配置文件/etc/inittab，包含针对每个运行级及适用于所有运行级的指令。这个文件和init的行为在绝大多数Linux工作站的帮助手册里都有详细的记录，在一些关于Linux系统管理的书籍中也有详细描述。我们不打算在这里重复这些工作，而是重点着眼于开发人员如何为嵌入式系统配置inittab。至于inittab和init如何一起工作的详细说明，在大部分Linux工作站下可以通过键入man init和man inittab查看帮助手册得知。
+
+我们来看一个简单嵌入式系统的典型inittab文件。代码清单6-6是针对一个系统的inittab简单示例，该文件只支持一个运行级，实现系统的关机和重启。
+
+代码清单6-6　简单的inittab文件示例
+
+   1. # /etc/inittab  
+   2.  
+   3. # The default runlevel (2 in this example)  
+   4. id:2:initdefault:  
+   5.  
+   6. # This is the first process (actually a script) to be run.  
+   7. si::sysinit:/etc/rc.sysinit  
+   8.  
+   9. # Execute our shutdown script on entry to runlevel 0  
+  10. l0:0:wait:/etc/init.d/sys.shutdown  
+  11.  
+  12. # Execute our normal startup script on entering runlevel 2  
+  13. l2:2:wait:/etc/init.d/runlvl2.startup  
+  14.  
+  15. # This line executes a reboot script (runlevel 6)  
+  16. l6:6:wait:/etc/init.d/sys.reboot  
+  17.  
+  18. # This entry spawns a login shell on the console  
+  19. # Respawn means it will be restarted each time it is killed  
+  20. con:2:respawn:/bin/sh 
+
+这个非常简单的inittab 脚本描述了3个不同的运行级，每个运行级都与一个脚本相关联，这些脚本必须是开发人员根据每个运行级所期望的动作而创建的。当init进程读取这个文件时，执行的第一个脚本是/etc/rc.sysinit，由标签sysinit表示。然后init进程进入运行级2，执行为运行级2定义的脚本，这个例子里即为脚本/etc/init.d/runlvl2.startup。正如代码清单6-6中的:wait:标签所示，init进程在该脚本执行完毕之前一直处于等待状态。在运行级2的脚本执行完毕后，init进程会在控制台中生成一个shell（通过符号链接/bin/sh），如代码清单6-6最后一行所示。关键词respawn指示init进程一旦检测到shell退出便重新启动shell。代码清单6-7显示了启动期间的输出信息。
+
+代码清单6-7　启动信息示例
+
+   1. ...  
+   2. VFS: Mounted root (nfs filesystem).  
+   3. Freeing init memory: 304K  
+   4. INIT: version 2.78 booting  
+   5. This is rc.sysinit  
+   6. INIT: Entering runlevel: 2  
+   7. This is runlvl2.startup  
+   8.  
+   9. # 
+
+这个例子里的启动脚本除了为便于说明而打印自身被执行的信息外，不做其他任何事情。当然，在一个实际的系统中，这些脚本会启用若干功能和服务，完成一些有用的任务！就该例的这个简单配置文件而言，你可以在脚本/etc/init.d/runlvl2.startup里为特定的组件启用一些服务和应用程序，同时在关机或者重启脚本里执行逆操作，即终止这些应用程序、服务和设备。我们会在下一节分析一些典型的系统配置，以及在启动脚本里启用这些配置所必需的条目。

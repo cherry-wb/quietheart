@@ -1,0 +1,294 @@
+各位，
+制作文件系统镜像，烧写内核，烧写文件系统方法已经确定。
+可以不用tftp和nfs启动板子。
+
+1,编译内核方法参考以前邮件。
+2,制作文件系统镜像方法如下：
+1)开发时候，在已经编译过代码的基础上，
+进入10.1.29.125/svn/sony/trunk/Source/Rootfs/makerootfs/
+2)运行
+./makerootfs.sh rootfs
+可参考其中"readme"文件。
+3,烧写内核以及文件系统参见附件。
+
+
+
+具体如下：
+===================
+一、制作initrd文件系统镜像
+二、准备烧写分区
+三、烧写内核和文件系统
+四、配置uboot环境
+五、从板子启动加载内核并启动文件系统
+六、其他
+
+===================
+一、制作initrd文件系统镜像
+===================
+方案1，ramdisk镜像：
+-------------------
+1,创建空白镜像：
+#dd if=/dev/zero of=ramdisk bs=1M count=16
+#mkfs.ext2 -m0 ramdisk
+
+2,将文件系统拷入空白镜像：
+#mkdir tmpmnt
+#mount -o loop ramdisk tmpmnt
+#cp -a rootfs/* tmpmnt
+这里，rootfs是文件系统目录,注意，rootfs里面的"dev/ram0"不可少。
+
+3,压缩镜像：
+#umount tmpmnt
+#gzip -v9 ramdisk && mv $_.gz $_.img
+
+至此，文件系统镜像创建完毕，可以把它拷贝到你的tftp目录,以便烧写:
+#cp ramdisk.img /tftpboot
+
+方案2，cpio压缩镜像
+-------------------
+$cd rootfs
+$ln sbin/init init
+$find . | cpio --quiet -c -o | gzip -9 -n > ../ramdisk.img.gz
+这里，/init得存在，如果不存在，那么给内核的rdinit参数指定init程序的位置（而不是init参数）cpio的-c必须指定。当前采用的就是这种方法，这种方法比前面的方法新，而且不限制原始镜像大小。
+如果不用压缩镜像，可以用：find . |cpio --quiet -c -o > ../ramdisk.img，这样镜像大小会16M左右很大。
+
+
+注：
+*pc版文件系统镜像制作方法略有不同，如下：
+(1)（前面方法没有实践）生成pc版本文件系统镜像如下：
+#cd rootfs
+#find . | cpio --quiet -c -o | gzip -9 -n > ../ramdisk.img
+这里，rootfs是适合x86的pc上的文件系统，生成的镜像放在rootfs同级目录下。压缩镜像后缀可以不是.gz.
+
+(2)运行镜像时需要:
+a)#cp ../ramdisk.img /boot
+b)修改/boot/grub/grub.conf
+修改添加内容参考grub.conf原有内容。
+
+
+===================
+二、准备烧写分区
+===================
+1,初始化sdm设备：
+NBL> sdm init
+
+2,初始化mac地址：
+NBL> diag ethaddr 00:11:12:33:44:55
+这个最好不要与别人冲突。
+
+3,创建内核烧写区域:
+NBL> sdm create -n -l 0x400000 kernel
+这里，区域名为kernel,大小指定4M.
+
+4,创建文件系统烧写分区：
+1）创建文件系统烧写所在区域
+NBL> sdm create -n -l 0x800000 initrd_fat
+这里，指定文件系统镜像大小8M。
+
+2)在区域上创建一个分区：
+在区域上创建一个分区：
+NBL> fdisk -a sdme::
+操作之后，会输出如下信息：
+Num. Boot    Start      Length    SystemID
+1                8       16376    0x83 (Linux native (ext2))
+
+3）在分区上创建fat文件系统:
+NBL> mkfs sdme1:uvfat:
+
+4)创建一个目录：
+NBL> mkdir sdme1:uvfat:/boot
+
+至此，烧写分区创建完毕。这时候，查看当前分区情况如下：
+NBL> sdm list
+sdma: nblconfig
+    device      : 0
+    start sect  : 0x88
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmb: sdmreg
+    device      : 0
+    start sect  : 0xa8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmc: sdmlog
+    device      : 0
+    start sect  : 0xc8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmd: kernel
+    device      : 0
+    start sect  : 0xe8
+    image size  : 0x400000 bytes(0x400 sectors)
+    protect     : No
+sdme: initrd_fat
+    device      : 0
+    start sect  : 0x4e8
+    image size  : 0x800000 bytes(0x800 sectors)
+    protect     : No
+其中sdma,sdmb,sdmc是执行"sdm init"之后就有了；而sdmd,sdme在"sdm create -n -l 0x800000 initrd_fat"之后就有了.
+另外,需要注意：
+(1)“准备烧写分区”这个步骤只需要进行一次，以后除非重新布局，否则不用再做。
+(2)可以在NBL下运行一些文件操作的命令,例如：
+*创建的目录内容：
+NBL> ls -l sdme1:uvfat:/boot
+输出如下：
+drwxrwxrwx root     4096 2000/01/01 00:00:00 ./
+drwxrwxrwx root    32768 2000/01/01 00:00:00 ../
+这里，时间是固定的"2000/01/01 00:00:00".
+
+(3)可以操作块，例如:
+删除刚才创建的区域sdme：
+NBL> sdm delete fat
+
+(4)创建的分区号不要超过sdmp.总大小不要超过64M.
+从文档"avp13_nbl_spec.txt"的第三节"3. Memory map of NBL"看，总物理内存512M，但是NBL只用其中64M，其他被别的微处理器使用了。
+
+===================
+三、烧写内核和文件系统
+===================
+
+1,将内核从tftp上拷贝到内核烧写区域：
+NBL> cp net:tftp:vmlinux.bin sdmd::
+这里，如果内核烧写的时候想要改名字，那么使用"cp net:tftp:vmlinux.bin sdmd::myname.bin"类似的命令。
+这样，内核烧写完毕.实际这个时候如果配置好uboot(即NBL)环境，大家就可以用:
+boot -r -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/home/quietheart/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+从nfs上启动自己的文件系统了。
+
+2,将文件系统镜像从tftp上面拷贝到文件烧写分区：
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+这里，在我的机器上面，拷贝之后输出如下信息：
+i8254x: Ethernet address: 00:11:22:33:44:55
+ # [if_i8254x.c] i8254x_set_phy_to_mac():822: Auto-negotiation failed: MII_GBCR=0x00000200, MII_GBSR=0x%, MII_ANAR=
+0x%, MII_ANLPAR=0x%
+i8254x: Ethernet address: 00:11:22:33:44:55
+ # [if_i8254x.c] i8254x_set_phy_to_mac():822: Auto-negotiation failed: MII_GBCR=0x00000200, MII_GBSR=0x%, MII_ANAR=
+0x%, MII_ANLPAR=0x%
+这里，需要注意文件系统镜像不要太大。最好用"rm"命令先删除"sdme1:uvfat:/boot"中无用的文件。
+
+===================
+四、配置uboot环境
+===================
+方案1，采用ramdisk镜像：
+-------------------
+（1）配置内核启动参数：
+NBL> set boot_option "console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.180::10.1.29.1:255.255.255.0"
+
+（2）配置文件系统镜像位置：
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img"
+
+这里，我的uboot全部配置如下：
+NBL> print
+console=on
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+servip=10.1.29.44
+boot_option=console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.180::10.1.29.1:255.255.255.0
+initrd=sdme1:uvfat:/boot/ramdisk.img
+这里，servip用setenv或set设置之后，必须将开发板断电或者运行ifconfig -u才能生效。
+
+方案2，采用cpio压缩的镜像：
+-------------------
+（1）配置内核启动参数：
+NBL> set boot_option "console=ttyS0,115200n8 ip=10.1.29.180::10.1.29.1:255.255.255.0"
+
+（2）配置文件系统镜像位置：
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img.gz"
+这里，我的uboot全部配置如下：
+NBL> print
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+console=off
+autoboot=on
+servip=10.1.29.44
+initrd=sdme1:uvfat:/boot/ramdisk.img.gz
+boot_option=console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0
+这里，我的cpio镜像根目录没有init，所以必须指定一个rdinit参数，否则可以省略
+这里，servip用setenv或set设置之后，必须将开发板断电或者运行ifconfig -u才能生效。
+
+
+
+===================
+五、从板子启动加载内核并启动文件系统
+===================
+启动系统命令如下：
+NBL> boot -r sdmd:raw:vmlinux.bin
+至此，内核与文件系统从板子里面正常启动了。
+另外，如果烧的内核是压缩版的话，例如vmlinux.bin.gz
+那么用
+NBL> boot -r -d sdmd:raw:vmlinux.bin.gz
+也能启动。
+实际，直接"boot -r sdmd::"或"boot -r sdmd:raw:<任意字符串>"即可.
+
+*拷贝的时候命名：
+cp net:tftp:vmlinux.bin sdmd:raw:zImage
+
+===================
+六、其他
+===================
+设置开发板自动启动的方法：
+前面的方法，启动系统还需手动键入boot命令，后面给出了基于前面的烧写结果，上电后自动启动系统的方法。
+1,简易步骤：
+-----------
+1),设置Boot Profile ：
+NBL> bootprof init
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+2),更改跳线：
+将开发板断电后，设置s1902跳线组第一号开关为"on".
+
+以上过程进行之后，即可实现上电自动启动。
+
+2,详细步骤：
+-----------
+1)，初始化Boot Profile 
+NBL> bootprof init
+这一步在第一次设置的时候使用即可。
+
+2),检查初始化结果：
+NBL> bootprof list
+以上命令会输出：
+[global]
+  normal    : Linux
+  recovery  : Linux0
+这里，可以用“bootprof bootname [-r] [<name>]”设置normal和recovery mode的名字。
+
+3)，设置Boot Profile 
+这里，根据需求，有以下四种情况：
+a)从tftp下载内核，挂载nfs文件系统：
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -t 3 -n 3 Linux
+这里，不要忘记配置你的tftp（即servip变量），以及nfs服务。
+
+b)从tftp下载内核，挂载flash加载内核，挂载flash上initrd镜像：
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+c）从flash加载内核，挂载nfs文件系统：
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -t 3 -n 3 Linux
+这里，10.1.29.xx2:/nfsdir是你机器的nfs目录。
+
+d）从flash加载内核，挂载flash上initrd镜像：
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+一般来说，开发调试使用第a)种情况，release使用第d)种情况。设置之后，可以尝试用"aboot"测试一下是否可以正确启动。
+
+4)，更改跳线开关：
+将开发板断电之后，找到开发板上s1902跳线组，这组跳线一共有8个开关，将第一号开关设置为"on".
+
+5),上电启动
+如上设置如果正确，上电之后即可实现自动启动。
+另外注意，这里文件名的后缀很重要，根据boot命令的文档，如果没有制动启动选项，NBL根据内核文件名后缀来识别各种文件类型。例如".bin",".gz",".elf"等等。
+
+前面设置的内容存放在一个flash里面，可以把这个flash拿下来，放到别的机器上面,注意上面有个小黑点在左侧（就是网口对面，开关那侧）。拿下来的方法就是有个黑色的弹簧卡夹，搬开就可以拿出flash了。
+
+
+*****启动的时候，使用raw格式的分区，ramdisk.img启动的更快。
+sdm create -n -l 0x600000 initrd_fat
+cp net:tftp:ramdisk.img sdme::
+bootprof param -k sdmd:raw:vmlinux.bin -c "mem=252MB console=ttyS0,115200n8 initrd=0x40a00000,2744425 rdinit=/sbin/init ip=10.1.29.135::10.1.29.1:255.255.255.0" -i sdme:raw:ramdisk.img -t 3 -n 3 Linux
+注意这里"initrd=0x40a00000,2744425"指定ramdisk.img大小通过ls -l获得，是2744425。
+raw格式要比uvfat格式读取速度快"initrd= phys_addr,size"其中phys_addr固定是0x40a00000，这事NBL里写死的。size就是ramdisk.img的 size
+
+启动的时候，如果sdmd是raw格式的，boot -r sdmd::即可,根本不用指定内核名称。
+
+******另外，可以直接用板子和机器之间通过一根网线直接连接，只要两者IP地址设置对了就行。
+据说有的网线是用于直接连接的，有的是交叉连接的反正有一种可能是不好用的，但是我测试过的网线是好用的。

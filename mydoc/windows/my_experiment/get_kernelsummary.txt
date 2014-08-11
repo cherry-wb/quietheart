@@ -1,0 +1,107 @@
+Sub getKernelSummary()
+'
+' mytest Macro
+'
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start As Integer
+    start = 0
+    i = start
+    
+    '构造命令用
+    Dim resultfile As String
+    resultfile = D:\Program Files\diffcount\summary_kernel_result.txt"
+
+    '读取结果
+    i = start
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring, token, addNum, modNum, amNum, totalNum As String
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+'    Dim osWrapper,zou3App,zou3Codec,zou3iLink,zou3Kernel,zou3Main,zou3Mif,zou3Mux,zou3Sc,zou3SC2P,diabloSubCpu As Integer
+'    osWrapper=2
+'    zou3App=3
+'    zou3Codec=4
+'    zou3iLink=5
+'    zou3Kernel=6
+'    zou3Main=7
+'    zou3Mif=8
+'    zou3Mux=9
+'    zou3Sc=10
+'    zou3SC2P=11
+'    diabloSubCpu=12
+    Dim currentColumn As Integer
+    currentColumn=2
+
+    Sheets("集計").Select
+    Do While f.AtEndOfStream <> True
+'        retstring = f.ReadLine
+'	If InStr(retstring,"osWrapper] result:") > 0 Then
+'           currentColumn=osWrapper 
+'	End If
+'	If InStr(retstring,"zou3App] result:") > 0 Then
+'           currentColumn=zou3App
+'	End If
+'	If InStr(retstring,"zou3Codec] result:") > 0 Then
+'           currentColumn=zou3Codec
+'	End If
+'	If InStr(retstring,"zou3iLink] result:") > 0 Then
+'           currentColumn=zou3iLink
+'	End If
+'	If InStr(retstring,"zou3Kernel] result:") > 0 Then
+'           currentColumn=zou3Kernel
+'	End If
+'	If InStr(retstring,"zou3Main] result:") > 0 Then
+'           currentColumn=zou3Main
+'	End If
+'	If InStr(retstring,"zou3Mif] result:") > 0 Then
+'           currentColumn=zou3Mif
+'	End If
+'	If InStr(retstring,"zou3Mux] result:") > 0 Then
+'           currentColumn=zou3Mux
+'	End If
+'	If InStr(retstring,"zou3Sc] result:") > 0 Then
+'           currentColumn=zou3Sc
+'	End If
+'	If InStr(retstring,"zou3SC2P] result:") > 0 Then
+'           currentColumn=zou3SC2P
+'	End If
+'	If InStr(retstring,"diabloSubCpu] result:") > 0 Then
+'           currentColumn=diabloSubCpu
+'	End If
+        If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            tokenValues = Split(retstring, token)
+            Dim tokenIndex As Integer
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                'MsgBox "add number:" & addNum
+                Cells(3,currentColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                'MsgBox "modify number:" & modNum
+                Cells(4,currentColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "A&M" Then
+                amNum = tokenValues(tokenIndex)
+                'MsgBox "modify and add number:" & amNum
+                Cells(5,currentColumn)=amNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file
+                totalNum = tokenValues(tokenIndex)
+                'MsgBox "total number:" & totalNum
+                Cells(3,currentColumn)=totalNum
+                Cells(5,currentColumn)=totalNum
+            End If
+            tokenIndex = tokenIndex + 1
+            Wend
+        End If
+    Loop
+    f.Close
+End Sub

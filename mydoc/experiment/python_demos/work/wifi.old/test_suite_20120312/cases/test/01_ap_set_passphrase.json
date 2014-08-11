@@ -1,0 +1,27 @@
+{
+    "name":"ap_set_Passphrase",
+    "type":{"name":"seq"},
+    "description":"set cisco ap wireless security passphrase.",
+    "scenarios":[{
+        "login":{
+            "fname":"ap/cisco/scenario_login.json", 
+            "type":{"name":"seq"}, 
+            "parameter":{
+                "ip":"10.1.10.32:8080"
+            }
+        }},
+        {"ap_set_SSID_Broadcast":{
+            "fname":"ap/cisco/scenario_set_wireless_passphrase.json", 
+            "type":{"name":"seq"}, 
+            "parameter":{
+                "passphrase":{"5G":"12345678","2G":"12345678"}
+            }
+        }},
+        {"logout":{
+            "fname":"ap/cisco/scenario_logout.json", 
+            "type":{"name":"seq"}, 
+            "parameter":{
+            }
+        }
+    }]
+}

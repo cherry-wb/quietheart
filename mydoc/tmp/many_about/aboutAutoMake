@@ -1,0 +1,98 @@
+先声明下，这里的东西有部分是转载的，不要说我侵权啊^_^
+引用原址：http://zhoulifa.bokee.com/3408349.html
+--------
+运用autoconf和automake自动生成Makefile实例讲解
+
+对于一个UNIX/Linux下C程序员来说，一个比较麻烦的工作就是写自己的Makefile。
+可能你有如下经验：写一个简单的C程序，自己多写几行gcc命令就把程序变成可执行的了；写一个稍微复杂点的程序，源文件个数可能在30个左右，还是写一行行的gcc命令就麻烦了，你可能想到写个makefile，你可能也在这样做着；但你某一天会发现你写的这个Makefile可能不是一个所有 UNIX/Linux类操作系统下通用的Makefile，比如某人下载了你的程序去他自己电脑上可能make不了。
+
+这样，你就有必要了解并学会运用autoconf和automake了。
+autoconf 是一个用于生成可以自动地配置软件源代码包以适应多种UNIX类系统的shell脚本的工具。由autoconf生成的配置脚本在运行的时候不需要用户的手工干预；通常它们甚至不需要手工给出参数以确定系统的类型。相反，它们对软件包可能需要的各种特征进行独立的测试。在每个测试之前，它们打印一个单行的消息以说明它们正在进行的检测，以使得用户不会因为等待脚本执行完毕而焦躁。因此，它们在混合系统或者从各种常见UNIX变种定制而成的系统中工作的很好。你也省了工作，没必要维护文件以储存由各个UNIX变种、各个发行版本所支持的特征的列表。
+automake是一个从文件Makefile.am自动生成Makefile.in的工具。每个Makefile.am基本上是一系列make的宏定义（make规则也会偶尔出现）生成的Makefile.in，服从GNU Makefile标准。
+为了生成Makefile.in，automake需要perl。但是由automake创建的发布完全服从GNU标准，并且在创建中不需要perl。
+
+在开始使用autoconf和automake之前，首先确认你的系统安装有GNU的如下软件：
+1. automake
+2. autoconf
+3. m4
+4. perl
+5. 如果你需要产生共享库（shared library）则还需要GNU Libtool
+
+介绍方法之前大家看一下下面这个图（见附件），先记下autoconf和automake工作的几个步骤：
+步骤解释如下：
+1、由你的源文件通过autoscan命令生成configure.scan文件，然后修改configure.scan文件并重命名为configure.in
+2、由aclocal命令生成aclocal.m4
+3、由autoconf命令生成configure
+4、编辑一个Makefile.am文件并由automake命令生成Makefile.in文件
+5、运行configure命令生成Makefile
+
+automake支持三种目录层次：flat、shallow和deep。
+一个flat包指的是所有文件都在一个目录中的包。为这类包提供的Makefile.am不需要SUBDIRS这个宏。这类包的一个例子是termutils。对应咱们程序员来说：就是所有源文件及自己写的头文件都位于当前目录里面，且没有子目录。
+一个deep包指的是所有的源代码都被储存在子目录中的包；顶层目录主要包含配置信息。GNU cpio是这类包的一个很好的例子，GNU tar也是。deep包的顶层Makefile.am将包括宏SUBDIRS，但没有其它定义需要创建的对象的宏。对应咱们程序员来说：就是所有源文件及自己写的头文件都位于当前目录的一个子目录里面，而当前目录里没有任何源文件。
+一个shallow包指的是主要的源代码储存在顶层目录中，而各个部分（典型的是库）则储存在子目录中的包。automake本身就是这类包（GNU make也是如此，它现在已经不使用automake）。对应咱们程序员来说：就是主要源文件在当前目录里，而其它一些实现各部分功能的源文件各自位于不同目录。
+
+前两个层次的程序编辑方法非常简单，按照上述步骤一步步即可。而第三种层次shallow稍微复杂一点，但这是我们经常写程序用到的结构。下面以一个例子说明shallow层次结构的源文件如何自动生成Makefile文件。
+例子源程序结构如下：
+hello 是我们的工作目录，hello目录下有main.c源文件和comm、tools、db、network、interface等五个目录。comm目录下有comm.c和comm.h源文件及头文件，tools目录下有tools.c和tools.h，同样其它目录分别有db.c、db.h、 network.c、network.h、interface.c、interface.h等一些源文件。
+
+按照如下步骤来自动生成Makefile吧：
+1、进入hello目录，运行autoscan命令，命令如下：
+cd hello
+autoscan
+2、 ls会发现多了一个configure.scan文件。修改此文件，在AC_INIT宏之后加入AM_INIT_AUTOMAKE(hello, 1.0)，这里hello是你的软件名称，1.0是版本号，即你的这些源程序编译将生成一个软件hello-1.0版。然后把 configure.scan文件的最后一行AC_OUTPUT宏填写完整变成AC_OUTPUT(Makefile)，表明autoconf和 automake最终将生成Makefile文件。最后把configure.scan文件改名为configure.in。最终 configure.in文件内容如下：
+
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(target.c)
+AM_INIT_AUTOMAKE(hello, 1.0)
+dnl Checks for programs.
+AC_PROG_CC
+
+dnl Checks for libraries.
+
+dnl Checks for header files.
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+
+dnl Checks for library functions.
+
+AC_OUTPUT(Makefile)
+
+3、运行aclocal命令，ls会发现多了一个aclocal.m4文件。
+4、然后运行autoconf命令，ls将发现生成了一个可执行的configure命令。
+5、编辑一个Makefile.am文件，文件内容如下：
+AUTOMAKE_OPTIONS=foreign
+bin_PROGRAMS=hello
+hello_SOURCES=main.c comm/comm.c comm/comm.h tools/tools.c tools/tools.h db/db.c db/db.h network/network.c network/network.h interface/interface.c interface/interface.h
+这表明你最后将通过一个make命令利用上述hello_SOURCES源文件生成一个hello的程序。
+6、运行automake --add-missing命令。屏幕提示如下：
+automake: configure.in: installing `./install-sh'
+automake: configure.in: installing `./mkinstalldirs'
+automake: configure.in: installing `./missing'
+7、然后你可以运行之前生成的configure命令来生成一个Makefile文件，输入./configure命令即可。
+8、编辑Makefile文件，找到$(LINK)所在的那一行，本来生成的文件内容如下：
+@rm -f hello
+$(LINK) $(hello_LDFLAGS) $(hello_OBJECTS) $(hello_LDADD) $(LIBS)
+在这两行之间增加几行变成：
+@rm -f hello
+@mv -f comm.o comm
+@mv -f tools.o tools
+@mv -f db.o db
+@mv -f network.o network
+@mv -f interface.o interface
+$(LINK) $(hello_LDFLAGS) $(hello_OBJECTS) $(hello_LDADD) $(LIBS)
+这是因为默认生成的Makefile将在编译后把所有目标文件置于当前目录，而在进行链接(link)时又会到各个子目录去找相应的目标文件。
+当然，为了完整，建议各位在clean部分加上如下一些行：
+@rm -f comm/comm.o
+@rm -f tools/tools.o
+@rm -f db/db.o
+@rm -f network/network.o
+@rm -f interface/interface.o
+
+好了，经过上述这些步骤后，现在你可以来编译生成你自己的可执行程序了。输入一个make all吧，然后就可以运行./hello来看你的程序运行了。
+
+运用autoconf和automake的最大好处是，你的程序以源程序方式发布后，其它所有人只需要依次输入
+./configure
+make
+make install
+命令就可以把你的程序安装在自己的电脑上运行了。所有符合GNU标准的UNIX/Linux都不需要再修改Makefile里的任何字符。
+

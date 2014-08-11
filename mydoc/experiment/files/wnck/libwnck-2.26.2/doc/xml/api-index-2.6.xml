@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>P</title>
+<indexentry><primaryie linkends="wnck-pid-read-resource-usage"><link linkend="wnck-pid-read-resource-usage">wnck_pid_read_resource_usage</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>R</title>
+<indexentry><primaryie linkends="WnckResourceUsage"><link linkend="WnckResourceUsage">WnckResourceUsage</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-close"><link linkend="wnck-window-close">wnck_window_close</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>X</title>
+<indexentry><primaryie linkends="wnck-xid-read-resource-usage"><link linkend="wnck-xid-read-resource-usage">wnck_xid_read_resource_usage</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

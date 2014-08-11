@@ -1,0 +1,217 @@
+http://blog.csdn.net/yueyinggufan/archive/2009/05/04/4147920.aspx
+typeof关键字简介
+
+typeof关键字是C语言中的一个新扩展。只要可以接受typedef名称，Sun Studio C 编译器就可以接受带有typeof的结构，包括以下语法类别：
+
+声明
+函数声明符中的参数类型链表和返回类型
+类型定义
+类型操作符s
+sizeof操作符
+复合文字
+typeof实参
+编译器接受带双下划线的关键字：__typeof和__typeof__。本文中的例子并没有遵循使用双下划线的惯例。从语句构成上看，typeof关键字后带圆括号，其中包含类型或表达式的名称。这类似于sizeof关键字接受的操作数（与sizeof不同的是，位字段允许作为typeof实参，并被解释为相应的整数类型）。从语义上看，typeof 关键字将用做类型名（typedef名称）并指定类型。
+
+使用typeof的声明示例
+下面是两个等效声明，用于声明int类型的变量a。
+
+typeof(int) a; /* Specifies variable a which is of the type int */ typeof('b') a; /* The same. typeof argument is an expression consisting of                    character constant which has the type int */以下示例用于声明指针和数组。为了进行对比，还给出了不带typeof的等效声明。
+
+typeof(int *) p1, p2; /* Declares two int pointers p1, p2 */int *p1, *p2;typeof(int) * p3, p4;/* Declares int pointer p3 and int p4 */int * p3, p4;typeof(int [10]) a1, a2;/* Declares two arrays of integers */int a1[10], a2[10];如果将typeof用于表达式，则该表达式不会执行。只会得到该表达式的类型。以下示例声明了int类型的var变量，因为表达式 foo()是int类型的。由于表达式不会被执行，所以不会调用foo函数。
+
+extern int foo();typeof(foo()) var;使用typeof的声明限制
+请注意，typeof构造中的类型名不能包含存储类说明符，如extern或static。不过允许包含类型限定符，如const或volatile。例如，下列代码是无效的，因为它在typeof构造中声明了extern：
+
+typeof(extern int) a;下列代码使用外部链接来声明标识符b是有效的，表示一个int类型的对象。下一个声明也是有效的，它声明了一个使用const限定符的char类型指针，表示指针p不能被修改。
+
+extern typeof(int) b;typeof(char * const) p = "a";在宏声明中使用typeof
+typeof构造的主要应用是用在宏定义中。可以使用typeof关键字来引用宏参数的类型。因此，在没有将类型名明确指定为宏实参的情况下，构造带有所需类型的对象是可能的。
+
+
+
+
+
+================================
+http://www.lupaworld.com/home.php?mod=space&uid=421039&do=blog&id=229111
+这里大概叙述了typeof是一个什么东西，怎么用，实际上可以用简单的话来重述。如果你对sizeof很熟悉的话，那么大可进行类推，sizeof（exp.）返回的是exp.的数据类型大小，那么typeof（exp.）返回的就是exp.的数据类型。值得注意的是在上面的话里我们可以看到，如果编译选项中指定了使用标准C，那么gcc的扩展使用可能会受到影响，不过在gcc编译条件下使用 __typeof__依然可以正常工作，这和使用asm是一样的。当然如果是在其他的编译器条件下，这样做也不行了，只能自定义一个macro去使用，也就是说跟gcc没啥关系了，你愿意把typeof咋实现都可以。
+
+下面写一个小程序示例一下:)
+
+#include <stdio.h>
+
+typedef struct
+{
+ int x;
+ char y;
+}astruct, * pastrcut;
+
+int main()
+{
+ int sizem, sizew;
+ int x = 3;
+ typeof(&x) m;
+ sizem = sizeof(m);
+ *m = 5;
+ typeof(((astruct *)5)->y) w;
+ sizew = sizeof(w);
+ w = 'a';
+ return 1;
+}
+
+首先看main函数里的m变量，这个变量的类型就是typeof(&x)， 由于x是int型的（这里与x是否被赋值一点关系都没有）所以&x应该是int *类型，那么typeof(&x)返回的类型就是int*，所以m自然也就是个int*类型的。之后我们看w变量，其类型是 typeof(((astruct *)0)->y)， 其中astruct是一个被定义的结构类型，其中的y元素是char*类型，那么((astruct *)0)->y是啥意思呢？在这里0并不是真正的变量，可以把它理解为一个替代使用的符号当然这个符号最好是一个数，其意思更可以理解为一个被赋值了的变量，这个数可以不是0，3也可以8也可以，随便什么都可以。那么((astruct *)0)->y仅仅就是表示了y这个变量，所以typeof的结果就是y元素的类型，也就是char。
+
+下面是gcc编译后使用insight调试的结果：
+
+    这里看到实际上对于编译后的程序，typeof完全是透明的，和直接使用变量类型定义变量没有什么太大区别。
+
+下面是结果：
+sizeofm = (int)4
+sizeofw = (int)1
+x = (int)3
+m = (int*)0x611669b8
+|----*m = (int)5
+w = (char)97 'a'
+
+可以看到变量的工作是完全正常的。
+
+在linux中这个东西很常用，这里举一个最常见的例子（linux2.6.23）：
+
+在list.h中有一个
+
+/**
+ * list_entry - get the struct for this entry
+ * @ptr: the &struct list_head pointer.
+ * @type: the type of the struct this is embedded in.
+ * @member: the name of the list_struct within the struct.
+ */
+#define list_entry(ptr, type, member) \
+ container_of(ptr, type, member)
+
+这个宏是linux中使用的链表的一个方法。其中我们可以看到 container_of(ptr, type, member)，这也是一个宏
+
+在kernel.h中定义：
+
+/**
+ * container_of - cast a member of a structure out to the containing structure
+ * @ptr: the pointer to the member.
+ * @type: the type of the container struct this is embedded in.
+ * @member: the name of the member within the struct.
+ *
+ */
+#define container_of(ptr, type, member) ({   \
+ const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+ (type *)( (char *)__mptr - offsetof(type,member) );}
+
+这里面就使用了我们上面示例中的一种typeof用法，其含义和上面所说的完全一样。
+
+看过了typeof的用法和含义，我们不免想寻根溯源一下，那么就要看看gcc里面是怎么写的了。在gcc4.3的源码中（当然之前的gcc版本也都会有了:)）在gcc目录下有c-parser.c文件，顾名思义，这个就是解析器了。那么我们看看里面到底对typeof写了什么。
+
+在
+
+static const struct resword reswords[]中列出了gcc的关键字，其中就有typeof
+
+在
+
+static void c_parser_declspecs (c_parser *parser, struct c_declspecs *specs,
+      bool scspec_ok, bool typespec_ok, bool start_attr_ok) 中对gcc的关键字进行了处理，
+
+ case RID_TYPEOF:
+   /* ??? The old parser rejected typeof after other type
+      specifiers, but is a syntax error the best way of
+      handling this?  */
+   if (!typespec_ok || seen_type)
+     goto out;
+   attrs_ok = true;
+   seen_type = true;
+   t = c_parser_typeof_specifier (parser);
+   declspecs_add_type (specs, t);
+   break;
+
+上面这一段就是对typeof的处理，RID_TYPEOF是在reswords[]中定义的typeof的ID，那么关键环节就在于
+
+  t = c_parser_typeof_specifier (parser);这一句上了。
+
+/* Parse a typeof specifier (a GNU extension).
+
+   typeof-specifier:
+     typeof ( expression )
+     typeof ( type-name )
+*/
+static struct c_typespec
+c_parser_typeof_specifier (c_parser *parser)
+{
+  struct c_typespec ret;
+  ret.kind = ctsk_typeof;
+  ret.spec = error_mark_node;
+  gcc_assert (c_parser_next_token_is_keyword (parser, RID_TYPEOF));
+  c_parser_consume_token (parser);
+  skip_evaluation++;
+  in_typeof++;
+  if (!c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
+    {
+      skip_evaluation--;
+      in_typeof--;
+      return ret;
+    }
+  if (c_parser_next_token_starts_typename (parser))
+    {
+      struct c_type_name *type = c_parser_type_name (parser);
+      skip_evaluation--;
+      in_typeof--;
+      if (type != NULL)
+ {
+   ret.spec = groktypename (type);
+   pop_maybe_used (variably_modified_type_p (ret.spec, NULL_TREE));
+ }
+    }
+  else
+    {
+      bool was_vm;
+      struct c_expr expr = c_parser_expression (parser);
+      skip_evaluation--;
+      in_typeof--;
+      if (TREE_CODE (expr.value) == COMPONENT_REF
+   && DECL_C_BIT_FIELD (TREE_OPERAND (expr.value, 1)))
+
+> error ("%<typeof%> applied to a bit-field");
+      ret.spec = TREE_TYPE (expr.value);
+      was_vm = variably_modified_type_p (ret.spec, NULL_TREE);
+      /* This should be returned with the type so that when the type
+  is evaluated, this can be evaluated.  For now, we avoid
+  evaluation when the context might.  */
+      if (!skip_evaluation && was_vm)
+ {
+   tree e = expr.value;
+
+   /* If the expression is not of a type to which we cannot assign a line
+      number, wrap the thing in a no-op NOP_EXPR.  */
+   if (DECL_P (e) || CONSTANT_CLASS_P (e))
+     e = build1 (NOP_EXPR, void_type_node, e);
+
+   if (EXPR_P (e))
+     SET_EXPR_LOCATION (e, input_location);
+
+   add_stmt (e);
+ }
+      pop_maybe_used (was_vm);
+    }
+  c_parser_skip_until_found (parser, CPP_CLOSE_PAREN, "expected %<)%>");
+  return ret;
+}
+
+这些就是这个函数的处理过程。虽然内容看起来有些复杂，但是仔细观察就会看到其中有一句很值得我们注意：
+
+ret.spec = TREE_TYPE (expr.value); 这是一句对返回值的赋值语句，也就是说，这句话的结果就是返回值的内容的一部分，expr是前面c_parser_expression (parser);的处理结果，得出的是表达式的内容，TREE_TYPE是tree.h中的一个宏：
+
+/* In all nodes that are expressions, this is the data type of the expression.
+   In POINTER_TYPE nodes, this is the type that the pointer points to.
+   In ARRAY_TYPE nodes, this is the type of the elements.
+   In VECTOR_TYPE nodes, this is the type of the elements.  */
+#define TREE_TYPE(NODE) ((NODE)->common.type)
+
+可以看出这个宏的结果大概就是一个type了，那么ret的结构里一共就有两个内容，一个是spec一个就是kind，kind在前面已经赋值过了， 
+
+/* A typeof specifier.  */
+  ctsk_typeof
+
+这个东西是C-tree.h中enum c_typespec_kind的里的一项，因此，ret的关键内容就是spec，由此我们就大概了解到，解析typeof的函数的返回结果就是一个type，这样我们也就理解了typeof的真正含义了。

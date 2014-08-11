@@ -1,0 +1,300 @@
+这里是关于qtExtend代码阅读时候的总结。
+
+主要内容：
+*关键代码
+*代码定位
+*代码例子
+*一些函数
+*其他
+
+*关键代码
+==============
+这里是对阅读代码来说很关键的部分。
+
+从文件src/server/main/main.cpp的main函数开始。
+**在main函数：
+调用int retVal = initApplication( argc, argv );
+负责运行应用程序的大部分工作.
+
+**在int initApplication( int argc, char ** argv )函数：
+调用:QAbstractServerInterface *interface = qtopiaWidget<QAbstractServerInterface>(0, Qt::FramelessWindowHint);//创建了整个桌面的构件等
+其中的文件在src/server/core_server/qtopiaserverapplication.h中，定义了许多宏实现，用于写自己的desktop UI。
+还有一个QAbstractServerInterface类在src/server/core_server/qabstractserverinterface.cpp,查看这个类的文档可以知道许多东西。
+然后可以查看http://qtextended.org/doc/qtextended4.4/integration-guide.html#server-widgets
+了解各个部分大致的关系。
+
+**程序的主要界面实现，应该在
+src/server/phone/serverinterface/phonelauncher/phonelauncher.cpp中做了。
+其中PhoneLauncher::PhoneLauncher(QWidget *parent, Qt::WFlags fl)构造函数中调用
+header();创建了顶部的statusbar
+createContext();创建了底部的softmenubar
+等等。
+后面还有一个loadTheme();调用，用来布局各个部件等。
+
+查看每个部件如何创建的以及其关系，可以参考:
+http://qtextended.org/doc/qtextended4.4/qtopiaserverapplication.html#qt-extended-server-widget
+
+**程序的顶部statusbar具体创建，应该在：
+src/server/phone/header/themed/phoneheader.cpp
+其中重要的部分：
+1）PhoneHeader::PhoneHeader中的:ctrl->registerThemedView(themedView, "Title");
+这里会将设置把title.xml描述的theme利用themedView加载进去。
+涉及的文件是：
+src/server/phone/themecontrol/themecontrol.cpp
+有些插件以及构件等主要是根据那个xml创建的，具体过程有待深入研究。
+
+2)PhoneHeader::PhoneHeader中的themedView(new QThemedView());
+会创建需要的themedView
+themedView(new QThemedView())涉及的文件是:
+src/libraries/qtopiatheming/qthemedview.cpp
+这里负责主题文件中各个构件的加载和事件的定义。
+
+**程序主体显示的桌面部分：（在中间的主用户交互区）
+涉及的文件：
+src/server/phone/browserscreen/gridbrowser/gridbrowser.cpp
+
+*代码定位
+==============
+******关于qpe的代码，大多数都在qtex/src/server中******
+1)顶部statusbar的大体定位可以参考：
+src/server/phone/serverinterface/phonelauncher/phonelauncher.cpp
+其中的header()调用创建titlebar
+
+2)关于修改桌面中间主体部分的5个按钮代码大致在：
+src/server/phone/browserscreen/gridbrowser/gridbrowser.cpp
+
+3)关于底部的softmenubar大体定位可以参考：
+src/server/phone/serverinterface/phonelauncher/phonelauncher.cpp
+其中的createContext()调用创建softmenubar
+
+底部softmenubar的三个按钮动作的定制在:
+src/server/phone/contextlabel/base/
+这里可以看key是怎么处理的。
+
+修改softmenubar的标题如hide等，可能需要修改如下文件：
+src/server/infrastructure/softmenubar/
+
+关于softmenubar类接口的定义：
+src/libraries/qtopia/qsoftmenubar.cpp
+这个文件应该是softmenubar这个类本身的一些东西。用户程序可以调用，接口是被封装的较靠上层。
+这个文件是softmenubar的库，可以用其中的接口修改菜单的标签.以及菜单的一些内容，例如是否允许取消等，可以由自定义应用程序调用其中的接口。
+
+softmenubar中的menu内容的动作需要改：
+src/server/phone/browserscreen/gridbrowser/phonelauncherview.cpp
+这个类表示的是选择将要运行的应用程序的界面
+
+src/server/infrastructure/softmenubar/qsoftmenubarprovider.cpp
+这个文件是和softmenubar通信，其中没有定义按钮但是定义了softmenubar上面按钮的图标等。
+在QSoftMenuBarProvider::buttons中可以看看它定义了"按钮"的什么属性。
+函数QSoftMenuBarProvider::QSoftMenuBarProvider是根据配置文件来读取设置按钮的。
+配置文件是：image/etc/defaultbuttons.conf
+
+4)关于输入法等docked类型的窗口等的定位，大体在文件：
+src/server/core_server/windowmanagement.cpp中
+
+5)关于具体创建的header()(即statusbar)类，在如下文件：
+src/server/phone/header/themed/phoneheader.cpp
+
+6)如果需要修改qt底层驱动等的相关代码需要修改：
+qtex/qtopiacore/qt/src/gui/embedded
+这个目录。
+进入.../build/qtopiacore/target/src/gui下运行make可以生成新的qt库(libQtGui.so)。
+
+7)如果是修改dockwindow相关的部分，需要：
+src/server/core_server/widowmanager.cpp里面修改。
+
+*代码例子
+==============
+1, 自己写一个简单桌面的步骤：
+(1）定义自己的桌面类以及实现
+testDesktopDemo.h文件
+1.1)包含:#include "qabstractserverinterface.h"
+1.2)定义：DesktopDemoServerInterface
+class DesktopDemoServerInterface : public QAbstractServerInterface
+{
+	public:
+	DesktopDemoServerInterface(QWidget* parent = 0, Qt::WFlags flags = 0);
+	.......
+}
+testDestkopDemo.cpp文件
+1.3)包含文件：
+#include "testDesktopDemo.h"
+#include "windowmanagement.h"
+#include "qabstractheader.h"
+#include "qabstractcontextlabel.h"
+#include "qtopiaserverapplication.h"
+1.4)实现具体的函数
+1.5)最后加上一句：
+QTOPIA_REPLACE_WIDGET(QAbstractServerInterface, DesktopDemoServerInterface)
+(2)将文件放到固定的位置
+2.1)cp testDesktopDemo.* .../src/server/phone/serverinterface/platform
+2.2)修改platform目录下的server.pri文件，将自己的桌面文件加入其中
+(3)编译
+cd .../src/server && ../../../build/bin/qbuild && ../../../build/bin/qbuild image
+实际如果目录结构不变的话，直接用qbuild image不用qbuild了。
+(4)改写配置文件启动自己的新桌面
+如果是虚拟机，修改build目录下面的home/Setting/Troll.../ServerWidgets.conf
+目标机器可能需要修改：etc/defaults/..../ServerWidgets.conf
+具体参见源代码desktopDemo/*.*。
+
+2,获取当前qtopia的路径：对应于qtopia的安装路径，例如：/usr/local/qtex
+Qtopia::qtopiaDir()
+
+3,根据.desktop文件执行程序：
+**自己建立desktop并且直接读取desktop文件执行
+适用于自己写的应用程序。
+假设我要执行的是calculator，那么:
+2.1)将src/applications/calculator/calculator.desktop文件拷贝到 build/image/myApps
+这里，myApps目录是我自己随便建立的。
+2.2)使用如下代码段：
+QContent applink(Qtopia::qtopiaDir()+ "myApps/calculator.desktop",false);
+applink.execute();
+这里，默认情况下qtopia把所有的.desktop文件存放到一个数据库文件中读取执行，这里直接指定位置。
+
+**从qpe的数据库文件中读取desktop文件并执行：
+直接使用如下代码段：
+QContent applink(Qtopia::qtopiaDir()+"apps/Applications/todolist.desktop",false);
+applink.execute();
+这里，程序的路径我是从代码PhoneMainMenu解析的defaultbuttons.conf中看到的。
+defaultbuttons里面的路径是:Applications/***.desktop,如果在*.desktop和qbuild.pro中也有相应的路径。
+例如src/settings/rotation中可以知道它的执行方法是：
+QContent applink(Qtopia::qtopiaDir()+"apps/Settings/rotation.desktop",false);
+applink.execute();
+注意它的desktop中指定了是File=QtopiaSettings而不是QtopiaApplications
+如果以前没有这个程序，使用qbuild image编译之后，就把程序路径的数据写入到了/usr/local/qtex/qtopia_db.sqlite里面。拷贝的时候，把二进制文件和这个数据库文件都拷贝才能执行起这个程序。
+
+而源代码中
+src/server/phone/browserscreen/gridbrowser/gridbrowser.cpp的
+PhoneMainMenu::readLauncherMenuItem有如下:Qtopia::qtopiaDir()+"apps/"作为路径的前缀。
+
+**将destkop文件安装到数据库文件里面，然后读取数据库文件中的相关内容并且执行：
+???
+
+**执行一个带有参数的程序：
+execute & setDocument??
+
+4,如何写一个简单的qtopia程序？
+方法是看
+qtex/examples/application
+下面的一个example程序代码。
+
+5,关闭当前的程序：
+方法一：
+QtopiaApplication::instance()->quit();
+这样就彻底关闭程序了。
+方法二：
+QtopiaIpcEnvelope e("QPE/System", "close()");
+这样是正常的“关闭”qtopia的代码，如果配置程序是假关闭的，那么配置就起作用,结果就将当前程序关闭了。
+
+6,去掉启动程序的小闹钟：
+src/server/ui/waitindicator/waitindicator.cpp
+中最后一句话：
+QTOPIA_TASK( WaitIndicator, WaitIndicator );
+注释掉就不显示了。
+
+如果修改配置文件：
+把/usr/local/qtex/etc/Tasks.cfg中的WaitIndicator放到[exclude]组。
+如果有配置文件$HOME/Settings/Trolltech/.....Tasks.cfg，则使用这个。
+
+7,关于softMenuBar:
+各位，
+在K1中，每个应用程序有不同的选项菜单，这些菜单反应在底部的softMenubar上面。也就是说，底部的softmenubar的内容，是和应用程序相关的，所以需要在应用程序中修改softmenubar以适用于最新的UI。
+
+底部softmenubar条分为左，中，右三个部分，分别用标签来显示其标题。左面是应用程序的上下文菜单入口（例如"OPtions"）.中间是确认菜单(例如"Select")，右面是关闭返回菜单（例如"Back"）.
+目前每个客户应用程序能够修改的是底部softmenubar三个标签的显示图标、文字、以及最左面应用程序上下文菜单的菜单内容。
+
+在应用程序中可以设置底部softmenubar的方法举例如下：
+1)设置最左面菜单图标和标签：
+#include <QSoftMenuBar>
+QMenu *softMenu = QSoftMenuBar::menuFor(this);
+QSoftMenuBar::setLabel(softMenu, QSoftMenuBar::keys().at(0),Qtopia::qtopiaDir() + "pics/icons/main_menu_more_nor.png", "More");
+这样会把最左面的程序上下文菜单标签设置为：1）图标是/usr/local/qtex/pics/icons/main_menu_more_nor.png 2）标签是"More".
+注意，上面按照文档来说是这样的，但是目前实际情况是图标部分开始可能无法显示出来，这时候得需要点击一下菜单标签的最左面才能显示出来。原因还没有查明。
+
+2）设置中间菜单不显示标签：
+#include <QSoftMenuBar>
+QMenu *softMenu = QSoftMenuBar::menuFor(this);
+QSoftMenuBar::setLabel(oftMenu, QSoftMenuBar::keys().at(1),QSoftMenuBar::NoLabel, QSoftMenuBar::AnyFocus);
+
+3) 设置最右面菜单标签为标准Back标签（无图片）：
+#include <QSoftMenuBar>
+QMenu *softMenu = QSoftMenuBar::menuFor(this);
+QSoftMenuBar::setLabel(oftMenu, QSoftMenuBar::keys().at(1),QSoftMenuBar::Back, QSoftMenuBar::AnyFocus);
+
+4)设置最左面菜单的菜单内容：
+#include <QSoftMenuBar>
+#include <QAction>
+QMenu *softMenu = QSoftMenuBar::menuFor(this);
+QAction *actionPhotos = new QAction(QIcon(":icon/start"), tr("Photos"), this);
+softMenu->addAction(actionPhotos);
+connect(actionPhotos, SIGNAL(triggered()), this, SLOT(actionClick()));
+这样，会:
+(1)建立一个"Photos"菜单项
+(2)将新建立的菜单项添加到当前应用程序环境下，softmenubar最左面的菜单中
+(3)点击这个菜单项会调用当前类的actionClick槽。
+
+另外，点击左、中、右这三个菜单分别会产生键盘按键事件，对应的键值分别为：Qt::Key_Context1,Qt::Key_Select,Qt::Key_Back
+更多参考资料查阅官方文档：
+http://qtextended.org/doc/qtextended4.4/qsoftmenubar.html
+
+补充：这里用menuFor建立的菜单，是当前获得焦点的构件的菜单，如果显示的构件没有焦点，那么是无法建立它的菜单的。可以调用用setFocus，这个函数的意思是：如果当前构件的某一个父构件具有焦点了，那么就将焦点拿到当前的构件上面来。
+
+8,弹出消息对话框：
+QMessageBox msgBox;
+msgBox.setText("Currently not applicable for document item click!");
+msgBox.exec();
+
+
+*一些函数
+==============
+这里列出了一些函数的深刻理解：
+1)关于blit的理解：
+void QScreen::blit ( const QImage & image, const QPoint & topLeft, const QRegion & region )   [virtual]
+官方文档：
+Copies the given region in the given image to the point specified by topLeft using device coordinates.
+意思是把image中的region(矩形列表)区域内容，拷贝到设备坐标中的点topLeft上面。
+但是，通过打印代码的log，发现，这样理解有误，
+有一个例子如下：
+在blit中，
+const QVector<QRect> rects = region.rects();                                        
+for (int i = 0; i < rects.size(); ++i) {                                            
+	    painter.drawImage( rects.at(i), image, QRect(rects.at(i).topLeft()-topLeft, rect
+	        s.at(i).size()) );                                                                          
+}     
+这里，意思是把image中的所有region块（rects[i]）,绘制到设备的rects[i]上面。
+rects[i]的左上角坐标是相对于设备的，
+topLeft是image相对于设备的左上角，
+根据函数drawImage的意思，需要把rects[i]转化为相对于image的坐标，所以要减去topLeft。
+综上所述，image包含了region中的许多或者一个矩形块，topLeft是image的左上角相对于设备的坐标。目前的理解就是这样。
+另外，image的image.rect()的左上角永远是0，0。因为image本身就没有rect的意义。
+
+*其他
+==============
+1)softmenubar菜单标签的图标和文字，如果注释掉
+src/libraries/qtopiatheming/qthemetextitem.cpp中的
+QThemeTextItem::setText中的
+themedScene()->layout();//这里会重新刷新所有的父构件
+update();
+这样在每次第一回显示softmenubar的时候，标签上的文字会显示，但是图表却无法显示。似乎原因是settext给text的部分update了但是没有给image来一个updata。
+这时候，在
+src/libraries/qtopiatheming/qthemeimageitem.cpp中的
+每个QThemeImageItem::setImage
+最后加上一个update，会避免这个问题。
+
+Q_UNUSED(var)这个宏会使得变量var如果不用的话，编译的时候也不会产生警告信息。
+
+2)编写一个自己的独立的应用程序：
+注意：
+如果在qbuild.pro中加入
+CONFIG+=qtopia quicklaunch
+
+在.desktop中修改：
+[Translation]
+File=myapp-nct
+为：
+[Translation]
+File=QtopiaApplications
+
+3)在程序中，如果是preload的程序（就是在启动qpe之前预先加载的程序），这样的程序崩溃之后，可能会导致Launcher.conf文件的相关preloads字段变成@Invalid()，这样下次就无法对这个程序进行preload了，进行这个步骤的代码位置，可能大致在：
+server/processctrl/startup/startupapps.cpp中的
+ bool StartupApplicationsPrivate::terminated（）函数。

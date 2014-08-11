@@ -1,0 +1,55 @@
+1,假设历史如下，并且当前的分之为"topic"
+
+                     A---B---C topic
+                    /
+               D---E---F---G master
+
+对于这种情况，使用如下两个命令的任何一个，
+$git rebase master
+或
+$git rebase master topic
+这样，将会导致历史变成如下：
+
+                             A'--B'--C' topic
+                            /
+               D---E---F---G master
+
+注意，后面的命令"$git rebase master topic"实际就是"git checkout topic"+"git rebase master"这两条命令的简写。当rebase退出的时候，当前分支保持为topic分支。
+
+
+2.如果上游分支已经包含了你已经做过的修改（例如：你通过电子邮件发送了一个修改的补丁并且这个补丁已经应用到了upstream上面），那么那个commit将会在rebase的时候被忽略。
+例如在如下的历史中运行"git rebase master"（这里的A和A'虽然是不同的commiter信息,却表示同样的修改）：
+
+                     A---B---C topic
+                    /
+               D---E---A'---F master
+
+导致的结果将是：
+
+                              B'---C' topic
+                             /
+               D---E---A'---F master
+
+3.如果你想要将一个基于某个分支的topic分支迁移到另外一个分支，使得我们看起来这个topic是基于那个另外的分支，那么，我们使用rebase --onto。
+首先，我们假设topic分支基于next分支。例如，topic分支中开发的某个功能依赖于next分支中的功能。如下：
+
+               o---o---o---o---o  master
+                    \
+                     o---o---o---o---o  next
+                                      \
+                                       o---o---o  topic
+
+我们想要让topic基于master分支。例如:q
+       We want to make topic forked from branch master; for example, because the functionality on which topic depends was
+       merged into the more stable master branch. We want our tree to look like this:
+
+               o---o---o---o---o  master
+                   |            \
+                   |             o'--o'--o'  topic
+                    \
+                     o---o---o---o---o  next
+
+       We can get this using the following command:
+
+           git rebase --onto master next topic
+

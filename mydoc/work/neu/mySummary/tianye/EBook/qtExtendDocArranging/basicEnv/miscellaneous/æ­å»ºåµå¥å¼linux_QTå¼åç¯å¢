@@ -1,0 +1,194 @@
+搭建嵌入式QT开发环境
+
+http://hi.baidu.com/proudboy_linux/blog/item/58d4daeeba84e51ffdfa3cd8.html
+
+搭建嵌入式QT开发环境
+
+网上看了好多关于Qt开发平台搭建的帖子，但发现上面的帖子都比较旧，是针对Qt旧版本而写的。本人喜欢用较新版的东西，相信新版的东西肯定比旧版的东西 好用，果不其然Qt的新版本真的很好用，而且搭建起来更加容易。刚开始接触的时候，Qt的众多版本搞的自己头昏脑涨，什么Qt/x11，Qt /win，Qt/embedded ，Qtopia core，Qtopia等等，真的是丈二和尚摸不着头脑，幸好有网络，上网总能找到自己想要的东西，而且又不需要给予别人回报，当然自己也有些责任共享自己的资料，看来共产主义在互联网已经开始萌芽了，哈哈。
+
+先看看Qt的各个版本简介：
+
+1.什么是QT
+
+Qt是一个完整的C++应用程序开发框架。它包含一个类库，和用于跨平台开发及国际化的工具。Qt API在所有支持的平台上都是相同的，Qt工具在这些平台上的使用方式也一致， 因而Qt应用的开发和部署与平台无关。
+
+2.什么是Qtopia
+
+Qtopia 是一个面向嵌入式Linux的全方位应用程序开发平台，同时也是用于基于Linux的PDA（个人数字助理），智能电话（Smartphone）以及其他移动设备的用户界面。简单地说，Qtopia实质上是一组关于PDA和智能电话的应用程序结合，如果需要开发这类产品可以在这组程序的基础上迅速构建出 PDA或者智能电话。Qtopia实质上依赖Qt/Embedded。
+
+3.什么是Qt/Embedded
+
+Qt/Embedded 是一个完整的自包含GUI和基于Linux的嵌入式平台开发工具。这个开发工具的名字好像最容易混淆，当然Qt/Embedded是最熟悉的名字，好像 Qtopia Core说的也是它。最近，奇趣公司又该名字了，它的新名字叫做qt-embedded-linux-xxxx，看来这个Qt/Embedded的马甲还很多哈。
+
+下面就是搭建Qt开发平台了，我的平台是fedora core 7，需要的Qt版本有两个：
+
+qt-x11-opensource-src-4.3.2.tar.gz
+
+qt-embedded-linux-opensource-src-4.4.0-rc1.tar.bz2
+
+qt-x11版本可以产生Qt开发工具，如designer等等，最重要的是可以得到qvfb，嵌入式的开发有了qvfb，就可以不需要实际的开发板，也可以开发Qt应程序。qt-embedded版本就是专门用于嵌入式方面的版本。下面是安装步骤：
+
+1.       解压这两个qt包
+
+a)         tar –jxvf qt-x11-opensource-src-4.3.2.tar.gz
+
+b)        tar –jxvf qt-embedded-linux-opensource-src-4.4.0-rc1.tar.bz2
+
+c)        cp qt-embedded-linux-opensource-src-4.4.0-rc1 qt-embedded-linux-opensource-src-4.4.0-rc1-x86
+
+d)        mv qt-embedded-linux-opensource-src-4.4.0-rc1 qt-embedded-linux-opensource-src-4.4.0-rc1-arm
+
+这里，qt-embedded有两个复制：qt-embedded-linux-opensource-src-4.4.0-rc1-x86 和qt-embedded-linux-opensource-src-4.4.0-rc1-arm，根据他们的名字可以知道前者是适合x架构的，后者适合arm架构为什么需要两个呢？如果有开发板的话，可以只编译qt-embedded版本成arm架构的就可以了，但是很多时候用qvfb的话，开发会方便很多，所以多编译一个x86架构的也不错。这里是否有些疑问，qt-x11也是适合x86结构的，这不是和qt-embedded重复了吗？答案是这样的，qt-embedded版本只能在嵌入式板子上面运行，编译成x86架构的程序也只能在x86的嵌入式板子上跑。前面说过，我们需要qvfb来开发，但是qvfb只能执行x86架构的应用程序，所以需要让qt-embedded生成关于x86的库和其他文件。而将qt-embedded编译成arm，又是为什么呢？道理很简单，我最终的qt应用程序需要在arm架构上面运行，当然需要这方面的库，所以编译成arm也就顺理成章了。好了，现在简单的总结一下，首先，使用qt-x11提供的库和开发工具开发出qt应用程序，然后使用qt-embedded关于x86库和工具再次编译我们开发qt应用程序，这是所得到的可执行文件就可以在qvfb上运行了，最后，使用qt-embeddedd的arm库再次编译就可以得到在arm上能运行的可执行程序。很明显，如果有开发板，第二步是可要可不要的（最好是要），如果没有开发板的话，第三步也就没必要了，这样就不需要将qt-embedded编译成适合arm 架构的。
+
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+具体步骤与说明:
+
+1. 下载源码包
+
+qt-x11-opensource-src-4.5.0.tar.bz2
+
+qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+
+下载地址:ftp://ftp.qtsoftware.com/qt/source/
+
+2.编译及安装qt-x11-opensource-src-4.5.0
+
+qt-x11版本可以产生Qt开发工具，如designer等等，最重要的是可以得到qvfb，嵌入式的开发有了qvfb，就可以不需要实际的开发板，也可以开发Qt应程序。qt-embedded版本就是专门用于嵌入式方面的版本。
+
+tar xjvf qt-x11-opensource-src-4.5.0.tar.bz2
+
+cd qt-x11-opensource-src-4.5.0
+
+./configure
+
+make
+
+make install
+
+历经漫长的编译过程，约一个半小时，默认安装在/usr/local/Trolltech/Qt-4.5.0下.编译完成后源程序不要删除,还有用。
+
+3.编译及安装qt-embedded-linux-opensource-src-4.5.0
+
+在用户目录下建立一个src目录，用于存放编译源文件qt-embedded-linux-opensource-src- 4.5.0.tar.bz2。将其解压得到qt-embedded-linux-opensource-src-4.5.0，重命名为qt- embedded-linux-opensource-src-4.5.0-x86. 再次解压qt-embedded-linux-opensource-src-4.5.0.tar.bz2,并重命令为qt-embedded- linux-opensource-src-4.5.0-arm.为什么有两个复制呢?我们可以从他们的名字上就不难看出前者是适合x架构的，后者适合 arm架构的，如果有开发板的话，可以只编译qt-embedded版本成arm架构的就可以了，但是很多时候用qvfb的话，开发会方便很多，所以多编译一个x86架构的也不错。
+
+mkdir ~/src
+
+mv qt-embedded-linux-opensource-src-4.5.0.tar.bz2 ~/src
+
+tar xjvf qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+
+mv qt-embedded-linux-opensource-src-4.5.0 qt-embedded-linux-opensource-src-4.5.0-x86
+
+tar xjvf qt-embedded-linux-opensource-src-4.5.0.tar.bz2
+
+mv qt-embedded-linux-opensource-src-4.5.0 qt-embedded-linux-opensource-src-4.5.0-arm
+
+cd qt-embedded-linux-opensource-src-4.5.0-x86
+
+./configure -prefix /usr/local/Trolltech/QtEmbedded-4.5.0-x86 -embedded x86 -qvfb
+
+make
+
+make install
+
+-------OK!qt-embedded-x86被安装在/usr/local/Trolltech/QtEmbedded-4.5.0-x86下.
+
+cd qt-embedded-linux-opensource-src-4.5.0-arm
+
+./configure -prefix /usr/local/Trolltech/QtEmbedded-4.5.0-arm -embedded arm
+
+make
+
+make install
+
+-------OK!qt-embedded-arm被安装在/usr/local/Trolltech/QtEmbedded-4.5.0-arm下.
+
+4.至此我们已经安装好了qt-x11版，即在PC机上运行的QT,qt-embedded-x86版(x86体系的嵌入式板子上运行的QT)和qt-embedded-arm(arm板子上运行的QT).下一步：设置环境变量
+
+(1)qt-x11:
+
+vi setenv.sh
+
+添加如下内容:
+
+PATH=/usr/local/Trolltech/Qt-4.5.0/bin:$PATH
+
+LD_LIBRARY_PATH=/usr/local/Trolltech/Qt-4.5.0/lib:$LD_LIBRARY_PATH
+
+保存退出.移到/usr/local/Trolltech/Qt-4.5.0中。
+
+(2)qt-embedded-x86:
+
+vi setenv.sh
+
+添加如下内容:
+
+QTEDIR=/usr/local/Trolltech/QtEmbedded-4.5.0-x86
+
+PATH=/usr/local/Trolltech/QtEmbedded-4.5.0-x86/bin:$PATH
+
+LD_LIBRARY_PATH=/usr/local/Trolltech/QtEmbedded-4.5.0-x86/lib:$LD_LIBRARY_PATH
+
+保存退出.移到/usr/local/Trolltech/QtEmbedded-4.5.0-x86中。
+
+(3)qt-embedded-arm:
+
+vi setenv.sh
+
+添加如下内容:
+
+QTEDIR=/usr/local/Trolltech/QtEmbedded-4.5.0-arm
+
+PATH=/usr/local/Trolltech/QtEmbedded-4.5.0-arm/bin:$PATH
+
+LD_LIBRARY_PATH=/usr/local/Trolltech/QtEmbedded-4.5.0-arm/lib:$LD_LIBRARY_PATH
+
+保存退出.移到/usr/local/Trolltech/QtEmbedded-4.5.0-arm中。
+
+我们在运行的时候分别运行对应的脚本即可，比如我们要用qt-x11:
+
+cd /usr/local/Trolltech/Qt-4.5.0
+
+source setenv.sh
+
+然后就可以用qmake designer等工具了.
+
+5.做到这一步还有qvfb没有编译,到qt-x11-opensource-src-4.5.0中重新编译qvfb即可
+
+cd qt-x11-opensource-src-4.5.0
+
+cd /tools/qvfb
+
+make --会在qt-x11-opensource-src-4.5.0/bin下生成qvfb,我们将它copy至/usr/local/Trolltech/QtEmbedded-4.5.0-x86/bin下
+
+cp ../..bin/qvfb /usr/local/Trolltech/QtEmbedded-4.5.0-x86/bin
+
+6.做一个测试
+
+cd /usr/local/Trolltech/QtEmbedded-4.5.0-x86
+
+source setenv.sh
+
+cd /usr/local/Trolltech/QtEmbedded-4.5.0-x86/demos/books
+
+qvfb -width 640 -height 480 &
+
+./books -qws
+
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+出错信息一般为
+Error opening framebuffer device /dev/fb0QScreenLinuxFb::connect: No such file or directory
+这种情况发生最多的是编译Qt-Embedded的x86版本，希望在qvfb上运行应用时
+使用者在
+第一步运行qvfb后
+第二步运行./myapp -qws
+出现以上的提示错误
+
+原因是Qt-Embedded在查找系统的显示设备时，默认去寻找LinuxFb，也即Linux的/dev/fb0设备，但是如果Qt- Embedded安装了其它显示设备，比如qvfb,则可以在qvfb上显示，但是需要一个插件(或者说驱动，可能会和设备驱动混淆)，使Qt- Embedded能使用qvfb。 为了作到这一点，需要在编译Qt-Embedded时的configure命令加上如下选项
+
+./configure -plugin-gfx-qvfb -plugin-kbd-qvfb -plugin-mouse-qvfb 或./configure -qt-gfx-qvfb -qt-kbd-qvfb -qt-mouse-qvfb
+如果，你不想重新编译Qt-Embedded，也可以单独编译qvfb的gfxdrivers,命令如下
+
+$ cd qt-embedded-linux-opensource-src-4.5.1/src/plugins/gfxdrivers/qvfb/$/usr/local/Trolltech/QtEmbedded-4.5.1/bin/qmake$ sudo make install
+对应所在的路径，在大家的机器上可能不尽相同，领会意思就行

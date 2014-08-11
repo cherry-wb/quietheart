@@ -1,0 +1,65 @@
+**关于mediawiki
+一些好的资料：
+http://codex.wordpress.org.cn/Mediawiki%E5%BB%BA%E7%AB%99%E7%BB%BC%E8%BF%B0
+http://www.ziyuan8.com/Article/IT/200810288308.html
+mediawiki安装步骤：
+0)准备安装环境：
+安装LAMP,过程如下：
+$sudo apt-get install apache2
+$sudo apt-get install mysql-server
+$sudo apt-get install php5
+$sudo apt-get install php5-mysql
+$sudo apt-get install php5-cli
+$sudo apt-get install libgd2-xpm libgd2-xpm-dev php5-gd
+这里，LAMP就是（linux,apache,mysql,php/python/perl），它是流行的建站标准环境。安装之后，如果后面有问题的话就重启apache2试试（$sudo /etc/init.d/apache2 restart）。
+
+1)下载：
+http://download.wikimedia.org/mediawiki/
+http://www.mediawiki.org/wiki/Download
+这里，从列出的地址里面下载之后，我这里下载的是：mediawiki-1.15.2.tar.gz
+
+2)解压复制更改权限：
+#tar -xzvf mediawiki-1.15.2.tar.gz -C /var/www
+#mv /var/www/mediawiki-1.15.2 /var/www/mediawiki
+#cd /var/www/mediawiki
+#chomd -r a+w /var/www/mediawiki/config
+解压之后，其中的文档README等好好看看。
+
+3）开始安装：
+3.1)在浏览器地址栏键入：http://192.168.0.118/mediawiki/
+这里，192.168.0.118是我的ip地址。之后按照提示点击设置你的网站，大致可以如下：
+    * Site name：你的wiki站点名称。注意：这与网站本身的名字空间有关，建议使用简短的英文（以后可修改）
+    * Contact e-mail：站长的联络邮件
+    * Language：语种选择。建议选择zh-cn简体中文或zh-tw繁体中文；没必要就不要选支持繁简体自动转换的zh中文，否则此后网站提示的本地化工作量将增加很多
+    * Copyright/license medadata：版权类型。其中GNU为公开的自由版权，允许他人复制、修改；不确定该用什么版权时选no license metadata
+    * Sysop account name：站长的名字。这是建立wiki后的第一个管理员用户，以后无法改名。可考虑使用英文名字
+    * password：站长的密码
+    * Shared memory caching：网站缓冲机制(没有就选NO CACHING)
+    * Memcached servers : (没有就不填）
+    * MySQL server：填写空间服务商提供的MySQL服务器名称，一般为localhost
+    * Database name：数据库名称，根据与空间服务商的约定填写
+    * DB username：数据库用户名，根据服务商约定填写
+    * DB password：数据库密码，根据服务商约定填写(不能为空,本地调试的要注意)
+    * Database table prefix：数据表前缀。建议设置前缀，以便与本站的其他软件公用MySQL数据库，甚至同时架设多个wiki（需放在不同目录）。
+    * DB root password：数据库root密码。（可忽略） 
+注意，这里需要提前有一个mysql用户。
+使用mysql创建一个用户的方法如下：
+(1)使用root用户登录：
+$mysql --user=root --password=123
+这里，假设root用户的密码是123。这样会有 "mysql>"提示符号，提示你和mysql进行交互。
+(2)运行mysql下面的命令，创建一个超级用户：
+mysql>grant all privileges on *.* to 'test'@'localhost'
+    -> identified by 'password' with grant option;
+这里，创建了一个用户"test",其密码是"password".注意，这里第一行"@"字符的左右没有空格，之后回车就会有第二行的"-> "提示符号了。
+这里创建方法参考的是http://www.eygle.com/digest/2008/01/mysql_create_user.html
+退出直接按[Ctrl]d，或者mysql>exit.
+
+4）善后处理：
+4.1)浏览器安装过程后，在config目录下会自动生成一个LocalSettings.php的本地配置文件，把它拷贝到上级目录中：
+$sudo cp config/LocalSettings.php ./
+4.2)取消config目录的写权限：
+$sudo chmod -R a-w config
+这里，更安全的方法是直接删除config目录。这是网站安全性的需要。 
+
+安装过程到此结束。此后再次执行http://www.allwiki.com/index.php" 就是正确的wiki首页了。此后根据需要进行mediawiki的定制。
+

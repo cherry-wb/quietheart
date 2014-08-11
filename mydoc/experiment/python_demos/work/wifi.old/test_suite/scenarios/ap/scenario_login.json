@@ -1,0 +1,7 @@
+{
+    "name":"login",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_login.py"},
+    "reporter":["success","fail"],
+    "description":"open firefox and login."
+}

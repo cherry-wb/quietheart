@@ -1,0 +1,109 @@
+内容：
+*基本配置qtextend
+*我的补充
+
+*基本配置qtextend
+=====================
+各位：
+
+QT-extended是基于QT-embedded开发的手持设备用户界面和应用程序平台。
+参考文档 http://doc.qt.nokia.com/qtextended4.4/
+EBook K1项目将使用QT-extended上的桌面等应用程序，
+同时采用QT-extended的qbuild框架，来编译发布我们的程序。
+
+一） qt-extended 相关代码
+        qt-extended代码放在SVN上，地址如下：
+        svn+ssh://10.1.14.234/var/svnrepos/EBookReader_K1/trunk
+
+        qt-embedded代码包放在如下地址：
+        ftp://10.1.14.235/EBookReader/K1/resources/qt/qt-embedded-linux-opensource-src-4.5.0.tar.gz
+
+        编译qt-embedded依赖的头文件及库文件放在如下地址：
+        ftp://10.1.14.235/EBookReader/K1/resources/dependencies/qte-dep-v0.1.tar.gz
+
+二） 编译qt-extended：
+       1) 从SVN上下载qt-extended代码。
+            有build和qtex两个目录
+       2) 从ftp上下载qt-embedded-4.5.0压缩包，解压到qt-extended的qtopiacore/qt目录下
+   # tar xzf qt-embedded-linux-opensource-src-4.5.0.tar.gz  --strip-components 1  -C ./qtex/qtopiacore/qt/
+       3) 从ftp上下载qte-dep-v0.1.tar.gz，解压到系统的/opt目录下
+   # tar xzf qte-dep-v0.1.tar.gz -C /opt
+       4) 配置及编译
+   # cd build
+   # ./config
+   # ./bin/qbuild
+       5) 生成程序包
+   # ./bin/qbuild image
+            该命令会将所有编译好的内容复制到 在build/image目录下
+       6) 上板调试
+            将image目录下的所有内容复制到rootfs的/usr/local/qtex目录下
+
+三） rootfs-v0.2版本
+rootfs-v0.2版本已包含有qt-extended运行环境，地址如下：
+ftp://10.1.14.235/EBookReader/K1/rootfs/v0.2/ebook-qt-rootfs-v0.2.tgz
+如果要在shell上运行qt程序，请先运行如下命令：
+# source /etc/qpe.env
+
+四）向qt-extended添加新的project
+       在qtex/src目录下有applications, libraries, plugins等目录，大家可根据模块的性质
+       将代码添加到相应的目录下。
+       相关参考文档：http://qt.nokia.com/doc/qtextended4.4/application.html
+
+       以browser为例，说明添加过程：
+       1) 将代码复制到qtex/src/applications/browser目录下。
+       2) 在qtex/src目录下添加 module_browser.pri文件，内容如下：
+PROJECTS*=\
+    applications/browser
+           建议： 功能相关的applications, libraries, plugins等使用同一个prj文件
+       3) 修改qtex/devices/ebook/configure，加入如下一行：
+            -add-module browser
+           这样在qt-extended整体编译时，就可以编译新加入的模块了。
+       4) 在qtex/src/applications/browser目录下添加qbuild.pro文件
+           可参照svn上的qtex/src/applications/browser/qbuild.pro文件
+           各变量的含义请参考文档：
+           http://qt.nokia.com/doc/qtextended4.4/buildsystem/over-project-files-1.html
+      5) 在qtex/src/applications/browser目录下添加xxxx.desktop文件
+          可参照svn上的qtex/src/applications/browser/webviewer.desktop文件
+          参考文档：http://qt.nokia.com/doc/qtextended4.4/desktopfiles.html
+      6）如果使用qt-designer设计ui，还可以加入.ui文件
+      7）关于多语言可参考文档：
+           http://qt.nokia.com/doc/qtextended4.4/syscust-internat.html
+    
+      注：模块也可单独使用qbuild编译
+
+五） 关于qt-extended中的资源
+      qt-extended中有大量的应用，我们目前的默认配置，只是编译了一部分。
+      大家可查看qtex/examples和qtex/src目录下的文件，看看有没有能在开发中借鉴的内容，
+      同时也可以编译看看效果。
+
+各位：
+      编译 qt-extended 需要x86版本的qmake。
+      编译前请确认 PATH 环境变量中已包含 qmake 所在目录，如果主机环境没有qmake，可从ftp上下载
+      ftp://10.1.14.235/EBookReader/K1/resources/qt/qt-sdk-linux-x86-opensource-2009.04.1.bin
+
+      然后执行：
+      # chmod +x  ./qt-sdk-linux-x86-opensource-2009.04.1.bin
+      # ./qt-sdk-linux-x86-opensource-2009.04.1.bin
+
+张峰
+
+
+张峰
+有两个模块会导致编译失败，需要删除,如下：
+qtex/src/3rdparty/applications/qx
+qtex/src/3rdparty/applications/qx_helper
+
+如果已开始编译还需要删除
+build/src/3rdparty/applications/qx
+
+
+*我的补充
+==========================
+1，添加项目过程：
+1)按照前面的步骤添加项目相应的源代码等到源代码目录中。
+2)在新项目的源代码中（有qbuild.pro)运行build目录中的bin/qbuild进行编译，例如:
+$../../../../../build/bin/qbuild
+这样只在build目录中生成新项目对应的编译文件。
+3)在新项目的源代码中运行build目录中的bin/qbuild生成镜像，例如：
+$../../../../../build/bin/qbuild image
+这样只在build目录中生成新项目对应的image文件。

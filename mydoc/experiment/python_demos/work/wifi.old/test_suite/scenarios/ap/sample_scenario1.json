@@ -1,0 +1,7 @@
+{
+	"name":"sample_scenario1",
+	"type":{"name":"seq"},
+	"script":{"fname":"sample_scenario1.py"},
+	"reporter":["success","fail"],
+	"description":"a example of execute python script in one scenario, with default reporter."
+}

@@ -1,0 +1,75 @@
+参考：http://bbs.chinaunix.net/thread-1168164-1-1.html
+trap "" 1 2 3 15
+这个是信号的意思吗？ 具体是能起到什么作用。
+忽略信号1 2 3 15
+
+man 怎么没有这个哈。:outu: :outu:
+google也没搜到几个解释的。
+
+百度的
+一. trap捕捉到信号之后，可以有三种反应方式：
+
+　　(1)执行一段程序来处理这一信号
+
+　　(2)接受信号的默认操作
+
+　　(3)忽视这一信号
+
+　　二. trap对上面三种方式提供了三种基本形式：
+
+　　第一种形式的trap命令在shell接收到signal list清单中数值相同的信号时，将执行双
+
+　　引号中的命令串。
+
+　　trap 'commands' signal-list
+
+　　trap "commands" signal-list
+
+　　为了恢复信号的默认操作，使用第二种形式的trap命令(man sh中也说可以用trap - signal-list形式)：
+
+　　trap signal-list
+
+　　第三种形式的trap命令允许忽视信号
+
+　　trap " " signal-list
+
+　　注意：
+
+　　(1) 对信号11(段违例)不能捕捉，因为shell本身需要捕捉该信号去进行内存的转储。
+
+　　(2) 在trap中可以定义对信号0的处理(实际上没有这个信号)， shell程序在其终止(如
+
+　　执行exit语句)时发出该信号。
+
+　　(3) 在捕捉到signal-list中指定的信号并执行完相应的命令之后， 如果这些命令没有
+
+　　将shell程序终止的话，shell程序将继续执行收到信号时所执行的命令后面的命令，这样将
+
+　　很容易导致shell程序无法终止。
+
+　　另外，在trap语句中，单引号和双引号是不同的，当shell程序第一次碰到trap语句时，
+
+　　将把commands中的命令扫描一遍。此时若commands是用单引号括起来的话，那么shell不会
+
+　　对commands中的变量和命令进行替换， 否则commands中的变量和命令将用当时具体的值来
+
+　　替换。
+
+--------------------------------
+
+1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL
+5) SIGTRAP      6) SIGABRT      7) SIGBUS       8) SIGFPE
+9) SIGKILL     10) SIGUSR1     11) SIGSEGV     12) SIGUSR2
+13) SIGPIPE     14) SIGALRM     15) SIGTERM     17) SIGCHLD
+18) SIGCONT     19) SIGSTOP     20) SIGTSTP     21) SIGTTIN
+22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO
+30) SIGPWR      31) SIGSYS      33) SIGRTMIN    34) SIGRTMIN+1
+35) SIGRTMIN+2 36) SIGRTMIN+3 37) SIGRTMIN+4 38) SIGRTMIN+5
+39) SIGRTMIN+6 40) SIGRTMIN+7 41) SIGRTMIN+8 42) SIGRTMIN+9
+43) SIGRTMIN+10 44) SIGRTMIN+11 45) SIGRTMIN+12 46) SIGRTMIN+13
+47) SIGRTMIN+14 48) SIGRTMIN+15 49) SIGRTMAX-15 50) SIGRTMAX-14
+51) SIGRTMAX-13 52) SIGRTMAX-12 53) SIGRTMAX-11 54) SIGRTMAX-10
+55) SIGRTMAX-9 56) SIGRTMAX-8 57) SIGRTMAX-7 58) SIGRTMAX-6
+59) SIGRTMAX-5 60) SIGRTMAX-4 61) SIGRTMAX-3 62) SIGRTMAX-2
+63) SIGRTMAX-1 64) SIGRTMAX

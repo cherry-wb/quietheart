@@ -1,0 +1,324 @@
+ http://www.arm.linux.org.uk/docs/kerncomp.php
+
+Kernel Compilation
+This guide will give you step by step instructions about compiling a kernel for ARM machines on the target platform. If you find something missing or unclear, please send a mail to the linux-arm list.
+
+这个文章告诉你怎样给在目标平台上的ARM的机器上面编译内核.
+Here are some initial notes to help you understand the terminology and conventions used in this document:
+这里是一些说明帮助你理解本文中的相关的术语和约定:
+    * "bash$" and "bash#" are shell prompts, not commands to be typed.
+    * "host" means the machine you are building the ARM kernel on.
+    * "target" means the machine you are building the ARM kernel for. 
+
+	* "bash$"和"bash#"是shell提示符号，不是键入的命令。
+	* "host"是你编译ARM内核的机器。
+	* "target"是使用你编译的ARM内核的机器。
+
+   1.
+      Decide where to build your kernel
+      Firstly, you need to decide where you are going to build your ARM Linux kernel. A good place to build the kernel is in your home directory, which we will refer to as $HOME thoughout this document. If you wish to use some other location, replace $HOME as appropriate.
+
+      However, please note that building a kernel in /usr/src/linux is highly discouraged.
+
+	1.决定在哪里编译你的内核
+	首先，你需要决定你要从那里编译你的ARM Linux内核。一个比较好的位置就是在你的home目录，我们在这篇文档中使用$HOME来表示它。如果你需要使用其他位置，那么就用相应的位置来替换$HOME变量。
+	然而，请注意，最好不要在/usr/src/linux中编译内核。
+   2.
+      Deciding on a kernel version
+      Firstly, you need to decide which version of the Linux kernel you wish to compile. Most people will want the latest stable kernel release. To help you identify a particular release, a system of version numbers is used by the kernel developers.
+      For any kernel version x.y.z,
+
+   2.决定内核的版本号
+   首先，你需要决定你想要编译哪个版本的linux内核。大多数然想要编译最新版本的稳定内核。有一套表示版本号的机制，可以帮助你决定识别一个特定的发行版本。
+   对于任何的内核版本x.y.z,
+
+          * x - This is the major revision number
+          * y - This is the minor revision number, where:
+            Even numbers indicate "stable" kernel releases
+            Odd numbers indicate "development" or "beta" kernel releases which may be less stable.
+          * z - This is the patch level of the kernel 
+
+		  * x -这个是主版本号
+		  * y -这个是次版本号，这里：
+		  偶数表示“稳定的”内核发行
+		  奇数表示"开发"或者"beta"内核发行版本，相对来说不稳定。
+		  * z -这是这个内核的补丁级别。
+      This version number represents the main line kernel version.
+	  这个版本号表示了内核版本的主线。
+
+      At the time of writing this document, the latest stable kernel on ARM is 2.6.6.
+	  写这个文档的时候，最新的稳定的ARM内核版本是2.6.6.
+
+      Under the ARM kernel tree, you will find a suffix to the kernel version number: -rmkN, or -vrsN where 'N' is the patch release number. For instance, 2.4.26-vrs1. This indicates the version of the main ARM kernel patch which should be applied. (note: kernels later than 2.6.0-test2 do not require a -rmk or -vrs patch to be applied since ARM architecture support is already merged.)
+	  在ARM内核树中，你会发现这样的内核版本号后缀：-rmkN,或者-vrsN这里，'N'就是发行的补丁号。例如，2.4.26-vs1。这里表示应该使用的主要的ARM内核补丁版本号。(注意，比2.6.0-test2晚的内核不需要-rmk或者-vrs补丁，因为这时候已经有了ARM体系的支持)
+
+      Other maintainers, such as Nicolas Pitre, may produce additional patches, and these will add an additional suffix to denote their version. Nicolas Pitre's patches add a -np suffix, eg 2.4.21-rmk2-np1.
+	  其他的维护者，例如Nicolas Pitre,可能会提供额外的补丁，如果这样那么会增加额外的后缀来表示他们的版本号。Nicolas Pitre的补丁增加的是-nl后缀，例如2.4.21-rmk2-np1.
+
+      This means that 2.4.21-rmk2-np1 is based upon 2.4.21-rmk2, which in turn is based upon the 2.4.21 kernel. Therefore, to get the kernel source for 2.4.21-rmk2-np1, you need the 2.4.21 main line kernel source, the 2.4.21-rmk2 patch and the 2.4.21-rmk2-np1 patch.
+	  这里代表的意思是，2.4.21-rmk2-np1是基于2.4.21-rmk2的，而2.4.21-rmk2又基于2.4.21内核。因此，为了获得2.4.21-rmk2-np1内核的源代码，你需要2.4.21主线内核的源代码，2.4.21-rmk2补丁，以及2.4.21-rmk2-np1补丁。
+
+      Therefore, if you need extra patches from other maintainers, you have to be careful to choose an appropriate kernel version. You will need to locate the maintainer patches first, and then work your way up through the version number towards the mainline kernel version.
+	  因此，如果你需要从其他维护者那的额外的补丁，你需要仔细的选择合适的内核版本号。你可以首先定位维护者的补丁，然后根据版本号最终获得主线内核的版本。
+   3.
+      Downloading the maintainer-specific patch.
+      In some circumstances, you will need to patch the kernel with a maintainer specific patch. These patches add extra features or other device drivers which may be specific to various machines. However, as a general rule, maintainers forward upstream parts of their patches into the -rmk or -vrs trees as and when they are happy with the change.
+
+   3.
+   下载指定维护者的补丁
+   在一些环境中，你需要使用指定的维护者的补丁来给内核打补丁。这些补丁增加了和具体机器相关的额外的特性或者设备驱动。(然而，一般来说，由于喜欢那些改变，维护者把他们的补丁跟踪前面的部分到-rmk或者-vrs中???。)
+      Please refer to the machine list for information concerning extra patches.
+	  对于额外的补丁信息，请参考机器列表。
+
+   4.
+      Downloading an ARM patch.
+      (You only need this step if you are using a kernel prior to 2.6.0-test2. There are no -rmk or -vrs patches for later kernels.)
+
+      You may need to download a kernel patch, which contains all the ARM specific updates for a particular kernel version. These can be found in ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches/. The kernel releases are separated out into directories corresponding to the major and minor version numbers of the kernel.
+	4.下载ARM补丁
+	(你的内核如果是在2.6.0-test2之前的版本，你才需要执行这一步，在后来的版本中没有-rmk或者-vrs补丁。)
+	你可能需要给某个特定的内核版本下载一个包含所有指定ARM特性的内核补丁。这些能够在ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches/中找到。内核的发行版本根据特定的主版本号和此版本号放到特定的目录中。
+
+      The individual files are named patch-x.y.z-rmkN.gz or patch-x.y.z-vrsN.gz, where 'x', 'y', 'z' and 'N' are the version numbers mentioned above. You should select and download the latest patch for the kernel into the $HOME directory. This is the one which will have either the most features, or the most bug fixes in. You will need the version of the patch later when downloading the main kernel source.
+	个别的文件被命名为：patch-x.y.z-rmkN.gz或者patch-x.y.z-vrsN.gz,这里'x','y','z'和'N'是前面提到的版本号。你应该选择和下载最新的内核补丁到主目录下面。这样会具有更多的特性以及更多的bug被修改。当下载主要的内核源代码之后，你稍后需要补丁的版本。
+
+      Note: Some files may be named (eg) pre-patch-x.y.z-rmkN.gz. These are alpha or beta patches, which are probably unstable. You should not use these unless you are sure that you know what you are doing, and you don't mind the target system being unstable. However, they are useful when new ideas need to be tested out.
+	  注意：有一些文件被命名为类似pre-patch-x.y.z-rmkN.gz的。这些是alpha或者beta的补丁，他们对于测试一些新的想法和特性是很有用的，这样的补丁可能是不稳定的，所以除非你确定你要用这些补丁或者你不关心平台的稳定性，否则最好不要使用它们。
+
+      Note2: Some kernels are based on the Alan Cox series of kernels. These have names similar to patch-x.y.z-acm-rmkN.gz where x.y.z is Linus' version number and m is Alan's version number. In this case, you will need to obtain Alan Cox's corresponding patch from the kernel.org servers, in the directory /pub/linux/kernel/people/alan/linux-2.4/.
+	  注意2：有些内核基于Alan Cox系列的内核。它们的名字类似：patch-x.y.z-acm-rmkN.gz,这里x.y.z就是Linus的版本号，m是Alan的版本号。在这种情况下，你需要获得Alan Cox的相应补丁，补丁的位置在kernel.org服务器的目录：/pub/linux/kernel/people/alan/linux-2.4/.
+
+   5.
+      Downloading the main line kernel source
+   5.
+   下载内核源代码主线
+      A patch file on its own usually does not contain any compilable code. It is a machine-readable description of changes to make to a set of text files (in this case, the kernel source.) You need to obtain the main kernel source tree.
+	  一个补丁文件本身并不包含任何可以编译的代码。它实际上就是描述了一系列文件之间的变化（在这里面指的是内核的源代码）。你需要获得主要的内核源代码树。
+
+
+      The kernel source can be found on one of the kernel.org FTP sites. There are many sites scattered around the world, and are named according to a unified naming scheme. All sites start with 'ftp.' and end in '.kernel.org'. In the middle is placed a country identifier. For example:
+	  内核源代码能够在下面的kernel.org FTP站点找到。有许多的站点分散在世界各地。
+
+          * ftp.uk.kernel.org
+          * ftp.us.kernel.org
+          * ftp.de.kernel.org 
+
+      and so forth. You can find out more information on these sites by looking at the main www.kernel.org site.
+		你还可以在主站点www.kernel.org上面找到这些站点的更多的信息。
+      Once you have selected a site, you need to find the kernel sources. They will be stored in the subdirectories of /pub/linux/kernel. Each kernel release is accompanied by several files:
+	  一旦你选择了一个站点，你需要寻找内核的源代码。他们被存放在目录：/pub/linux/kernel.每个内核随着一些文件被发行：
+          * linux-x.y.z.tar.gz
+          * linux-x.y.z.tar.bz2
+          * patch-x.y.z.gz
+          * patch-x.y.z.bz2 
+
+      You will want to download the linux-x.y.z.tar.gz file, again into your $HOME directory. Again, you should look for a version which matches the version of the patch you obtained above. These files are large (about 14MB or more), so if you are on a slow connection, be prepared for it to take some time.
+	  你将要下载linux-x.y.z.tar.gz文件到你的主目录。并且，你应该查找匹配你前面获得的补丁的版本。这些文件比较大（14MB或者更多），所以可能会花费一些时间。
+
+
+   6.
+      Unpacking the ARM kernel source
+      Unpack the tar archive you downloaded above using:
+   6.
+	  解压ARM内核源代码
+	  使用下面的命令解压你前面下载的源代码：
+
+      	bash$ cd $HOME
+      	bash$ tar zxvf linux-x.y.z.tar.gz
+
+      This will create a directory called linux or linux-x.y.z in your home directory. Change into the newly created directory and apply the patch files, eg:
+	  这样将会在你的home目录下面建立一个叫做linux或者linux-x.y.z的目录，进入那个新建立的母爱，然后应用补丁，如下：
+
+      	bash$ cd linux-2.4.26
+      	bash$ zcat ../patch-2.4.26-vrs1.gz | patch -p1
+
+      The patches are heirarchial, so you need to apply them in the correct order. The patch files with more extensions depend on the ones with less extensions, so you need to apply, for example, the -rmk patch before the -rmk-np patch.
+	  这些补丁具有层次结构，所以你需要用正确的次序来应用他们。一般来说具有更多扩展名的补丁依赖于较少扩展名的补丁，例如，应用的时候，-rmk补丁可能会在-rmk-np补丁之前。
+	  然后就可以准备配置内核源代码树了。
+      The kernel source tree is now ready to be configured.
+
+   7.
+      Configuration of the kernel build environment
+      Normally, the kernel build system will build the kernel for the native machine architecture. This is not appropriate when cross compiling, so you will need to change two lines in the top level kernel Makefile. Examine the top level Makefile in an editor and find the definitions for ARCH and CROSS_COMPILE. On 2.4.x kernels, they will look like this:
+   7.配置内核编译环境
+   一般地，内核编译系统为本地的体系结构编译内核。这在交叉编译的时候却是不适合的，所以你将需要修改顶级内核Makefile的两行。检查顶级Makefile，找到ARCH和CROSS_COMPILE的定义。在2.4.x内核中，它们看起来是这样的：
+
+      ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
+      [...]
+
+      CROSS_COMPILE   =
+
+      and on 2.6.x kernels:
+
+      ARCH            ?= $(SUBARCH)
+      CROSS_COMPILE   ?=
+
+      Edit these two lines to read:
+
+      ARCH		?= arm
+      CROSS_COMPILE	?= /usr/local/bin/arm-linux-
+
+      replacing /usr/local/bin/arm-linux- with the path to your ARM Linux toolchain.
+	  把/usr/local/bin/arm-linux-替换成你的ARM Linux工具链的路径。
+
+      This completes the configuration of the top level kernel makefile. The next step is to configure the kernel build to select the drivers that your platform requires.
+	  这样就完成了顶级内核makefile的配置。下一步就是配置内核编译选项，来选择你的平台需要的驱动。
+
+      You may like to read linux/README and linux/Documentation/arm/README before proceeding. Both these files provide further useful information which may be specific to your kernel version.
+	  在进行之前，你可能需要阅读linux/README和linux/Documentation/arm/README。所有这些文件提供了更多有用的信息，这些信息都是和你的版本号的内核相关的。
+
+   8.
+      Configuration of the kernel sources
+      There are a range of 'make' targets which allow a set of defaults to be selected for the particular machine you are compiling the source for. The process is much simpler for 2.6 kernels.
+  8.配置内核源代码
+   有许多的'make'目标，这些目标允许为你编译源代码的特定的机器选择一些默认的选项。在2.6内核的版本中，这个就更简单了。
+      Configuration of 2.4 kernels
+	  2.4内核的配置
+      For 2.4 kernels use <machinename>_config format, for example:
+	  对于2.4内核，使用<机器名>_config格式，例如：
+          * a5k_config
+          * ebsa110_config
+          * netwinder_config
+          * rpc_config
+          * assabet_config 
+
+
+      You should select one of these as the "basic" configuration as follows, and run make oldconfig immediately afterwards:
+
+      	bash$ make netwinder_config
+      	bash$ make oldconfig
+
+      The oldconfig step will prompt you for any new configuration options which may have been added since the default machine configuration file was submitted. It is normally safe to say 'N' to these new options.
+
+      Note: If you want to change the configuration via make xxx_config, please remove the file linux/.config immediately prior to executing this command.
+
+      Configuration of 2.6 kernels
+	  2.6内核的配置
+      For 2.6 kernels, the process is similar. Use <machinename>_defconfig to select the machine, eg:
+	  对于2.6的内核，过程很简单。使用<machinename>_defconfig来选择机器，例如：
+
+      	bash$ make netwinder_defconfig
+
+      In this case, there is no need to run a separate oldconfig step.
+	  在这种情况下，不需要指定独立的oldconfig步骤。
+   9.
+      Compiling the kernel source
+      If you are only installing the kernel source tree for other programs, then you have finished. If you want to compile up a new kernel, type the following commands:
+  9.编译内核源代码：
+  如果你仅仅为了其他的一些程序安装内核源代码，那么你已经完成了。如果你想要编译一个新的内核，那么键入如下命令：
+
+      	bash$ make clean
+      	bash$ make dep
+      	bash$ make zImage
+      	bash$ make modules
+
+      The final two commands will actually compile the kernel and the kernel modules.
+
+      Note: With 2.6 kernels, the make dep stage is not necessary.
+	  最后两步命令将要实际编译内核以及内核的模块。
+	  注意：对于2.6内核来说，make dep的步骤实际是不需要的。
+  10.
+      Installing the kernel
+      After the kernel has successfully compiled, you should have the kernel image, arch/arm/boot/zImage. What you do next depends if you are cross compiling or not.
+  10.安装内核
+  当内核被成功的编译完了之后，你应该得到内核的镜像了：arch/arm/boot/zImage.你下一步要做什么，依赖于你是否进行交叉编译。
+
+      If you are cross compiling, goto the section "Installing a cross compiled kernel".
+	  如果你进行交叉编译，那么进入到"安装交叉编译内核"这一节。
+
+      If you are building natively (ie, for the target on the target), continue.
+	  如果你编译是本地的编译（例如在target上面为了target进行）,那么继续。
+
+  11.
+      Installing a native kernel
+      Since you are about to upgrade system files, you need to become 'root'. To do this, type:
+  11.
+	  安装本地内核
+	  既然你打算更新系统文件了，那么你需要成为root用户，如下：
+
+      	bash$ su
+      	Password:
+      	bash#
+
+      It is highly advisable to keep a backup of your current kernel and modules. What you need to do is machine dependent. Note that it is a good idea to always keep a known good previous version of the kernel and modules in case you need to back down to a previous version.
+
+      The following is given as an example (for a 2.4.3-rmk1 kernel):
+	强烈建议为你当前的内核和模块保存一个备份。你需要做得是和机器独立的。注意，保存一个较好的先前的版本是很重要的，你可能需要回到原来的版本下工作。
+	下面是一个例子（对于2.4.3-rmk1内核）:
+
+      	bash# cd /lib/modules
+      	bash# mv 2.4.3-rmk1 2.4.3-rmk1.old
+      	bash# cd /boot
+      	bash# mv vmlinuz vmlinuz.bak
+      	bash# mv System.map System.map.bak
+      	bash#
+
+      Now, install the new kernel modules:
+
+	现在，安装新的内核：
+      	bash# cd $HOME/linux
+      	bash# make modules_install
+      	bash#
+	
+
+      This will copy the modules into the /lib/modules/x.y.z directory. Next, install the kernel image (normally into /boot):
+	这样将会拷贝模块到/lib/modules/x.y.z目录。下一步，安装内核镜像（一般是在/boot中）：
+
+      	bash# cd /boot
+      	bash# cat $HOME/linux/arch/arm/boot/zImage >vmlinuz
+      	bash# cp $HOME/linux/System.map .
+      	bash#
+
+      Note that the command to copy the new kernel image is cat and is not the usual cp. Unix traditionally will not allocate space on the filesystem to sections of files containing zero data, but instead creates "holes" in the file. Some kernel loaders do not understand files with holes in, and therefore using cat in this way ensures that this does not happen.
+	  注意，这里拷贝新内核镜像的命令是cat而不是cp.Unix一般不会给包含0数据的文件扇区分配文件系统的空间，而是在文件中创建"holes".有一些内核loader不知道文件有holes在其中，所以使用cat保证了这不会发生。
+
+  12.
+      Running loadmap
+      Loadmap is part of the Linux loader on Acorn machines, as well as EBSA285 machines using EBSA285BIOS with an IDE disk. For other machines, please refer to the documentation for your machine.
+  12.运行loadmap
+  Loadmap是Acorn机器上Linuxloader的一部分，和EBSA285机器使用EBSA235BIOS（有IDE硬盘）一样。对于其他机器，参考你机器上面的文档。
+
+      Edit the loader configuration file /etc/boot.conf so that you can boot either the vmlinuz.bak or vmlinuz images. If you place the vmlinuz kernel first, then this will be the default kernel which the kernel loader will use.
+
+      More information can be found by typing man boot.conf.
+
+      Run the boot loader map utility:
+	  编辑loader配置文件/etc/boot.conf，这样你可以利用vmlinuz.bak或者vmlinuz镜像来启动。如果你把vmlinuz内核放在第一个位置，那么这就将成为内核loader使用的默认内核。
+	  更多的信息，可以通过man boot.conf来找到。
+
+      	bash# loadmap -v
+      	bash#
+
+      to update the maps.
+	  更新maps.
+
+      You have finished, and are now ready to reboot your machine and try out your new kernel! If you experience problems, please go to the "Problems" step below.
+	  这样就完成了，重启系统，可以加载你的新内核了！
+
+  13.
+      Installing a cross compiled kernel
+      Kernel modules are installed into the /lib/modules/x.y.z directory on the target system, though this will normally be a different directory on the host system. Where this directory is depends on your setup, but we will call it $TARGETDIR.
+  13.安装交叉编译内核
+  内核模块被安装到目标机器的/lib/modules/x.y.z目录，这个在主机系统中却一般是不同的目录。这个目录依赖于你的设置，但是我们称它为$TARGETDIR.
+
+      Install the modules into $TARGETDIR as follows:
+	  运行如下的命令把模块安装到$TARGETDIR:
+
+      	bash$ make modules_install INSTALL_MOD_PATH=$TARGETDIR
+      	bash$
+
+      This will place the modules into the $TARGETDIR/lib/modules/x.y.z directory on the host, which can then be placed into an suitable filesystem, or transferred to the target machine. Please also note that you must not install these kernel modules into the hosts root filesystem (eg by omitting INSTALL_MOD_PATH or giving $TARGETDIR as "/"), since they are incompatible with your host kernel and therefore may leave you with an unbootable host system.
+	  这样将会把模块放到主机中的$TARGETDIR/lib/modules/x.y.z目录中这能够放到合适的文件系统中，或者复制到目标机器中。请注意，你千万不要把这些内核模块安装到主机的根文件系统中（例如忽略了INSTALL_MOD_PATH或者指定$TARGETDUR为'/'）,既然他们和你的主机内核是不兼容的，这会导致你的主机系统无法启动。
+
+      The kernel will be available in $HOME/linux/arch/arm/boot/zImage and the kernel symbol information in $HOME/linux/System.map. Exactly how do install this is outside the scope of this document.
+	  内核在/RHOME/linux/arch/arm/bot/zImage中和$HOME/linux/System.map中的内核符号连接信息是可以利用的。确切地说，怎样安装这个，在本文档的讨论之外。
+
+      It is important that you keep the System.map file safe - it contains the symbolic information for this kernel, which will be required if you need to debug or report a problem.
+	  保持你的System.map文件的安全非常重要，－它包含了内核的符号连接信息，这些信息在你需要调试以及回馈问题报告的时候是需要的。
+
+  14.
+      Reporting Problems
+      Please follow the REPORTING-BUGS guide in the kernel source tree. However, please use the linux-arm-kernel mailing list to report problems, rather than the linux-kernel mailing list. 
+14.问题的报告
+请遵循内核源代码树中的REPORTING-BUGS指导。然而，也可以利用linux-arm-kernel邮件列表来报告问题，不要使用linux-kernel邮件列表。

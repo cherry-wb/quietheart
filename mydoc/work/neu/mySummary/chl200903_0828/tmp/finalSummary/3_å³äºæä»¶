@@ -1,0 +1,317 @@
+内容：
+1）如何添加插件到HildonDesktop中
+2）添加插件的原理
+3）插件的编写
+
+如何添加插件
+==============
+原理是这样的，
+1,首先，~/.osso/hildon-desktop/desktop.conf 文件描述的hildon-desktop的全局配置，这个配置文件一般配置了home,statusbar,navigator三个插件的属性，文件内容如下：
+#######################################################
+[Tasknavigator]
+X-Type=panel_box
+X-Position-X=0
+X-Position-Y=0
+X-Size-Width=480
+X-Size-Height=80
+X-Orientation=left
+X-UI-Policy=libtasknavigatorpolicy.so
+X-Is-Ordered=1
+X-Config-File=tasknavigator.conf
+X-Plugin-Dir=/usr/share/applications/hildon-navigator
+
+[Home]
+X-Type=home
+X-Is-Ordered=0
+X-Load-New-Plugins=1
+X-Config-File=home.conf
+X-Plugin-Dir=/usr/share/applications/hildon-home;~/.hildon-home
+
+[Statusbar]
+X-Type=panel_expandable
+X-Position-X=0
+X-Position-Y=0
+X-Size-Width=800
+X-Size-Height=50
+X-Orientation=bottom
+X-UI-Policy=libstatusbarpolicy.so
+X-Is-Ordered=1
+X-Load-New-Plugins=1
+X-Config-File=statusbar.conf#这里指定statusbar的配置文件
+X-Plugin-Dir=/usr/share/applications/hildon-status-bar#这里指定statusbar插件的子插件配置文件的路径
+
+#######################################################
+启动hildon-desktop的时候，程序读取这个配置文件，加载相应的插件信息。
+
+
+2，默认插件的配置文件：
+默认有home,statusbar,navigator,三个插件，这三个插件的配置文件在"~/.osso/hildon-desktop/"下,例如statusbar插件的配置文件为~/.osso/hildon-desktop/statusbar.conf，文件的内容：
+#######################################################
+[/usr/share/applications/hildon-status-bar/tncpa_li_plugin_sb_battery.desktop]
+[/usr/share/applications/hildon-status-bar/large-statusbar-clock-hours.desktop]
+#######################################################
+含义很明显，每行代表将要加载的子插件的配置文件。
+
+3，子插件的配置文件：
+配置文件在其父插件（默认插件）中的conf文件指定了。以上面的large-statusbar-clock-hours.desktop文件为例：
+进入/usr/share/applications/hildon-status-bar打开large-statusbar-clock-hours.desktop文件，内容如下：
+#######################################################
+Name=Large Statusbar Clock Hours
+Category=permanent
+Icon=lsbc
+X-status-bar-plugin=liblarge_statusbar_clock_hours.so
+#######################################################
+这里，X-status-bar-plugin=liblarge_statusbar_clock_hours.so就指明了执行哪一个插件,该插件的路径在：
+/usr/lib/hildon-desktop/中。
+
+4,更改插件的图标：
+插件图标的路径默认都在：
+/scratchbox/users/quietheart/targets/DIABLO_ARMEL/usr/share/icons/hicolor/**/hildon中。
+以helloworld为例：
+1).首先把要更改的图标放到:/scratchbox/users/quietheart/targets/DIABLO_ARMEL/usr/share/icons/hicolor/40x40/hildon里面，或者替换相应的文件。
+2)重新启动:af-sb-init.sh restart，
+没有效果的话，就刷新图标缓存：
+gtk-update-icon-cache -f /usr/share/icons/hicolor
+3)重新启动:af-sb-init.sh restart。
+
+
+添加插件的原理
+===============
+
+通过尝试，终于了解到如何才能够把插件加载上去了。
+这里将说明各种行和不行的情况，及其原因。
+在此之前，先说明一点，两种写插件的方式：
+1,官方的helloworld源程序，是通过定义一个宏来识别插件。结合.desktop中X-Path字段
+目录files下的hello-world-app.tar.gz就是这样写的。
+2，另外的方法是通过<name>_entry函数识别的。结合.desktop中X-status-bar-plugin字段
+目录files下的taskmanager.tar.gz就是这样写的。
+
+=================
+对于第1种方法写的插件，是通过
+HD_DEFINE_PLUGIN(HildonStatusBarCloseApp,
+		 hildon_status_bar_helloworld,
+	       	 STATUSBAR_TYPE_ITEM);
+类似的宏来识别并根据配置加载该插件的。
+当.desktop文件用X-Path指明插件后，会根据这个宏定义，在默认目录/usr/lib/hildon-desktop下面寻找并加载插件。
+
+4种所有可能的配置方法情况下看插件能否加载，以及可能的原因：
+1),.desktop文件,用X-Path指明,目录为/usr/lib/hildon-desktop,行.
+因为具有插件的宏定义及X-Path默认目录.../lib/hildon-desktop正确，可以加载插件.
+
+2),.desktop文件用X-status-bar-plugin指明,目录为/usr/lib/hildon-status-bar,不行。
+因为用X-status-bar-plugin指明后会寻找<name>_entry函数来加载,但这里没有这个函数。
+
+3),.desktop文件,用X-Path指明,目录为/usr/lib/hildon-status-bar,不行.
+因为虽然有插件宏定义，但是X-Path的默认目录设错了，所以不行。
+
+4),.desktop文件用X-status-bar-plugin指明,目录为/usr/lib/hildon-desktop,不行。
+因为无宏定义，且X-status-bar-plugin默认路径为.../lib/hildon-status-bar,所以不行。	
+=================
+对于第2种方法些的插件，是通过函数
+<name>_entry
+这样类似的函数来识别并且根据配置加载插件的。
+当.desktop文件用X-status-bar-plugin来指定插件后，会先寻找插件代码中的<name>_entry函数，然后在默认目录/usr/lib/hildon-status-bar下面寻找statusbar插件。
+
+4种所有可能的配置方法情况下看插件能否加载，以及可能的原因：
+1),.desktop文件用X-status-bar-plugin指明,目录为/usr/lib/hildon-status-bar,行。
+因为用entry函数来加载,并且默认目录为.../lib/hildon-status-bar,都对,所以行。
+
+2),.desktop文件,用X-Path指明,目录为/usr/lib/hildon-desktop,不行.
+因为没有插件的宏定义尽管X-Path默认目录.../lib/hildon-desktop正确，所以也不行.
+
+3),.desktop文件,用X-Path指明,目录为/usr/lib/hildon-status-bar,不行.
+因为没有插件的宏定义且X-Path默认目录也设错了，所以不行。
+
+4),.desktop文件用X-status-bar-plugin指明,目录为/usr/lib/hildon-desktop,不行。
+因为尽管有entry但X-status-bar-plugin的默认目录设错了，所以不行.
+
+由此可知，一定要注意的是：
+1）源代码中是宏定义还是entry函数
+2）.desktop文件中是X-Path还是X-status-bar-plugin
+3)插件目录是/usr/lib/hildon-desktop还是/usr/lib/hildon-status-bar
+至于.desktop文件的位置，只要在.conf文件中指定对了就没有问题。
+
+另外，应该是默认从主目录中的.osso/hildon-desktop中找.conf文件，如果这里没有，则从/etc/hildon-desktop中加载.conf文件并且把这个conf文件复制一份到主目录的.osso/hildon-desktop中。（不知道为什么实践过了之后不行）
+
+插件的编写
+==============
+参考网址：
+http://test.maemo.org/platform/docs/howtos/tutorial_desktop_plugins_bora.html#status-bar-plugins
+如何编写statusba插件：
+=========================
+编写自己的statusbar插件，你可以创建一个共享对象，这个对象具有特定的函数。
+注意：Hildon Desktop动态的连接到libhildonstatusbar.so库上面，所以想要静态的连接到他的上面是不可能利用这个statusbaritem的API（因为系统可能会通过get_type()在内存中获得两个实例。）
+statusbar插件分为三种类型，permanent,conditional和temporal.Permanent插件一直会显示。Conditional和temporal插件只有在条件满足的时候才会显示。
+每一个插件都会有一个.desktop文件，如下：
+  [Desktop Entry]
+  Name=<logical name identifier>
+  Icon=<logical icon identifier>
+  Category=<permanent/conditional/temporal>, 
+            the default value is permanent if the key value read fails.
+  X-status-bar-plugin=lib<plugin name>.so
+  Mandatory=<true/false>,
+            if not set, the default value is false
+含义不多说了。
+--------------------
+
+Status bar 函数：
+---------------------------------------------------------
+entry函数：
+最重要的函数是entry函数，这个函数在库被打开的时候被调用。这个函数定义了其他插件操作需要的函数。entry函数的名字和你的库文件的名字相关联。它的名字是:[你的库名]_entry.例如，有一个插件的名字叫做hello,（库名应该是libhello.so）那么他的entry函数应该是:hello_entry。下面的例子展示了entry函数：
+/*******举例子:entry*********/
+/* Definition of HildonStatusBarPluginFn_st */
+#include <hildon-status-bar-lib/hildon-status-bar-item.h>
+#include <gtk/gtk.h>
+
+void *hello_initialize(HildonStatusBarItem *item, GtkWidget **button);
+void hello_destroy(void *data);
+void hello_update(void *data, gint value1, gint value2, const gchar *str);
+int hello_get_priority(void *data);
+
+/* 这里你也需要定义你的entry函数的原型 */
+void hello_entry(HildonStatusBarPluginFn_st *fn);
+
+void hello_entry(HildonStatusBarPluginFn_st *fn)
+{
+  /* Sanity check */
+  if (fn == NULL) {
+    return;
+  }
+  fn->initialize = hello_initialize;/*确定初始化函数*/
+  fn->destroy = hello_destroy;/*确定‘析构’函数*/
+  fn->update = hello_update;
+  fn->get_priority = hello_get_priority;
+}
+
+entry函数告诉了status bar对于特定的函数，需要调用那个函数。
+
+---------------------------------------------------------
+initialize函数
+对于第一个事件，initialize函数被调用。initialize的返回值被传递给了destroy，update和get_priority函数。
+为了能够析构一个item，initialize的第一个参数必须保存下来以便后来会用到。第二个参数必须初始化成为一个新的按钮，这个按钮是插件的图形表示。插件按钮的大小应该是40x40像素。如果有任何的g_timeouts或者它们????被利用了，它们???的ID必须被存储起来，以便于删除（如果不删除，那么整个status bar就会崩溃），下面的函数展示了initialize函数：
+
+/*******举例子:initialize*********/
+struct HelloPlugin {/*这里定义插件*/
+  HildonStatusBarItem *item;
+  GtkWidget *button;
+  /* Add here any data for your plugin. */
+};
+
+void *hello_initialize(HildonStatusBarItem *item, GtkWidget **button)
+{
+  GtkWidget *image = NULL;
+  struct HelloPlugin *hello = g_new0(struct HelloPlugin, 1);
+
+  hello->item = item;/*保存item*/
+  *button = hello->button = gtk_button_new();/*第二个参数对应的按钮*/
+
+  image = gtk_image_new_from_file("hello.png"); /* 图像的像素大小应该是40x40 */
+
+  gtk_container_add(
+    GTK_CONTAINER(*button),
+    GTK_WIDGET(image));
+
+  /* Here could add some gconf_notify's, g_timeouts or such. */
+
+  gtk_widget_show_all(*button);
+
+  return (void *)hello;
+}
+
+---------------------------------------------------------
+现在插件就被初始化了，下面的例子展示了update函数，这个函数在插件获得事件的时候被调用。这个插件接口有三个参数传递给插件，两个整型的和一个字符串类型的。插件能够任意利用这些参数。例如，第一个整数，可以用来定义是否显示这个插件。
+---------------------------------------------------------
+destroy函数
+当插件被析构的时候，destroy函数就被调用了。它应该释放所有的资源（原文：It should free all the memory and release all the notifys that can lead to the plugin code.）widget不能在这里释放，status bar负责这方面。下面的例子是destroy函数：
+
+void hello_destroy(void *data)
+{/*这里的data是initialize传递来的吗？是什么类型的呢？*/
+  if (!data) {
+    return;
+  }
+
+  /* You should do g_source_removes and gconf_client_notify_removes here. */
+
+  g_free(data);
+}
+
+
+---------------------------------------------------------
+set_conditional(设置插件)函数：
+设置一个插件的接口函数的原型如下：
+void [plugin_name]_set_conditional( void *data, gboolean conditional_status);
+
+这个函数目的是给conditional和temporal插件提供一个接口用来设置一个插件。boolean变量用来描述一个插件是否被显示（显示则为TRUE）。这个函数是可选的，也就是说permanent插件不需要执行这个函数。下面是这个函数的举例：
+
+/**********set_conditional函数举例***********/ 
+
+/* 这个函数在hildon_status_bar_update_conditional信号被发射给statusbar item的时候，
+ * 被desktop进程调用。这个函数的功能是设置statusbaritem的状态。
+ */
+static void
+hello_set_conditional (HelloSb *data, gboolean visible)
+{
+  if (!data)
+    return;
+
+  if (visible)
+    {/*如果显示*/
+      if (!data->button)
+        {/*按钮没被分配过则创建按钮并连接回调函数，再显示*/
+          data->button = gtk_button_new_with_label ("H");
+          g_signal_connect_swapped (data->button, "clicked",
+                                    G_CALLBACK (hello_clicked),
+                                    data);
+
+          gtk_widget_show_all (data->button);
+
+        }
+    }
+
+  else
+    {/*如果不显示*/
+      gtk_widget_destroy (data->button);/*释放按钮，这样将导致调用其finalize函数,以及把它从container中移走*/
+      data->button = NULL;
+    }
+/*做完前面的工作之后，设置对应的statusbar item的按钮为button,指定了插入到statusbar中的按钮*/
+  hildon_status_bar_item_set_button (data->item, data->button);
+
+}
+
+API也提供了一个新的信号，提示statusbar? 一个conditional插件的状态已经改变，原型如下：
+void (*hildon_status_bar_update_conditional)
+            (HildonStatusBarItem * self, gboolean conditional_status);
+这里，boolean参数的目的是用来告诉statusbar一个插件是否需要被显示或者被隐藏。
+
+conditional插件不需要在initialize API调用中创建他的按钮，所以可以设置这个按钮为NULL。为了指定插入到statusbar中的按钮，这个插件需要在它的set_conditional()执行的过程中调用如下函数(正如前面代码所示)：
+   void hildon_status_bar_item_set_button (HildonStatusBarItem *item, GtkWidget *button);
+---------------------------------------------------------
+改变conditional状态
+
+如果一个插件是permanent的，也就是说它会一直显示，那么它不需要执行set_conditional函数。但是，如果他是conditional或者temporal的，它将执行set_conditional函数。在statusBar ?initialization中，默认这些插件是不显示的。
+
+当一个插件需要改变它的状态的时候，它需要发送信号"hildon_status_bar_update_conditional",如下代码片段：
+/**********发送hildon_status_bar_update_conditional信号代码片段举例***********/
+gboolean is_shown = FALSE;
+   g_signal_emit_by_name(item,
+                         "hildon_status_bar_update_conditional",
+                         !is_shown);
+
+发送信号之后，StatusBarItem自己设置conditional函数，并且StatusBar在用户配置的位置显示插件。
+
+---------------------------------------------------------
+
+析构插件：
+可能会需要更频繁的reloading和removing插件。因此，......（原文：Hence, because at least some existing permanent plugins haven't included yet in their _destroy function dbus deinitialization (osso_deinitialize), not later than now all plugins should include it.）
+
+通过在.desktop文件中设置插件为mandatory，这样可能会避免插件reloading的可能性，这样它在任何情况下都不会被unloaded。如果这样，这个插件就不能在控制面板的navigator程序中被选择了。
+
+---------------------------------------------------------
+编译共享对象：
+利用了gcc中的'-shared'标记，例如：        
+[sbox-SDK_PC: ~] > gcc -shared `pkg-config gtk+-2.0 libosso --libs --cflags` hello.c -o libhello.so
+
+gcc产生的二进制必须安装到"hildon-status-bar-lib pkg-config"entry指定的的路径。
+这个路径可以通过:pkg-config hildon-status-bar-lib --variable=pluginlibdir来获得。默认它在目录:/usr/lib/hildon-status-bar下面。
+----------------------------------------
+对于一个完整的插件，taskmanager.tar.gz是一个很好的例子。

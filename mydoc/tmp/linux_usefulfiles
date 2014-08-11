@@ -1,0 +1,26 @@
+学习的时候会发现有时候介绍linux里面一些文件的作用，在这里面记录下来：
+*文件 /proc/devices新注册的驱动模块的入口
+*一个计数器跟踪着有多少进程正在使用该模块。你可以通过查看文件 /proc/modules的第三列来获取这些信息.
+*/var/cache/apt/archives/ 这是apt-get安装软件时候存放下载的软件的地方。
+用apt-get 安装软件包的时候，apt会从/etc/apt/sources.list里面将相应的软件包恢复出来，把它们存放在一个本地的文档库中（/var/cache/apt/archives/）然后才开始安装，随着时间的增长，这将不断地消耗硬盘的空间。
+*"/proc/meminfo"里面包含的就是内存的信息，还包括了swap的信息
+*/proc/stat包含的是cpu的使用信息。
+每一个CPU的每一tick用在什么地方都在这个文件里面记着。后面的数字含义分别是： user、nice、sys、idle、iowait。有些版本的kernel没有iowait这一项。这些数值表示从开机到现在，CPU的每tick用在了哪里。例如： cpu0 256279030 0 11832528 1637168262 就是cpu0从开机到现在有 256279030 tick用在了user消耗，11832528用在了sys消耗。所以如果想计算单位时间（例如1s）里面CPU的负载，那只需要计算1秒前后数值的差除以每一秒的tick数量就可以了。gkrellm就是这样实现的：((200 * (v2 - v1) / CPU_TICKS_PER_SECOND) + 1) /2 例如，第一次读取/proc/stat，user的值是256279030；一秒以后再读一次，值是256289030，那么CPU在这一秒的user消耗就是：((200 * (256289030 - 256279030) / CPU_TICKS_PER_SECOND) + 1) /2 = ((10000 * 200 / 1000000) + 1) / 2 = 1%了。
+*文件/proc/modules里是已加载模块的列表, 其中的第三列跟踪了有多少个进程使用了相应的模块。查看文件 /proc/modules的第三列来获取这些信息。如果该值非零，则卸载 就会失败。
+*(APUE说的)关于信号定义的文件：/usr/include/signal.h
+实际在这个文件中包含了/usr/include/bits/signum.h,这个文件里面有各种信号的定义。
+*/proc/kallsyms里面的是内核提供的函数，在内核模块中只能使用这里面的函数。
+*/proc/sys/kernel/pid_max可以通过修改这个文件来改变内核中进程pid最大的数目。
+*/proc/interrupts:描述当前中断信息。第一列是注册了中断函数的中断号，后面是各个cpu上该中断次数，然后是中断处理控制器名称，然后是产生这个中断的中断线上的所有设备。
+*/etc/mtab和/etc/fstab
+参考：http://www.blogjava.net/sunzhong/articles/286760.html
+/etc/fstab文件的作用
+        记录了计算机上硬盘分区的相关信息，启动 Linux 的时候，检查分区的 fsck 命令，和挂载分区的 mount 命令，都需要 fstab 中的信息，来正确的检查和挂载硬盘。
+/etc/mtab文件的作用：
+     记载的是现在系统已经装载的文件系统，包括操作系统建立的虚拟文件等；而/etc/fstab是系统准备装载的。
+每当 mount 挂载分区、umount 卸载分区，都会动态更新 mtab，mtab 总是保持着当前系统中已挂载的分区信息，fdisk、df 这类程序，必须要读取 mtab 文件，才能获得当前系统中的分区挂载情况。当然我们自己还可以通过读取/proc/mount也可以来获取当前挂载信息
+*/dev/fd/*
+这里是供文件描述符号，打开这里的文件等价于dup相应的文件。主要shell使用标准输入和输出时候用。例如
+filter file2 | cat file1 - file3 | lpr替换为：
+filter file2 | cat file1 /dev/fd/0 file3 | lpr
+这样比较好.

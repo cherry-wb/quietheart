@@ -1,0 +1,1081 @@
+Option Explicit
+Declare Function GetExitCodeProcess Lib "kernel32" (ByVal hProcess As Long, lpExitCode As Long) As Long
+Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Public Const Process_Query_Information = &H400
+Public Const Still_Active = 259
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMillSecond As Long)
+
+
+Function appCompareA(ByVal old_src as string,ByVal new_src as string) as boolean
+'
+' 用于比较和统计每个App上sheet信息的部分
+'
+    Sheets("App").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount_appfiles.bat"
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    'dir1 = InputBox("修改后代码中diablo目录的路径:" & dir1)
+    'dir2 = InputBox("原始代码中diablo目录的路径:" & dir2)
+    dir1 = new_src
+    dir1 = dir1 & "\Rootfs" '这里主要是设置为diablo的父目录，取决于svn目录结构
+    dir2 = old_src
+    'dir1 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    'dir2 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    'dir1=Application.FileDialog(msoFileDialogFolderPicker).Show
+    'dir2=Application.FileDialog(msoFileDialogFolderPicker).Show
+    resultfile = "D:\Program Files\diffcount\every_file_result.txt"
+
+    '清空上次统计
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim f
+    Set f = fso.CreateTextFile(resultfile,True)
+    f.close
+
+    'XXX 配置忽略的前几个字符...
+    Dim ignore_stri As Integer
+    ignore_stri = 3
+
+    '开始比较每个文件
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+      param1 = Cells(i, 2)
+      param2 = Cells(i, 5)
+      If Not IsEmpty(param2) Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, vbHide)
+        'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+	  GetExitCodeProcess hProcess, exitcode
+	  DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      Else 'Cells(i,4) = "新规"
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = param1
+        param1 = "--count-only"
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, 1)
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      End If 'if isempty(param2)
+        i = i + 1
+    Wend 'while i < afer_end
+
+    '读取结果
+    i = start
+    'Dim f
+    'Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Const ForReading = 1
+    f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring As String
+    Dim tmpPos,tmpPos2 As Integer
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0 
+       	  If tmpPos > 0 Then '找到Total
+            tmpPos2 = InStr(retstring,"(standard C lines)")
+            retstring = Mid(retstring, tmpPos + 5, tmpPos2-tmpPos-5)
+	    'retstring = Mid(retstring, tmpPos + 5, Len(retstring))
+       	    Cells(i, 8).Value = retstring
+       	  End If 'tmpPos > 0
+       	End If 'Not f.AtEnd
+      Else 'Cells(i,4) = "新规"
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "otal:") '查找Total
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0 
+       	  If tmpPos > 0 Then '找到Total
+            tmpPos2 = InStr(retstring,"(standard C lines)")
+            retstring = Mid(retstring, tmpPos + 5, tmpPos2-tmpPos-5)
+	    'retstring = Mid(retstring, tmpPos + 5, Len(retstring))
+       	    Cells(i, 8).Value = retstring
+       	  End If 'tmpPos > 0
+       	End If 'Not f.AtEnd
+      End If 'if not IsEmpty(Cells(i,5))
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:H").AutoFit
+
+    '文件输入对话框，以及消息对话框
+    'Dim kk As String
+    'kk = Application.GetOpenFilename("EXCEL (*.XLS), *.XLS", Title:="提示：请打开一个EXCEL文件：")
+    'msgbox kk
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+
+    ''''''统计总体数据情况
+    cmpapp = "D:\Program Files\diffcount\diffcount_appsummary.bat"
+    resultfile = "D:\Program Files\diffcount\summary_result.txt"
+    Dim osWrapper, zou3App, zou3Codec, zou3iLink, zou3Kernel, zou3Main, zou3Mif, zou3Mux, zou3Sc, zou3SC2P, diabloSubCpu As String
+
+    ''''''oswrapper
+    param1 = "--count-only"
+    param2 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\osWrapper"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+'   fso.DeleteFile resultfile
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3App
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3App"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3App"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Codec
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Codec"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Codec"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3iLink
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3iLink"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3iLink"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Kernel
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Kernel"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Kernel"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Main
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Main"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Main"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Mif
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Mif"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Mif"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Mux
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Mux"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Mux"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3Sc
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3Sc"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3Sc"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''zou3SC2P
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloMainCpu\zou3SC2P"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloMainCpu\zou3SC2P"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+
+    ''''''diabloSubCpu
+    param1 = Chr(34) & dir1 & Chr(34) & "\diablo\diabloSubCpu"
+    param2 = Chr(34) & dir2 & Chr(34) & "\diablo\diabloSubCpu"
+    shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+'   fso.DeleteFile resultfile
+    ProcessId = Shell(shell_cmd, vbHide)
+    'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+    hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+    Do
+      GetExitCodeProcess hProcess, exitcode
+      DoEvents
+    Loop While exitcode = Still_Active
+'    Sheets("集計").Select
+    appCompareA = true
+End Function
+
+Function appCompareB(ByVal old_src as string,ByVal new_src as string) as boolean
+'
+' 用于比较和统计每个App上sheet信息的部分
+'
+    Sheets("App").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount_appfiles.bat"
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    'dir1 = InputBox("修改后代码中diablo目录的路径:" & dir1)
+    'dir2 = InputBox("原始代码中diablo目录的路径:" & dir2)
+    dir1 = new_src
+    dir1 = dir1 & "\Rootfs" '这里主要是设置为diablo的父目录，取决于svn目录结构
+    dir2 = old_src
+    'dir1 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    'dir2 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    'dir1=Application.FileDialog(msoFileDialogFolderPicker).Show
+    'dir2=Application.FileDialog(msoFileDialogFolderPicker).Show
+    resultfile = "D:\Program Files\diffcount\every_file_result.txt"
+
+    'XXX 配置忽略的前几个字符...
+    Dim ignore_stri As Integer
+    ignore_stri = 3
+
+    '清空上次统计
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim f
+    Set f = fso.CreateTextFile(resultfile,True)
+    f.close
+
+    '开始比较每个文件
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+      param1 = Cells(i, 2)
+      param2 = Cells(i, 5)
+      If Not IsEmpty(param2) Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, vbHide)
+        'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+	  GetExitCodeProcess hProcess, exitcode
+	  DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      Else 'Cells(i,4) = "新规"
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = param1
+        param1 = "--count-only"
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, 1)
+	hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+	Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+	Loop While exitcode = Still_Active
+        'Sleep (400)
+      End If 'if isempty(param2)
+        i = i + 1
+    Wend 'while i < afer_end
+    appCompareB = true
+End Function
+
+Function getAppSummaryA()
+'
+' 自动填写并统计“集計”上面app部分的统计信息
+'
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start As Integer
+    start = 0
+    i = start
+    
+    '构造命令用
+    Dim resultfile As String
+    resultfile = "D:\Program Files\diffcount\summary_result.txt"
+
+    '读取结果
+    i = start
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+    Dim retstring, token, addNum, modNum, amNum, totalNum As String
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+    Dim osWrapper,zou3App,zou3Codec,zou3iLink,zou3Kernel,zou3Main,zou3Mif,zou3Mux,zou3Sc,zou3SC2P,diabloSubCpu As Integer
+    osWrapper=2
+    zou3App=3
+    zou3Codec=4
+    zou3iLink=5
+    zou3Kernel=6
+    zou3Main=7
+    zou3Mif=8
+    zou3Mux=9
+    zou3Sc=10
+    zou3SC2P=11
+    diabloSubCpu=12
+    Dim currentColumn As Integer
+    currentColumn=0
+
+    Sheets("集計").Select
+    Do While f.AtEndOfStream <> True
+        retstring = f.ReadLine
+	If InStr(retstring,"osWrapper] result:") > 0 Then
+           currentColumn=osWrapper 
+	End If
+	If InStr(retstring,"zou3App] result:") > 0 Then
+           currentColumn=zou3App
+	End If
+	If InStr(retstring,"zou3Codec] result:") > 0 Then
+           currentColumn=zou3Codec
+	End If
+	If InStr(retstring,"zou3iLink] result:") > 0 Then
+           currentColumn=zou3iLink
+	End If
+	If InStr(retstring,"zou3Kernel] result:") > 0 Then
+           currentColumn=zou3Kernel
+	End If
+	If InStr(retstring,"zou3Main] result:") > 0 Then
+           currentColumn=zou3Main
+	End If
+	If InStr(retstring,"zou3Mif] result:") > 0 Then
+           currentColumn=zou3Mif
+	End If
+	If InStr(retstring,"zou3Mux] result:") > 0 Then
+           currentColumn=zou3Mux
+	End If
+	If InStr(retstring,"zou3Sc] result:") > 0 Then
+           currentColumn=zou3Sc
+	End If
+	If InStr(retstring,"zou3SC2P] result:") > 0 Then
+           currentColumn=zou3SC2P
+	End If
+	If InStr(retstring,"diabloSubCpu] result:") > 0 Then
+           currentColumn=diabloSubCpu
+	End If
+        If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            tokenValues = Split(retstring, token)
+            Dim tokenIndex As Integer
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                'MsgBox "add number:" & addNum
+                Cells(9,currentColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                'MsgBox "modify number:" & modNum
+                Cells(10,currentColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "A&M" Then
+                amNum = tokenValues(tokenIndex)
+                'MsgBox "modify and add number:" & amNum
+                Cells(11,currentColumn)=amNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file
+                totalNum = tokenValues(tokenIndex)
+                'MsgBox "total number:" & totalNum
+                Cells(9,currentColumn)=totalNum
+                Cells(11,currentColumn)=totalNum
+            End If
+            tokenIndex = tokenIndex + 1
+            Wend
+        End If
+    Loop
+    f.Close
+End Function
+Function getAppSummaryB()
+'
+' 自动填写并统计“集計”上面app部分的统计信息
+'
+    '读取结果
+    Dim i, start, after_end As Integer
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+
+    Dim resultfile as String
+    resultfile = "D:\Program Files\diffcount\every_file_result.txt"
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+
+    Sheets("App").Select
+    ''''''统计各个文件数据情况用
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+    Dim retstring, token, addNum, modNum, delNum, totalNum As String
+    Dim tokenIndex,tmpPos,addColumn,modColumn,delColumn,totalColumn As Integer
+    addColumn=8
+    modColumn=9
+    delColumn=10
+    totalColumn=11
+    ''''''统计总体数据情况用
+    Dim osWrapper_Index,zou3App_Index,zou3Codec_Index,zou3iLink_Index,zou3Kernel_Index,zou3Main_Index,zou3Mif_Index,zou3Mux_Index,zou3Sc_Index,zou3SC2P_Index,diabloSubCpu_Index As Integer
+    'XXX How many??
+    Dim ii,appTitleRow,addRow,modRow,totalRow As Integer
+    appTitleRow=8
+    addRow=9
+    modRow=10
+    totalRow=11
+    ii = 0
+    'While Cells(2,i+2)<>集計
+    While ii < 11
+      If Sheets("集計").Cells(appTitleRow,ii+2)="osWrapper" Then
+        osWrapper_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3App" Then
+        zou3App_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Codec" Then
+        zou3Codec_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3iLink" Then
+        zou3iLink_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Kernel" Then
+        zou3Kernel_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Main" Then
+        zou3Main_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Mif" Then
+        zou3Mif_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Mux" Then
+        zou3Mux_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3Sc" Then
+        zou3Sc_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="zou3SC2P" Then
+        zou3SC2P_Index=ii
+      ElseIf Sheets("集計").Cells(appTitleRow,ii+2)="diabloSubCpu" Then
+        diabloSubCpu_Index=ii
+      EndIf
+      Sheets("集計").Cells(addRow,ii+2)=0
+      Sheets("集計").Cells(modRow,ii+2)=0
+      Sheets("集計").Cells(totalRow,ii+2)=0
+      ii = ii + 1
+    Wend
+
+    ''''''开始统计
+    i = start
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计非空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn).Value = 0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      ElseIf Cells(i,4) = "新规" Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn)=0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      Else
+        Cells(i, addColumn)=0
+        Cells(i, modColumn)=0
+        Cells(i, delColumn)=0
+        Cells(i, totalColumn)=0
+      End If 'if not IsEmpty(Cells(i,4))
+
+      If InStr(Cells(i,2), "\osWrapper") > 0 Then
+        Sheets("集計").Cells(addRow,osWrapper_Index+2)=Sheets("集計").Cells(addRow,osWrapper_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,osWrapper_Index+2)=Sheets("集計").Cells(modRow,osWrapper_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,osWrapper_Index+2)=Sheets("集計").Cells(totalRow,osWrapper_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3App") > 0 Then
+        Sheets("集計").Cells(addRow,zou3App_Index+2)=Sheets("集計").Cells(addRow,zou3App_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3App_Index+2)=Sheets("集計").Cells(modRow,zou3App_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3App_Index+2)=Sheets("集計").Cells(totalRow,zou3App_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Codec") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Codec_Index+2)=Sheets("集計").Cells(addRow,zou3Codec_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Codec_Index+2)=Sheets("集計").Cells(modRow,zou3Codec_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Codec_Index+2)=Sheets("集計").Cells(totalRow,zou3Codec_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3iLink") > 0 Then
+        Sheets("集計").Cells(addRow,zou3iLink_Index+2)=Sheets("集計").Cells(addRow,zou3iLink_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3iLink_Index+2)=Sheets("集計").Cells(modRow,zou3iLink_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3iLink_Index+2)=Sheets("集計").Cells(totalRow,zou3iLink_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Kernel") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Kernel_Index+2)=Sheets("集計").Cells(addRow,zou3Kernel_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Kernel_Index+2)=Sheets("集計").Cells(modRow,zou3Kernel_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Kernel_Index+2)=Sheets("集計").Cells(totalRow,zou3Kernel_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Main") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Main_Index+2)=Sheets("集計").Cells(addRow,zou3Main_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Main_Index+2)=Sheets("集計").Cells(modRow,zou3Main_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Main_Index+2)=Sheets("集計").Cells(totalRow,zou3Main_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Mif") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Mif_Index+2)=Sheets("集計").Cells(addRow,zou3Mif_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Mif_Index+2)=Sheets("集計").Cells(modRow,zou3Mif_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Mif_Index+2)=Sheets("集計").Cells(totalRow,zou3Mif_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Mux") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Mux_Index+2)=Sheets("集計").Cells(addRow,zou3Mux_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Mux_Index+2)=Sheets("集計").Cells(modRow,zou3Mux_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Mux_Index+2)=Sheets("集計").Cells(totalRow,zou3Mux_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3Sc") > 0 Then
+        Sheets("集計").Cells(addRow,zou3Sc_Index+2)=Sheets("集計").Cells(addRow,zou3Sc_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3Sc_Index+2)=Sheets("集計").Cells(modRow,zou3Sc_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3Sc_Index+2)=Sheets("集計").Cells(totalRow,zou3Sc_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\zou3SC2P") > 0 Then
+        Sheets("集計").Cells(addRow,zou3SC2P_Index+2)=Sheets("集計").Cells(addRow,zou3SC2P_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,zou3SC2P_Index+2)=Sheets("集計").Cells(modRow,zou3SC2P_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,zou3SC2P_Index+2)=Sheets("集計").Cells(totalRow,zou3SC2P_Index+2) + Cells(i,totalColumn)
+      ElseIf InStr(Cells(i,2), "\diabloSubCpu") > 0 Then
+        Sheets("集計").Cells(addRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(addRow,diabloSubCpu_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(modRow,diabloSubCpu_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,diabloSubCpu_Index+2)=Sheets("集計").Cells(totalRow,diabloSubCpu_Index+2) + Cells(i,totalColumn)
+      EndIf
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:L").AutoFit
+    Sheets("集計").Columns("B:T").AutoFit
+End Function
+
+Function kernelCompare(ByVal old_src as string,ByVal new_src as string) as boolean
+'
+' mytest Macro
+'
+    Sheets("Kernel").Select
+
+    'XXX 迭代获得每一个单元格直到最后,start可配置
+    Dim i, start, after_end As Integer
+    'start = 1520
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 1))
+        i = i + 1
+    Wend
+    after_end = i
+    'Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+    'XXX 配置命令参数
+    cmpapp = "D:\Program Files\diffcount\diffcount_kernelfiles.bat"
+    'dir1 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    'dir2 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    resultfile = "D:\Program Files\diffcount\every_kernel_file_result.txt"
+
+    '输入自行选择输入参数，例如：D:\...\diablo
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+    'dir1 = InputBox("请输入svn中Kernel父目录的路径:" & dir1)
+    'dir2 = InputBox("请输入vxworks原始代码父目录的路径(包含diablo和kernel26):" & dir2)
+    dir1= new_src
+    dir2 = old_src
+    'dir1=FileDialog(msoFileDialogFolderPicker).Show
+    'dir2=FileDialog(msoFileDialogFolderPicker).Show
+
+    'XXX 配置忽略的前几个字符...
+    Dim ignore_stri As Integer
+    ignore_stri = 3
+
+    '清空上次统计
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim f
+    Set f = fso.CreateTextFile(resultfile,True)
+    f.close
+
+    'XXX 开始比较每个文件.（考虑用dos批处理改善）,此处考虑清空文件
+    Dim ProcessId, hProcess, exitcode As Long
+    i = start
+    While i < after_end
+      param1 = Cells(i, 1)
+      param2 = Cells(i, 5)
+      If Not IsEmpty(param2) Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = Chr(34) & dir2 & Chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param2 & " " & param1
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, vbHide)
+        'ProcessId = Shell(shell_cmd, 1) 'vbNormalFocus
+        hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+        Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+        Loop While exitcode = Still_Active
+        'Sleep (400)
+      ElseIf Cells(i,4) = "新规" Then
+        param1 = Chr(34) & dir1 & Chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+        param2 = param1
+        param1 = "--count-only"
+        shell_cmd = Chr(34) & cmpapp & Chr(34) & " " & param1 & " " & param2
+        'XXX 同步执行
+        ProcessId = Shell(shell_cmd, 1)
+        hProcess = OpenProcess(Process_Query_Information, False, ProcessId)
+        Do
+          GetExitCodeProcess hProcess, exitcode
+          DoEvents
+        Loop While exitcode = Still_Active
+        'Sleep (400)
+      End If 'if isempty(param2)
+        i = i + 1
+    Wend 'while i < afer_end
+    kernelCompare=true
+End Function
+
+Function getKernelSummary()
+'
+' 自动填写并统计“集計”上面kernel部分的统计信息
+'
+    '读取结果
+    Dim i, start, after_end As Integer
+    start = 2
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        i = i + 1
+    Wend
+    after_end = i
+
+    Dim resultfile as String
+    resultfile = "D:\Program Files\diffcount\every_kernel_file_result.txt"
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const ForReading = 1
+    Dim f
+    Set f = fso.OpenTextFile(resultfile, ForReading, False)
+
+    Sheets("Kernel").Select
+    ''''''统计各个文件数据情况用
+    Dim tokenTitles() As String
+    Dim tokenValues() As String
+    Dim retstring, token, addNum, modNum, delNum, totalNum As String
+    Dim tokenIndex,tmpPos,addColumn,modColumn,delColumn,totalColumn As Integer
+    addColumn=8
+    modColumn=9
+    delColumn=10
+    totalColumn=11
+    ''''''统计总体数据情况用
+    Dim CSI_Index,STCC_Index,Timer_Index,GPIO_Index,IRQ_Index,PCI_Index,PCIE_Index,UART_Index,INT_Index,EXPCD_Index,TORINO_Index,AVSEL_Index,BSIF_Index,HFDMA_Index,MEMORY_Index,VREF_Index,TK1_Index,OTHER_Index As Integer
+    'XXX How many??
+    Dim ii,kernTitleRow,addRow,modRow,totalRow As Integer
+    kernTitleRow=2
+    addRow=3
+    modRow=4
+    totalRow=5
+    ii = 0
+    'While Cells(2,i+2)<>集計
+    While ii < 18
+      If Sheets("集計").Cells(kernTitleRow,ii+2)="CSI" Then
+        CSI_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="STCC" Then
+        STCC_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="Timer" Then
+        Timer_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="GPIO" Then
+        GPIO_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="IRQ" Then
+        IRQ_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="PCI" Then
+        PCI_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="PCIE" Then
+        PCIE_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="UART" Then
+        UART_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="INT" Then
+        INT_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="EXPCD" Then
+        EXPCD_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="TORINO" Then
+        TORINO_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="AVSEL" Then
+        AVSEL_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="BSIF" Then
+        BSIF_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="HFDMA" Then
+        HFDMA_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="MEMORY" Then
+        MEMORY_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="VREF" Then
+        VREF_Index=ii
+      ElseIf Sheets("集計").Cells(kernTitleRow,ii+2)="TK1" Then
+        TK1_Index=ii
+      Else
+        OTHER_Index=ii
+      EndIf
+      Sheets("集計").Cells(addRow,ii+2)=0
+      Sheets("集計").Cells(modRow,ii+2)=0
+      Sheets("集計").Cells(totalRow,ii+2)=0
+      ii = ii + 1
+    Wend
+
+    ''''''开始统计
+    i = start
+    While i < after_end
+      If Not IsEmpty(Cells(i, 5)) Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计非空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn).Value = 0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      ElseIf Cells(i,4) = "新规" Then
+        If Not f.AtEndOfStream Then
+          Do
+            retstring = f.ReadLine
+            tmpPos = InStr(retstring, "] result:")
+          Loop While f.AtEndOfStream <> True And Not tmpPos > 0
+          If tmpPos > 0 Then
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "LANG") = 1 Then '字符串查找，最开始的位置是1，没有则返回0
+            token = Mid(retstring, 5, 1) '截取字符串，参数分别是(字符串,起始,截取的长度)这里，字符串的最开始起始位置是1
+            tokenTitles = Split(retstring, token)
+            retstring = f.ReadLine
+            retstring = f.ReadLine
+            If InStr(retstring, "---------") = 0 Then '统计空
+            tokenValues = Split(retstring, token)
+            tokenIndex = 0
+            While tokenIndex <= UBound(tokenTitles)
+            If tokenTitles(tokenIndex) = "ADD" Then
+                addNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=addNum
+            ElseIf tokenTitles(tokenIndex) = "MOD" Then
+                modNum = tokenValues(tokenIndex)
+                Cells(i,modColumn)=modNum
+            ElseIf tokenTitles(tokenIndex) = "DEL" Then
+                delNum = tokenValues(tokenIndex)
+                Cells(i,delColumn)=delNum
+            ElseIf tokenTitles(tokenIndex) = "NBNC" Then
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,totalColumn)=totalNum
+            ElseIf tokenTitles(tokenIndex) = "TOTAL" Then 'for new file should not attach here for Cells(i,5) not empty
+                totalNum = tokenValues(tokenIndex)
+                Cells(i,addColumn)=totalNum
+                Cells(i,modColumn)=0
+                Cells(i,delColumn)=0
+                Cells(i,10)=totalNum
+            End If ' If tokenTitles
+            tokenIndex = tokenIndex + 1
+            Wend ' while tokenIndex <= UBound(tokenTitles)
+            Else
+              Cells(i, addColumn)=0
+              Cells(i, modColumn)=0
+              Cells(i, delColumn)=0
+              Cells(i, totalColumn)=0
+            EndIf ' if InStr(retstring, "---------") = 0
+            EndIf ' if InStr(retstring, "LANG") = 1
+          End If 'tmpPos > 0
+        End If 'Not f.AtEnd
+      Else
+        Cells(i, addColumn)=0
+        Cells(i, modColumn)=0
+        Cells(i, delColumn)=0
+        Cells(i, totalColumn)=0
+      End If 'if not IsEmpty(Cells(i,4))
+
+      If Cells(i,2)="CSI" Then
+        Sheets("集計").Cells(addRow,CSI_Index+2)=Sheets("集計").Cells(addRow,CSI_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,CSI_Index+2)=Sheets("集計").Cells(modRow,CSI_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,CSI_Index+2)=Sheets("集計").Cells(totalRow,CSI_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="STCC" Then
+        Sheets("集計").Cells(addRow,STCC_Index+2)=Sheets("集計").Cells(addRow,STCC_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,STCC_Index+2)=Sheets("集計").Cells(modRow,STCC_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,STCC_Index+2)=Sheets("集計").Cells(totalRow,STCC_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="Timer" Then
+        Sheets("集計").Cells(addRow,Timer_Index+2)=Sheets("集計").Cells(addRow,Timer_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,Timer_Index+2)=Sheets("集計").Cells(modRow,Timer_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,Timer_Index+2)=Sheets("集計").Cells(totalRow,Timer_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="GPIO" Then
+        Sheets("集計").Cells(addRow,GPIO_Index+2)=Sheets("集計").Cells(addRow,GPIO_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,GPIO_Index+2)=Sheets("集計").Cells(modRow,GPIO_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,GPIO_Index+2)=Sheets("集計").Cells(totalRow,GPIO_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="IRQ" Then
+        Sheets("集計").Cells(addRow,IRQ_Index+2)=Sheets("集計").Cells(addRow,IRQ_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,IRQ_Index+2)=Sheets("集計").Cells(modRow,IRQ_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,IRQ_Index+2)=Sheets("集計").Cells(totalRow,IRQ_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="PCI" Then
+        Sheets("集計").Cells(addRow,PCI_Index+2)=Sheets("集計").Cells(addRow,PCI_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,PCI_Index+2)=Sheets("集計").Cells(modRow,PCI_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,PCI_Index+2)=Sheets("集計").Cells(totalRow,PCI_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="PCIE" Then
+        Sheets("集計").Cells(addRow,PCIE_Index+2)=Sheets("集計").Cells(addRow,PCIE_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,PCIE_Index+2)=Sheets("集計").Cells(modRow,PCIE_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,PCIE_Index+2)=Sheets("集計").Cells(totalRow,PCIE_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="UART" Then
+        Sheets("集計").Cells(addRow,UART_Index+2)=Sheets("集計").Cells(addRow,UART_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,UART_Index+2)=Sheets("集計").Cells(modRow,UART_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,UART_Index+2)=Sheets("集計").Cells(totalRow,UART_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="INT" Then
+        Sheets("集計").Cells(addRow,INT_Index+2)=Sheets("集計").Cells(addRow,INT_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,INT_Index+2)=Sheets("集計").Cells(modRow,INT_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,INT_Index+2)=Sheets("集計").Cells(totalRow,INT_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="EXPCD" Then
+        Sheets("集計").Cells(addRow,EXPCD_Index+2)=Sheets("集計").Cells(addRow,EXPCD_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,EXPCD_Index+2)=Sheets("集計").Cells(modRow,EXPCD_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,EXPCD_Index+2)=Sheets("集計").Cells(totalRow,EXPCD_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="TORINO" Then
+        Sheets("集計").Cells(addRow,TORINO_Index+2)=Sheets("集計").Cells(addRow,TORINO_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,TORINO_Index+2)=Sheets("集計").Cells(modRow,TORINO_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,TORINO_Index+2)=Sheets("集計").Cells(totalRow,TORINO_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="AVSEL" Then
+        Sheets("集計").Cells(addRow,AVSEL_Index+2)=Sheets("集計").Cells(addRow,AVSEL_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,AVSEL_Index+2)=Sheets("集計").Cells(modRow,AVSEL_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,AVSEL_Index+2)=Sheets("集計").Cells(totalRow,AVSEL_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="BSIF" Then
+        Sheets("集計").Cells(addRow,BSIF_Index+2)=Sheets("集計").Cells(addRow,BSIF_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,BSIF_Index+2)=Sheets("集計").Cells(modRow,BSIF_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,BSIF_Index+2)=Sheets("集計").Cells(totalRow,BSIF_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="HFDMA" Then
+        Sheets("集計").Cells(addRow,HFDMA_Index+2)=Sheets("集計").Cells(addRow,HFDMA_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,HFDMA_Index+2)=Sheets("集計").Cells(modRow,HFDMA_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,HFDMA_Index+2)=Sheets("集計").Cells(totalRow,HFDMA_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="MEMORY" Then
+        Sheets("集計").Cells(addRow,MEMORY_Index+2)=Sheets("集計").Cells(addRow,MEMORY_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,MEMORY_Index+2)=Sheets("集計").Cells(modRow,MEMORY_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,MEMORY_Index+2)=Sheets("集計").Cells(totalRow,MEMORY_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="VREF" Then
+        Sheets("集計").Cells(addRow,VREF_Index+2)=Sheets("集計").Cells(addRow,VREF_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,VREF_Index+2)=Sheets("集計").Cells(modRow,VREF_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,VREF_Index+2)=Sheets("集計").Cells(totalRow,VREF_Index+2) + Cells(i,totalColumn)
+      ElseIf Cells(i,2)="TK1" Then
+        Sheets("集計").Cells(addRow,TK1_Index+2)=Sheets("集計").Cells(addRow,TK1_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,TK1_Index+2)=Sheets("集計").Cells(modRow,TK1_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,TK1_Index+2)=Sheets("集計").Cells(totalRow,TK1_Index+2) + Cells(i,totalColumn)
+      Else
+        Sheets("集計").Cells(addRow,OTHER_Index+2)=Sheets("集計").Cells(addRow,OTHER_Index+2) + Cells(i,addColumn)
+        Sheets("集計").Cells(modRow,OTHER_Index+2)=Sheets("集計").Cells(modRow,OTHER_Index+2) + Cells(i,modColumn)
+        Sheets("集計").Cells(totalRow,OTHER_Index+2)=Sheets("集計").Cells(totalRow,OTHER_Index+2) + Cells(i,totalColumn)
+      EndIf
+      i = i + 1
+    Wend
+    f.Close
+    Columns("B:L").AutoFit
+    Sheets("集計").Columns("B:T").AutoFit
+End Function
+
+Sub startCompareAll()
+'
+' 自动统计
+'
+
+'输入目录
+Dim old_src,new_src As String
+old_src = InputBox("vxworks原始代码路径(包含diablo和kernel26子目录):" & old_src)
+new_src = InputBox("svn代码路径(包含Kernel的Source目录):" & new_src)
+
+'统计app数据
+appCompareB old_src,new_src
+getAppSummaryB
+'appCompareA old_src,new_src
+'getAppSummaryA
+
+'统计内核数据
+kernelCompare old_src,new_src
+getKernelSummary
+
+'提示结束
+msgbox "ok"
+End Sub

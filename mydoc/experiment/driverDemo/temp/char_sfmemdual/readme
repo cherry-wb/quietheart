@@ -1,0 +1,8 @@
+ sfmemdual_drv
+ 驱动代码。
+
+ sfmemlib
+ 暴露给上层的库。
+
+ version_test
+ 自己编写的测试程序。

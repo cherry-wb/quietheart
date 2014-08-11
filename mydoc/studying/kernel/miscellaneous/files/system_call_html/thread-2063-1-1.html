@@ -1,0 +1,957 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=x-gbk">
+<title>深入理解Linux的系统调用 - 编程与内核 -  红联Linux论坛 全球Linux人网上交流平台 - 天下没有难学的Linux</title>
+<meta name="keywords" content="Linux,Linux论坛,Linux书籍,Linux教程,Fedora,Ubuntu,红旗,Redhat,SuSE,Linux培训,linux安装,Unix,debian,samba">
+<meta name="description" content=" 红联Linux论坛 一、 什么是系统调用在Linux的世界里，我们经常会遇到系统调用这一术语，所谓系统调用，就是内核提供的、功能十分强大的一系列的函数。这些系统调用是在内核 ...">
+<meta name="generator" content="linuxdiyf.com">
+<meta name="author" content="linux">
+<meta name="copyright" content="linuxdiyf.com/bbs">
+<meta name="MSSmartTagsPreventParsing" content="True">
+<meta http-equiv="MSThemeCompatible" content="Yes">
+<meta http-equiv="x-ua-compatible" content="ie=7">
+<link rel="archives" title="红联Linux论坛" href="http://www.linuxdiyf.com/bbs/archiver/">
+<style type="text/css">
+@import url(forumdata/cache/style_1_common.css?c5O);
+@import url(forumdata/cache/style_1_viewthread.css?c5O);
+#f_post td { padding-top: 15px; padding-bottom: 20px; vertical-align: top; }
+#f_post p, .fastcheck { margin: 5px 0; }
+#f_post .txtarea { margin: -1px 0 0; width: 596px; height: 120px; border-color: #999 #CCC #CCC #999; border-top: none; overflow: auto; }
+.defaultpost { height: auto !important; height:260px; min-height:260px !important; }
+.signatures { max-height: 240px; }
+* html .signatures { height: expression(signature(this)); }
+.t_msgfontfix { min-height: 100px; }
+* html .t_msgfontfix { height: 100px; overflow: visible; }
+</style><script type="text/javascript">var STYLEID = '1', IMGDIR = 'images/default', VERHASH = 'c5O', charset = 'gbk', discuz_uid = 0, cookiedomain = '', cookiepath = '/', attackevasive = '0', allowfloatwin = '0', creditnotice = '1|威望|,2|现金|圆,3|魅力|点', gid = parseInt('2'), fid = parseInt('9'), tid = parseInt('2063')</script>
+<script src="thread-2063-1-1_files/common.js" type="text/javascript"></script>
+</head><body id="viewthread" onkeydown="if(event.keyCode==27) return false;">
+
+<div id="append_parent"></div><div id="ajaxwaitid"></div>
+<div id="header">
+<div class="wrap s_clear">
+<h2><a href="http://www.linuxdiyf.com/bbs/index.php" title="红联Linux论坛"><img src="thread-2063-1-1_files/logo.gif" alt="红联Linux论坛" border="0"></a></h2>
+<div id="umenu">
+<a href="http://www.linuxdiyf.com/bbs/register.php" onclick="floatwin('open_register', this.href, 600, 400, '600,0');return false;" class="noborder">注册</a>
+<a href="http://www.linuxdiyf.com/bbs/logging.php?action=login" onclick="floatwin('open_login', this.href, 600, 400);return false;">登录</a>
+</div>
+<div id="ad_headerbanner"></div>
+<div id="menu">
+<ul>
+<li class="menu_16"><a href="http://www.linuxdiyf.com/bbs/forum-3-1.html" hidefocus="true" title="有关Linux的问题都可以到这个版提问" id="mn_forum-3-1">提问专区</a></li><li class="current"><a href="http://www.linuxdiyf.com/bbs/index.php" hidefocus="true" id="mn_index">论坛</a></li><li class="menu_6"><a href="http://www.linuxdiyf.com/" hidefocus="true" title="红联Linux门户" target="_blank" id="mn_www">首页</a></li><li class="menu_7" id="lb6N5p" onmouseover="showMenu(this.id)"><a href="http://www.linuxdiyf.com/bbs/index.php?gid=2" hidefocus="true" title="Linux通用技术交流区" class="dropmenu">热版</a></li><li class="menu_17" id="j4FSG8" onmouseover="showMenu(this.id)"><a href="http://www.linuxdiyf.com/bbs/index.php?gid=70" hidefocus="true" title="Linux人－交朋会友" class="dropmenu">交友</a></li><li class="menu_2"><a href="http://www.linuxdiyf.com/bbs/search.php" hidefocus="true" id="mn_search">搜索</a></li><li class="menu_5"><a href="http://www.linuxdiyf.com/bbs/misc.php?action=nav" hidefocus="true" onclick="floatwin('open_nav', this.href, 600, 410);return false;">导航</a></li></ul>
+<script type="text/javascript">
+var currentMenu = $('mn_') ? $('mn_') : $('mn_index');
+currentMenu.parentNode.className = 'current';
+</script>				
+</div>
+<script type="text/javascript">
+function setstyle(styleid) {
+str = unescape('tid%3D2063%26extra%3Dpage%253D%26page%3D1');
+str = str.replace(/(^|&)styleid=\d+/ig, '');
+str = (str != '' ? str + '&' : '') + 'styleid=' + styleid
+location.href = 'viewthread.php?' + str;
+}
+</script>
+<ul id="style_switch"><li class="current"><a href="###" onclick="setstyle(1)" title="默认风格" style="background: none repeat scroll 0% 0% rgb(30, 75, 126);">默认风格</a></li><li><a href="###" onclick="setstyle(7)" title="pink" style="background: none repeat scroll 0% 0% rgb(204, 51, 102);">pink</a></li><li><a href="###" onclick="setstyle(8)" title="green" style="background: none repeat scroll 0% 0% rgb(102, 153, 0);">green</a></li><li><a href="###" onclick="setstyle(9)" title="violet" style="background: none repeat scroll 0% 0% rgb(96, 82, 161);">violet</a></li><li><a href="###" onclick="setstyle(10)" title="gray" style="background: none repeat scroll 0% 0% rgb(80, 80, 80);">gray</a></li><li><a href="###" onclick="setstyle(11)" title="blue" style="background: none repeat scroll 0% 0% rgb(36, 77, 143);">blue</a></li><li><a href="###" onclick="setstyle(12)" title="orange" style="background: none repeat scroll 0% 0% rgb(231, 123, 15);">orange</a></li><li><a href="###" onclick="setstyle(13)" title="greyish-green" style="background: none repeat scroll 0% 0% rgb(6, 102, 159);">greyish-green</a></li><li><a href="###" onclick="setstyle(14)" title="red" style="background: none repeat scroll 0% 0% rgb(155, 0, 0);">red</a></li><li><a href="###" onclick="setstyle(15)" title="purple" style="background: none repeat scroll 0% 0% rgb(96, 36, 100);">purple</a></li><li><a href="###" onclick="setstyle(16)" title="brown" style="background: none repeat scroll 0% 0% rgb(153, 102, 51);">brown</a></li></ul>
+</div>
+</div>
+<script src="thread-2063-1-1_files/viewthread.js" type="text/javascript"></script>
+<script type="text/javascript">zoomstatus = parseInt(1);var imagemaxwidth = '600';var aimgcount = new Array();</script>
+
+<div id="nav">
+<a href="http://www.linuxdiyf.com/bbs/index.php" id="fjump" onmouseover="showMenu(this.id)" class="dropmenu">红联Linux论坛</a> &#187; <a href="http://www.linuxdiyf.com/bbs/forumdisplay.php?fid=9&amp;page=">编程与内核</a> &#187; 深入理解Linux的系统调用</div>
+
+<div class="ad_text" id="ad_text"><table summary="Text Ad" cellpadding="0" cellspacing="1"><tbody><tr><td width="25%"><p><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php">网站导航：红联Linux门户导航</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/task.php">论坛任务,完成任务获得奖励</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/rf/lz5.htm">关于红联 坚持|创新|成功</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/it/fast.htm">用www.linux110.com访问红联</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-78-1.html">中国操作系统-中标麒麟</a></p></td><td width="25%"><p><a target="_blank" href="http://www.linuxdiyf.com/bbs/thread-122903-1-1.html">Linux人联系名录,QQ/QQ群/msn</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-58-1.html">软件下载,linux开源软件更新</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-63-1.html">Linux精华文档</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/thread-122831-1-1.html">电子书:优秀Linux教程推荐下载</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-76-1.html">美图分享,心情桑拿院,精彩贴图</a></p></td><td width="25%"><p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-11-1.html">开源新闻与评论,最新动态</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-71-1.html">命令专区,专攻Linux命令</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/viewarticle.php?id=100472">大学生攻克Linux系统教程</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/thread-185973-1-1.html">Linux学习推荐阅读,每日更新</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-17-1.html">奇闻趣事,笑话怪事,让大家乐乐</a></p></td><td width="25%"><p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-65-1.html">Linux操作系统下载(各发行版本)</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/thread-76000-1-1.html">红联建立成Linux服务公司</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-60-1.html">企鹅贴图,个性Linux桌面展示</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-80-1.html">女人帮,Linux女性半边天</a></p>
+<p><a target="_blank" href="http://www.linuxdiyf.com/bbs/forum-75-1.html">灌水聊天,放松心情,聊天交友</a></p></td></tr>
+</tbody></table></div><div id="wrap" class="wrap s_clear threadfix">
+<div class="forumcontrol">
+<table cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="modaction">
+</td>
+<td>
+<span class="pageback"><a href="http://www.linuxdiyf.com/bbs/forumdisplay.php?fid=9&amp;page=">返回列表</a></span>
+<span class="replybtn"><a href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a></span>
+<span class="postbtn" id="newspecial" onmouseover="$('newspecial').id = 'newspecialtmp';this.id = 'newspecial';showMenu(this.id)"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9" onclick="floatwin('open_newthread', this.href, 600, 410, '600,0');return false;">发帖</a></span>
+</td>
+</tr>
+</tbody></table>
+</div>
+
+<ul class="popupmenu_popup postmenu" id="newspecial_menu" style="position: absolute; z-index: 999; clip: rect(auto, auto, auto, auto); left: 415px; top: 321px; display: none;">
+<li><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9" onclick="floatwin('open_newthread', this.href, 600, 410, '600,0');doane(event)">发新话题</a></li><li class="poll"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=1">发布投票</a></li><li class="reward"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=3">发布悬赏</a></li><li class="debate"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=5">发布辩论</a></li><li class="activity"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=4">发布活动</a></li><li class="video"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=6">发布视频</a></li><li class="trade"><a href="http://www.linuxdiyf.com/bbs/post.php?action=newthread&amp;fid=9&amp;special=2">发布商品</a></li></ul>
+
+<div id="postlist" class="mainbox viewthread"><div id="post_8349">
+<table id="pid8349" summary="pid8349" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=878" style="margin-left: 20px; font-weight: 800;">root</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo8349" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo8349_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=878" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=878&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_0" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=878" target="_blank">root</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>878&nbsp;</dd><dt>帖子</dt><dd>469&nbsp;</dd><dt>威望</dt><dd>1241 &nbsp;</dd><dt>现金</dt><dd>3590 圆&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=878" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo8349_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo8349')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=878" target="_blank"><img src="thread-2063-1-1_files/avatar_005.gif"><br><img src="thread-2063-1-1_files/15.gif" alt="" border="0"></a></div>
+<p><em><font color="Red">[Hl.y]成员</font></em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 10"><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 10"><img src="thread-2063-1-1_files/star_level2.gif" alt="Rank: 10"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>878&nbsp;</dd><dt>帖子</dt><dd>469&nbsp;</dd><dt>积分</dt><dd>1241&nbsp;</dd><dt>现金</dt><dd>3590 圆&nbsp;</dd><dt>魅力</dt><dd>65 点&nbsp;</dd><dt>阅读权限</dt><dd>150&nbsp;</dd><dt>注册时间</dt><dd>2005-8-3&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum8349" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid8349', '帖子地址已经复制到剪贴板')"><b><font color="red">楼主</font></b></a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+<a href="http://www.linuxdiyf.com/bbs/viewthread.php?action=printable&amp;tid=2063" target="_blank" class="print left">打印</a>
+<div class="msgfsize right">
+<label>字体大小: </label><small onclick="$('postlist').className='mainbox viewthread'" title="正常">t</small><big onclick="$('postlist').className='mainbox viewthread t_bigfont'" title="放大">T</big>
+</div>
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon8349" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo8349');">
+<em id="authorposton8349">发表于 2005-8-24 01:14</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=878" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div class="ad_textlink2" id="ad_thread2_0"><a href="http://www.linuxdiyf.com/bbs/faq.php?action=faq&amp;id=35">
+<font color="#ff0000">最新主题与辩论主题，5分钟前由系统自动更新！[抢沙发]</font></a> | <a href="http://www.linuxdiyf.com/bbs/faq.php?action=faq&amp;id=41">
+<font color="#2f589c">24小时热点Top20，一周热点Top20！</font></a></div><div class="ad_pip" id="ad_thread3_0"><a href="http://www.linuxdiyf.com/bbs/magic.php" target="_blank"><img src="thread-2063-1-1_files/cck.gif" border="0"></a></div><div id="ad_thread4_0"></div>
+<div class="postmessage firstpost">
+<div id="threadtitle">
+<h1><a href="http://www.linuxdiyf.com/bbs/forumdisplay.php?fid=9&amp;filter=type&amp;typeid=18">[linux内核]</a> 深入理解Linux的系统调用</h1>
+</div>
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_8349">一、 什么是系统调用<br>
+<br>
+在Linux的世界里，我们经常会遇到系统调用这一术语，所谓系统调用，就是内核提供的、功能十分强大的一系列的函数。这些系统调用是在内核中实现的，再
+通过一定的方式把系统调用给用户，一般都通过门(gate)陷入(trap)实现。系统调用是用户程序和内核交互的接口。<br>
+<br>
+二、 系统调用的作用<br>
+<br>
+系统调用在Linux系统中发挥着巨大的作用，如果没有系统调用，那么应用程序就失去了内核的支持。<br>
+<br>
+我们在编程时用到的很多函数，如fork、open等这些函数最终都是在系统调用里实现的，比如说我们有这样一个程序：<br>
+<br>
+<br>
+<img src="thread-2063-1-1_files/462255.jpg" onload="thumbImg(this)" alt="" height="137" width="146"><br>
+<br>
+<br>
+这里我们用到了两个函数，即fork和exit,这两函数都是glibc中的函数，但是如果我们跟踪函数的执行过程，看看glibc对fork和exit
+函数的实现就可以发现在glibc的实现代码里都是采用软中断的方式陷入到内核中再通过系统调用实现函数的功能的。具体过程我们在系统调用的实现过程会详
+细的讲到。<br>
+<br>
+由此可见，系统调用是用户接口在内核中的实现，如果没有系统调用，用户就不能利用内核。<br>
+<br>
+三、 系统调用的现实及调用过程<br>
+<br>
+详细讲述系统调用的之前也讲一下Linux系统的一些保护机制。<br>
+<br>
+Linux系统在CPU的保护模式下提供了四个特权级别，目前内核都只用到了其中的两个特权级别，分别为“特权级0”和“特权级3”,级别0也就是我们通
+常所讲的内核模式，级别3也就是我们通常所讲的用户模式。划分这两个级别主要是对系统提供保护。内核模式可以执行一些特权指令和进入用户模式，而用户模式
+则不能。<br>
+<br>
+这里特别提出的是，内核模式与用户模式分别使用自己的堆栈，当发生模式切换的时候同时要进行堆栈的切换。<br>
+<br>
+每个进程都有自己的地址空间（也称为进程空间），进程的地址空间也分为两部分：用户空间和系统空间，在用户模式下只能访问进程的用户空间，在内核模式下则
+可以访问进程的全部地址空间，这个地址空间里的地址是一个逻辑地址，通过系统段面式的管理机制，访问的实际内存要做二级地址转换，即：逻辑地址?线性地
+址?物理地址。<br>
+<br>
+系统调用对于内核来说就相当于函数，我们是关键问题是从用户模式到内核模式的转换、堆栈的切换以及参数的传递。<br>
+<br>
+下面将结合内核源代码对这些过程进行分析，以下分析环境为FC2,kernel 2.6.5<br>
+<br>
+下面是内核源代码里arch/i386/kernel/entry.S的一段代码。<br>
+<br>
+<br>
+<br>
+<img src="thread-2063-1-1_files/462257.jpg" onload="thumbImg(this)" alt="" height="1703" width="468"><br>
+<br>
+以上这段代码里定义了两个非常重要的宏,即SAVE_ALL和RESTORE_ALL<br>
+<br>
+SAVE_ALL先保存用户模式的寄存器和堆栈信息,然后切换到内核模式,宏__SWITCH_KERNELSPACE实现地址空间的转换RESTORE_ALL的过程过SAVE_ALL的过程正好相反。<br>
+<br>
+在内核原代码里有一个系统调用表：（entry.S的文件里）<br>
+<br>
+<br>
+<img src="thread-2063-1-1_files/462259.jpg" onload="thumbImg(this)" alt="" height="337" width="500"><br>
+<br>
+<br>
+在2.6.5的内核里，有280多个系统调用，这些系统调用的名称全部在这个系统调用表里。<br>
+<br>
+在这个原文件里，还有非常重要的一段。<br>
+<br>
+<br>
+<img src="thread-2063-1-1_files/462261.jpg" onload="thumbImg(this)" alt="" height="165" width="287"><br>
+<br>
+<br>
+这一段完成系统调用的执行。<br>
+<br>
+system_call函数根据用户传来的系统调用号，在系统调用表里找到对应的系统调用再执行。<br>
+<br>
+从glibc的函数到系统调用还有一个很重要的环节就是系统调用号。<br>
+<br>
+系统调用号的定义在include/asm-i386/unistd.h里<br>
+<br>
+<br>
+<img src="thread-2063-1-1_files/462263.jpg" onload="thumbImg(this)" alt="" height="165" width="287"><br>
+<br>
+<br>
+每一个系统调用号都对应有一个系统调用<br>
+<br>
+接下来就是系统调用宏的展开<br>
+<br>
+没有参数的系统调用的宏展开<br>
+<br>
+！！！代码6::<br>
+<br>
+带一个参数的系统调用的宏展开<br>
+<br>
+！！！代码7::<br>
+<br>
+两个参数<br>
+<br>
+代码8:: <br>
+<br>
+#define _syscall2(type,name,type1,arg1,type2,arg2) \<br>
+<br>
+三个参数的<br>
+<br>
+代码9:: <br>
+<br>
+#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3) \<br>
+<br>
+四个参数的<br>
+<br>
+代码10:: <br>
+<br>
+#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \ <br>
+<br>
+五个参数的<br>
+<br>
+代码11:: <br>
+<br>
+#define _syscall5(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \ <br>
+<br>
+type5,arg5) \ <br>
+<br>
+六个参数的<br>
+<br>
+代码12::<br>
+<br>
+#define _syscall6(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \ <br>
+<br>
+type5,arg5,type6,arg6) \<br>
+<br>
+_res); \ <br>
+<br>
+从这段代码我们可以看出int $0x80通过软中断开触发系统调用，当发生调用时，函数中的name会被系统系统调用名所代替。然后调用前面所讲的system_call。这个过程里包含了系统调用的初始化，系统调用的初始化原代码在：<br>
+<br>
+arch/i386/kernel/traps.c中每当用户执行int 0x80时，系统进行中断处理，把控制权交给内核的system_call。<br>
+<br>
+整个系统调用的过程可以总结如下：<br>
+<br>
+1． 执行用户程序(如:fork) <br>
+<br>
+2． 根据glibc中的函数实现，取得系统调用号并执行int $0x80产生中断。<br>
+<br>
+3． 进行地址空间的转换和堆栈的切换，执行SAVE_ALL。（进行内核模式）<br>
+<br>
+4． 进行中断处理，根据系统调用表调用内核函数。<br>
+<br>
+5． 执行内核函数。<br>
+<br>
+6． 执行RESTORE_ALL并返回用户模式<br>
+<br>
+解了系统调用的实现及调用过程，我们可以根据自己的需要来对内核的系统调用作修改或添加。</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_8349"></div>
+<div class="useraction">
+<a id="ajax_favorite" href="http://www.linuxdiyf.com/bbs/logging.php?action=login" onclick="floatwin('open_login', this.href, 600, 400);return false;">收藏</a>
+<a id="emailfriend" href="http://www.linuxdiyf.com/bbs/misc.php?action=emailfriend&amp;tid=2063" onclick="floatwin('open_emailfriend', this.href, 250, 200);return false;">分享</a>
+<a id="ratelink" href="http://www.linuxdiyf.com/bbs/logging.php?action=login" onclick="floatwin('open_login', this.href, 600, 400);return false;">评分</a>
+</div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_0"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=8349&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=8349&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="http://www.linuxdiyf.com/bbs/my.php?item=subscriptions&amp;subadd=2063" id="ajax_subscription" onclick="ajaxmenu(event, this.id, 3000, null, 0)">订阅</a>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+<div id="ad_interthread"></div></td>
+</tr>
+</tbody></table>
+</div><div id="post_8660">
+<table id="pid8660" summary="pid8660" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=915" style="margin-left: 20px; font-weight: 800;">CMK</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo8660" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo8660_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=915" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=915&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_1" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=915" target="_blank">CMK</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>915&nbsp;</dd><dt>帖子</dt><dd>345&nbsp;</dd><dt>威望</dt><dd>1195 &nbsp;</dd><dt>现金</dt><dd>3034 圆&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=915" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo8660_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo8660')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=915" target="_blank"><img src="thread-2063-1-1_files/avatar_003.gif"><br><img src="thread-2063-1-1_files/10.gif" alt="" border="0"></a></div>
+<p><em>开源CEO</em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 9"><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 9"><img src="thread-2063-1-1_files/star_level1.gif" alt="Rank: 9"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>915&nbsp;</dd><dt>帖子</dt><dd>345&nbsp;</dd><dt>积分</dt><dd>1195&nbsp;</dd><dt>现金</dt><dd>3034 圆&nbsp;</dd><dt>魅力</dt><dd>23 点&nbsp;</dd><dt>阅读权限</dt><dd>120&nbsp;</dd><dt>注册时间</dt><dd>2005-8-6&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum8660" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid8660', '帖子地址已经复制到剪贴板')"><b><font color="red">沙发</font></b></a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon8660" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo8660');">
+<em id="authorposton8660">发表于 2005-8-28 00:21</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=915" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div class="ad_textlink2" id="ad_thread2_1"><a href="http://www.linuxdiyf.com/bbs/faq.php?action=faq&amp;id=35">
+<font color="#ff0000">最新主题与辩论主题，5分钟前由系统自动更新！[抢沙发]</font></a> | <a href="http://www.linuxdiyf.com/bbs/faq.php?action=faq&amp;id=41">
+<font color="#2f589c">24小时热点Top20，一周热点Top20！</font></a></div><div id="ad_thread3_1"></div><div id="ad_thread4_1"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_8660">学习了</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_8660"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_1"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=8660&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=8660&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div><div id="post_11830">
+<table id="pid11830" summary="pid11830" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=896" style="margin-left: 20px; font-weight: 800;">reing</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo11830" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo11830_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=896" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=896&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_2" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=896" target="_blank">reing</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>896&nbsp;</dd><dt>帖子</dt><dd>552&nbsp;</dd><dt>威望</dt><dd>1080 &nbsp;</dd><dt>现金</dt><dd>1612 圆&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=896" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo11830_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo11830')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=896" target="_blank"><img src="thread-2063-1-1_files/avatar.gif"><br><img src="thread-2063-1-1_files/15.gif" alt="" border="0"></a></div>
+<p><em><font color="Red">[Hl.y]成员</font></em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 10"><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 10"><img src="thread-2063-1-1_files/star_level2.gif" alt="Rank: 10"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>896&nbsp;</dd><dt>帖子</dt><dd>552&nbsp;</dd><dt>积分</dt><dd>1080&nbsp;</dd><dt>现金</dt><dd>1612 圆&nbsp;</dd><dt>魅力</dt><dd>47 点&nbsp;</dd><dt>阅读权限</dt><dd>150&nbsp;</dd><dt>注册时间</dt><dd>2005-8-5&nbsp;</dd></dl><p><img src="thread-2063-1-1_files/medal31.gif" alt="红联财神" title="红联财神"></p>
+</td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum11830" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid11830', '帖子地址已经复制到剪贴板')">藤椅</a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon11830" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo11830');">
+<em id="authorposton11830">发表于 2005-10-1 00:16</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=896" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div id="ad_thread2_2"></div><div id="ad_thread3_2"></div><div id="ad_thread4_2"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_11830">感谢分享</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_11830"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_2"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=11830&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=11830&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div><div id="post_152804">
+<table id="pid152804" summary="pid152804" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=47416" style="margin-left: 20px; font-weight: 800;">pipu</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo152804" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo152804_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=47416" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=47416&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_3" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=47416" target="_blank">pipu</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>47416&nbsp;</dd><dt>帖子</dt><dd>22&nbsp;</dd><dt>威望</dt><dd>32 &nbsp;</dd><dt>现金</dt><dd>320 圆&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=47416" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo152804_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo152804')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=47416" target="_blank"><img src="thread-2063-1-1_files/avatar_007.gif"><br><img src="thread-2063-1-1_files/13.gif" alt="" border="0"></a></div>
+<p><em>开源营长</em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level2.gif" alt="Rank: 3"><img src="thread-2063-1-1_files/star_level1.gif" alt="Rank: 3"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>47416&nbsp;</dd><dt>帖子</dt><dd>22&nbsp;</dd><dt>积分</dt><dd>32&nbsp;</dd><dt>现金</dt><dd>320 圆&nbsp;</dd><dt>魅力</dt><dd>7 点&nbsp;</dd><dt>阅读权限</dt><dd>40&nbsp;</dd><dt>注册时间</dt><dd>2007-1-14&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum152804" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid152804', '帖子地址已经复制到剪贴板')">板凳</a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon152804" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo152804');">
+<em id="authorposton152804">发表于 2007-1-28 22:38</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=47416" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div id="ad_thread2_3"></div><div id="ad_thread3_3"></div><div id="ad_thread4_3"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_152804">不懂</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_152804"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_3"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=152804&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=152804&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div><div id="post_847828">
+<table id="pid847828" summary="pid847828" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=247397" style="margin-left: 20px; font-weight: 800;">balini</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo847828" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo847828_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=247397" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=247397&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_4" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=247397" target="_blank">balini</a>
+<em>(你)</em><em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>247397&nbsp;</dd><dt>帖子</dt><dd>608&nbsp;</dd><dt>威望</dt><dd>680 &nbsp;</dd><dt>现金</dt><dd>6356 圆&nbsp;</dd><dt>性别</dt><dd>男&nbsp;</dd><dt>来自</dt><dd>广西&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=247397" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo847828_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo847828')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=247397" target="_blank"><img src="thread-2063-1-1_files/avatar_004.gif"><br><img src="thread-2063-1-1_files/14.gif" alt="" border="0"></a></div>
+<p><em>开源将军</em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 8"><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 8"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>247397&nbsp;</dd><dt>帖子</dt><dd>608&nbsp;</dd><dt>积分</dt><dd>680&nbsp;</dd><dt>现金</dt><dd>6356 圆&nbsp;</dd><dt>魅力</dt><dd>36 点&nbsp;</dd><dt>阅读权限</dt><dd>100&nbsp;</dd><dt>注册时间</dt><dd>2009-7-17&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum847828" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid847828', '帖子地址已经复制到剪贴板')">报纸</a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon847828" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo847828');">
+<em id="authorposton847828">发表于 2009-7-22 15:03</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=247397" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div id="ad_thread2_4"></div><div id="ad_thread3_4"></div><div id="ad_thread4_4"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_847828">学习了</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_847828"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_4"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=847828&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=847828&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div><div id="post_881854">
+<table id="pid881854" summary="pid881854" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=255224" style="margin-left: 20px; font-weight: 800;">js001sdx</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo881854" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo881854_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=255224" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=255224&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_5" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=255224" target="_blank">js001sdx</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>255224&nbsp;</dd><dt>帖子</dt><dd>338&nbsp;</dd><dt>威望</dt><dd>367 &nbsp;</dd><dt>现金</dt><dd>2421 圆&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=255224" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <div id="userinfo881854_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo881854')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=255224" target="_blank"><img src="thread-2063-1-1_files/avatar_002.gif"><br><img src="thread-2063-1-1_files/14_002.gif" alt="" border="0"></a></div>
+<p><em>开源军长</em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 7"><img src="thread-2063-1-1_files/star_level2.gif" alt="Rank: 7"><img src="thread-2063-1-1_files/star_level1.gif" alt="Rank: 7"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>255224&nbsp;</dd><dt>帖子</dt><dd>338&nbsp;</dd><dt>积分</dt><dd>367&nbsp;</dd><dt>现金</dt><dd>2421 圆&nbsp;</dd><dt>魅力</dt><dd>34 点&nbsp;</dd><dt>阅读权限</dt><dd>80&nbsp;</dd><dt>注册时间</dt><dd>2009-8-7&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum881854" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid881854', '帖子地址已经复制到剪贴板')">地板</a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon881854" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo881854');">
+<em id="authorposton881854">发表于 2009-8-7 15:03</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=255224" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div id="ad_thread2_5"></div><div id="ad_thread3_5"></div><div id="ad_thread4_5"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_881854">抽象！！看不太懂</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_881854"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_5"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=881854&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=881854&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div><div id="post_1056464">
+<table id="pid1056464" summary="pid1056464" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="postauthor">
+<div class="postinfo">
+<a target="_blank" href="http://www.linuxdiyf.com/bbs/space.php?uid=312003" style="margin-left: 20px; font-weight: 800;">ausername</a>
+</div>
+<div class="popupmenu_popup userinfopanel" id="userinfo1056464" style="display: none; position: absolute; margin-top: -11px;">
+<div class="popavatar">
+<div id="userinfo1056464_ma"></div>
+<ul class="profile_side">
+<li class="pm"><a href="http://www.linuxdiyf.com/bbs/pm.php?action=new&amp;uid=312003" onclick="floatwin('open_sendpm', this.href, 600, 410);return false;" title="发短消息">发短消息</a></li>
+<li class="buddy"><a href="http://www.linuxdiyf.com/bbs/my.php?item=buddylist&amp;newbuddyid=312003&amp;buddysubmit=yes" target="_blank" id="ajax_buddy_6" title="加为好友" onclick="ajaxmenu(event, this.id, 3000, 0)">加为好友</a></li>
+</ul>
+</div>
+<div class="popuserinfo">
+<p>
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=312003" target="_blank">ausername</a>
+<em>当前离线
+</em>
+</p>
+
+<dl class="s_clear"><dt>UID</dt><dd>312003&nbsp;</dd><dt>帖子</dt><dd>232&nbsp;</dd><dt>威望</dt><dd>191 &nbsp;</dd><dt>现金</dt><dd>2218 圆&nbsp;</dd></dl>
+<div class="imicons">
+<a href="http://www.linuxdiyf.com/bbs/space.php?uid=312003" target="_blank" title="查看详细资料"><img src="thread-2063-1-1_files/userinfo.gif" alt="查看详细资料"></a>
+</div>
+<div id="avatarfeed"><span id="threadsortswait"></span></div>
+</div>
+</div>
+ <a name="lastpost"></a><div id="userinfo1056464_a">
+<div class="avatar" onmouseover="showauthor(this, 'userinfo1056464')"><a href="http://www.linuxdiyf.com/bbs/space.php?uid=312003" target="_blank"><img src="thread-2063-1-1_files/avatar_006.gif"><br><img src="thread-2063-1-1_files/9.gif" alt="" border="0"></a></div>
+<p><em>开源师长</em></p>
+</div>
+<p><img src="thread-2063-1-1_files/star_level3.gif" alt="Rank: 6"><img src="thread-2063-1-1_files/star_level2.gif" alt="Rank: 6"></p>
+<dl class="profile s_clear"><dt>UID</dt><dd>312003&nbsp;</dd><dt>帖子</dt><dd>232&nbsp;</dd><dt>积分</dt><dd>191&nbsp;</dd><dt>现金</dt><dd>2218 圆&nbsp;</dd><dt>魅力</dt><dd>0 点&nbsp;</dd><dt>阅读权限</dt><dd>70&nbsp;</dd><dt>注册时间</dt><dd>2009-12-25&nbsp;</dd></dl></td>
+<td class="postcontent">
+<div class="postinfo">
+<strong><a title="复制本帖链接" id="postnum1056464" href="javascript:;" onclick="setcopy('http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1#pid1056464', '帖子地址已经复制到剪贴板')"><em>7</em><sup>#</sup></a></strong>
+<div class="posterinfo">
+<div class="pagecontrol">
+</div>
+<div class="authorinfo">
+<img class="authicon" id="authicon1056464" src="thread-2063-1-1_files/online_member.gif" onclick="showauthor(this, 'userinfo1056464');">
+<em id="authorposton1056464">发表于 2009-12-30 10:06</em>
+ | <a href="http://www.linuxdiyf.com/bbs/viewthread.php?tid=2063&amp;page=1&amp;authorid=312003" rel="nofollow">只看该作者</a>
+</div>
+</div>
+</div>
+<div class="defaultpost">
+<div id="ad_thread2_6"></div><div id="ad_thread3_6"></div><div id="ad_thread4_6"></div>
+<div class="postmessage ">
+<div class="t_msgfontfix">
+<table cellpadding="0" cellspacing="0"><tbody><tr><td class="t_msgfont" id="postmessage_1056464">学习了</td></tr></tbody></table>
+</div>
+
+<div id="post_rate_div_1056464"></div>
+</div>
+
+</div>
+<div class="ad_textlink1" id="ad_thread1_6"><b><a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=2">
+<font color="#2f589c">Linux通用技术区</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=47">
+<font color="#006699">Linux发行版技术</font></a></b> |
+<b>
+<a target="_blank" href="http://www.linuxdiyf.com/articlelist.php?id=12">
+<font color="#006699">Linux实验室</font></a></b> |
+<a href="http://www.linuxdiyf.com/bbs/thread-122903-88-1.html">
+<font color="#2f589c">386城Linux人联系</font></a></div></td>
+</tr>
+<tr>
+<td class="postauthor"></td>
+<td class="postcontent">
+<div class="postactions">
+<div class="postact s_clear">
+<em>
+<a class="fastreply" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;reppost=1056464&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">回复</a>
+<a class="repquote" href="http://www.linuxdiyf.com/bbs/post.php?action=reply&amp;fid=9&amp;tid=2063&amp;repquote=1056464&amp;extra=page%3D&amp;page=1" onclick="floatwin('open_reply', this.href, 600, 410, '600,0');return false;">引用</a>
+</em>
+<p>
+<a href="javascript:;" onclick="scrollTo(0,0);">TOP</a>
+</p>
+</div>
+</div>
+</td>
+</tr>
+<tr class="threadad">
+<td class="postauthor"></td>
+<td class="adcontent">
+</td>
+</tr>
+</tbody></table>
+</div></div>
+
+<div id="postlistreply" class="mainbox viewthread"><div id="post_new" style="display: none;"></div></div>
+
+<form method="post" name="modactions" id="modactions">
+<input name="formhash" value="35c6ba1a" type="hidden">
+<input name="optgroup" type="hidden">
+<input name="operation" type="hidden">
+<input name="listextra" value="page%3D" type="hidden">
+</form>
+
+
+<div class="forumcontrol s_clear">
+<table class="narrow" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td class="modaction">
+</td>
+<td>
+<span class="pageback"><a href="http://www.linuxdiyf.com/bbs/forumdisplay.php?fid=9&amp;page=">返回列表</a></span>
+</td>
+</tr>
+</tbody></table>
+</div>
+
+<div class="popupmenu_popup" id="fjump_menu" style="display: none;">
+<dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=2">≡ Linux通用技术交流区 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-45-1.html">初学者园地</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-3-1.html">系统应用交流</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-6-1.html">书籍资源下载</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-11-1.html">开源新闻与评论</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-46-1.html">人才交流和招聘</a></li><li class="current"><a href="http://www.linuxdiyf.com/bbs/forum-9-1.html">编程与内核</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-58-1.html">软件下载</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-54-1.html">我与Linux的故事</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-59-1.html">视频分享</a></li></ul></dd></dl><dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=47">≡ Linux发行版技术交流 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-48-1.html">Redhat/Fedora/CentOS</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-49-1.html">Ubuntu</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-50-1.html">红旗Linux</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-51-1.html">SUSE/openSUSE</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-52-1.html">Debian</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-78-1.html">中标麒麟</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-53-1.html">更多Linux发行版交流</a></li></ul></dd></dl><dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=15">≡ Linux企业应用 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-7-1.html">服务器应用</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-8-1.html">数据库应用</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-32-1.html">Unix技术交流</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-67-1.html">网络安全</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-71-1.html">命令专区</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-72-1.html">龙芯电脑</a></li></ul></dd></dl><dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=12">≡ Linux实验室 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-63-1.html">精华文档</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-55-1.html">English Linux</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-56-1.html">书籍推荐(非电子书)</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-60-1.html">系统贴图</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-68-1.html">LinuxWorld China</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-64-1.html">游戏玩家</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-69-1.html">手机/电脑</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-65-1.html">Linux操作系统下载</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-61-1.html">IT业界</a></li></ul></dd></dl><dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=70">≡ 休闲娱乐 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-57-1.html">同城人(交友)</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-62-1.html">大学校园</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-80-1.html">女人帮</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-75-1.html">灌水聊天</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-76-1.html">美图分享</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-17-1.html">奇闻趣事</a></li></ul></dd></dl><dl><dt><a href="http://www.linuxdiyf.com/bbs/index.php?gid=18">≡ 练功房 ≡</a></dt><dd><ul><li><a href="http://www.linuxdiyf.com/bbs/forum-66-1.html">对Linux的意见或建议</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-19-1.html">论坛管理</a></li></ul></dd></dl></div>
+
+<script type="text/javascript">
+var maxpage = 1;
+if(maxpage > 1) {
+document.onkeyup = function(e){
+e = e ? e : window.event;
+var tagname = is_ie ? e.srcElement.tagName : e.target.tagName;
+if(tagname == 'INPUT' || tagname == 'TEXTAREA') return;
+actualCode = e.keyCode ? e.keyCode : e.charCode;
+}
+}
+</script></div><ul class="popupmenu_popup headermenu_popup" id="lb6N5p_menu" style="display: none;"><li><a href="http://www.linuxdiyf.com/bbs/forum-11-1.html" hidefocus="true">开源新闻</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-63-1.html" hidefocus="true">精华文档</a></li><li><a href="http://www.linuxdiyf.com/bbs/index.php?gid=47" hidefocus="true">Linux发行版</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-6-1.html" hidefocus="true">书籍下载</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-58-1.html" hidefocus="true">软件下载</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-54-1.html" hidefocus="true">我与Linux的故事</a></li></ul><ul class="popupmenu_popup headermenu_popup" id="j4FSG8_menu" style="display: none;"><li><a href="http://www.linuxdiyf.com/bbs/forum-57-1.html" hidefocus="true">同城人(交友)</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-62-1.html" hidefocus="true">大学校园</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-80-1.html" hidefocus="true">女人帮</a></li><li><a href="http://www.linuxdiyf.com/bbs/forum-75-1.html" hidefocus="true">灌水聊天</a></li></ul><div class="ad_footerbanner" id="ad_footerbanner1"><font color="#0d2345"><b>社区简称“红联”</b>　<b>格言</b>：天下没有难学的Linux！</font></div>
+<div id="footer">
+<div class="wrap s_clear">
+<div id="footlink">
+<p>
+<strong><a href="http://www.linuxdiyf.com/" target="_blank">首页 (凝聚Linux人的力量,Linux人网上交流平台)</a></strong>
+<span class="pipe">|</span><a href="http://www.linuxdiyf.com/bbs/templates/hl/hlgg.htm">联系我们</a>
+<span class="pipe">|</span><a href="http://www.linuxdiyf.com/bbs/wap/" target="_blank">WAP</a><span class="pipe">| <a href="http://www.linuxdiyf.com/bbs/forum-55-1.html">English</a></span></p>
+<p class="smalltext">
+GMT+8, 2011-1-18 11:27, <span id="debuginfo">Processed in 0.046589 second(s), 4 queries, Gzip enabled</span>.
+</p>
+</div>
+<div id="rightinfo">
+<p>Powered by <strong><a href="http://www.discuz.net/" target="_blank">Discuz!</a></strong> <em>7.0.0</em></p>
+<p class="smalltext">&#169; 2011 <a href="http://www.comsenz.com/" target="_blank">Comsenz Inc.</a></p>
+</div></div>
+</div>
+</body></html>

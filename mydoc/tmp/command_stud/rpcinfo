@@ -1,0 +1,3 @@
+centeros上
+通过命令查看nfs所使用端口
+rpcinfo -p

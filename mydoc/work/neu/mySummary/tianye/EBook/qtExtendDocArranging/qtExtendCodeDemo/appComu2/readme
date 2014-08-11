@@ -1,0 +1,13 @@
+这里实现两个Qtopia的程序之间的通信。
+接收端appRcv实际只需要接收并且处理信号：
+appMessage就行了。例如：
+connect(QtopiaApplication::instance(), 
+		SIGNAL(appMessage(const QString &, const QByteArray &)), 
+		this, SLOT(applicationMessage(const QString &, const QByteArray &)));
+
+发送端appSnd只需要调用QCopChannel向"QPE/Application/appRcv"发送消息即可产生appMessage：
+QByteArray data;//for params of function
+QCopChannel::send("QPE/Application/appRcv", "message", data);
+QCopChannel::flush();
+//QCopChannel::send("QPE/Application/qpe", "backToApp()", data);//向qpe桌面程序发送
+

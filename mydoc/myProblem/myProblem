@@ -1,0 +1,252 @@
+主要内容：
+1）应用问题
+2)不熟悉的命令
+3)想要实践的：
+4)想要学习或者不会的知识
+5)杂乱问题
+
+应用问题：
+============
+1,vi如何在指定范围内进行搜索
+2,vi如何粘贴鼠标选择的文本？
+3,如何在命令行中打开一个图形的文件窗口，该窗口的路径是命令行中的路径？反过来呢？[已经解决]
+1)运行：
+$nautilus dirPath
+这将用图形文件管理器打开dirPath路径。
+2)安装：nautilus-open-terminal
+这将在鼠标右键中添加"用terminal打开"菜单。
+4,有没有命令行下面的字典翻译工具?
+5,为什么我的minicom设置好了无法敲入命令？[已经解决]
+硬件数据流控制
+软件数据流控制
+都设置为 NO 
+具体为：
+1）ctrl a
+看帮助，
+2）ctrl o
+设置
+进入之后选择：
+Serial port setup
+3)F，G就是硬件数据流控制和软件数据流控制，设置为NO
+6,minicom输入命令超过一行不能自动换行?[已经解决]
+输入ctrl a z可以看到w，说明此处是设置换行的。
+输入ctal a w
+7,有没有linux的撤销命令？比如我删了一个文件，想要撤销？
+8,怎样查看一个标准库中某个类型的结构定义？
+9,vi怎样在另一个标签中打开当前光标下的文件（gf之类的命令）
+10,vi怎样在另一个标签中打开同样的当前的文件。
+11，vi怎样一次用多个标签启动文件。
+12,vi怎样让选中的一个代码块前面插入tab或者注释？
+13,vi如何以只读的方式打开文件。[已经解决]
+view filename 或者vi -R filename
+14,vi 忽略大小写的搜索？
+15,如何通过串口把pc上面的数据传到nandflash中以及相反？
+
+不熟悉的命令：
+============
+1，nm命令：好像是寻找目标文件（库）中指定的标号??
+2,打开历史功能？
+3，如何设置命令行的颜色？
+4,tee命令
+5,gprof
+6,gdb多文件调试
+7,install
+8,xvinfo
+9,uname
+10,hostname
+11,time
+在tmp/comand_stud中有一些学习命令的片段
+sort
+uniq
+seq
+basename
+cal
+date
+sed
+tr
+expand
+unexpand
+paste
+join
+head
+bzip
+udev
+xset
+lshal
+man dbus-daemon
+crypt
+strace(strace <程序名>,这将显示程序调用的所有系统调用)
+getopt
+ldd(ldd <程序名>，将显示程序所需要的库和相应的位置。)
+eval
+mountpoint 查看一个目录是不是挂载点。
+vimdiff?(ok)
+getopt
+
+
+想要实践的：
+============
+autotools
+模块的编写(ok)
+驱动的简单例子(ok)
+hashTable
+gettext
+__LINE__等调试开关
+含有XML的DBUS
+gtk资源(ok)
+内核编译
+gtk scale,slider
+gconf(ok)
+latex
+systray
+lspanel
+fvwm
+GtkHPane(ok)
+GtkToolBar(ok)
+GtkHandleBox(ok)
+popupmenu弹出菜单(ok)
+optonMenu条件菜单
+g_object_set_data
+GtkActionEntry,GtkUIManager(ok)
+GtkTreeView
+
+字符串比较，追加
+g_strdup动态分配字符串
+
+g_object_set_data附加数据
+更换图标的函数gtk_image_set_from_file。
+添加和删除container上面的控件以及获取父亲控件。
+g_idle_add
+
+kill and signal in linux
+
+想要学习或者不会的知识
+============
+什么是固件？
+gettext
+xml,css
+hal
+udev
+apm?
+dbus (glib,signal,man dbus-daemon)
+gconf
+glade
+kernelmod
+themes
+info man如何阅读
+latex
+qt
+chown
+chmod
+shopt
+帐户管理？
+/proc/stat
+kill
+trap
+sleep
+eval
+stty
+id
+mktemp
+ldd
+gdb方便调试的显示模式($gdb -tui)
+描述了文件系统结构的规范：http://www.pathname.com/fhs/
+什么是busybox：http://www.busybox.net/
+linux中的c语言加载插件
+c++一对多映射
+字体和多语言相关
+autoconf,automake
+
+qt中
+QPolygon点列表(ok)
+QMultiHash哈希表
+风格相关
+插件机制
+
+关于加密算法以及加密相关的命令
+
+man proc
+
+page大小和磁盘块大小有什么区别？page大小可以用sysconf获得，但是如何获得磁盘块的大小？
+
+杂乱问题
+===========
+什么是NAND
+应该仔细仔细地看linux的一些简单命令例如cat，便于编写shell程序。
+
+什么是framebuffer
+
+看man程序员手册如果不好用：
+apt-get install manpages-dev
+是不是就好用了?
+
+gcc 中的-L -l -I 以及-i
+
+线程和进程究竟有何区别？
+
+meld比较工具
+
+关于desktop文件
+
+c++中switch 的case需要"{}"吗？
+__attribute__是gcc的保留字，用来作属性描述,怎么回事？
+答：例如：
+volatile unsigned long saved2_dsa
+__attribute__ ((aligned (4)));
+表示变量saved2_dsa的地址的对齐因子是4。
+
+struct foo{
+	char a;
+	int x[z] __attribute__ ((packed));
+}
+表示字符a与整型数组x之间不应为了与32位长整数边界对齐而留下空洞。 
+指明函数，变量的属性包括的内容很多——变量的内存分配对齐方式，函数所处的段（.text等）等等
+使用info看看就知道了
+参考：http://www.linuxforum.net/forum/showflat.php?Board=linuxK&Number=215305
+
+一个静态编译可以检查语法错误的工具pcLine,不用生成目标文件所以快。
+刘兴宝、金文豪、赵慧鹏
+PClint代码静态检查工具放在如下位置，请大家先试用。
+ftp://10.1.14.235/basicSoftware/PCLint/
+使用方法&要求
+环境：windows+Source Insight
+方法
+1.将上述压缩包解压缩到C盘根目录。
+1.1单个文件检查：
+1.1.1.Source Insight Option->Custom Commands->Add,起个名字“PC Lint”
+1.1.2.Run中敲入"c:\pclint\lint -u -ic:\pclint std env-si %f"
+1.1.3.选中IConic window,Capture Output,Save Files first,Parse links in Output
+1.1.4.选择Menu->Menu->View-><end of menu>,将左边的“PC Lint”选中后选择Insert
+此时主菜单上的View中会出现PC Lint
+1.1.5.打开某一个想要进行检查的文件，选择View->PC Lint执行检查。
+1.2工程批量检查
+1.2.1.Source Insight Option->Custom Commands->Add,起个名字“Project PC Lint”
+1.2.2.Run中敲入"C:\pclint\usr\local\wbin\find.exe %d -name *.c -o -name *.cpp | C:\pclint\usr\local\wbin\xargs C:\pclint\lint-nt -i"C:\pclint\usr\local" -u c:\pclint\std.lnt c:\pclint\env-si.lnt"
+1.2.3.选中IConic window,Capture Output,Save Files first,Parse links in Output
+1.2.4.选择Menu->Menu->View-><end of menu>,将左边的“Project PC Lint”选中后选择Insert
+此时主菜单上的View中会出现Project PC Lint
+1.2.5.建立source insight工程，选择View->PC Lint执行检查。
+注意：
+1.通常会出现较多的例如找不到某个头文件的问题，可以通过在std.lnt文件中追加路径的方法解决，参考std.lnt
+2.QTCore编译时会生成大量的没有扩展名的头文件在build/SDK下，可以考虑把这些文件全部拷贝在某一个目录下集中通过向std.lnt中追加一个路径解决。
+3.手册请参考pclint目录下的pdf文档和ftp://10.1.14.235/basicSoftware/PCLint/下的中文版简介。
+
+关于MVC
+百度百科上面有简单的介绍
+MVC与模板概念的理解
+MVC本来是存在于Desktop程序中的，M是指数据模型，V是指用户界面，C则是控制器。使用MVC的目的是将M和V的实现代码分离，从而使同一个程序可以使用不同的表现形式。比如一批统计数据你可以分别用柱状图、饼图来表示。C存在的目的则是确保M和V的同步，一旦M改变，V应该同步更新。
+　　模型－视图－控制器（MVC）是Xerox PARC在八十年代为编程语言Smalltalk－80发明的一种软件设计模式，至今已被广泛使用。最近几年被推荐为Sun公司J2EE平台的设计模式，并且受到越来越多的使用 ColdFusion 和 PHP 的开发者的欢迎。模型－视图－控制器模式是一个有用的工具箱，它有很多好处，但也有一些缺点。
+
+gtk中比较困惑的问题：
+-----------------
+1,为什么需要在init中安装一个属性？涉及到
+g_object_class_install_property
+
+2,经常看到constructor函数，这个函数究竟是怎么用的？
+
+3,Atom是什么类型？
+
+---------
+对于静态库如果换一台机器再编译就不好用了？
+
+

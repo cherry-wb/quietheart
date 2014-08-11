@@ -1,0 +1,40 @@
+ping
+
+*ping一个网址：
+#ping 192.168.1.1
+这样会对192.168.1.1进行ping，同时不断输出信息，只有键入[Ctrl]C才会终止，例如如下：
+lv-k@quietheart:~/mydoc/tmp/command_stud$ ping 172.18.2.1
+PING 172.18.2.1 (172.18.2.1) 56(84) bytes of data.
+64 bytes from 172.18.2.1: icmp_req=1 ttl=64 time=0.462 ms
+64 bytes from 172.18.2.1: icmp_req=2 ttl=64 time=0.439 ms
+64 bytes from 172.18.2.1: icmp_req=3 ttl=64 time=0.432 ms
+64 bytes from 172.18.2.1: icmp_req=4 ttl=64 time=0.435 ms
+^C
+--- 172.18.2.1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 2999ms
+rtt min/avg/max/mdev = 0.432/0.442/0.462/0.011 ms
+
+
+*ping 一个网址指定的次数：
+#ping -c 2 192.168.1.1
+这样会ping一个网址2次，然后返回0（可以用echo $?来查看返回）。
+例如：
+lv-k@quietheart:~/mydoc/tmp/command_stud$ ping -c 2 172.18.1.1
+PING 172.18.1.1 (172.18.1.1) 56(84) bytes of data.
+From 10.0.20.105 icmp_seq=1 Time to live exceeded
+From 10.0.20.105 icmp_seq=2 Time to live exceeded
+
+--- 172.18.1.1 ping statistics ---
+2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1001ms
+lv-k@quietheart:~/mydoc/tmp/command_stud$ echo $?
+0
+如果网址不通，那么返回1。
+
+*ping的时候只执行3秒，无论多少次：
+#ping -w 3 192.168.1.1
+
+*ping的时候等待一定时间作为超时时间：
+#ping -W 2 -c 1 192.168.1.1
+这里，只ping一次，当网址不通的时候，2秒之后返回，这里，如果我们不使用-c那么当网络不通的时候看不出什么，如果我们使用-c指定一次，那么假设网络不通，那么2秒之后就返回(如果指定2次也2秒，指定多次那么就许多秒，并不是成倍的关系-W只是等待响应的时间)，并告之不通。
+
+

@@ -1,0 +1,8 @@
+{
+	"name":"ping_test",
+	"vendor":"device:tate",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_ping_test.py"},
+	"reporter":["success","fail"],
+	"description":"ping 10.1.10.100 after connected to a ap"
+}

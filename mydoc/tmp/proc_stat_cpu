@@ -1,0 +1,130 @@
+http://www.linuxdiyf.com/viewarticle.php?id=109486
+一般来说对于需要大量cpu计算的进程，当前端压力越大时，CPU利用率越高。但对于I/O网络密集型的进程，即使请求很多，服务器的CPU也不一定很到，这时的服务瓶颈一般是在磁盘的I/O上。比较长见的就是，大文件频繁读写的cpu开销远小于小文件频繁读写的开销。因为在I/O吞吐量一定时，小文件的读写更加频繁，需要更多的cpu来处理I/O的中断。
+
+在Linux/Unix下，CPU利用率分为用户态，系统态和空闲态，分别表示CPU处于用户态执行的时间，系统内核执行的时间，和空闲系统进程执行的时间。平时所说的CPU利用率是指：CPU执行非系统空闲进程的时间 / CPU总的执行时间。
+
+在Linux的内核中，有一个全局变量：Jiffies。 Jiffies代表时间。它的单位随硬件平台的不同而不同。系统里定义了一个常数HZ，代表每秒种最小时间间隔的数目。这样jiffies的单位就是 1/HZ。Intel平台jiffies的单位是1/100秒，这就是系统所能分辨的最小时间间隔了。每个CPU时间片，Jiffies都要加1。 CPU的利用率就是用执行用户态+系统态的Jiffies除以总的Jifffies来表示。
+
+在Linux系统中，可以用/proc/stat文件来计算cpu的利用率(详细的解释可参考：http://www.linuxhowtos.org/System/procstat.htm)。这个文件包含了所有CPU活动的信息，该文件中的所有值都是从系统启动开始累计到当前时刻。
+
+如：
+QUOTE:
+[sailorhzr@builder ~]$ cat /proc/stat
+cpu 432661 13295 86656 422145968 171474 233 5346
+cpu0 123075 2462 23494 105543694 16586 0 4615
+cpu1 111917 4124 23858 105503820 69697 123 371
+cpu2 103164 3554 21530 105521167 64032 106 334
+cpu3 94504 3153 17772 105577285 21158 4 24
+intr 1065711094 1057275779 92 0 6 6 0 4 0 3527 0 0 0 70 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 7376958 0 0 0 0 0 0 0 1054602 0 0 0 0 0 0 0 30 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ctxt 19067887
+btime 1139187531
+processes 270014
+procs_running 1
+procs_blocked 0
+
+输出解释
+CPU 以及CPU0、CPU1、CPU2、CPU3每行的每个参数意思（以第一行为例）为：
+
+参数 解释
+user (432661) 从系统启动开始累计到当前时刻，用户态的CPU时间（单位：jiffies） ，不包含 nice值为负进程。1jiffies=0.01秒
+nice (13295) 从系统启动开始累计到当前时刻，nice值为负的进程所占用的CPU时间（单位：jiffies）
+system (86656) 从系统启动开始累计到当前时刻，核心时间（单位：jiffies）
+idle (422145968) 从系统启动开始累计到当前时刻，除硬盘IO等待时间以外其它等待时间（单位：jiffies）
+iowait (171474) 从系统启动开始累计到当前时刻，硬盘IO等待时间（单位：jiffies） ，
+irq (233) 从系统启动开始累计到当前时刻，硬中断时间（单位：jiffies）
+softirq (5346) 从系统启动开始累计到当前时刻，软中断时间（单位：jiffies）
+
+CPU时间=user+system+nice+idle+iowait+irq+softirq
+
+“intr”这行给出中断的信息，第一个为自系统启动以来，发生的所有的中断的次数；然后每个数对应一个特定的中断自系统启动以来所发生的次数。
+“ctxt”给出了自系统启动以来CPU发生的上下文交换的次数。
+“btime”给出了从系统启动到现在为止的时间，单位为秒。
+“processes (total_forks) 自系统启动以来所创建的任务的个数目。
+“procs_running”：当前运行队列的任务的数目。
+“procs_blocked”：当前被阻塞的任务的数目。
+
+那么CPU利用率可以使用以下两个方法。先取两个采样点，然后计算其差值：
+QUOTE:
+cpu usage=(idle2-idle1)/(cpu2-cpu1)*100
+cpu usage=[(user_2 +sys_2+nice_2) - (user_1 + sys_1+nice_1)]/(total_2 - total_1)*100
+
+以下用分别用bash和perl做的一个cpu利用率的计算：
+
+本人注:以下代码则采用公式为:
+QUOTE:
+total_0USER[0]+NICE[0]+SYSTEM[0]+IDLE[0]+IOWAIT[0]+IRQ[0]+SOFTIRQ[0]
+total_1=USER[1]+NICE[1]+SYSTEM[1]+IDLE[1]+IOWAIT[1]+IRQ[1]+SOFTIRQ[1]
+cpu usage=(IDLE[0]-IDLE[1]) / (total_0-total_1) * 100
+
+###bash 代码(本人提供.可用)
+CODE:
+#!/bin/sh
+
+##echo user nice system idle iowait irq softirq
+CPULOG_1=$(cat /proc/stat | grep 'cpu ' | awk '{print $2" "$3" "$4" "$5" "$6" "$7" "$8}')
+SYS_IDLE_1=$(echo $CPULOG_1 | awk '{print $4}')
+Total_1=$(echo $CPULOG_1 | awk '{print $1+$2+$3+$4+$5+$6+$7}')
+
+sleep 5
+
+CPULOG_2=$(cat /proc/stat | grep 'cpu ' | awk '{print $2" "$3" "$4" "$5" "$6" "$7" "$8}')
+SYS_IDLE_2=$(echo $CPULOG_2 | awk '{print $4}')
+Total_2=$(echo $CPULOG_2 | awk '{print $1+$2+$3+$4+$5+$6+$7}')
+
+SYS_IDLE=`expr $SYS_IDLE_2 - $SYS_IDLE_1`
+
+Total=`expr $Total_2 - $Total_1`
+SYS_USAGE=`expr $SYS_IDLE/$Total*100 |bc -l`
+
+SYS_Rate=`expr 100-$SYS_USAGE |bc -l`
+
+Disp_SYS_Rate=`expr "scale=3; $SYS_Rate/1" |bc`
+echo $Disp_SYS_Rate%
+
+
+
+
+
+
+
+###perl 代码(网友提供.可用)
+
+
+#!/usr/bin/perl
+
+use warnings;
+
+$SLEEPTIME=5;
+
+if (-e "/tmp/stat") {
+unlink "/tmp/stat";
+}
+open (JIFF_TMP, ">>/tmp/stat") || die "Can't open /proc/stat file!\n";
+open (JIFF, "/proc/stat") || die "Can't open /proc/stat file!\n";
+@jiff_0=<JIFF>;
+print JIFF_TMP $jiff_0[0] ;
+close (JIFF);
+
+sleep $SLEEPTIME;
+
+open (JIFF, "/proc/stat") || die "Can't open /proc/stat file!\n";
+@jiff_1=<JIFF>;
+print JIFF_TMP $jiff_1[0];
+close (JIFF);
+close (JIFF_TMP);
+
+@USER=`awk '{print \$2}' "/tmp/stat"`;
+@NICE=`awk '{print \$3}' "/tmp/stat"`;
+@SYSTEM=`awk '{print \$4}' "/tmp/stat"`;
+@IDLE=`awk '{print \$5}' "/tmp/stat"`;
+@IOWAIT=`awk '{print \$6}' "/tmp/stat"`;
+@IRQ=`awk '{print \$7}' "/tmp/stat"`;
+@SOFTIRQ=`awk '{print \$8}' "/tmp/stat"`;
+
+$JIFF_0=$USER[0]+$NICE[0]+$SYSTEM[0]+$IDLE[0]+$IOWAIT[0]+$IRQ[0]+$SOFTIRQ[0];
+$JIFF_1=$USER[1]+$NICE[1]+$SYSTEM[1]+$IDLE[1]+$IOWAIT[1]+$IRQ[1]+$SOFTIRQ[1];
+
+$SYS_IDLE=($IDLE[0]-$IDLE[1]) / ($JIFF_0-$JIFF_1) * 100;
+$SYS_USAGE=100 - $SYS_IDLE;
+
+printf ("The CPU usage is %1.2f%%\n",$SYS_USAGE);

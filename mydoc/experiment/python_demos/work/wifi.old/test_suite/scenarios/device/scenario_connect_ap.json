@@ -1,0 +1,8 @@
+{
+    "name":"connect_ap",
+    "vendor":"device:tate",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_connect_ap.py"},
+    "reporter":["success","fail"],
+    "description":"connect to the cisco ap"
+}

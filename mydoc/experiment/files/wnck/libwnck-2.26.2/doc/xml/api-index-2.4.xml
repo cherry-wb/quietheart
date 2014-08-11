@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="wnck-screen-move-viewport"><link linkend="wnck-screen-move-viewport">wnck_screen_move_viewport</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-is-in-viewport"><link linkend="wnck-window-is-in-viewport">wnck_window_is_in_viewport</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-height"><link linkend="wnck-workspace-get-height">wnck_workspace_get_height</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-viewport-x"><link linkend="wnck-workspace-get-viewport-x">wnck_workspace_get_viewport_x</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-viewport-y"><link linkend="wnck-workspace-get-viewport-y">wnck_workspace_get_viewport_y</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-get-width"><link linkend="wnck-workspace-get-width">wnck_workspace_get_width</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-workspace-is-virtual"><link linkend="wnck-workspace-is-virtual">wnck_workspace_is_virtual</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

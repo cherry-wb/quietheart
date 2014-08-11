@@ -1,0 +1,9 @@
+{
+	"name":"logout",
+	"vendor":"ap:cisco:wrt54gl",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_logout_wrt.py"},
+	"reporter":["success","fail"],
+	"description":"logout and close firefox."
+}
+

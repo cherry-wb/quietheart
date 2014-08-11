@@ -1,0 +1,207 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+ACLOCAL	./Makefile	/^ACLOCAL = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run aclocal-1.7$/;"	m
+ACLOCAL_M4	./Makefile	/^ACLOCAL_M4 = $(top_srcdir)\/aclocal.m4$/;"	m
+ACTIVE_WINDOW_MAGIC	./main.c	183;"	d	file:
+AMDEP_FALSE	./Makefile	/^AMDEP_FALSE = #$/;"	m
+AMDEP_TRUE	./Makefile	/^AMDEP_TRUE = $/;"	m
+AMTAR	./Makefile	/^AMTAR = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run tar$/;"	m
+AM_CFLAGS	./Makefile	/^AM_CFLAGS = -Wall$/;"	m
+AM_CPPFLAGS	./Makefile	/^AM_CPPFLAGS =  -I\/usr\/include\/glib-2.0 -I\/usr\/lib\/glib-2.0\/include  $/;"	m
+AUTOCONF	./Makefile	/^AUTOCONF = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run autoconf$/;"	m
+AUTOHEADER	./Makefile	/^AUTOHEADER = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run autoheader$/;"	m
+AUTOMAKE	./Makefile	/^AUTOMAKE = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run automake-1.7$/;"	m
+AWK	./Makefile	/^AWK = gawk$/;"	m
+CC	./Makefile	/^CC = gcc$/;"	m
+CCDEPMODE	./Makefile	/^CCDEPMODE = depmode=gcc3$/;"	m
+CCLD	./Makefile	/^CCLD = $(CC)$/;"	m
+CFLAGS	./Makefile	/^CFLAGS = -g -O2$/;"	m
+CFLAGS	./debian/rules	/^CFLAGS = -Wall -g$/;"	m
+COMPILE	./Makefile	/^COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \\$/;"	m
+CONFIG_CLEAN_FILES	./Makefile	/^CONFIG_CLEAN_FILES =$/;"	m
+CPP	./Makefile	/^CPP = gcc -E$/;"	m
+CPPFLAGS	./Makefile	/^CPPFLAGS = $/;"	m
+CTAGS	./Makefile	/^CTAGS = ctags$/;"	m
+CTAGSFLAGS	./Makefile	/^CTAGSFLAGS =$/;"	m
+CYGPATH_W	./Makefile	/^CYGPATH_W = echo$/;"	m
+DEB_BUILD_GNU_TYPE	./debian/rules	/^DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)$/;"	m
+DEB_HOST_GNU_TYPE	./debian/rules	/^DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)$/;"	m
+DEFAULT_INCLUDES	./Makefile	/^DEFAULT_INCLUDES =  -I. -I$(srcdir)$/;"	m
+DEFS	./Makefile	/^DEFS = -DPACKAGE_NAME=\\"\\" -DPACKAGE_TARNAME=\\"\\" -DPACKAGE_VERSION=\\"\\" -DPACKAGE_STRING=\\"\\" -DPACKAGE_BUGREPORT=\\"\\" -DPACKAGE=\\"wmctrl\\" -DVERSION=\\"1.07\\" $/;"	m
+DEPDIR	./Makefile	/^DEPDIR = .deps$/;"	m
+DEP_FILES	./Makefile	/^DEP_FILES = .\/$(DEPDIR)\/main.Po$/;"	m
+DISTFILES	./Makefile	/^DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)$/;"	m
+DIST_COMMON	./Makefile	/^DIST_COMMON = README AUTHORS COPYING ChangeLog INSTALL Makefile.am \\$/;"	m
+DIST_SOURCES	./Makefile	/^DIST_SOURCES = $(wmctrl_SOURCES)$/;"	m
+ECHO_C	./Makefile	/^ECHO_C = $/;"	m
+ECHO_N	./Makefile	/^ECHO_N = -n$/;"	m
+ECHO_T	./Makefile	/^ECHO_T = $/;"	m
+ETAGS	./Makefile	/^ETAGS = etags$/;"	m
+ETAGSFLAGS	./Makefile	/^ETAGSFLAGS =$/;"	m
+EXEEXT	./Makefile	/^EXEEXT = $/;"	m
+EXTRA_DIST	./Makefile	/^EXTRA_DIST = $(man_MANS)$/;"	m
+GLIB_CFLAGS	./Makefile	/^GLIB_CFLAGS = -I\/usr\/include\/glib-2.0 -I\/usr\/lib\/glib-2.0\/include  $/;"	m
+GLIB_GENMARSHAL	./Makefile	/^GLIB_GENMARSHAL = glib-genmarshal$/;"	m
+GLIB_LIBS	./Makefile	/^GLIB_LIBS = -lglib-2.0  $/;"	m
+GLIB_MKENUMS	./Makefile	/^GLIB_MKENUMS = glib-mkenums$/;"	m
+GOBJECT_QUERY	./Makefile	/^GOBJECT_QUERY = gobject-query$/;"	m
+GZIP_ENV	./Makefile	/^GZIP_ENV = --best$/;"	m
+HELP	./main.c	44;"	d	file:
+INSTALL	./Makefile	/^INSTALL = \/scratchbox\/tools\/bin\/install -c$/;"	m
+INSTALL_DATA	./Makefile	/^INSTALL_DATA = ${INSTALL} -m 644$/;"	m
+INSTALL_HEADER	./Makefile	/^INSTALL_HEADER = $(INSTALL_DATA)$/;"	m
+INSTALL_PROGRAM	./Makefile	/^INSTALL_PROGRAM = ${INSTALL}$/;"	m
+INSTALL_SCRIPT	./Makefile	/^INSTALL_SCRIPT = ${INSTALL}$/;"	m
+INSTALL_STRIP_PROGRAM	./Makefile	/^INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s$/;"	m
+IceConnectionNumber	./configure	/^IceConnectionNumber ();$/;"	f
+LDADD	./Makefile	/^LDADD =   -lSM -lICE -lX11 -lXmu  -lglib-2.0  $/;"	m
+LDFLAGS	./Makefile	/^LDFLAGS = $/;"	m
+LIBOBJS	./Makefile	/^LIBOBJS = $/;"	m
+LIBS	./Makefile	/^LIBS = $/;"	m
+LINK	./Makefile	/^LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@$/;"	m
+LTLIBOBJS	./Makefile	/^LTLIBOBJS = $/;"	m
+MAKEINFO	./Makefile	/^MAKEINFO = ${SHELL} \/home\/quietheart\/testSrc\/wmctrl-1.07\/missing --run makeinfo$/;"	m
+MANS	./Makefile	/^MANS = $(man_MANS)$/;"	m
+MAX_PROPERTY_VALUE_LEN	./main.c	181;"	d	file:
+NORMAL_INSTALL	./Makefile	/^NORMAL_INSTALL = :$/;"	m
+NORMAL_UNINSTALL	./Makefile	/^NORMAL_UNINSTALL = :$/;"	m
+NROFF	./Makefile	/^NROFF = nroff$/;"	m
+OBJEXT	./Makefile	/^OBJEXT = o$/;"	m
+PACKAGE	./Makefile	/^PACKAGE = wmctrl$/;"	m
+PACKAGE_BUGREPORT	./Makefile	/^PACKAGE_BUGREPORT = $/;"	m
+PACKAGE_NAME	./Makefile	/^PACKAGE_NAME = $/;"	m
+PACKAGE_STRING	./Makefile	/^PACKAGE_STRING = $/;"	m
+PACKAGE_TARNAME	./Makefile	/^PACKAGE_TARNAME = $/;"	m
+PACKAGE_VERSION	./Makefile	/^PACKAGE_VERSION = $/;"	m
+PATH_SEPARATOR	./Makefile	/^PATH_SEPARATOR = :$/;"	m
+PKG_CONFIG	./Makefile	/^PKG_CONFIG = \/scratchbox\/tools\/bin\/pkg-config$/;"	m
+POST_INSTALL	./Makefile	/^POST_INSTALL = :$/;"	m
+POST_UNINSTALL	./Makefile	/^POST_UNINSTALL = :$/;"	m
+PRE_INSTALL	./Makefile	/^PRE_INSTALL = :$/;"	m
+PRE_UNINSTALL	./Makefile	/^PRE_UNINSTALL = :$/;"	m
+PROGRAMS	./Makefile	/^PROGRAMS = $(bin_PROGRAMS)$/;"	m
+SELECT_WINDOW_MAGIC	./main.c	182;"	d	file:
+SET_MAKE	./Makefile	/^SET_MAKE = $/;"	m
+SHELL	./Makefile	/^SHELL = \/bin\/sh$/;"	m
+SOURCES	./Makefile	/^SOURCES = $(wmctrl_SOURCES)$/;"	m
+STRIP	./Makefile	/^STRIP = $/;"	m
+Select_Window	./main.c	/^static Window Select_Window(Display *dpy) {\/*{{{*\/$/;"	f	file:
+VERSION	./Makefile	/^VERSION = 1.07$/;"	m
+XOpenDisplay	./configure	/^XOpenDisplay ();$/;"	f
+X_CFLAGS	./Makefile	/^X_CFLAGS = $/;"	m
+X_EXTRA_LIBS	./Makefile	/^X_EXTRA_LIBS = $/;"	m
+X_LIBS	./Makefile	/^X_LIBS = $/;"	m
+X_PRE_LIBS	./Makefile	/^X_PRE_LIBS =  -lSM -lICE$/;"	m
+_NET_WM_STATE_ADD	./main.c	40;"	d	file:
+_NET_WM_STATE_REMOVE	./main.c	39;"	d	file:
+_NET_WM_STATE_TOGGLE	./main.c	41;"	d	file:
+ac_ct_CC	./Makefile	/^ac_ct_CC = gcc$/;"	m
+ac_ct_STRIP	./Makefile	/^ac_ct_STRIP = $/;"	m
+action_window	./main.c	/^static int action_window (Display *disp, Window win, char mode) {\/*{{{*\/$/;"	f	file:
+action_window_pid	./main.c	/^static int action_window_pid (Display *disp, char mode) {\/*{{{*\/$/;"	f	file:
+action_window_str	./main.c	/^static int action_window_str (Display *disp, char mode) {\/*{{{*\/$/;"	f	file:
+activate_window	./main.c	/^static int activate_window (Display *disp, Window win, \/* {{{ *\/$/;"	f	file:
+am__CONFIG_DISTCLEAN_FILES	./Makefile	/^am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \\$/;"	m
+am__cd	./Makefile	/^am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd$/;"	m
+am__depfiles_maybe	./Makefile	/^am__depfiles_maybe = depfiles$/;"	m
+am__fastdepCC_FALSE	./Makefile	/^am__fastdepCC_FALSE = #$/;"	m
+am__fastdepCC_TRUE	./Makefile	/^am__fastdepCC_TRUE = $/;"	m
+am__include	./Makefile	/^am__include = include$/;"	m
+am__leading_dot	./Makefile	/^am__leading_dot = .$/;"	m
+am__quote	./Makefile	/^am__quote = $/;"	m
+am__remove_distdir	./Makefile	/^am__remove_distdir = \\$/;"	m
+am_wmctrl_OBJECTS	./Makefile	/^am_wmctrl_OBJECTS = main.$(OBJEXT)$/;"	m
+binPROGRAMS_INSTALL	./Makefile	/^binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)$/;"	m
+bin_PROGRAMS	./Makefile	/^bin_PROGRAMS = wmctrl$(EXEEXT)$/;"	m
+bin_PROGRAMS	./Makefile	/^bin_PROGRAMS = wmctrl$/;"	m
+bindir	./Makefile	/^bindir = ${exec_prefix}\/bin$/;"	m
+build_alias	./Makefile	/^build_alias = $/;"	m
+change_geometry	./main.c	/^static int change_geometry (Display *disp) {\/*{{{*\/$/;"	f	file:
+change_number_of_desktops	./main.c	/^static int change_number_of_desktops (Display *disp) {\/*{{{*\/$/;"	f	file:
+change_viewport	./main.c	/^static int change_viewport (Display *disp) {\/*{{{*\/$/;"	f	file:
+client_msg	./main.c	/^static int client_msg(Display *disp, Window win, char *msg, \/* {{{ *\/$/;"	f	file:
+close_window	./main.c	/^static int close_window (Display *disp, Window win) {\/*{{{*\/$/;"	f	file:
+connect	./configure	/^connect ();$/;"	f
+datadir	./Makefile	/^datadir = ${prefix}\/share$/;"	m
+dc_install_base	./Makefile	/^	dc_install_base=`$(am__cd) $(distdir)\/_inst && pwd | sed -e 's,^[^:\\\\\/]:[\\\\\/],\/,'` \\$/;"	m
+depcomp	./Makefile	/^depcomp = $(SHELL) $(top_srcdir)\/depcomp$/;"	m
+distcleancheck_listfiles	./Makefile	/^distcleancheck_listfiles = find . -type f -print$/;"	m
+distdir	./Makefile	/^distdir = $(PACKAGE)-$(VERSION)$/;"	m
+distuninstallcheck_listfiles	./Makefile	/^distuninstallcheck_listfiles = find . -type f -print$/;"	m
+dnet_ntoa	./configure	/^dnet_ntoa ();$/;"	f
+envir_utf8	./main.c	/^static gboolean envir_utf8;$/;"	v	file:
+exec_prefix	./Makefile	/^exec_prefix = ${prefix}$/;"	m
+force_utf8	./main.c	/^    int force_utf8;$/;"	m	struct:__anon1	file:
+full_window_title_match	./main.c	/^    int full_window_title_match;$/;"	m	struct:__anon1	file:
+get_active_window	./main.c	/^static Window get_active_window(Display *disp) {\/*{{{*\/$/;"	f	file:
+get_client_list	./main.c	/^static Window *get_client_list (Display *disp, unsigned long *size) {\/*{{{*\/$/;"	f	file:
+get_output_str	./main.c	/^static gchar *get_output_str (gchar *str, gboolean is_utf8) {\/*{{{*\/$/;"	f	file:
+get_property	./main.c	/^static gchar *get_property (Display *disp, Window win, \/*{{{*\/$/;"	f	file:
+get_window_class	./main.c	/^static gchar *get_window_class (Display *disp, Window win) {\/*{{{*\/$/;"	f	file:
+get_window_title	./main.c	/^static gchar *get_window_title (Display *disp, Window win) {\/*{{{*\/$/;"	f	file:
+gethostbyname	./configure	/^gethostbyname ();$/;"	f
+host_alias	./Makefile	/^host_alias = $/;"	m
+includedir	./Makefile	/^includedir = ${prefix}\/include$/;"	m
+infodir	./Makefile	/^infodir = ${prefix}\/info$/;"	m
+init_charset	./main.c	/^static void init_charset (void) {\/*{{{*\/$/;"	f	file:
+install_sh	./Makefile	/^install_sh = \/home\/quietheart\/testSrc\/wmctrl-1.07\/install-sh$/;"	m
+install_sh_DATA	./Makefile	/^install_sh_DATA = $(install_sh) -c -m 644$/;"	m
+install_sh_PROGRAM	./Makefile	/^install_sh_PROGRAM = $(install_sh) -c$/;"	m
+install_sh_SCRIPT	./Makefile	/^install_sh_SCRIPT = $(install_sh) -c$/;"	m
+libdir	./Makefile	/^libdir = ${exec_prefix}\/lib$/;"	m
+libexecdir	./Makefile	/^libexecdir = ${exec_prefix}\/libexec$/;"	m
+list_desktops	./main.c	/^static int list_desktops (Display *disp) {\/*{{{*\/$/;"	f	file:
+list_windows	./main.c	/^static int list_windows (Display *disp) {\/*{{{*\/$/;"	f	file:
+localstatedir	./Makefile	/^localstatedir = ${prefix}\/var$/;"	m
+longest_str	./main.c	/^static int longest_str (gchar **strv) {\/*{{{*\/$/;"	f	file:
+main	./main.c	/^int main (int argc, char **argv) { \/* {{{ *\/$/;"	f
+man1dir	./Makefile	/^man1dir = $(mandir)\/man1$/;"	m
+man_MANS	./Makefile	/^man_MANS = wmctrl.1$/;"	m
+mandir	./Makefile	/^mandir = ${prefix}\/man$/;"	m
+match_by_cls	./main.c	/^	int match_by_cls;$/;"	m	struct:__anon1	file:
+match_by_id	./main.c	/^    int match_by_id;$/;"	m	struct:__anon1	file:
+mkinstalldirs	./Makefile	/^mkinstalldirs = $(SHELL) $(top_srcdir)\/mkinstalldirs$/;"	m
+oldincludedir	./Makefile	/^oldincludedir = \/usr\/include$/;"	m
+options	./main.c	/^} options;$/;"	v	typeref:struct:__anon1	file:
+p_verbose	./main.c	185;"	d	file:
+param	./main.c	/^    char *param;$/;"	m	struct:__anon1	file:
+param_window	./main.c	/^    char *param_window;$/;"	m	struct:__anon1	file:
+pkgdatadir	./Makefile	/^pkgdatadir = $(datadir)\/wmctrl$/;"	m
+pkgincludedir	./Makefile	/^pkgincludedir = $(includedir)\/wmctrl$/;"	m
+pkglibdir	./Makefile	/^pkglibdir = $(libdir)\/wmctrl$/;"	m
+prefix	./Makefile	/^prefix = \/usr\/local$/;"	m
+program_transform_name	./Makefile	/^program_transform_name = s,x,x,$/;"	m
+remove	./configure	/^remove ();$/;"	f
+sbindir	./Makefile	/^sbindir = ${exec_prefix}\/sbin$/;"	m
+sharedstatedir	./Makefile	/^sharedstatedir = ${prefix}\/com$/;"	m
+shmat	./configure	/^shmat ();$/;"	f
+show_class	./main.c	/^    int show_class;$/;"	m	struct:__anon1	file:
+show_geometry	./main.c	/^    int show_geometry;$/;"	m	struct:__anon1	file:
+show_pid	./main.c	/^    int show_pid;$/;"	m	struct:__anon1	file:
+showing_desktop	./main.c	/^static int showing_desktop (Display *disp) {\/*{{{*\/$/;"	f	file:
+srcdir	./Makefile	/^srcdir = .$/;"	m
+subdir	./Makefile	/^subdir = .$/;"	m
+switch_desktop	./main.c	/^static int switch_desktop (Display *disp) {\/*{{{*\/$/;"	f	file:
+sysconfdir	./Makefile	/^sysconfdir = ${prefix}\/etc$/;"	m
+target_alias	./Makefile	/^target_alias = $/;"	m
+top_builddir	./Makefile	/^top_builddir = .$/;"	m
+top_distdir	./Makefile	/^top_distdir = .$/;"	m
+top_srcdir	./Makefile	/^top_srcdir = .$/;"	m
+transform	./Makefile	/^transform = $(program_transform_name)$/;"	m
+verbose	./main.c	/^    int verbose;$/;"	m	struct:__anon1	file:
+wa_desktop_titles_invalid_utf8	./main.c	/^    int wa_desktop_titles_invalid_utf8;$/;"	m	struct:__anon1	file:
+window_move_resize	./main.c	/^static int window_move_resize (Display *disp, Window win, char *arg) {\/*{{{*\/$/;"	f	file:
+window_set_title	./main.c	/^static void window_set_title (Display *disp, Window win, \/* {{{ *\/$/;"	f	file:
+window_state	./main.c	/^static int window_state (Display *disp, Window win, char *arg) {\/*{{{*\/$/;"	f	file:
+window_to_desktop	./main.c	/^static int window_to_desktop (Display *disp, Window win, int desktop) {\/*{{{*\/$/;"	f	file:
+wm_info	./main.c	/^static int wm_info (Display *disp) {\/*{{{*\/$/;"	f	file:
+wm_supports	./main.c	/^static gboolean wm_supports (Display *disp, const gchar *prop) {\/*{{{*\/$/;"	f	file:
+wmctrl_DEPENDENCIES	./Makefile	/^wmctrl_DEPENDENCIES =$/;"	m
+wmctrl_LDADD	./Makefile	/^wmctrl_LDADD = $(LDADD)$/;"	m
+wmctrl_LDFLAGS	./Makefile	/^wmctrl_LDFLAGS =$/;"	m
+wmctrl_OBJECTS	./Makefile	/^wmctrl_OBJECTS = $(am_wmctrl_OBJECTS)$/;"	m
+wmctrl_SOURCES	./Makefile	/^wmctrl_SOURCES = main.c$/;"	m

@@ -1,0 +1,29 @@
+log:
+*查看某个文件修改大致记录：
+$git log <pathname>
+这样会看到所有影响pathname文件的提交以及commit ID，可以在<pathname>之前使用'--'，防止它和分支或者选项冲突，如果想要看更简略的信息，可以使用'--pretty=oneline'，即："git log --pretty=oneline <pathname>"或者"git log --oneline <pathname>"。
+
+*查看某次提交某个文件修改详细记录：
+$git show <commit id> <pathname>
+通过前面的"git log --oneline <pathname>"返回的commit id，我们可以使用"git show"查看文件相应那次commit修改的详细内容，例如作者以及修改的地方等，如果不指定<pathname>那么因为这次提交可能不止修改了一个文件导致输出可能会很多的。
+
+
+*查看提交中那些文件被修改了：
+$git whatchanged
+这样会分别显示所有提交id下的被修改的文件。
+
+*查看某个文件修改详细记录：
+$git blame <pathname>
+这样会显示文件内容，并且将在每行开头显示该行最新改变对应的版本,时间，作者等。
+
+*显示摘要和增改行数：
+$git log --stat
+这样会显示每个提交修改的文件以及相应的修改行数，作者等。
+
+------待整理
+
+*查看整个git库的演进
+
+*查看提交两个版本之间的变化：
+目录变与未变
+如果目录结构没有变化，只要运行git-log v2.6.11 v2.6.12 arch/x86_64/kernel/smp.c就行 

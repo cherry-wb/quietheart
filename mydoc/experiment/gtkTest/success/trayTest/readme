@@ -1,0 +1,12 @@
+网上说：
+1首先在你的源码里引用头文件 eggtrayicon.h
+2调用 GtkWidget *egg_tray_icon_new(void) 来创建一个通知图标控件,如 tray_icon.
+3在 tray_icon 加入自己的控件,如图标或者其它.
+
+但是我直接用eggtrayicon.c不行，里面有一些错误，需要这样改一下：
+1)进入eggtrayicon.c
+2)把#include <config.h>注释掉：
+//#include <config.h>//lvkaidel
+3)把#define _(x) dgettext (GETTEXT_PACKAGE, x)修改成如下：
+#define _(x) gettext (x)//lvkaiadd
+

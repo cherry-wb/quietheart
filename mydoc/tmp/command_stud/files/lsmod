@@ -1,0 +1,12 @@
+http://soft.zdnet.com.cn/software_zone/2007/1101/597595.shtml
+insmod 这个工具，和modprobe 有点类似，但功能上没有modprobe 强，modprobe 在挂载模块是不用指定模块文件的路径，也不用带文件的后缀.o 或.ko ；而insmod 需要的是模块的所在目录的绝对路径，并且一定要带有模块文件名后缀的(modulefile.o 或modulesfile.ko ）；
+
+对于这个工具，我们只是介绍一下， 并不推荐使用。因为模块有依赖关系，对于新手来说，可能不知道这个模块依赖和哪个模块依赖；
+
+举例：
+
+代码:
+
+[root@localhost beinan]# insmod /lib/modules/2.6.11-1.1369_FC4/kernel/drivers/net/tg3.ko
+
+我们要到 /lib/modules/内核版本 uname -r 的命令输出/kernel/drivers 中找相对应的模块才行，要有绝对路径，而且必须要用到文件名的全称，不能把文件名的后缀省略； 

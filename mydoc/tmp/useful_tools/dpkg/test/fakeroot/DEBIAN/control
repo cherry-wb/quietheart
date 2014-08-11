@@ -1,0 +1,26 @@
+Package: myapplication
+Version: 1.0
+Maintainer: QuietHeart <quiet_heart000@126.com>
+Architecture: i386
+Homepage: quietheart.sf.net
+Description: The description can contain free-form text
+ describing the function of the program, what kind of features it has, and so on.
+ More descriptive text see 'man 5 deb-control'.
+ (1)Must include are:
+ Package: 
+ Version: 
+ Maintainer: 
+ Description:
+ (2)Option Fields such as:
+ Architecture:
+ Homepage:
+ Section:
+ Priority:
+ Essential:
+ Depends:
+ Pre-Depends:
+ Recommends:
+ Suggests:
+ Installed-Size:
+ Conflicts:
+ ...

@@ -1,0 +1,576 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+ABOUT	PinyinFrame.cpp	/^const char ABOUT[]="About";$/;"	v
+AR	Makefile	/^AR	=	arm-linux-ar cqs$/;"	m
+AR	Makefile.x86	/^AR	=	ar cqs$/;"	d
+BOOK_MARK1	PinyinFrame.cpp	/^const int BOOK_MARK1	=0x300a;$/;"	v
+BOOK_MARK2	PinyinFrame.cpp	/^const int BOOK_MARK2	=0x300b;$/;"	v
+CC	Makefile	/^CC	=	arm-linux-gcc$/;"	m
+CC	Makefile.x86	/^CC	=	gcc$/;"	d
+CC_DEBUG	phrase/Makefile	/^	CC_DEBUG	= -O2$/;"	m
+CC_DEBUG	phrase/Makefile	/^	CC_DEBUG	= -g -DMC_DEBUG -DOSAL_DEBUG -DHEAP_DEBUG -DDEBUG$/;"	m
+CC_DEBUG	scim/Makefile	/^	CC_DEBUG	= -O2$/;"	m
+CC_DEBUG	scim/Makefile	/^	CC_DEBUG	= -g -DMC_DEBUG -DOSAL_DEBUG -DHEAP_DEBUG -DDEBUG$/;"	m
+CC_PROF	phrase/Makefile	/^	CC_PROF		= -pg$/;"	m
+CC_PROF	phrase/Makefile	/^	CC_PROF		=$/;"	m
+CC_PROF	scim/Makefile	/^	CC_PROF		= -pg$/;"	m
+CC_PROF	scim/Makefile	/^	CC_PROF		=$/;"	m
+CFLAGS	Makefile	/^CFLAGS	=	-pipe -Wall -W -O2 -fPIC -DNO_DEBUG$/;"	m
+CFLAGS	Makefile.x86	/^CFLAGS	=	-pipe -Wall -W -O2 -fno-default-inline -fPIC -DNO_DEBUG$/;"	d
+CFLAGS	phrase/Makefile	/^CFLAGS	= -Wall $(CC_DEBUG) $(CC_PROF) $(CC_DEFS) $(CC_INCDIR)$/;"	m
+CFLAGS	scim/Makefile	/^CFLAGS	= -Wall $(CC_DEBUG) $(CC_PROF) $(CC_DEFS) $(CC_INCDIR)$/;"	m
+COLON_MARK	PinyinFrame.cpp	/^const int COLON_MARK	=0xff1a;$/;"	v
+COMMA_MARK	PinyinFrame.cpp	/^const int COMMA_MARK	=0xff0c;$/;"	v
+CONFIG_H	Config.h	21;"	d
+CONFIG_VALUES	Config.h	/^typedef std::map<std::string,std::string> CONFIG_VALUES;$/;"	t
+CPPFLAGS	phrase/Makefile	/^CPPFLAGS = $(CC_DEBUG) -MD -Wall -fno-exceptions -fno-rtti -I$(INCLD) -L$(LIBDIRS) -DX86$/;"	m
+CPPFLAGS	scim/Makefile	/^CPPFLAGS = $(CC_DEBUG) -MD -Wall -fno-exceptions -fno-rtti -I$(INCLD) -L$(LIBDIRS)$/;"	m
+CXX	Makefile	/^CXX	=	arm-linux-g++$/;"	m
+CXX	Makefile.x86	/^CXX	=	g++$/;"	d
+CXX	phrase/Makefile	/^CXX = g++$/;"	m
+CXX	scim/Makefile	/^CXX = g++$/;"	m
+CXXFLAGS	Makefile	/^CXXFLAGS=	-pipe -DQT_QWS_SL5XXX -DQT_QWS_CUSTOM -DQWS -fno-exceptions -fno-rtti -Wall -W -O2 -fPIC -DNO_DEBUG$/;"	m
+CharFrequencyPair	scim/scim_pinyin.h	/^typedef std::pair<ucs4_t, uint32>     CharFrequencyPair;$/;"	t
+CharFrequencyPairEqualToByChar	scim/scim_pinyin.h	/^class CharFrequencyPairEqualToByChar {$/;"	c
+CharFrequencyPairGreaterThanByChar	scim/scim_pinyin.h	/^class CharFrequencyPairGreaterThanByChar {$/;"	c
+CharFrequencyPairGreaterThanByCharAndFrequency	scim/scim_pinyin.h	/^class CharFrequencyPairGreaterThanByCharAndFrequency {$/;"	c
+CharFrequencyPairGreaterThanByFrequency	scim/scim_pinyin.h	/^class CharFrequencyPairGreaterThanByFrequency {$/;"	c
+CharFrequencyPairLessThanByChar	scim/scim_pinyin.h	/^class CharFrequencyPairLessThanByChar {$/;"	c
+CharFrequencyPairLessThanByCharAndFrequency	scim/scim_pinyin.h	/^class CharFrequencyPairLessThanByCharAndFrequency {$/;"	c
+CharFrequencyPairLessThanByFrequency	scim/scim_pinyin.h	/^class CharFrequencyPairLessThanByFrequency {$/;"	c
+CharVector	scim/scim_pinyin.h	/^typedef std::vector<ucs4_t>           CharVector;$/;"	t
+Config	Config.cpp	/^Config::Config(const char* config_file)$/;"	f	class:Config
+Config	Config.h	/^class Config$/;"	c
+DEPS	phrase/Makefile	/^DEPS := $(patsubst %.o,%.d,$(OBJS)) $/;"	m
+DEPS	scim/Makefile	/^DEPS := $(patsubst %.o,%.d,$(OBJS)) $/;"	m
+DIST	Makefile	/^DIST	=	$/;"	m
+DIST	Makefile.x86	/^DIST	=	$/;"	d
+FILE_VERSION	public.h	35;"	d
+GZIP	Makefile	/^GZIP	=	gzip -9f$/;"	m
+GZIP	Makefile.x86	/^GZIP	=	gzip -9f$/;"	d
+GetKey	PinyinFrame.cpp	/^bool QPinyinFrame::GetKey(int u, int k\/*,int m*\/)\/*int unicode, int keycode, int modifiers*\/$/;"	f	class:QPinyinFrame
+HEADERS	Makefile	/^HEADERS =	PinyinFrame.h \\$/;"	m
+HEADERS	Makefile.x86	/^HEADERS =	PinyinFrame.h \\$/;"	d
+INCLD	phrase/Makefile	/^INCLD		= $(QTDIR)\/include$/;"	m
+INCLD	phrase/Makefile	/^INCLD		= $/;"	m
+INCLD	scim/Makefile	/^INCLD		= $(QTDIR)\/include$/;"	m
+INCPATH	Makefile	/^INCPATH	=	-I$(QPEDIR)\/include -I$(QTDIR)\/include$/;"	m
+INCPATH	Makefile.x86	/^INCPATH	=	-I$(QPEDIR)\/include -I$(QTDIR)\/include$/;"	d
+INTERFACES	Makefile	/^INTERFACES =	$/;"	m
+INTERFACES	Makefile.x86	/^INTERFACES =	$/;"	d
+INTERFACE_DECL_PATH	Makefile	/^INTERFACE_DECL_PATH = .$/;"	m
+INTERFACE_DECL_PATH	Makefile.x86	/^INTERFACE_DECL_PATH = .$/;"	d
+LD	phrase/Makefile	/^LD		= ld$/;"	m
+LD	scim/Makefile	/^LD		= ld$/;"	m
+LDFLAGS	phrase/Makefile	/^LDFLAGS 	= $(LDOPTS) $(LIBDIRS) $(LIBS)$/;"	m
+LDFLAGS	scim/Makefile	/^LDFLAGS 	= $(LDOPTS) $(LIBDIRS) $(LIBS)$/;"	m
+LDOPTS	phrase/Makefile	/^	LDOPTS		=$/;"	m
+LDOPTS	phrase/Makefile	/^	LDOPTS 		=$/;"	m
+LDOPTS	scim/Makefile	/^	LDOPTS		=$/;"	m
+LDOPTS	scim/Makefile	/^	LDOPTS 		=$/;"	m
+LFLAGS	Makefile	/^LFLAGS	=	-shared -Wl,-soname,libmurphypinyin.so.0$/;"	m
+LFLAGS	Makefile.x86	/^LFLAGS	=	-shared -Wl,-soname,libmurphypinyin.so.0$/;"	d
+LIBDIRS	phrase/Makefile	/^LIBDIRS		= $(QTDIR)\/lib$/;"	m
+LIBDIRS	phrase/Makefile	/^LIBDIRS		= $/;"	m
+LIBDIRS	scim/Makefile	/^LIBDIRS		= $(QTDIR)\/lib$/;"	m
+LIBS	Makefile	/^LIBS	=	$(SUBLIBS) -L$(QTDIR)\/lib -lqpe -lqte$/;"	m
+LIBS	Makefile.x86	/^LIBS	=	$(SUBLIBS) -L$(QTDIR)\/lib -lm -lqpe -lqte$/;"	d
+LIBS	phrase/Makefile	/^LIBS		= m qte qpe qtopia$/;"	m
+LIBS	phrase/Makefile	/^LIBS		=$/;"	m
+LIBS	phrase/Makefile	/^LIBS := $/;"	m
+LIBS	scim/Makefile	/^LIBS		= m qte qpe qtopia$/;"	m
+LIBS	scim/Makefile	/^LIBS := $/;"	m
+LINK	Makefile	/^LINK	=	arm-linux-g++$/;"	m
+LINK	Makefile.x86	/^LINK	=	gcc$/;"	d
+MAKEPHRASE_CLOSE	PinyinFrame.cpp	/^const char MAKEPHRASE_CLOSE[] = "\\xe3\\x80\\x91";$/;"	v
+MAKEPHRASE_OPEN	PinyinFrame.cpp	/^const char MAKEPHRASE_OPEN [] = "\\xe3\\x80\\x90\\xe9\\x80\\xa0\\xe8\\xaf\\x8d\\x20";$/;"	v
+MAXLEN	Config.cpp	/^const int MAXLEN = 256;$/;"	v
+MOC	Makefile	/^MOC	=	$(QTDIR)\/bin\/moc$/;"	m
+MOC	Makefile.x86	/^MOC	=	$(QTDIR)\/bin\/moc$/;"	d
+Makefile	Makefile.x86	/^Makefile: MurphyPinyin.pro$/;"	l
+OBJECTS	Makefile	/^OBJECTS =	PinyinFrame.o \\$/;"	m
+OBJECTS	Makefile.x86	/^OBJECTS =	PinyinFrame.o \\$/;"	d
+OBJMOC	Makefile	/^OBJMOC	=	moc_PinyinFrame.o$/;"	m
+OBJMOC	Makefile.x86	/^OBJMOC	=	moc_PinyinFrame.o$/;"	d
+OBJS	phrase/Makefile	/^OBJS	= $(patsubst %.cpp,%.o,$(SOURCE))$/;"	m
+OBJS	scim/Makefile	/^OBJS	= $(patsubst %.cpp,%.o,$(SOURCE))$/;"	m
+PERIOD_MARK	PinyinFrame.cpp	/^const int PERIOD_MARK	=0x3002;$/;"	v
+PINYIMPL_H	PinyinImpl.h	21;"	d
+PINYINENGIN_H	PinyinEngine.h	26;"	d
+PINYINFRM_H	PinyinFrame.h	20;"	d
+PINYINPhrase_H	phrase/PinyinPhrase.h	25;"	d
+PINYIN_X	PinyinFrame.cpp	/^const int PINYIN_X = 2;$/;"	v
+PINYIN_Y	PinyinFrame.cpp	/^const int PINYIN_Y = 2;$/;"	v
+PUBLIC_H	public.h	22;"	d
+PhraseOffset	phrase/PinyinPhrase.h	/^typedef uint32				PhraseOffset;$/;"	t
+PhraseOffsetFrequencyPair	phrase/PinyinPhrase.h	/^typedef std::pair<uint32, uint32>	PhraseOffsetFrequencyPair;$/;"	t
+PhraseOffsetFrequencyPairGreaterThanByFrequency	phrase/PinyinPhrase.h	/^class PhraseOffsetFrequencyPairGreaterThanByFrequency$/;"	c
+PhraseOffsetFrequencyPairGreaterThanByPhraseOffset	phrase/PinyinPhrase.h	/^class PhraseOffsetFrequencyPairGreaterThanByPhraseOffset$/;"	c
+PhraseOffsetFrequencyPairVector	phrase/PinyinPhrase.h	/^typedef std::vector<PhraseOffsetFrequencyPair> PhraseOffsetFrequencyPairVector;$/;"	t
+PhraseOffsetToFreqMap	phrase/PinyinPhrase.h	/^typedef std::map<uint32,uint32>         PhraseOffsetToFreqMap;$/;"	t
+PhraseOffsetVector	phrase/PinyinPhrase.h	/^typedef std::vector<PhraseOffset>	PhraseOffsetVector;$/;"	t
+PhrasePinyinKeyEqualTo	phrase/PinyinPhrase.h	/^class PhrasePinyinKeyEqualTo$/;"	c
+PhraseString	phrase/PinyinPhrase.h	/^typedef std::vector<ucs4_t>		PhraseString;$/;"	t
+PhraseStringVector	phrase/PinyinPhrase.h	/^typedef std::vector<PhraseString>       PhraseStringVector;$/;"	t
+PinyinEngine	PinyinEngine.cpp	/^PinyinEngine::PinyinEngine(const char *table_file,const char *phrase_index_file)$/;"	f	class:PinyinEngine
+PinyinEngine	PinyinEngine.h	/^class PinyinEngine$/;"	c
+PinyinEntry	scim/scim_pinyin.h	/^	PinyinEntry (PinyinKey key)$/;"	f	class:PinyinEntry
+PinyinEntry	scim/scim_pinyin.h	/^	PinyinEntry (const PinyinEntry &entry)$/;"	f	class:PinyinEntry
+PinyinEntry	scim/scim_pinyin.h	/^	PinyinEntry (const PinyinValidator &validator,$/;"	f	class:PinyinEntry
+PinyinEntry	scim/scim_pinyin.h	/^class PinyinEntry$/;"	c
+PinyinEntryVector	scim/scim_pinyin.h	/^	typedef std::vector<PinyinEntry> PinyinEntryVector;$/;"	t	class:PinyinTable
+PinyinFinal	scim/scim_pinyin.h	/^enum PinyinFinal$/;"	g
+PinyinInitial	scim/scim_pinyin.h	/^enum PinyinInitial$/;"	g
+PinyinKey	scim/scim_pinyin.h	/^	PinyinKey (PinyinInitial initial = SCIM_PINYIN_ZeroInitial,$/;"	f	class:PinyinKey
+PinyinKey	scim/scim_pinyin.h	/^	PinyinKey (const PinyinValidator &validator,$/;"	f	class:PinyinKey
+PinyinKey	scim/scim_pinyin.h	/^class PinyinKey$/;"	c
+PinyinKeyExactEqualTo	scim/scim_pinyin.h	/^class PinyinKeyExactEqualTo$/;"	c
+PinyinKeyExactLessThan	scim/scim_pinyin.h	/^class PinyinKeyExactLessThan$/;"	c
+PinyinKeyVector	scim/scim_pinyin.h	/^typedef std::vector<PinyinKey>        PinyinKeyVector;$/;"	t
+PinyinParsedKey	scim/scim_pinyin.h	/^	PinyinParsedKey (int pos = 0,$/;"	f	struct:PinyinParsedKey
+PinyinParsedKey	scim/scim_pinyin.h	/^struct PinyinParsedKey : public PinyinKey$/;"	s
+PinyinParsedKeyVector	scim/scim_pinyin.h	/^typedef std::vector<PinyinParsedKey>  PinyinParsedKeyVector;$/;"	t
+PinyinPhraseEntry	phrase/PinyinPhrase.cpp	/^PinyinPhraseEntry::PinyinPhraseEntry(PinyinPhraseKey& key):m_key(key)$/;"	f	class:PinyinPhraseEntry
+PinyinPhraseEntry	phrase/PinyinPhrase.cpp	/^PinyinPhraseEntry::PinyinPhraseEntry(const char*pinyin)$/;"	f	class:PinyinPhraseEntry
+PinyinPhraseEntry	phrase/PinyinPhrase.cpp	/^PinyinPhraseEntry::PinyinPhraseEntry(std::istream &is)$/;"	f	class:PinyinPhraseEntry
+PinyinPhraseEntry	phrase/PinyinPhrase.h	/^class PinyinPhraseEntry$/;"	c
+PinyinPhraseEntryVector	phrase/PinyinPhrase.h	/^typedef std::vector<PinyinPhraseEntry>	PinyinPhraseEntryVector;$/;"	t
+PinyinPhraseEntryVectorPosRangePair	phrase/PinyinPhrase.h	/^	PinyinPhraseEntryVectorPosRangePair;$/;"	t
+PinyinPhraseKey	phrase/PinyinPhrase.cpp	/^PinyinPhraseKey::PinyinPhraseKey()$/;"	f	class:PinyinPhraseKey
+PinyinPhraseKey	phrase/PinyinPhrase.cpp	/^PinyinPhraseKey::PinyinPhraseKey(const char *keystr)$/;"	f	class:PinyinPhraseKey
+PinyinPhraseKey	phrase/PinyinPhrase.h	/^class PinyinPhraseKey$/;"	c
+PinyinPhraseKeyLessThan	phrase/PinyinPhrase.h	/^class PinyinPhraseKeyLessThan$/;"	c
+PinyinPhraseKeyVector	phrase/PinyinPhrase.h	/^typedef std::vector<PinyinPhraseKey>	PinyinPhraseKeyVector;$/;"	t
+PinyinPhraseTable	phrase/PinyinPhrase.cpp	/^PinyinPhraseTable::PinyinPhraseTable(const char* indexfile)$/;"	f	class:PinyinPhraseTable
+PinyinPhraseTable	phrase/PinyinPhrase.h	/^class PinyinPhraseTable$/;"	c
+PinyinTable	scim/scim_pinyin.cpp	/^PinyinTable::PinyinTable (\/*(const PinyinCustomSettings &custom,*\/$/;"	f	class:PinyinTable
+PinyinTable	scim/scim_pinyin.cpp	/^PinyinTable::PinyinTable (\/*const PinyinCustomSettings &custom,*\/$/;"	f	class:PinyinTable
+PinyinTable	scim/scim_pinyin.h	/^class PinyinTable$/;"	c
+PinyinToken	scim/scim_pinyin.h	/^struct PinyinToken$/;"	s
+PinyinTone	scim/scim_pinyin.h	/^enum PinyinTone$/;"	g
+PinyinValidator	scim/scim_pinyin.cpp	/^PinyinValidator::PinyinValidator (\/*const PinyinCustomSettings &custom,(*\/$/;"	f	class:PinyinValidator
+PinyinValidator	scim/scim_pinyin.h	/^class PinyinValidator$/;"	c
+PinyinValidatorBitmapSize	scim/scim_pinyin.h	/^const int PinyinValidatorBitmapSize = (SCIM_PINYIN_InitialNumber *$/;"	v
+QPinyinFrame	PinyinFrame.cpp	/^QPinyinFrame::QPinyinFrame(QWidget* parent, const char* name, WFlags f) :$/;"	f	class:QPinyinFrame
+QPinyinFrame	PinyinFrame.h	/^class QPinyinFrame : public QFrame, public QWSServer::KeyboardFilter$/;"	c
+QPinyinImpl	PinyinImpl.cpp	/^QPinyinImpl::QPinyinImpl()$/;"	f	class:QPinyinImpl
+QPinyinImpl	PinyinImpl.h	/^class QPinyinImpl : public InputMethodInterface$/;"	c
+QUESTION_MARK	PinyinFrame.cpp	/^const int QUESTION_MARK	=0xff1f;$/;"	v
+Q_EXPORT_INTERFACE	PinyinImpl.cpp	/^Q_EXPORT_INTERFACE()$/;"	f
+RANLIB	Makefile	/^RANLIB	=	$/;"	m
+RANLIB	Makefile.x86	/^RANLIB	=	$/;"	d
+SCIM_MAX_CHAR_FREQUENCY	scim/scim_pinyin.h	55;"	d
+SCIM_PINYIN_A	scim/scim_pinyin.h	/^	SCIM_PINYIN_A    = 1,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ai	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ai   = 2,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_An	scim/scim_pinyin.h	/^	SCIM_PINYIN_An   = 3,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ang	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ang  = 4,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ao	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ao   = 5,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Bo	scim/scim_pinyin.h	/^	SCIM_PINYIN_Bo  = 1,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Chi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Chi = 3,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Ci	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ci  = 2,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_De	scim/scim_pinyin.h	/^	SCIM_PINYIN_De  = 4,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_E	scim/scim_pinyin.h	/^	SCIM_PINYIN_E    = 6,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ei	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ei   = 7,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_En	scim/scim_pinyin.h	/^	SCIM_PINYIN_En   = 8,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Eng	scim/scim_pinyin.h	/^	SCIM_PINYIN_Eng  = 9,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Er	scim/scim_pinyin.h	/^	SCIM_PINYIN_Er   =10,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Fifth	scim/scim_pinyin.h	/^	SCIM_PINYIN_Fifth  = 5,$/;"	e	enum:PinyinTone
+SCIM_PINYIN_FinalNumber	scim/scim_pinyin.h	/^	SCIM_PINYIN_FinalNumber = SCIM_PINYIN_LastFinal + 1$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_First	scim/scim_pinyin.h	/^	SCIM_PINYIN_First  = 1,$/;"	e	enum:PinyinTone
+SCIM_PINYIN_Fo	scim/scim_pinyin.h	/^	SCIM_PINYIN_Fo  = 5,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Fourth	scim/scim_pinyin.h	/^	SCIM_PINYIN_Fourth = 4,$/;"	e	enum:PinyinTone
+SCIM_PINYIN_Ge	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ge  = 6,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_He	scim/scim_pinyin.h	/^	SCIM_PINYIN_He  = 7,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_I	scim/scim_pinyin.h	/^	SCIM_PINYIN_I    =11,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ia	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ia   =12,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ian	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ian  =13,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Iang	scim/scim_pinyin.h	/^	SCIM_PINYIN_Iang =14,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Iao	scim/scim_pinyin.h	/^	SCIM_PINYIN_Iao  =15,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ie	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ie   =16,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_In	scim/scim_pinyin.h	/^	SCIM_PINYIN_In   =17,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ing	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ing  =18,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_InitialNumber	scim/scim_pinyin.h	/^	SCIM_PINYIN_InitialNumber = SCIM_PINYIN_LastInitial + 1$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Iong	scim/scim_pinyin.h	/^	SCIM_PINYIN_Iong =19,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Iou	scim/scim_pinyin.h	/^	SCIM_PINYIN_Iou  =20,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Iu	scim/scim_pinyin.h	/^	SCIM_PINYIN_Iu   =21,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ji	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ji  = 8,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_KEY_MAXLEN	scim/scim_pinyin.h	54;"	d
+SCIM_PINYIN_Ke	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ke  = 9,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_LastFinal	scim/scim_pinyin.h	/^	SCIM_PINYIN_LastFinal = SCIM_PINYIN_Vn,	\/**< the last final *\/$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_LastInitial	scim/scim_pinyin.h	/^	SCIM_PINYIN_LastInitial = SCIM_PINYIN_Zhi,	\/**< the last initial *\/$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_LastTone	scim/scim_pinyin.h	/^	SCIM_PINYIN_LastTone = SCIM_PINYIN_Fifth, \/**< the last tone *\/$/;"	e	enum:PinyinTone
+SCIM_PINYIN_Le	scim/scim_pinyin.h	/^	SCIM_PINYIN_Le  =10,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Mo	scim/scim_pinyin.h	/^	SCIM_PINYIN_Mo  =11,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Ne	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ne  =12,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Ng	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ng   =22,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_O	scim/scim_pinyin.h	/^	SCIM_PINYIN_O    =23,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ong	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ong  =24,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ou	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ou   =25,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Po	scim/scim_pinyin.h	/^	SCIM_PINYIN_Po  =13,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Qi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Qi  =14,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Ri	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ri  =15,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Second	scim/scim_pinyin.h	/^	SCIM_PINYIN_Second = 2,$/;"	e	enum:PinyinTone
+SCIM_PINYIN_Shi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Shi =17,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Si	scim/scim_pinyin.h	/^	SCIM_PINYIN_Si  =16,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Te	scim/scim_pinyin.h	/^	SCIM_PINYIN_Te  =18,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Third	scim/scim_pinyin.h	/^	SCIM_PINYIN_Third  = 3,$/;"	e	enum:PinyinTone
+SCIM_PINYIN_ToneNumber	scim/scim_pinyin.h	/^	SCIM_PINYIN_ToneNumber = SCIM_PINYIN_LastTone + 1$/;"	e	enum:PinyinTone
+SCIM_PINYIN_U	scim/scim_pinyin.h	/^	SCIM_PINYIN_U    =26,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ua	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ua   =27,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uai	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uai  =28,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uan	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uan  =29,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uang	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uang =30,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ue	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ue   =31,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uei	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uei  =32,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uen	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uen  =33,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ueng	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ueng =34,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ui	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ui   =35,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Un	scim/scim_pinyin.h	/^	SCIM_PINYIN_Un   =36,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Uo	scim/scim_pinyin.h	/^	SCIM_PINYIN_Uo   =37,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_V	scim/scim_pinyin.h	/^	SCIM_PINYIN_V    =38,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Van	scim/scim_pinyin.h	/^	SCIM_PINYIN_Van  =39,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Ve	scim/scim_pinyin.h	/^	SCIM_PINYIN_Ve   =40,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Vn	scim/scim_pinyin.h	/^	SCIM_PINYIN_Vn   =41,$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_Wo	scim/scim_pinyin.h	/^	SCIM_PINYIN_Wo  =19,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Xi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Xi  =20,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Yi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Yi  =21,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_ZeroFinal	scim/scim_pinyin.h	/^	SCIM_PINYIN_ZeroFinal = 0,	\/**< zero final. indicates invalid final *\/$/;"	e	enum:PinyinFinal
+SCIM_PINYIN_ZeroInitial	scim/scim_pinyin.h	/^	SCIM_PINYIN_ZeroInitial = 0,	\/**< zero initial. indicates invaild initial *\/$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_ZeroTone	scim/scim_pinyin.h	/^	SCIM_PINYIN_ZeroTone = 0,	\/**< zero tone. this will be matched with all other tones. *\/$/;"	e	enum:PinyinTone
+SCIM_PINYIN_Zhi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Zhi =23,$/;"	e	enum:PinyinInitial
+SCIM_PINYIN_Zi	scim/scim_pinyin.h	/^	SCIM_PINYIN_Zi  =22,$/;"	e	enum:PinyinInitial
+SOURCE	phrase/Makefile	/^SOURCE := main.cpp PinyinPhrase.cpp ..\/scim\/scim_pinyin.cpp$/;"	m
+SOURCE	scim/Makefile	/^SOURCE := main.cpp scim_pinyin.cpp ..\/PinyinEngine.cpp$/;"	m
+SOURCES	Makefile	/^SOURCES =	PinyinFrame.cpp \\$/;"	m
+SOURCES	Makefile.x86	/^SOURCES =	PinyinFrame.cpp \\$/;"	d
+SRCMOC	Makefile	/^SRCMOC	=	moc_PinyinFrame.cpp$/;"	m
+SRCMOC	Makefile.x86	/^SRCMOC	=	moc_PinyinFrame.cpp$/;"	d
+SendKey	PinyinFrame.cpp	/^void QPinyinFrame::SendKey(int u , int c)$/;"	f	class:QPinyinFrame
+String	scim/scim_pinyin.h	/^typedef std::basic_string<char> String;$/;"	t
+TAR	Makefile	/^TAR	=	tar -cf$/;"	m
+TAR	Makefile.x86	/^TAR	=	tar -cf$/;"	d
+TARGET	Makefile	/^TARGET	=	libmurphypinyin.so.0.0.2$/;"	m
+TARGET	Makefile.x86	/^TARGET	=	libmurphypinyin.so.0.0.1$/;"	d
+TARGET	phrase/Makefile	/^TARGET:= test$/;"	m
+TARGET	scim/Makefile	/^TARGET:= test$/;"	m
+TARGET0	Makefile	/^TARGET0	=	libmurphypinyin.so$/;"	m
+TARGET0	Makefile.x86	/^TARGET0	=	libmurphypinyin.so$/;"	d
+TARGET1	Makefile	/^TARGET1	=	libmurphypinyin.so.0$/;"	m
+TARGET1	Makefile.x86	/^TARGET1	=	libmurphypinyin.so.0$/;"	d
+TARGET2	Makefile	/^TARGET2	=	libmurphypinyin.so.0.0$/;"	m
+TARGET2	Makefile.x86	/^TARGET2	=	libmurphypinyin.so.0.0$/;"	d
+TARGETA	Makefile	/^TARGETA	=	DIST\/libmurphypinyin.a$/;"	m
+TARGETA	Makefile.x86	/^TARGETA	=	\/opt\/Qtopia\/plugins\/inputmethods\/libmurphypinyin.a$/;"	d
+TARGETD	Makefile	/^TARGETD	=	libmurphypinyin.so.0.0.2$/;"	m
+TARGETD	Makefile.x86	/^TARGETD	=	libmurphypinyin.so.0.0.1$/;"	d
+UIC	Makefile	/^UIC	=	$(QTDIR)\/bin\/uic$/;"	m
+UIC	Makefile.x86	/^UIC	=	$(QTDIR)\/bin\/uic$/;"	d
+UICDECLS	Makefile	/^UICDECLS =	$/;"	m
+UICDECLS	Makefile.x86	/^UICDECLS =	$/;"	d
+UICIMPLS	Makefile	/^UICIMPLS =	$/;"	m
+UICIMPLS	Makefile.x86	/^UICIMPLS =	$/;"	d
+Uses_C_STDIO	scim/scim_pinyin.cpp	23;"	d	file:
+Uses_SCIM_CONFIG_BASE	scim/scim_pinyin.cpp	27;"	d	file:
+Uses_SCIM_CONFIG_PATH	scim/scim_pinyin.cpp	28;"	d	file:
+Uses_SCIM_ICONV	scim/scim_pinyin.cpp	26;"	d	file:
+Uses_SCIM_LOOKUP_TABLE	scim/scim_pinyin.cpp	29;"	d	file:
+Uses_SCIM_SERVER	scim/scim_pinyin.cpp	25;"	d	file:
+Uses_SCIM_UTILITY	scim/scim_pinyin.cpp	24;"	d	file:
+Uses_STL_ALGORITHM	scim/scim_pinyin.cpp	19;"	d	file:
+Uses_STL_AUTOPTR	scim/scim_pinyin.cpp	14;"	d	file:
+Uses_STL_FSTREAM	scim/scim_pinyin.cpp	18;"	d	file:
+Uses_STL_FUNCTIONAL	scim/scim_pinyin.cpp	15;"	d	file:
+Uses_STL_IOMANIP	scim/scim_pinyin.cpp	22;"	d	file:
+Uses_STL_IOSTREAM	scim/scim_pinyin.cpp	17;"	d	file:
+Uses_STL_MAP	scim/scim_pinyin.cpp	20;"	d	file:
+Uses_STL_UTILITY	scim/scim_pinyin.cpp	21;"	d	file:
+Uses_STL_VECTOR	scim/scim_pinyin.cpp	16;"	d	file:
+VERSION	public.h	34;"	d
+WideString	scim/scim_pinyin.h	/^typedef std::basic_string<ucs4_t> WideString;$/;"	t
+YING	PinyinFrame.cpp	/^const unsigned short YING  = 0x82f1;   \/\/Hanzi : English$/;"	v
+ZHONG	PinyinFrame.cpp	/^const unsigned short ZHONG = 0x4e2d;   \/\/Hanzi : Chinese $/;"	v
+__SCIM_PINYIN_H	scim/scim_pinyin.h	15;"	d
+all	Makefile.x86	/^all: \/opt\/Qtopia\/plugins\/inputmethods\/libmurphypinyin.so.0.0.1 version$/;"	l
+append	phrase/PinyinPhrase.h	/^	inline void append(PinyinPhraseEntry& entry){$/;"	f	class:PinyinPhraseEntry
+append_phrase	PinyinEngine.cpp	/^void PinyinEngine::append_phrase(QString& phrase,const char* pinyin)$/;"	f	class:PinyinEngine
+append_phrase	phrase/PinyinPhrase.cpp	/^bool PinyinPhraseTable::append_phrase(PhraseString& str,const char* pinyin)$/;"	f	class:PinyinPhraseTable
+apply_additional_rules	scim/scim_pinyin.cpp	/^PinyinKey::apply_additional_rules (PinyinInitial &initial, PinyinFinal &final)$/;"	f	class:PinyinKey
+build_phrase_map	phrase/winpy2phrase.py	/^def build_phrase_map(map):$/;"	f
+candidates_count	PinyinFrame.h	/^		unsigned int candidates_count;$/;"	m	struct:QPinyinFrame::ime_info_struc
+candidates_on_page	PinyinFrame.h	/^		unsigned int candidates_on_page; \/\/hanzi candidates on current page$/;"	m	struct:QPinyinFrame::ime_info_struc
+candidates_on_prev_page	PinyinFrame.h	/^		unsigned int candidates_on_prev_page; \/\/hanzi candidates on previous page$/;"	m	struct:QPinyinFrame::ime_info_struc
+clean	Makefile.x86	/^clean:$/;"	l
+clear	scim/scim_pinyin.h	/^	void clear () {$/;"	f	class:PinyinEntry
+clear	scim/scim_pinyin.h	/^	void clear () {$/;"	f	class:PinyinTable
+clear_key	PinyinEngine.h	/^	inline void clear_key(){$/;"	f	class:PinyinEngine
+clear_key	phrase/PinyinPhrase.h	/^	inline void clear_key(){$/;"	f	class:PinyinPhraseKey
+cmask	scim/scim_pinyin.cpp	/^	int     cmask;$/;"	m	struct:utf8_table	file:
+combine_to_bytes	scim/scim_pinyin.h	/^	void combine_to_bytes (unsigned char *bytes) const {$/;"	f	class:PinyinKey
+commit_selection	PinyinFrame.cpp	/^bool QPinyinFrame::commit_selection(int k)$/;"	f	class:QPinyinFrame
+config_file	PinyinFrame.cpp	/^const char config_file[]=$/;"	v
+create_pinyin_key_vector_vector	scim/scim_pinyin.cpp	/^PinyinTable::create_pinyin_key_vector_vector (std::vector<PinyinKeyVector> &vv,$/;"	f	class:PinyinTable
+cval	scim/scim_pinyin.cpp	/^	int     cval;$/;"	m	struct:utf8_table	file:
+dist	Makefile.x86	/^dist:$/;"	l
+else	Makefile.x86	/^else$/;"	l
+endif	Makefile.x86	/^endif$/;"	l
+enum_offset_freq_vector	phrase/main.cpp	/^void enum_offset_freq_vector(PhraseOffsetFrequencyPairVector& v)$/;"	f
+erase	scim/scim_pinyin.cpp	/^PinyinTable::erase (ucs4_t hz, PinyinKey key)$/;"	f	class:PinyinTable
+erase	scim/scim_pinyin.cpp	/^PinyinTable::erase (ucs4_t hz, const char *key)$/;"	f	class:PinyinTable
+erase	scim/scim_pinyin.h	/^	void erase (ucs4_t c) {$/;"	f	class:PinyinEntry
+extract_from_bytes	scim/scim_pinyin.h	/^	void extract_from_bytes (unsigned char byte0,$/;"	f	class:PinyinKey
+filter	PinyinFrame.cpp	/^bool QPinyinFrame::filter (int unicode, int keycode, int modifiers, bool isPress, bool autoRepeat)$/;"	f	class:QPinyinFrame
+filter	phrase/winpy2phrase.py	/^def filter(line):$/;"	f
+final_equal_to	phrase/PinyinPhrase.h	/^	bool final_equal_to(PinyinKey lhs,$/;"	f	class:PinyinPhraseKeyLessThan
+find_chars	scim/scim_pinyin.cpp	/^PinyinTable::find_chars (std::vector <ucs4_t> &vec, PinyinKey key) const$/;"	f	class:PinyinTable
+find_chars_with_frequencies	scim/scim_pinyin.cpp	/^PinyinTable::find_chars_with_frequencies (std::vector <CharFrequencyPair> &vec, PinyinKey key) const$/;"	f	class:PinyinTable
+find_exact_entry	scim/scim_pinyin.cpp	/^PinyinTable::find_exact_entry (PinyinKey key)$/;"	f	class:PinyinTable
+find_key_strings	scim/scim_pinyin.cpp	/^PinyinTable::find_key_strings (std::vector<PinyinKeyVector> &vec, const WideString & str)$/;"	f	class:PinyinTable
+find_keys	scim/scim_pinyin.cpp	/^PinyinTable::find_keys (PinyinKeyVector &vec, ucs4_t code)$/;"	f	class:PinyinTable
+find_phrases	phrase/PinyinPhrase.cpp	/^unsigned int PinyinPhraseTable::find_phrases(PhraseOffsetFrequencyPairVector& phrases,PinyinPhraseKey& pinyin)$/;"	f	class:PinyinPhraseTable
+first_visible	PinyinFrame.h	/^		unsigned int first_visible; \/\/index of first visible candidate hanzi,start from 0$/;"	m	struct:QPinyinFrame::ime_info_struc
+get_all_chars	scim/scim_pinyin.h	/^	int get_all_chars (std::vector<ucs4_t> &vec) const {$/;"	f	class:PinyinEntry
+get_all_chars_with_frequencies	scim/scim_pinyin.h	/^	int get_all_chars_with_frequencies (std::vector<CharFrequencyPair> &vec) const {$/;"	f	class:PinyinEntry
+get_all_phrases	phrase/PinyinPhrase.cpp	/^unsigned int PinyinPhraseEntry::get_all_phrases(PhraseOffsetFrequencyPairVector& vect)$/;"	f	class:PinyinPhraseEntry
+get_as_int	Config.cpp	/^int Config::get_as_int(const char* key_name)$/;"	f	class:Config
+get_as_string	Config.cpp	/^std::string Config::get_as_string(const char* key_name)$/;"	f	class:Config
+get_char	PinyinEngine.cpp	/^QChar PinyinEngine::get_char(unsigned int index)$/;"	f	class:PinyinEngine
+get_char	PinyinFrame.h	/^	inline QChar QPinyinFrame::get_char(unsigned int nIndex\/*this is global index*\/){$/;"	f	class:QPinyinFrame::QPinyinFrame
+get_char_by_index	scim/scim_pinyin.h	/^	ucs4_t get_char_by_index (unsigned int index) const {$/;"	f	class:PinyinEntry
+get_char_count	PinyinEngine.h	/^	inline unsigned int get_char_count(){$/;"	f	class:PinyinEngine
+get_char_frequency	scim/scim_pinyin.cpp	/^PinyinTable::get_char_frequency (ucs4_t ch, PinyinKey key)$/;"	f	class:PinyinTable
+get_char_frequency	scim/scim_pinyin.h	/^	uint32 get_char_frequency (ucs4_t ch) const {$/;"	f	class:PinyinEntry
+get_char_with_frequency_by_index	scim/scim_pinyin.h	/^	const CharFrequencyPair & get_char_with_frequency_by_index (unsigned int index) const {$/;"	f	class:PinyinEntry
+get_charunicode	PinyinFrame.cpp	/^int QPinyinFrame::get_charunicode(unsigned int nIndexOnPage)$/;"	f	class:QPinyinFrame
+get_end_pos	scim/scim_pinyin.h	/^	int get_end_pos () const { return m_pos + m_length; }$/;"	f	struct:PinyinParsedKey
+get_final	scim/scim_pinyin.h	/^	PinyinFinal get_final () const {$/;"	f	class:PinyinKey
+get_final_string	scim/scim_pinyin.h	/^	const char* get_final_string () const {$/;"	f	class:PinyinKey
+get_formatted_pinyin	PinyinEngine.h	/^	inline String get_formatted_pinyin(){$/;"	f	class:PinyinEngine
+get_initial	scim/scim_pinyin.h	/^	PinyinInitial get_initial () const {$/;"	f	class:PinyinKey
+get_initial_string	scim/scim_pinyin.h	/^	const char* get_initial_string () const {$/;"	f	class:PinyinKey
+get_key	phrase/PinyinPhrase.h	/^	inline PinyinPhraseKey& get_key(){$/;"	f	class:PinyinPhraseEntry
+get_key	scim/scim_pinyin.h	/^	PinyinKey get_key () const {$/;"	f	class:PinyinEntry
+get_key_by_index	phrase/PinyinPhrase.h	/^	inline PinyinKey& get_key_by_index(unsigned int index){$/;"	f	class:PinyinPhraseKey
+get_key_count	phrase/PinyinPhrase.h	/^	inline unsigned int get_key_count(){$/;"	f	class:PinyinPhraseKey
+get_key_string	phrase/PinyinPhrase.cpp	/^String PinyinPhraseKey::get_key_string()$/;"	f	class:PinyinPhraseKey
+get_key_string	scim/scim_pinyin.cpp	/^PinyinKey::get_key_string () const$/;"	f	class:PinyinKey
+get_length	scim/scim_pinyin.h	/^	int get_length () const { return m_length; }$/;"	f	struct:PinyinParsedKey
+get_phrase	PinyinEngine.cpp	/^QString PinyinEngine::get_phrase(unsigned int index)$/;"	f	class:PinyinEngine
+get_phrase	PinyinFrame.h	/^	inline QString QPinyinFrame::get_phrase(unsigned int nIndex\/*this is global index*\/){$/;"	f	class:QPinyinFrame::QPinyinFrame
+get_phrases_by_offsets	phrase/PinyinPhrase.cpp	/^unsigned int PinyinPhraseTable::get_phrases_by_offsets(PhraseOffsetFrequencyPairVector& phrases_pair,$/;"	f	class:PinyinPhraseTable
+get_pos	scim/scim_pinyin.h	/^	int get_pos () const { return m_pos; }$/;"	f	struct:PinyinParsedKey
+get_tone	scim/scim_pinyin.h	/^	PinyinTone get_tone () const {$/;"	f	class:PinyinKey
+has_char	scim/scim_pinyin.h	/^	bool has_char (ucs4_t c) const {$/;"	f	class:PinyinEntry
+has_key	scim/scim_pinyin.cpp	/^PinyinTable::has_key (PinyinKey key) const$/;"	f	class:PinyinTable
+has_key	scim/scim_pinyin.cpp	/^PinyinTable::has_key (const char *key) const$/;"	f	class:PinyinTable
+hide	PinyinFrame.cpp	/^void QPinyinFrame::hide()$/;"	f	class:QPinyinFrame
+hit	PinyinEngine.cpp	/^void PinyinEngine::hit(unsigned int index)$/;"	f	class:PinyinEngine
+hit_test_helper	PinyinFrame.cpp	/^bool hit_test_helper(int x,int y,QRect& rect)$/;"	f
+icn	PinyinImpl.h	/^    QPixmap *icn;$/;"	m	class:QPinyinImpl
+icon	PinyinImpl.cpp	/^QPixmap *QPinyinImpl::icon()$/;"	f	class:QPinyinImpl
+ifdef	Makefile.x86	/^ifdef DEBUG$/;"	l
+ime_info_struc	PinyinFrame.h	/^		ime_info_struc(){$/;"	f	struct:QPinyinFrame::ime_info_struc
+ime_info_struc	PinyinFrame.h	/^	typedef struct ime_info_struc{$/;"	s	class:QPinyinFrame
+ime_info_t	PinyinFrame.h	/^	}ime_info_t;$/;"	t	class:QPinyinFrame	typeref:struct:QPinyinFrame::ime_info_struc
+index_file	phrase/main.cpp	/^const char index_file[]="murphytalk_phrase_idx.txt";$/;"	v
+init_gui_dimention	PinyinFrame.cpp	/^int QPinyinFrame::init_gui_dimention()$/;"	f	class:QPinyinFrame
+initialize	scim/scim_pinyin.cpp	/^PinyinValidator::initialize (\/*const PinyinCustomSettings &custom,*\/$/;"	f	class:PinyinValidator
+input	phrase/PinyinPhrase.cpp	/^bool PinyinPhraseTable::input (std::istream &is)$/;"	f	class:PinyinPhraseTable
+input	scim/scim_pinyin.cpp	/^PinyinTable::input (std::istream &is)$/;"	f	class:PinyinTable
+inputMethod	PinyinImpl.cpp	/^QWidget *QPinyinImpl::inputMethod( QWidget *parent, Qt::WFlags f )$/;"	f	class:QPinyinImpl
+input_text	phrase/PinyinPhrase.cpp	/^std::istream& PinyinPhraseEntry::input_text (std::istream &is)$/;"	f	class:PinyinPhraseEntry
+input_text	scim/scim_pinyin.cpp	/^PinyinEntry::input_text (const PinyinValidator &validator, std::istream &is)$/;"	f	class:PinyinEntry
+input_text	scim/scim_pinyin.cpp	/^PinyinKey::input_text (const PinyinValidator &validator, std::istream &is)$/;"	f	class:PinyinKey
+insert	phrase/PinyinPhrase.cpp	/^void PinyinPhraseTable::insert(PinyinPhraseEntry& phrase)$/;"	f	class:PinyinPhraseTable
+insert	phrase/PinyinPhrase.h	/^	void insert (const PhraseOffset &ch) {$/;"	f	class:PinyinPhraseEntry
+insert	scim/scim_pinyin.cpp	/^PinyinTable::insert (ucs4_t hz, PinyinKey key)$/;"	f	class:PinyinTable
+insert	scim/scim_pinyin.cpp	/^PinyinTable::insert (ucs4_t hz, const char *key)$/;"	f	class:PinyinTable
+insert	scim/scim_pinyin.h	/^	void insert (const CharFrequencyPair &ch) {$/;"	f	class:PinyinEntry
+isPhrase	PinyinEngine.h	/^	inline bool isPhrase(){$/;"	f	class:PinyinEngine
+isValid	phrase/PinyinPhrase.h	/^	inline bool isValid(){$/;"	f	class:PinyinPhraseEntry
+isValid	phrase/PinyinPhrase.h	/^	inline bool isValid(){$/;"	f	class:PinyinPhraseKey
+is_alpha	phrase/winpy2phrase.py	/^	def is_alpha(a):$/;"	f	function:filter
+keyPressEvent	PinyinFrame.cpp	/^void QPinyinFrame::keyPressEvent(QKeyEvent*)$/;"	f	class:QPinyinFrame
+len	scim/scim_pinyin.h	/^	int len;		\/**< length of ASCII name. *\/$/;"	m	struct:PinyinToken
+lmask	scim/scim_pinyin.cpp	/^	long    lmask;$/;"	m	struct:utf8_table	file:
+load_index	phrase/PinyinPhrase.cpp	/^bool PinyinPhraseTable::load_index(const char* indexfile)$/;"	f	class:PinyinPhraseTable
+load_table	scim/scim_pinyin.cpp	/^PinyinTable::load_table (const char *tablefile)$/;"	f	class:PinyinTable
+lval	scim/scim_pinyin.cpp	/^	long    lval;$/;"	m	struct:utf8_table	file:
+m_about_rect	PinyinFrame.h	/^	QRect m_about_rect;\/*the about text rect*\/$/;"	m	class:QPinyinFrame
+m_bEnglishMode	PinyinFrame.h	/^	bool m_bEnglishMode;$/;"	m	class:QPinyinFrame
+m_bMakingPhrase	PinyinFrame.h	/^	bool m_bMakingPhrase;$/;"	m	class:QPinyinFrame
+m_bitmap	scim/scim_pinyin.h	/^	char m_bitmap [PinyinValidatorBitmapSize];$/;"	m	class:PinyinValidator
+m_chars	PinyinEngine.h	/^	CharVector  m_chars;$/;"	m	class:PinyinEngine
+m_chars	scim/scim_pinyin.h	/^	std::vector <CharFrequencyPair> m_chars;$/;"	m	class:PinyinEntry
+m_engine	PinyinFrame.h	/^	PinyinEngine m_engine;$/;"	m	class:QPinyinFrame
+m_ime_info	PinyinFrame.h	/^	ime_info_t m_ime_info;$/;"	m	class:QPinyinFrame
+m_indicator_rect	PinyinFrame.h	/^	QRect m_indicator_rect\/*for English or Chinese mode*\/;$/;"	m	class:QPinyinFrame
+m_key	PinyinEngine.h	/^	PinyinPhraseKey   m_key;$/;"	m	class:PinyinEngine
+m_key	phrase/PinyinPhrase.h	/^	PinyinPhraseKey			m_key;$/;"	m	class:PinyinPhraseEntry
+m_key	scim/scim_pinyin.h	/^	PinyinKey m_key;$/;"	m	class:PinyinEntry
+m_key_equal	phrase/PinyinPhrase.h	/^	PhrasePinyinKeyEqualTo	m_key_equal;$/;"	m	class:PinyinPhraseKey
+m_keys	phrase/PinyinPhrase.h	/^	PinyinKey m_keys[2];	$/;"	m	class:PinyinPhraseKey
+m_keys	phrase/PinyinPhrase.h	/^        PinyinKeyVector		m_keys;$/;"	m	class:PinyinPhraseKey
+m_last_matched_phrases_range	phrase/PinyinPhrase.h	/^     	PinyinPhraseEntryVectorPosRangePair m_last_matched_phrases_range;$/;"	m	class:PinyinPhraseTable
+m_leftbtn_rect	PinyinFrame.h	/^	QRect m_leftbtn_rect,m_rightbtn_rect;$/;"	m	class:QPinyinFrame
+m_length	scim/scim_pinyin.h	/^	int m_length;	\/**< the length of string used by this key. *\/$/;"	m	struct:PinyinParsedKey
+m_making_phrase_pinyin	PinyinFrame.h	/^	String     m_making_phrase_pinyin;$/;"	m	class:QPinyinFrame
+m_new_phrases_cache	phrase/PinyinPhrase.h	/^	PinyinPhraseEntryVector             m_new_phrases_cache;$/;"	m	class:PinyinPhraseTable
+m_offset_freq_pairs	PinyinEngine.h	/^	PhraseOffsetFrequencyPairVector m_offset_freq_pairs;$/;"	m	class:PinyinEngine
+m_phrase_idx_filename	PinyinEngine.h	/^	String                          m_phrase_idx_filename;$/;"	m	class:PinyinEngine
+m_phrases	PinyinEngine.h	/^	PhraseStringVector              m_phrases;$/;"	m	class:PinyinEngine
+m_phrases	phrase/PinyinPhrase.h	/^	PhraseOffsetVector		m_phrases;$/;"	m	class:PinyinPhraseEntry
+m_phrases	phrase/PinyinPhrase.h	/^	PinyinPhraseEntryVector             m_phrases;$/;"	m	class:PinyinPhraseTable
+m_phrases_table	PinyinEngine.h	/^       	PinyinPhraseTable               m_phrases_table;$/;"	m	class:PinyinEngine
+m_pinyin_frame	PinyinImpl.h	/^    QPinyinFrame *m_pinyin_frame;$/;"	m	class:QPinyinImpl
+m_pinyin_key_equal	scim/scim_pinyin.h	/^	PinyinKeyExactEqualTo m_pinyin_key_equal;$/;"	m	class:PinyinTable
+m_pinyin_key_less	scim/scim_pinyin.h	/^	PinyinKeyExactLessThan m_pinyin_key_less;$/;"	m	class:PinyinTable
+m_pos	scim/scim_pinyin.h	/^	int m_pos;		\/**< the position of this key in the whole string. *\/$/;"	m	struct:PinyinParsedKey
+m_recent_hit_cache	phrase/PinyinPhrase.h	/^	PhraseOffsetToFreqMap               m_recent_hit_cache;$/;"	m	class:PinyinPhraseTable
+m_rightbtn_rect	PinyinFrame.h	/^	QRect m_leftbtn_rect,m_rightbtn_rect;$/;"	m	class:QPinyinFrame
+m_table	PinyinEngine.h	/^	PinyinTable m_table;$/;"	m	class:PinyinEngine
+m_table	scim/scim_pinyin.h	/^	PinyinEntryVector m_table;$/;"	m	class:PinyinTable
+m_table_filename	PinyinEngine.h	/^	String      m_table_filename;$/;"	m	class:PinyinEngine
+m_validator	scim/scim_pinyin.h	/^	const PinyinValidator *m_validator;$/;"	m	class:PinyinTable
+m_values	Config.h	/^	CONFIG_VALUES m_values;$/;"	m	class:Config
+main	phrase/main.cpp	/^int main()$/;"	f
+main	phrase/winpy2phrase.py	/^def main():$/;"	f
+main	scim/main.cpp	/^int main()$/;"	f
+moc	Makefile.x86	/^moc: $(SRCMOC)$/;"	l
+mouseReleaseEvent	PinyinFrame.cpp	/^void QPinyinFrame::mouseReleaseEvent(QMouseEvent* m)$/;"	f	class:QPinyinFrame
+murphutalk_Phrase_file	phrase/PinyinPhrase.cpp	/^static const char murphutalk_Phrase_file         [] =  $/;"	v	file:
+murphytalk_Phrase_index_header	phrase/PinyinPhrase.cpp	/^static const char murphytalk_Phrase_index_header [] = "MurphyTalk Pinyin Phrase Index Table";$/;"	v	file:
+murphytalk_Phrase_index_version	phrase/PinyinPhrase.cpp	/^static const char murphytalk_Phrase_index_version[] = "Ver "FILE_VERSION;$/;"	v	file:
+name	PinyinImpl.cpp	/^QString QPinyinImpl::name()$/;"	f	class:QPinyinImpl
+next_page	PinyinFrame.cpp	/^bool QPinyinFrame::next_page()$/;"	f	class:QPinyinFrame
+next_page_available	PinyinFrame.h	/^		bool next_page_available(){$/;"	f	struct:QPinyinFrame::ime_info_struc
+number_of_entry	scim/scim_pinyin.h	/^	size_t number_of_entry () const { return m_table.size (); }$/;"	f	class:PinyinTable
+onKeyPress	PinyinImpl.cpp	/^void QPinyinImpl::onKeyPress( QObject *receiver, const char *slot )$/;"	f	class:QPinyinImpl
+operator !=	phrase/PinyinPhrase.h	/^	bool operator != (PinyinPhraseEntry rhs) const {$/;"	f	class:PinyinPhraseEntry
+operator !=	phrase/PinyinPhrase.h	/^	bool operator != (PinyinPhraseKey rhs) const {$/;"	f	class:PinyinPhraseKey
+operator !=	scim/scim_pinyin.h	/^	bool operator != (PinyinKey rhs) const {$/;"	f	class:PinyinKey
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (PinyinKey lhs,$/;"	f	class:PhrasePinyinKeyEqualTo
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (PinyinPhraseKey lhs,$/;"	f	class:PinyinPhraseKeyLessThan
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (const PhraseOffsetFrequencyPair &lhs,$/;"	f	class:PhraseOffsetFrequencyPairGreaterThanByFrequency
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (const PhraseOffsetFrequencyPair &lhs,$/;"	f	class:PhraseOffsetFrequencyPairGreaterThanByPhraseOffset
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (uint32 lhs,$/;"	f	class:PhraseOffsetFrequencyPairGreaterThanByFrequency
+operator ()	phrase/PinyinPhrase.h	/^	bool operator () (uint32 lhs,$/;"	f	class:PhraseOffsetFrequencyPairGreaterThanByPhraseOffset
+operator ()	scim/scim_pinyin.cpp	/^PinyinValidator::operator () (PinyinKey key) const$/;"	f	class:PinyinValidator
+operator ()	scim/scim_pinyin.h	/^	bool operator () (PinyinKey lhs,$/;"	f	class:PinyinKeyExactEqualTo
+operator ()	scim/scim_pinyin.h	/^	bool operator () (PinyinKey lhs,$/;"	f	class:PinyinKeyExactLessThan
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairEqualToByChar
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairGreaterThanByChar
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairGreaterThanByCharAndFrequency
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairGreaterThanByFrequency
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairLessThanByChar
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairLessThanByCharAndFrequency
+operator ()	scim/scim_pinyin.h	/^	bool operator () (const CharFrequencyPair &lhs,$/;"	f	class:CharFrequencyPairLessThanByFrequency
+operator ()	scim/scim_pinyin.h	/^	bool operator () (ucs4_t lhs,$/;"	f	class:CharFrequencyPairGreaterThanByChar
+operator ()	scim/scim_pinyin.h	/^	bool operator () (ucs4_t lhs,$/;"	f	class:CharFrequencyPairLessThanByChar
+operator ()	scim/scim_pinyin.h	/^	bool operator () (uint32 lhs,$/;"	f	class:CharFrequencyPairGreaterThanByFrequency
+operator ()	scim/scim_pinyin.h	/^	bool operator () (uint32 lhs,$/;"	f	class:CharFrequencyPairLessThanByFrequency
+operator <<	phrase/PinyinPhrase.cpp	/^std::fstream& operator << (std::fstream& os, uint32& value)$/;"	f
+operator <<	scim/scim_pinyin.h	/^operator << (std::ostream& os, PinyinKey key)$/;"	f
+operator <<	scim/scim_pinyin.h	/^operator << (std::ostream& os, const PinyinEntry &entry)$/;"	f
+operator =	phrase/PinyinPhrase.h	/^	const PinyinPhraseEntry& operator = (const PinyinPhraseEntry &entry) {$/;"	f	class:PinyinPhraseEntry
+operator =	scim/scim_pinyin.h	/^	const PinyinEntry& operator = (const PinyinEntry &entry) {$/;"	f	class:PinyinEntry
+operator ==	phrase/PinyinPhrase.cpp	/^bool operator == (PhraseString& left,PhraseString& right)$/;"	f
+operator ==	phrase/PinyinPhrase.h	/^	bool operator == (PinyinPhraseEntry rhs) const {$/;"	f	class:PinyinPhraseEntry
+operator ==	phrase/PinyinPhrase.h	/^	bool operator == (PinyinPhraseKey rhs) const {$/;"	f	class:PinyinPhraseKey
+operator ==	scim/scim_pinyin.h	/^	bool operator == (PinyinKey rhs) const {$/;"	f	class:PinyinKey
+operator >>	phrase/PinyinPhrase.cpp	/^std::ifstream& operator >> (std::ifstream& is, uint32& value)$/;"	f
+operator PinyinKey	scim/scim_pinyin.h	/^	operator PinyinKey () const {$/;"	f	class:PinyinEntry
+operator PinyinPhraseKey	phrase/PinyinPhrase.h	/^	operator PinyinPhraseKey () const {$/;"	f	class:PinyinPhraseEntry
+output	scim/scim_pinyin.cpp	/^PinyinTable::output (std::ostream &os, bool binary) const$/;"	f	class:PinyinTable
+output_text	phrase/PinyinPhrase.cpp	/^std::ostream& PinyinPhraseEntry::output_text(std::ostream &os)$/;"	f	class:PinyinPhraseEntry
+output_text	scim/scim_pinyin.cpp	/^PinyinEntry::output_text (std::ostream &os) const$/;"	f	class:PinyinEntry
+output_text	scim/scim_pinyin.cpp	/^PinyinKey::output_text (std::ostream &os) const$/;"	f	class:PinyinKey
+paintEvent	PinyinFrame.cpp	/^void QPinyinFrame::paintEvent(QPaintEvent * e)$/;"	f	class:QPinyinFrame
+parse_final	scim/scim_pinyin.cpp	/^PinyinKey::parse_final (PinyinFinal &final,$/;"	f	class:PinyinKey
+parse_initial	scim/scim_pinyin.cpp	/^PinyinKey::parse_initial (PinyinInitial &initial,$/;"	f	class:PinyinKey
+parse_key	scim/scim_pinyin.cpp	/^PinyinKey::parse_key (PinyinInitial &initial,$/;"	f	class:PinyinKey
+parse_pinyin_key	scim/scim_pinyin.cpp	/^PinyinKey::parse_pinyin_key (const PinyinValidator &validator,$/;"	f	class:PinyinKey
+parse_tone	scim/scim_pinyin.cpp	/^PinyinKey::parse_tone (PinyinTone &tone,$/;"	f	class:PinyinKey
+phrase	PinyinFrame.h	/^		QString      phrase;$/;"	m	struct:QPinyinFrame::ime_info_struc
+phrase_index_file	PinyinFrame.cpp	/^const char phrase_index_file[]=$/;"	v
+pinyin	PinyinFrame.h	/^		String       pinyin;$/;"	m	struct:QPinyinFrame::ime_info_struc
+pix_next	PinyinFrame.cpp	/^static const char * pix_next[] = {$/;"	v	file:
+pix_prev	PinyinFrame.cpp	/^static const char * pix_prev[] = {$/;"	v	file:
+pix_xpm	PinyinImpl.cpp	/^static const char * pix_xpm[] = {$/;"	v	file:
+pre_make	build-ipk	/^pre_make(){$/;"	f
+prev_page	PinyinFrame.cpp	/^bool QPinyinFrame::prev_page()$/;"	f	class:QPinyinFrame
+prev_page_available	PinyinFrame.h	/^		bool prev_page_available(){$/;"	f	struct:QPinyinFrame::ime_info_struc
+printX86	public.h	27;"	d
+printX86	public.h	29;"	d
+queryInterface	PinyinImpl.cpp	/^QRESULT QPinyinImpl::queryInterface( const QUuid &uuid, QUnknownInterface **iface )$/;"	f	class:QPinyinImpl
+ref	PinyinImpl.h	/^    ulong ref;$/;"	m	class:QPinyinImpl
+refresh	scim/scim_pinyin.cpp	/^PinyinTable::refresh (ucs4_t hz, uint32 shift, PinyinKey key)$/;"	f	class:PinyinTable
+refresh_char_frequency	scim/scim_pinyin.h	/^	void refresh_char_frequency (ucs4_t ch, uint32 shift) {$/;"	f	class:PinyinEntry
+resetState	PinyinFrame.h	/^	void resetState(){$/;"	f	class:QPinyinFrame
+resetState	PinyinImpl.cpp	/^void QPinyinImpl::resetState()$/;"	f	class:QPinyinImpl
+save_index	phrase/PinyinPhrase.cpp	/^bool PinyinPhraseTable::save_index(const char* indexfile)$/;"	f	class:PinyinPhraseTable
+save_matched_strings	phrase/main.cpp	/^void save_matched_strings(const char *fname,PhraseStringVector& strs)$/;"	f
+save_table	PinyinEngine.cpp	/^void PinyinEngine::save_table()$/;"	f	class:PinyinEngine
+save_table	scim/scim_pinyin.cpp	/^PinyinTable::save_table (const char *tablefile, bool binary) const$/;"	f	class:PinyinTable
+scim_default_pinyin_validator	scim/scim_pinyin.cpp	/^const PinyinValidator scim_default_pinyin_validator;$/;"	v
+scim_number_of_finals	scim/scim_pinyin.cpp	/^const int scim_number_of_finals = sizeof (scim_pinyin_finals) \/ sizeof (PinyinToken);$/;"	v
+scim_number_of_initials	scim/scim_pinyin.cpp	/^const int scim_number_of_initials = sizeof (scim_pinyin_initials) \/ sizeof (PinyinToken);$/;"	v
+scim_pinyin_finals	scim/scim_pinyin.cpp	/^const PinyinToken scim_pinyin_finals[] =$/;"	v
+scim_pinyin_initials	scim/scim_pinyin.cpp	/^const PinyinToken scim_pinyin_initials[] =$/;"	v
+scim_pinyin_table_binary_header	scim/scim_pinyin.cpp	/^static const char scim_pinyin_table_binary_header [] = "SCIM_Pinyin_Table_BINARY";$/;"	v	file:
+scim_pinyin_table_text_header	scim/scim_pinyin.cpp	/^static const char scim_pinyin_table_text_header [] = "SCIM_Pinyin_Table_TEXT";$/;"	v	file:
+scim_pinyin_table_version	scim/scim_pinyin.cpp	/^static const char scim_pinyin_table_version [] = "VERSION_0_4";$/;"	v	file:
+search	PinyinEngine.cpp	/^unsigned int PinyinEngine::search(const char* pinyin)$/;"	f	class:PinyinEngine
+search	PinyinFrame.h	/^	inline void search(){		$/;"	f	class:QPinyinFrame
+search_and_hit	phrase/main.cpp	/^void search_and_hit(PinyinPhraseTable& phase)$/;"	f
+send_hanzi_mark	PinyinFrame.cpp	/^bool QPinyinFrame::send_hanzi_mark(int ascii_mark)$/;"	f	class:QPinyinFrame
+set_char_frequency	scim/scim_pinyin.cpp	/^PinyinTable::set_char_frequency (ucs4_t ch, uint32 freq, PinyinKey key)$/;"	f	class:PinyinTable
+set_char_frequency	scim/scim_pinyin.h	/^	void set_char_frequency (ucs4_t ch, uint32 freq) {$/;"	f	class:PinyinEntry
+set_final	scim/scim_pinyin.h	/^	void set_final (PinyinFinal final = SCIM_PINYIN_ZeroFinal) {$/;"	f	class:PinyinKey
+set_frequency	phrase/PinyinPhrase.cpp	/^void PinyinPhraseTable::set_frequency(uint32 offset,uint32 freq)$/;"	f	class:PinyinPhraseTable
+set_initial	scim/scim_pinyin.h	/^	void set_initial (PinyinInitial initial = SCIM_PINYIN_ZeroInitial) {$/;"	f	class:PinyinKey
+set_key	phrase/PinyinPhrase.cpp	/^void PinyinPhraseKey::set_key(const char *keystr)$/;"	f	class:PinyinPhraseKey
+set_key	scim/scim_pinyin.cpp	/^PinyinKey::set_key (const PinyinValidator &validator,$/;"	f	class:PinyinKey
+set_key	scim/scim_pinyin.h	/^	void set_key (PinyinInitial initial = SCIM_PINYIN_ZeroInitial,$/;"	f	class:PinyinKey
+set_key	scim/scim_pinyin.h	/^	void set_key (PinyinKey key) {$/;"	f	class:PinyinEntry
+set_length	scim/scim_pinyin.h	/^	void set_length (int length) { m_length = length; }$/;"	f	struct:PinyinParsedKey
+set_pos	scim/scim_pinyin.h	/^	void set_pos (int pos) { m_pos = pos; }$/;"	f	struct:PinyinParsedKey
+set_tone	scim/scim_pinyin.h	/^	void set_tone (PinyinTone tone = SCIM_PINYIN_ZeroTone) {$/;"	f	class:PinyinKey
+shift	scim/scim_pinyin.cpp	/^	int     shift;$/;"	m	struct:utf8_table	file:
+show	PinyinFrame.cpp	/^void QPinyinFrame::show()$/;"	f	class:QPinyinFrame
+size	scim/scim_pinyin.cpp	/^PinyinTable::size () const$/;"	f	class:PinyinTable
+size	scim/scim_pinyin.h	/^	size_t size () const {$/;"	f	class:PinyinEntry
+sizeHint	PinyinFrame.cpp	/^QSize QPinyinFrame::sizeHint() const$/;"	f	class:QPinyinFrame
+sort	scim/scim_pinyin.cpp	/^PinyinTable::sort ()$/;"	f	class:PinyinTable
+sort	scim/scim_pinyin.h	/^	void sort () {$/;"	f	class:PinyinEntry
+staticlib	Makefile.x86	/^staticlib: $(TARGETA)$/;"	l
+str	scim/scim_pinyin.h	/^	char str[8];	\/**< ASCII name of the token. *\/$/;"	m	struct:PinyinToken
+table_file	PinyinFrame.cpp	/^const char table_file[]=$/;"	v
+table_file	scim/main.cpp	/^const char table_file[]="pinyin_table.txt";$/;"	v
+tmake	Makefile.x86	/^tmake: Makefile$/;"	l
+trim	public.cpp	/^std::string trim(std::string &str, char ch)$/;"	f
+ucs4_t	scim/scim_pinyin.h	/^typedef unsigned short ucs4_t;$/;"	t
+uint16	scim/scim_pinyin.h	/^typedef uint16_t uint16;$/;"	t
+uint32	scim/scim_pinyin.h	/^typedef uint32_t uint32;$/;"	t
+uint64	scim/scim_pinyin.h	/^typedef uint64_t uint64;$/;"	t
+utf8_mbstowcs	phrase/PinyinPhrase.cpp	/^int utf8_mbstowcs(ucs4_t *pwcs, const __u8 *s, int n)$/;"	f
+utf8_mbtowc	scim/scim_pinyin.cpp	/^utf8_mbtowc(ucs4_t *p, const __u8 *s, int n)$/;"	f
+utf8_table	scim/scim_pinyin.cpp	/^static struct utf8_table utf8_table[] =$/;"	v	typeref:struct:utf8_table	file:
+utf8_table	scim/scim_pinyin.cpp	/^struct utf8_table {$/;"	s	file:
+utf8_wcstombs	phrase/PinyinPhrase.cpp	/^int utf8_wcstombs(__u8 *s, const ucs4_t *pwcs, int maxlen)$/;"	f
+utf8_wctomb	scim/scim_pinyin.cpp	/^utf8_wctomb(__u8 *s, ucs4_t wc, int maxlen)$/;"	f
+utf8_write_phase_string	phrase/PinyinPhrase.cpp	/^std::ostream& utf8_write_phase_string(std::ostream& os,PhraseString& str)$/;"	f
+utf8_write_wchar	scim/scim_pinyin.cpp	/^utf8_write_wchar (std::ostream &os, ucs4_t wc)$/;"	f
+version	Makefile.x86	/^version:$/;"	l
+wlen	scim/scim_pinyin.h	/^       	int wlen;		\/**< length of Chinese name. *\/$/;"	m	struct:PinyinToken
+wstr	scim/scim_pinyin.h	/^       	ucs4_t wstr[4];	\/**< Chinese name in unicode. *\/$/;"	m	struct:PinyinToken
+zero	scim/scim_pinyin.h	/^	bool zero() const {$/;"	f	class:PinyinKey
+~PinyinEngine	PinyinEngine.cpp	/^PinyinEngine::~PinyinEngine()$/;"	f	class:PinyinEngine
+~PinyinPhraseEntry	phrase/PinyinPhrase.cpp	/^PinyinPhraseEntry::~PinyinPhraseEntry()$/;"	f	class:PinyinPhraseEntry
+~PinyinPhraseKey	phrase/PinyinPhrase.cpp	/^PinyinPhraseKey::~PinyinPhraseKey()$/;"	f	class:PinyinPhraseKey
+~PinyinPhraseTable	phrase/PinyinPhrase.cpp	/^PinyinPhraseTable::~PinyinPhraseTable()$/;"	f	class:PinyinPhraseTable
+~QPinyinFrame	PinyinFrame.cpp	/^QPinyinFrame::~QPinyinFrame()$/;"	f	class:QPinyinFrame
+~QPinyinImpl	PinyinImpl.cpp	/^QPinyinImpl::~QPinyinImpl()$/;"	f	class:QPinyinImpl

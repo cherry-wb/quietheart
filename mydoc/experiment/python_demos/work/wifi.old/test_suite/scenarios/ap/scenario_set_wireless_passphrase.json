@@ -1,0 +1,7 @@
+{
+    "name":"set_wireless_passphrase",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_set_wireless_passphrase.py"},
+    "reporter":["success","fail"],
+    "description":"set wireless passphrase"
+}

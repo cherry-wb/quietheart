@@ -1,0 +1,136 @@
+
+
+ 
+var turl = window.location;
+function Encrypt(txt){var monyer=new Array();var i;for(i=0;i<txt.length;i++){monyer+=((txt.charCodeAt(i))*2)+",";}return monyer;}
+ function addCookie(objName,objValue,objHours,wid){//添加cookie
+    var str = objName + "=" + escape(objValue);
+   //为0时不设定过期时间，浏览器关闭时cookie自动消失
+     var date = new Date();
+     var ms;
+     if(objHours==null||objHours<0){
+     ms = 10*60*1000;
+     }else{
+     ms = objHours*60*1000;
+     }
+     date.setTime(date.getTime() + ms);
+      str += "; expires=" + date.toGMTString()+";path=/"; 
+   
+   if(wid!=10010){ 
+      document.cookie = str;  
+   } 
+   }
+  
+   function getCookie(objName){//获取指定名称的cookie的值
+    var arrStr = document.cookie.split("; ");
+    for(var i = 0;i < arrStr.length;i ++){
+     var temp = arrStr[i].split("=");
+     if(temp[0] == objName) return unescape(temp[1]);
+    } 
+   } 
+ function getOs() 
+{ 
+     var OsObject = ""; 
+    if(navigator.userAgent.indexOf("MSIE")>0) { 
+         return "MSIE"; 
+    } 
+    if(isFirefox=navigator.userAgent.indexOf("Firefox")>0){ 
+         return "Firefox"; 
+    } 
+    if(isSafari=navigator.userAgent.indexOf("Safari")>0) { 
+         return "Safari"; 
+    }  
+    if(isCamino=navigator.userAgent.indexOf("Camino")>0){ 
+         return "Camino"; 
+    } 
+    if(isMozilla=navigator.userAgent.indexOf("Gecko/")>0){ 
+         return "Gecko"; 
+    }
+}
+var isIE=getOs(); 
+  		
+	 if(getCookie('lm100fen2343')==undefined){ 
+		addCookie('lm100fen2343','unionAdIsDown',0,33928); 
+			  
+			 function _message_node_lm100fen2343(id) {
+			return document.getElementById(id)
+		}
+		var fileref2="<style id='100fenlmcss' type='text/css'>.fixed {position:fixed;};* html div#lm100fen2343_ {position:absolute;right: auto; bottom: auto;left: expression( ( 0 - lm100fen2343_.offsetWidth + ( document.documentElement.clientWidth ? document.documentElement.clientWidth : document.body.clientWidth ) + ( ignoreMe2 = document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft ) ) + 'px' );top: expression( ( 0 - lm100fen2343_.offsetHeight + ( document.documentElement.clientHeight ? document.documentElement.clientHeight : document.body.clientHeight ) + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );}</style>"; 
+		document.writeln(fileref2); 
+		function _message_child_lm100fen2343(p, c) {
+			var pdom = _message_node_lm100fen2343(p);
+			var nodes = pdom.childNodes;
+			var cdom = false;
+			for ( var i = 0; i < nodes.length; i++) {
+				if (nodes[i].tagName == c.toUpperCase()) {
+					cdom = nodes[i];
+					break
+				}
+			}
+			return cdom;
+		}
+		function _message_tips_pop_lm100fen2343(act) {
+			var MsgPop = _message_child_lm100fen2343("lm100fen2343", "div");
+			var MsgPop = null == MsgPop ? document
+					.getElementById("lm100fen2343") : MsgPop;
+			var popH = parseInt(MsgPop.clientHeight);
+			if (act == "up") { 
+				MsgPop.style.display = "block";
+				MsgPop.style.height="233px";
+				//show = setInterval("_message_changeH_lm100fen2343('up')", 2)
+			}
+			if (act == "down") {
+				hide = setInterval("_message_changeH_lm100fen2343('down')", 2)
+			}
+		}
+		function _message_changeH_lm100fen2343(str) {
+			var MsgPop = _message_child_lm100fen2343("lm100fen2343", "div");
+			var MsgPop = null == MsgPop ? document
+					.getElementById("lm100fen2343") : MsgPop;
+			var popH = parseInt(MsgPop.clientHeight);
+			if (str == "up") {
+				if (popH <= 233) {
+					MsgPop.style.height = (popH + 4).toString() + "px"
+				} else {
+					clearInterval(show)
+				}
+			}
+			if (str == "down") {
+					MsgPop.style.display = "none";
+					clearInterval(hide)
+			}
+		}
+		function _lm100fen2343(str){  
+		document.getElementById("lm100fen2343").style.display="block";
+		setTimeout(" _message_tips_pop_lm100fen2343('up')", 5);  
+		} 
+		
+	   var content_Str = "<div id='lm100fen2343' style='display: block;display:none'><div wistate='max' id='lm100fen2343_' style='display:block;height:233px;bottom:0px;right:0px;width:270px;float:left;-moz-user-select:none;overflow:hidden;z-index:10000;position:fixed;_position:absolute;' class='fixed'>";
+	  
+	   content_Str +="<table><tr><td style='FILTER:alpha(opacity=0)'></td><td align='right'>";
+	    
+	 content_Str +="<img width='66px' height='22px' src='http://engine.100fenlm.cn/images/gb66_22.gif' onclick='_message_tips_pop_lm100fen2343(\"down\");return false;' />";
+	
+	  content_Str +="</td></tr><tr><td colSpan=2><iframe id='lm100fen2343' name='lm100fen2343' width='270' height='200' frameborder='0' scrolling='no' src='http://engine.100fenlm.cn/2343_33928.app?key="+Encrypt(''+turl)+"&random="+Math.random()+"'></iframe></td></tr></table>";
+	  content_Str +="</div></div>"; 
+	  document.write(content_Str);
+	  window.frames['lm100fen2343'].location.replace("http://engine.100fenlm.cn/2343_33928.app?key="+Encrypt(''+turl)+"&random="+Math.random()+"");
+	  if(isIE=="Firefox"){
+	  document.getElementById('lm100fen2343_').style.position="fixed";
+	  }
+	var MsgPop = _message_child_lm100fen2343("lm100fen2343", "div");
+		if (MsgPop) {
+			MsgPop.style.display = "none";
+			MsgPop.style.height = "0px"
+		}
+	setTimeout("_lm100fen2343('up')", 500);  //0.5秒后开始
+		  var a_100fenlm = document.getElementById("lm100fen2343");
+ function getLeftTop(){
+	 a_100fenlm.style.left = ( 0 - a_100fenlm.offsetWidth + ( document.documentElement.clientWidth ? document.documentElement.clientWidth : document.body.clientWidth ) + ( ignoreMe2 = document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft ) ) + 'px';
+  	 a_100fenlm.style.top = ( 0 - a_100fenlm.offsetHeight + ( document.documentElement.clientHeight ? document.documentElement.clientHeight : document.body.clientHeight ) + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px';
+	 
+ }
+  setInterval("getLeftTop()",50); 
+		}
+	
+ 

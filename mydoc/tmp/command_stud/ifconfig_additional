@@ -1,0 +1,14 @@
+ifconfig eth0 192.168.1.139 netmask 255.255.255.0 up
+配置之后，并不会保存到机器上面，之后重新启动机器会丢失。所以需要写入到配置文件中去。
+
+发现的一个现象就是，连接到路由器的局网的时候，使用
+ifconfig eth0 down
+ifconfig <ip> netmask 255.255.255.0 up
+这样才能够在终端上登陆路由，但是在firefox上面不能上网。
+如果没有ifconfig eth0 down，尽管终端上面能够ping路由，也无法登陆，firefox仍然不能登陆网。
+
+ifconfig -a
+即使网卡被down也会显示，如果直接ifconfig那么被ifconfig down掉的网卡不会显示。
+
+修改mac：
+#ifconfig eth0 hw ether 00:0C:18:EF:FF:ED

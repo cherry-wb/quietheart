@@ -1,0 +1,18 @@
+这个命令是shell内建命令，用来判断命令类型，
+
+例如：
+
+*判断echo是什么类型的命令：
+$type echo
+输入之后，输出如下：
+echo is a shell builtin
+实际也有一个echo不是内建的，这样做：
+$type -a echo
+输入之后，输出如下：
+echo is a shell builtin
+echo is /bin/echo
+
+*判断for是什么类型的：
+$type for
+输入之后，输出如下：
+for is a shell keyword

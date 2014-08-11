@@ -1,0 +1,386 @@
+﻿カーネルコンパイル、ファイルシステムイメージの作成及び焼き込み方法に関する説明
+
+【概要】
+本書はカーネルコンパイル、ファイルシステムイメージの作成、カーネル焼き込み、ファイルシステムイメージの焼き込み、及び焼き込んだカーネルとファイルシステムからNBLを起動する設定方法を説明するものである。
+
+
+【主な内容】
+===================
+手順がちょっと複雑なので、詳細は【詳細内容】のほうをご参照ください。
+ここでは、とりあえず操作手順を説明しておく。
+一、カーネルコンパイル
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+
+二、ファイルシステムのイメージを作成する。
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Rootfs
+$cd makerootfs
+$./makerootfs.sh all
+
+
+三、焼き込み用パーティションを設定する
+ボード起動後、順番に下記内容を実行する。
+NBL> sdm init
+NBL> diag ethaddr 00:11:12:33:44:55
+NBL> sdm create -n -l 0x400000 kernel
+NBL> sdm create -n -l 0x800000 initrd_fat
+NBL> fdisk -a sdme::
+NBL> mkfs sdme1:uvfat:
+NBL> mkdir sdme1:uvfat:/boot
+
+四、NBL環境を設定する。
+NBL> set boot_option "console=ttyS0,115200n8 ip=10.1.29.xx1::10.1.29.1:255.255.255.0"
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img"
+NBL> set console on
+NBL> set myip 10.1.29.xx1
+NBL> set gateip 10.1.29.1
+NBL> set servip 10.1.29.xx2
+
+五、カーネルとファイルシステムを焼き込み、システムを起動する。
+ファイルシステムイメージとカーネルをtftpエクスポートディレクトリにコピーした後、
+以下の内容を実行する。
+NBL> cp net:tftp:vmlinux.bin sdmd::
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+NBL> boot -r sdmd:raw:vmlinux.bin
+ここまで、カーネルとファイルシステムをボードで正しく起動できるようになった。
+===================
+
+
+【詳細内容】
+===================
+一、カーネルコンパイル
+二、initrdファイルシステムのイメージを作成する。
+三、焼き込み用パーティションを用意する。
+四、カーネルとファイルシステムを焼き込む。
+五、uboo環境を構築する。
+六、ボードからカーネルを起動しロードして、ファイルシステムを起動する。
+七、補足
+
+=====================
+一、カーネルコンパイル
+=====================
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+[注意事項]
+*カーネルコンパイル前に環境変数を「exportPATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH」に設定
+*作成するカーネル：avp13Build/vmlinux.bin
+
+===================
+二、initrdファイルシステムのイメージを作成する。
+===================
+案1，ramdiskイメージ：
+-------------------
+1、空のイメージを作成する。
+#dd if=/dev/zero of=ramdisk bs=1M count=16
+#mkfs.ext2 -m0 ramdisk
+
+2、ファイルシステムを空のイメージにコピーする。
+#mkdir tmpmnt
+#mount -o loop ramdisk tmpmnt
+#cp -a rootfs/* tmpmnt
+rootfsはファイルシステムディレクトリである。rootfs中の「dev/ram0」が必須で、欠けてはいけない。
+
+3、イメージを圧縮する。
+#umount tmpmnt
+#gzip -v9 ramdisk && mv $_.gz $_.img
+
+ここまでファイルシステムイメージの作成が完了になった。
+あなたのtftpディレクトリにコピーし、焼き込む時に使用する。
+#cp ramdisk.img /tftpboot
+
+案2，cpio圧縮イメージ：
+-------------------
+$cd rootfs
+$ln sbin/init init
+$find . | cpio --quiet -c -o | gzip -9 -n > ../ramdisk.img
+ここで/initというリンクは必ず必要で、cpioの-c選択肢も指定しないといけないです。現在この方法を使って
+イメージを作成します。上記と比べるとより先進的で、rootfsサイズに対して制限がないのはメリットです。
+圧縮イメージを使わないのであれば、：find . |cpio --quiet -c -o > 
+../ramdisk.imgを利用可能ですが、
+イメージサイズは16M前後となります。
+
+備考：
+PC版のファイルシステムイメージの作成方法は少々違う。
+詳細は以下の通り。
+(1)（上記方法を実践していない）PC版のファイルシステムイメージを以下のように作成する。
+#cd rootfs
+#find . | cpio --quiet -c -o | gzip -9 -n > ../ramdisk.img
+ここのrootfsはx86のPC上のファイルシステムに対応し、作成したイメージをrootfsの同級ディレクトリに格納する。
+
+(2)イメージ実行時に下記操作が必要である。
+a)#cp ../ramdisk.img /boot
+b)/boot/grub/grub.conf変更
+変更・追加する内容はgrub.confの元の内容をご参照ください。
+
+
+===================
+三、焼き込み用パーティションを用意する。
+===================
+1、sdmデバイスを初期化する。
+NBL> sdm init
+
+2、macアドレスを初期化する。
+NBL> diag ethaddr 00:11:12:33:44:55
+他人と競合しないでください。
+
+3、カーネル焼き込み用パーティションを作成する。
+NBL> sdm create -n -l 0x400000 kernel
+ここでは領域名をkernel、サイズを4Mに指定する。
+
+4、ファイルシステム焼き込み用パーティションを作成する。
+1）ファイルシステム焼き込み用領域を作成する。
+NBL> sdm create -n -l 0x800000 initrd_fat
+ここではファイルシステムイメージのサイズを8Mに指定する。
+
+2)領域に1つのパーティションを作成する。
+NBL> fdisk -a sdme::
+操作後に下記情報が出力される。
+Num. Boot    Start      Length    SystemID
+1                8       16376    0x83 (Linux native (ext2))
+
+3）パーティションにfatファイルシステムを作成する。
+NBL> mkfs sdme1:uvfat:
+
+4)ディレクトリを作成する。
+NBL> mkdir sdme1:uvfat:/boot
+
+ここまで、焼き込み用パーティションの作成が完了になった。この際のパーティション状況は以下のとおり、
+NBL> sdm list
+sdma: nblconfig
+    device      : 0
+    start sect  : 0x88
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmb: sdmreg
+    device      : 0
+    start sect  : 0xa8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmc: sdmlog
+    device      : 0
+    start sect  : 0xc8
+    image size  : 0x20000 bytes(0x20 sectors)
+    protect     : Yes
+sdmd: kernel
+    device      : 0
+    start sect  : 0xe8
+    image size  : 0x400000 bytes(0x400 sectors)
+    protect     : No
+sdme: initrd_fat
+    device      : 0
+    start sect  : 0x4e8
+    image size  : 0x800000 bytes(0x800 sectors)
+    protect     : No
+sdma、sdmb、sdmcは「sdm init」実行後に現れ、sdmd、sdmeは「sdm create -n -l 0x800000 initrd_fat」の後に現れる。
+[注意事項]
+(1)「焼き込み用パーティションを用意する」ことは1回だけ行う。今後、レイヤアウトやり直し以外の場合に再度行う必要がない。
+(2)NBLでいくつかのファイル操作コマンドを実行できる。
+例えば、*作成するディレクトリ内容：
+NBL> ls -l sdme1:uvfat:/boot
+以下のように出力される。
+drwxrwxrwx root     4096 2000/01/01 00:00:00 ./
+drwxrwxrwx root    32768 2000/01/01 00:00:00 ../
+ここでは、時刻は固定値「2000/01/01 00:00:00」となる。
+
+(3)ブロックを操作できる。
+例えば、作成した領域sdmeを削除する。
+NBL> sdm delete fat
+
+(4)作成するパーティション番号はsdmpを上限とする。総サイズは64Mを上限とする。
+「avp13_nbl_spec.txt」の第3節「3. Memory map of NBL」によると、総物理メモリが512Mとなるが、NBLはそのうちの64Mしか使わない。残りはそれ以外のマイクロプロセッサに使用されてしまう。
+
+===================
+四、カーネルとファイルシステムを焼き込む
+===================
+
+1、カーネルをtftpからカーネル焼き込み用領域にコピーする。
+NBL> cp net:tftp:vmlinux.bin sdmd::
+こうして、カーネル焼き込みが完了になった。
+この際、boot loader(すなわちNBL)環境構築済みの場合、
+boot -r -c "mem=252MB console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/home/quietheart/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0" sdmd:raw:vmlinux.bin
+によって、nfsから自分のファイルシステムを起動できる。
+
+2、ファイルシステムイメージをtftpからファイル焼き込み用パーティションにコピーする。
+NBL> cp net:tftp:ramdisk.img sdme1:uvfat:/boot/
+私のPCではコピー後に以下のような情報が出力される。
+i8254x: Ethernet address: 00:11:22:33:44:55
+ # [if_i8254x.c] i8254x_set_phy_to_mac():822: Auto-negotiation failed: MII_GBCR=0x00000200, MII_GBSR=0x%, MII_ANAR=
+0x%, MII_ANLPAR=0x%
+i8254x: Ethernet address: 00:11:22:33:44:55
+ # [if_i8254x.c] i8254x_set_phy_to_mac():822: Auto-negotiation failed: MII_GBCR=0x00000200, MII_GBSR=0x%, MII_ANAR=
+0x%, MII_ANLPAR=0x%
+ファイルシステムイメージが大きすぎないように注意してください。
+「rm」コマンドで「sdme1:uvfat:/boot」から無駄なファイルを削除したほうがいい。
+
+===================
+五、bootloader環境を構築する。
+===================
+案1，ramdiskイメージを利用する：
+-------------------
+（1）カーネル起動用引数を設定する。
+NBL> set boot_option "mem=252MB console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.180::10.1.29.1:255.255.255.0"
+
+（2）ファイルシステムイメージの位置を設定する。
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img"
+
+ここで、私はboot loaderを以下のように設定する。
+NBL> print
+console=on
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+servip=10.1.29.44
+boot_option=mem=252MB console=ttyS0,115200n8 root=/dev/ram0 ip=10.1.29.180::10.1.29.1:255.255.255.0
+initrd=sdme1:uvfat:/boot/ramdisk.img
+
+
+案2，cpio圧縮イメージを利用する：
+-------------------
+（1）カーネル起動用引数を設定する。
+NBL> set boot_option "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0"
+
+（2）ファイルシステムイメージの位置を設定する。
+NBL> set initrd "sdme1:uvfat:/boot/ramdisk.img"
+
+ここで、私はboot loaderを以下のように設定する。
+NBL> print
+myip=10.1.29.180
+ethaddr=0011223344559966
+gateip=10.1.29.1
+console=on
+servip=10.1.29.44
+initrd=sdme1:uvfat:/boot/ramdisk.img
+boot_option=mem=252MB console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.180::10.1.29.1:255.255.255.0
+
+===================
+六、ボードからカーネルを起動しロードして、ファイルシステムを起動する。
+===================
+起動コマンドは以下の通り
+NBL> boot -r sdmd:raw:vmlinux.bin
+ここまで、ボードからカーネルとファイルシステムを起動できるようになった。
+焼き込んだのは圧縮版のカーネル（例えばvmlinux.bin.gz）の場合、
+NBL> boot -r -d sdmd:raw:vmlinux.bin.gzでも起動できる。
+
+===================
+七、補足
+===================
+特に無し。
+開発ボード自動起動の設定方法
+
+
+
+前の方法ではシステム起動のために手動でbootコマンドを入力する必要がある。
+
+後ろには前記の焼き込み結果により、電源供給後の自動起動方法を記載する。
+
+
+
+1、簡単手順
+
+-----------
+
+1)Boot Profile設定
+
+NBL> bootprof init
+
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+2) ジャンパーピン変更
+
+開発ボードの電源を落とした後、s1902ジャンパーピンセットの1番目のスイッチをonに設定。
+
+
+
+上記手順操作後、自動起動可能になる。
+
+
+
+2、詳細手順
+
+-----------
+
+1)Boot Profile初期化 
+
+NBL> bootprof init
+
+この手順は初回設定時に操作すればいい。
+
+
+
+2)初期化結果チェック
+
+NBL> bootprof list
+
+上記コマンドで下記内容が出力される。
+
+[global]
+
+  normal    : Linux
+
+  recovery  : Linux0
+
+ここでは、bootprof bootname [-r] [<name>]でnormalとrecovery modeの名前を設定できる。
+
+
+
+3)Boot Profile設定 
+
+必要に応じて、下記4つの場合がある。
+
+a)tftpからカーネルをダウンロードし、nfsファイルシステムをマウントする。
+
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -t 3 -n 3 Linux
+
+ここでは、あなたのtftp（即ちservip変数）とnfsサービスの設定を忘れないように注意してください。
+
+
+
+b)tftpからカーネルをダウンロードし、flashをマウントしカーネルをロードし、flashでのinitrdイメージをマウントする。
+
+NBL> bootprof param -k net:tftp:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+
+
+c）flashからカーネルをロードし、nfsファイルシステムをマウントする。
+
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.xx2:/nfsdir ip=10.1.29.180::10.1.29.1:255.255.255.0" -t 3 -n 3 Linux
+
+ここの10.1.29.xx2:/nfsdirはあなたの機器のnfsディレクトリである。
+
+
+
+d）flashからカーネルをロードし、flashでのinitrdイメージをマウントする。
+
+NBL> bootprof param -k sdmd:raw:vmlinux.bin -c "console=ttyS0,115200n8 rdinit=/sbin/init ip=10.1.29.xx1::10.1.29.1:255.255.255.0" -i sdme1:uvfat:/boot/ramdisk.img -t 3 -n 3 Linux
+
+
+
+通常に開発デバッグ時にa)を、リリース時にd)を利用する。
+
+設定後に「aboot」で正しく起動できるかを確認できる。
+
+
+
+4) ジャンパーピンスイッチ変更
+
+開発ボードの電源を落とした後、開発ボードのs1902ジャンパーピンセットを見つける。
+
+全部で8つのスイッチがある。
+
+1番目のスイッチをonに設定する。
+
+
+
+5)電源供給、起動
+
+上記設定が正しければ、電源供給後に自動的に起動できるはずである。
+
+
+
+
+Neusoft
+2010年11月11日

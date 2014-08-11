@@ -1,0 +1,6 @@
+*查看一个目录所在的文件系统的空间信息：
+$df /home/quietheart/test
+输入之后，输出如下：
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda9             14879484  12005608   2118020  86% /home
+这里，输出的结果和df /home一样，也就是说，可以用"df <目录>"来查看那个目录所在文件系统的空间信息。

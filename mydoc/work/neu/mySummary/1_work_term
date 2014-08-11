@@ -1,0 +1,95 @@
+问题：
+1,例：DRM需求不明，无法评估工作量。
+问：这里的DRM是什么意思呢？
+
+2,例：有一个DRM的材料，是否能够给东软发需要首先确认NDA，大体上是根据Device ID进行解密.
+问：这里的NDA是什么意思呢？
+在dict.cn上面查询发现如下：
+NDA
+n. 不公开协议
+
+3,RTM是什么？
+需求分析
+测试人员根据RTM列出的内容进行测试。
+开发人员根据这个RTM进行开发。
+
+4,QA
+bbr. 质量保证(=Quality Assurance) 
+又：Question and answer.(应该是这个)
+当有问题的时候，询问客户需要提QA.
+
+5,ODM
+abbr. 海外开发部（=Ministry of Overseas Development）
+
+6,BSP
+board support package
+
+7,NG
+No Good
+在公司内部测试的时候，如果发现了错误，交由开发人员处理，处理之后转发测试人员发现还有这个错误，那么这个错误就标记为NG,表示对测试资源的浪费。
+
+8,TBD
+ to be determined
+待确定的，待完成的.
+
+9,SRS
+软件需求分析
+
+10,测试标准操作流程 (SOP)
+
+
+
+================
+from yu.ht@neusoft.com
+PPL －－ project plan 项目计划－－－包括：各个phase，人员分配。。。。。。 
+
+STP --- system test plan.
+STC ---- system test case.
+STR --- system test report.
+在SRS 后期作 stp 和stc， 
+在 ST 之后 出 STR。 
+
+ITP,
+ITC,
+ITR,
+在 HLD 后期 作ITP，ITC。
+在IT之后 作 ITR。 
+
+
+UTP,
+UTC,
+UTR,
+在LLD后期 做UTP，UTC。 
+在UT之后作 UTR。 
+
+
+各个phase之后 －－ 都做 doc review。 
+然后coding －－ coding之后 作 code review。 
+
+
+CMP -- configuration management plan.
+CMO -- CM officer
+
+PHB -- project handbook --- 项目管理手册，表示当前项目执行过程中所遵循的
+一些方法和标准。 
+比如：采用什么开发模型－－瀑布型。
+
+WBS －－ work breakdown structure －－ 工作任务分解 －－ PL 分配任务使用
+的。
+wbs 的分解 granularity 粒度 还是比较粗，有更精细的tool 
+
+SRS －－ software requirements specification 需求分解。
+SRS 阶段还要作 －－－ estimation －－－估计， 方法： delphi 和 xxx。 
+然后在 HLD 阶段 －－ 还要作 重估计－－re－estimation。   
+估计的结果是PL制定 project plan的重要依据。 
+
+另外，项目还要管理 risk management －－－ RM
+还有需求管理 －－ requirements trace management －－ RTM。
+
+=======
+参考stp，stc，str的解释， 所以我没有给出来。 
+it ---集成测试 －－ integrated test.
+ut -- 单元测试 －－ unit test。
+
+hld －－ high level desgin －－概要设计。
+lld －－ low level design －－详细设计。

@@ -1,0 +1,159 @@
+commit bc54279cec3a82724c173cb1e112d908421e2b7b
+Author: Vincent Untz <vuntz@gnome.org>
+Date:   2009-06-22
+
+    [core] Fix wnck_application_get_icon_is_fallback()
+
+    We can't simply call _wnck_icon_cache_get_is_fallback() since we're
+    possibly using the icon from a window:
+
+     + if we have an icon for the application, we know it's not a fallback
+       icon (we use _wnck_icon_cache_set_want_fallback())
+     + if we use the icon of a window, then we simply relay the result of
+       wnck_window_get_icon_is_fallback()
+
+    http://bugzilla.gnome.org/show_bug.cgi?id=586571
+
+M	libwnck/application.c
+
+commit d078edc9b209b1ff64c5f7cb165d85b5fd4e6d6a
+Author: Runa Bhattacharjee <runab@redhat.com>
+Date:	2009-06-12
+
+    Updated Bengali India Translations
+
+M	po/bn_IN.po
+
+commit 7a0e76c148b132b012c7563e70383ad6937b4cb4
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-06-04
+
+    [build] Mark strings as fuzzy in po files for commit hook check
+
+M	po/ne.po
+
+commit c61c7d87e1a0df7a3559fa6a1a02b783da2a2d22
+Author: Ivar Smolin <okul@linux.ee>
+Date:	2009-05-07
+
+    Updating Estonian translation
+
+M	po/et.po
+
+commit 49c91d9b9a7d31a4479fdd81febb1377c754a979
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-05-02
+
+    Update commit messages guidelines
+
+M	ChangeLog
+
+commit 1b48de14f5e72413a663e59920835b0a490bf4cb
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-27
+
+    Update MAINTAINERCLEANFILES
+
+    Add configure, remove intltool-*.in (shouldn't be here in the first
+    place, see lp#367259) and .gitignore (handled by git.mk).
+
+M	Makefile.am
+
+commit 9d21c76a2e5d6248b40751e5fe2e6782ee498edc
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-27
+
+    Update git.mk from pango
+
+M	git.mk
+
+commit 53a7dfece6cebab2c269e3a7a01a07aad1361954
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-24
+
+    Use git.mk from pango to autogenerate .gitignore files
+
+M	Makefile.am
+M	doc/Makefile.am
+A	git.mk
+M	libwnck/Makefile.am
+
+commit 16d184b8c95abacb6a001355258ea55693c8d1ec
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-26
+
+    Fix doap file to have mail address as URL (mailto:)
+
+M	libwnck.doap
+
+commit 9bc71cae231ee0c2adcd9d48d666dd95a516144d
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-24
+
+    Use shave to improve build log readability
+
+    See http://git.lespiau.name/cgit/shave/tree/README for more details.
+
+M	configure.in
+M	libwnck/Makefile.am
+A	m4/shave.m4
+A	shave-libtool.in
+A	shave.in
+
+commit c05b1f0eb98d5d729b53ac6050062fbecc79d92a
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-24
+
+    Trivial fix for a gtk-doc warning
+
+M	libwnck/util.c
+
+commit 0ee4159972087eb00f19f792445e7fd9b9579666
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-24
+
+    Clean up rules for generated files
+
+M	libwnck/Makefile.am
+
+commit ce2231175f2bfea6ddaefb4fff8a2fe37a8d6613
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-24
+
+    Make autogen.sh more modern.
+
+M	autogen.sh
+
+commit 635ee7ce054462b4e0f2e97e83b0b9f2d696f450
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-22
+
+    Add doap file
+
+A	libwnck.doap
+
+commit 103bc0377f4beccea8353b2c3e72ed77595abca9
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-22
+
+    Rename ChangeLog files to ChangeLog.pre-git
+
+M	ChangeLog
+C100	ChangeLog	ChangeLog.pre-git
+R100	po/ChangeLog	po/ChangeLog.pre-git
+
+commit a10992078cbd999dcc5a70994a978aac842637a9
+Author: Vincent Untz <vuntz@gnome.org>
+Date:	2009-04-13
+
+    post-release bump to 2.26.2
+
+    2009-04-14	Vincent Untz  <vuntz@gnome.org>
+
+	* configure.in: post-release bump to 2.26.2
+
+    svn path=/trunk/; revision=1767
+
+M	ChangeLog
+M	configure.in
+M	po/ChangeLog

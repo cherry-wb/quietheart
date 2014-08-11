@@ -1,0 +1,176 @@
+1,directory
+files:
+profiles:
+default config for general information.
+
+cases:
+case config files.
+
+cases/test:
+some case in developing.
+
+scenarios:
+scenario config files, and corresponding .py scripts.
+
+scripts:
+implementation classes and case analyze parser scripts.
+
+2,profiles and databases:
+profile(e.g. profiles/ciso.conf) specifies the database which storages the data.
+
+database:
+data stores in mysql DB. information about default ap settings as following:
+apData ={
+    "serial":"CVQ01k634585",
+    "mac":"68:7F:74:C5:CA:82",
+    "ip":"192.168.1.1",
+    "submask":"255.255.255.0",
+    "dns":"10.1.10.254",
+    "admin":"admin",
+    "password":"admin"
+}
+which were done in scripts/utils/dbgenerate.py.
+
+3,configure files
+for case configure files:
+refer to:cases/00_sample_case1.json.template
+{
+    "name":"00_sample_case1",
+    "type":{"name":"seq"},
+    "ap":[
+    {"model":"ap:cisco:e3000","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"},
+    {"model":"ap:cisco:e3200","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"}
+    ],
+    "description":"an example.",
+    "scenarios":[
+    {
+        "scenarios1":{
+            "fname":"sample_scenario1.json", 
+            "catagory":"ap",
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}
+"type":{"name":"loop","parameter":"5"}: loop for 5 times for this case.
+"type":{"name":"seq"}: which equals to  "type":{"name":"loop","parameter":"1"}
+the "type" field can be omitted.
+
+
+"ap":[
+{"model":"ap:cisco:e3000","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"}
+],
+    "dut":[
+{"model":"device:tate","mac":""}
+],
+
+"catagory":"ap",
+"catagory":"dut",
+
+"ap":[
+{"model":"all","mac":"all"}
+],
+This means use all the ap.(if there's one "all" model and mac.the whole "ap":[...] will act as this also)
+
+for scenario
+refer to:cases/00_sample_case1.json.template
+{
+    "name":"sample_scenario1",
+    "type":{"name":"seq"},
+    "script":{"fname":"sample_scenario1.py"},
+    "reporter":["success","fail"],
+    "description":"a example of execute python script in one scenario, with default reporter."
+}
+if not support "vendor" and "mac", assume use the following:
+"vendor":"ap:cisco:e3000",
+"mac":"68:7F:74:C5:CA:82",
+which were done in scripts/factory_class.py
+
+for subscenario
+current the subscenario like the case(it can even be excuted as case), except that it lays in scenarios.
+refer to:scenarios/sample_subscenario.json.template
+{
+    "name":"sample_subscenario",
+    "type":{"name":"seq"},
+    "ap":[
+    {"model":"ap:cisco:e3000","mac":"68:7F:74:C5:CA:82","serial":"CVQ01k634585"}
+    ],
+    "description":"setting device wireless.",
+    "scenarios":[
+    {
+        "subscenarios1":{
+            "fname":"sample_scenario1.json", 
+            "catagory":"ap",
+            "type":{"name":"seq"}, 
+            "parameter":
+            {
+                "param1":"value1",
+                "param2":"value2",
+                "param3":"value3"
+            }
+        }
+    }
+    ]
+}
+
+#
+scenario json was removed.
+scenario and case type became optional( default "seq")
+
+
+4,database
+ApInfo
++----+----------+-------------------+---------------------------+
+| id |   ap_id  |    config_name    |      config_value         |
++----+----------+-------------------+---------------------------+
+| 1  |    1     |      vendor       |       ap:cisco            |
++----+----------+-------------------+---------------------------+
+| 2  |    1     |       model       |       e3000               |
++----+----------+-------------------+---------------------------+
+| 3  |    1     |      serial       |       CVQ01k634585        |
++----+----------+-------------------+---------------------------+
+| 4  |    1     |        mac        |       68:7F:74:C5:CA:82   |
++----+----------+-------------------+---------------------------+
+| 5  |    1     |        ip         |       192.168.1.1         |
++----+----------+-------------------+---------------------------+
+| 6  |    1     |      manageIP     |       192.168.1.1         |
++----+----------+-------------------+---------------------------+
+| 7  |    1     |      subMask      |       255.255.255.0       |
++----+----------+-------------------+---------------------------+
+| 8  |    1     |       dhcp        |       enable              |
++----+----------+-------------------+---------------------------+
+| 9  |    1     |       dns         |       10.1.10.254         |
++----+----------+-------------------+---------------------------+
+| 10 |    1     |       admin       |       admin               |
++----+----------+-------------------+---------------------------+
+| 11 |    1     |     password      |       admin               |
++----+----------+-------------------+---------------------------+
+| .  |    .     |         .         |              .            |
+| .  |    .     |         .         |              .            |
+| .  |    .     |         .         |              .            |
+|    |          |                   |                           |
++----+----------+-------------------+---------------------------+
+
+ApTable
++----+--------+-------+---------------------+
+| id | vendor | model |         mac         |
++----+--------+-------+---------------------+
+| 1  | cisco  | e3000 |  68:7F:74:C5:CA:82  |
++----+--------+-------+---------------------+
+| .  |   .    |   .   |          .          |
+| .  |   .    |   .   |          .          |
++----+--------+-------+---------------------+
+
+
+CaseLogTable
++----+------+------+------+---------+------+---------+------+-------+
+| id | name | time |module| apModel | apMac|dutModule|status|message|
++----+------+------+------+---------+------+---------+------+-------+
++----+------+------+------+---------+------+---------+------+-------+
++----+------+------+------+---------+------+---------+------+-------+

@@ -1,0 +1,6 @@
+http://cache.baidu.com/c?m=9d78d513d98300fc4fece4697d1dc0126f43f0622ba6a1013894cd47c9221d03506790a63a784b13d3b22c345af90e4bea87672f681e71eacb98d3578de5cf7d32d361632f01861041d21da4c91172c276935de2fe4ae2eaa162c4ad83d0c8542490155a24&p=866cda15d9c04af612be9b7f1e7a&user=baidu 
+//RSA的加解密过程：
+  //  有 rsa1 和 rsa2 两个RSA对象。
+  //  现在要 rsa2 发送一段信息给 rsa1， 则先由 rsa1 发送“公钥”给 rsa2
+  //  rsa2 获取得公钥之后，用来加密要发送的数据内容。
+  //  rsa1 获取加密后的内容后，用自己的私钥解密，得出原始的数据内容。

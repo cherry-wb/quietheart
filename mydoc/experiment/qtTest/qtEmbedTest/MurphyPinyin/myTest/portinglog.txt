@@ -1,0 +1,27 @@
+Log for qt3to4 on 周二 10月 27 18:08:14 2009. Number of log entries: 13
+In file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/main.cpp at line 1 column 82: qtextstream.h -> q3textstream.h
+In file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/main.cpp at line 1 column 300: IO_WriteOnly -> QIODevice::WriteOnly
+In file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/main.cpp at line 1 column 321: QTextStream -> Q3TextStream
+In file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/main.cpp at line 1 column 370: QTextStream -> Q3TextStream
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/PinyinEngine.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/public.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/phrase/PinyinPhrase.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/scim/scim_pinyin.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/PinyinEngine.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/public.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/phrase/PinyinPhrase.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/scim/scim_pinyin.h
+In file myTest.pro: Added entry QT +=  qt3support 
+
+Log for qt3to4 on 周二 10月 27 18:09:24 2009. Number of log entries: 10
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/main.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/PinyinEngine.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/public.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/phrase/PinyinPhrase.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/scim/scim_pinyin.cpp
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/PinyinEngine.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/public.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/phrase/PinyinPhrase.h
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/qtEmbedTest/MurphyPinyin/myTest/scim/scim_pinyin.h
+In file myTest.pro: Added entry QT +=  qt3support 
+

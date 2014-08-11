@@ -1,0 +1,233 @@
+1,lshal可以查看信息。
+2，hal和dbus
+3，hal的specifications
+4,namespace:例如lshal中的udi，addons,callouts,methods等字段的详细。 
+
+------
+参考网址：
+http://blog.csdn.net/absurd
+------
+HAL是Hardware Abstraction Layer的首字母缩写。Windows下的HAL和Linux下的HAL两者所指并非相同之物：
+Windows下的HAL：位于操作系统的最底层，直接操作物理硬件，隔离与硬件相关的信息，为上层的操作系统和设备驱动程序提供一个统一的接口，起到对硬件的抽象作用。有了HAL，编写驱动程序就容易多了，因为HAL的接口不但使用简单，而且具有更好的可移植性（没用过）。
+
+Linux 下的HAL：至于对硬件的抽象，Linux内核早就有类似机制，只不过没有专门的名称罢了。而Linux的HAL指的并非这个，它不是位于操作系统的最底层，直接操作硬件，相反，它位于操作系统和驱动程序之上，是一个运行在用户空间中服务程序。
+
+在linux中，有了设备和设备驱动程序，却不知道如何使用它,所以有必要提供一个硬件抽象层，来为上层应用程序提供一个统一的接口，Linux的HAL就这样应运而生了. HAL只是告诉应用程序，系统中有哪些设备可用，以及这些设备的类型、特性和能力等。
+
+udev创建dev下的文件结点，加载驱动程序，让设备处于可用状态。而HAL则告诉应用程序，现在有哪些设备可用，这些设备的类型、特性和能力，让应用程序知道如何使用它们。
+
+ 设备的属性管理是HAL最重要任务之一，有的设备属性来源于实际的硬件，有的来源于设备信息文件(/usr/share/hal/fdi/)，有的来源其它配置信息(如/usr/share/hwdata/)。设备属性的都有标准的定义，这些属性定义是HAL的SPEC的主要内容之一，可以参考http://people.freedesktop.org/~david/hal-spec/hal-spec.html。
+
+ 简单的说，HAL就是一个设备数据库，它管理当前系统中所有的设备，你可以以多种灵活的方式去查询这些设备，可以获取指定设备的特性，可以注册设备变化事件。
+
+--------
+参考网址：
+http://people.freedesktop.org/~david/hal-spec/hal-spec.html
+--------
+这里进介绍我所理解的关键部分。
+第一章 简介
+概要
+======
+Hal可以提供各种和系统相关的硬件的信息，依据一定的策略来管理硬件。
+Hal利用设备对象(device object)来表示一系列的硬件.一个设备对象对应唯一的标识，并且它包含许多key/value对来表示各种设备属性。属性或者来自实际的硬件设备，或者来自设备信息文件，它们有些和实际设备的配置相关。这样，系统或者桌面级别的组件就能够区分不同的设备对象以及通过设备对象的属性对设备进行配置。
+Hal提供了许多接口，通过D-Bus可以很容易地使用它们，并且可以在系统消息总线上实现两个程序之间的通信。特别地，D-Bus提供了异步通知机制，这样，如果设备被添加、移除或者设备属性变化的时候可以通知其他设备。
+Hal的最重要的目标就是提供类Unix系统的即插即拔特性，Hal以D-Bus的强大支持为基础，能够在类Unix系统中运行。最初主要集中在Linux2.6的内核下运行。
+
+Hal的体系结构
+======
+官方文档中的图示可以很好地展示Hal的体系结构，这里不多说了。
+这里有几个重要的概念需要理解：
+HAL daemon
+HAL守护进程，负责管理设备配置信息以及提供系统范围服务。
+
+Applications
+请求HAL服务的程序，包括桌面范围的会话守护程序，这些守护程序根据维持执行的策略。例如电源管理程序，磁盘管理程序等。
+
+Callouts
+Callouts是一些程序，这些程序在设备对象在hal守护进程中被添加或者删除的时候被调用。这在第三方软件在通过D-Bus通知之前向设备对象中添加额外的信息的时候很有用。Callouts在每个设备中用例如info.callouts.add或者info.callouts.remove的方式指定。
+
+Addons
+Addon相当于一个守护进程，它的生命周期和HAL中的设备对象相对应。addon也提供了设备对象上面特定的接口，这样在每个函数不用起动新的程序的情况下，可以为应用程序提供服务以配置和使用设备。HAL利用如info.addons的属性，提供为每个设备对象运行和卸载一个或多个addons的便利的方式。
+
+Device Information Files
+这是文件的集合，它们匹配了设备对象上面的属性，以及添加额外的信息。这些文件也指定哪些callouts,methods和addons和一个设备对象相关联。例如，对于使用可移动介质的驱动，HAL包含了一个add-on守护进程，这个守护进程的作用就是连续地轮询驱动，检测媒体的变化。
+
+D-Bus系统消息总线用于给应用程序提供网络编程接口。D-Bus被设计成语言无关的，这样许多各种语言的运行的系统可容易地访问HAL提供的(D-Bus)服务。
+
+设备对象
+========
+Hal的设备对象非常重要，一个设备对象代表硬件的一个最小的可访问单元。这样，实际的设备和设备对象之间是一个一对多的关系。比如说一个多功能的打印机，在用户看来是个打印机，在HAL中可能会对应多个对象：一个代表打印的对象，一个代表传真的对象，等等。
+
+在Hal中，各个设备对象可以用树状的结构来组织起来。
+
+除了设备对象提供硬件的种类信息，以及提供设备的寻址之外，Hal也包含了操作系统内核提供的接口信息，以使用设备，这通常在设备对象中以/dev中的一个特殊文件作为字符串属性的形式来实现,除此之外也包含了许多其他的信息。
+
+最后HAL也提供了一系列的D-Bus接口可以用来使用和配置设备。
+总之，一个设备对象主要由一下一些部分构成：
+1)UDI:代表设备对象的唯一标识。
+2)属性：每一个设备对象都有一系列的键／值表示其属性。属性可以是整型、字符型等各种类型。属性被组织到一个namespace里面，用.来分隔。
+3)接口：应用程序可以使用D-Bus接口来配置和使用设备。
+
+设备能力?
+========
+现在主流的硬件都没能很好地说明它们究竟是做什么的，至多告诉我们怎样和它们交互。主要是没有额外的数据的话，操作系统和桌面环境展现给用户的只是片面的。例如一个照相机在系统中仅仅展现的是一个usb设备。
+HAL通过merge考虑到了这些额外的数据，这是通过例如设备信息文件实现的，hal有方法记录怎样保存这些信息。这是通过info.category(单个的数字字母keyword)和info.capabilities(多个用空格分开的数字字母keyword)两个文本属性实现的。 前者描述设备是什么，后者描述设备能做什么。后面我们就把这些本文中可用的已经定义的keyword简单称作能力。
+HAL在设备检测的时候通过检查设备类型以及通过操作系统和硬件查找信息，来给这些能力赋值。
+......
+最后，设备能力具有继承机制，例如，如果一个设备有foo.bar这个能力，那它一定有foo这个能力。
+
+第二章 设备信息文件
+
+匹配
+======
+每一个设备信息文件都有一系列的<match key......>对，它们针对设备对象的属性被检测，如果所有的match都通过了，之后设备信息就能够包含<[merge|append|prepend|addsee]key...>了。可以merge新的属性或者append已存在的属性到设备对象上面。需要注意的是所有之前的从设备检测获得的属性都可能会被设备信息文件所覆盖。
+
+这里的<match>, <merge>, <append>, <prepend>  和 <addset>需要一个关键字属性，这个属性可以是设备对象的属性名字或者另一设备对象属性路径。表示它们有一定的格式尤其后者有间接引用，这里不细说了。
+确定了match的性质，就可以在match标签中使用各种属性。
+
+例如：
+<match key="foo.bar" string="baz"> 
+将要仅仅在'foo.bar'是一个字符串属性并且值为'baz'的时候匹配。
+
+合并
+=====
+<merge>, <append>, <prepend>  和 <addset>需要指定类型属性来确定合并什么。具体支持的类型不细说了。
+
+例如：
+<merge key="foo.bar" type="string">baz</merge>  will merge the value 'baz' into the property 'foo.bar'. 
+将要把值'baz'合并到'foo.bar'属性中.
+
+<remove>指令进需要一个关键字，并且能够使用于所有的关键字。对于strlist，这是一个额外的语法，用于移除string list中的一个item.
+
+例如：
+移除属性foo.bar中的bla项。
+
+搜索路径
+========
+设备信息文件依次从两个目录进行读取：
+/usr/share/hal/fdi -用于packages提供的文件。
+/etc/hal/fdi  -用于系统管理员或者用户提供的文件。 
+系统提供的在后面就意味着它可能会覆盖packages提供的属性。
+
+目录/usr/share/hal/fdi的结构如下：
+----------------------
+*information - 用于合并设备信息的设备信息文件
++--10freedesktop - 同hal package一同包含
++--20thirdparty - 来自第三方，不再hal package中的 
+
+*policy - 用于合并策略属性（例如addons或者callouts）的设备信息文件
++--10osvendor - 同hal package一同包含
++--20thirdparty - 来自第三方，不再hal package中的 
+
+*preprobe - 检测设备之前读取的设备信息文件
++--10osvendor -  同hal package一同包含
++--20thirdparty - 来自第三方，不再hal package中的 
+
+目录/etc/hal/fdi的结构如下
+----------------------
+*information - 用于合并设备信息的设备信息文件
+
+*policy - 用于合并策略属性（例如addons或者callouts）的设备信息文件
+
+*preprobe - 检测设备之前读取的设备信息文件
+
+所有设备信息文件以如下次序匹配每一个hal设备对象:
+---------------
+1.当一个设备被发现的时候，先于设备检测的信息文件（例如所有/usr/share/hal/fdi/preprobe 和/etc/hal/fdi/preprobe中的文件）被处理。
+典型的应用是：这个类型的设备信息文件通过设置bool属性的info.ignore为TRUE来告诉HAL忽略设备。它也能够被用来运行程序，先于探测的callouts（在普通设备检测之前）.
+2.HAL开始运行先于检测的callouts.
+3.HAL现在开始检测设备。
+4.处理所有的设备信息文件（例如在/usr/share/hal/fdi/information 和 /etc/hal/fdi/information中的所有文件）。
+这些设备信息文件一般用于把额外的信息和设备对象相关联。
+5.处理所有的策略信息文件（例如在/usr/share/hal/fdi/policy 和 /etc/hal/fdi/policy中的文件）。
+这些设备信息文件一般用来把callouts和addons与设备对象相关联。
+6.HAL现在开始运行callouts,启动addons,最后在系统消息总线上面通知设备。
+
+第三章. 访问控制
+使用IPC(进程间通信)给非特权用户授予访问硬件通常有两种方式:通过给特殊设备文件授予访问权限，或者允许通过另外的进程进行访问。HAL采用后一种方式并且使用系统范围的消息总线(D-Bus)做为进程间消息通信机制。另外，HAL支持在设备文件上面修改ACL(访问控制列表)给予一定的标准来回收或者授予用户访问权限。
+
+设备文件
+===================
+如果HAL编译的时候使用了--enable-acl-management选项（这同时需要--enable-console-kit 和 --enable-policy-kit），那么设备对象上面的访问控制列表连同access_control能力根据"access control namespace(访问控制域)"自动管理。另外，对于这个配置，HAL切换一个设备信息文件（一般在/usr/share/hal/fdi/policy/10osvendor/20-acl-management.fdi）通过这个设备文件来合并非特权用户一般访问的设备对象能力。这个包括例如声卡，webcams，和其他设备但是不包括drives和volumes，因为后两者一般通过用户把它们挂载到文件系统上面访问。
+
+Hal使用PolicyKit，根据PolicyKit配置来决定哪些用户具有访问权限。PolicyKit权限的定义文件一般在(/etc/PolicyKit/privileges/hal-device-file.priv)
+
+另外，第三方软件包能够提供设备信息文件，来指定特定的用户或者组具有访问设备文件的权限（通过access_control.grant_user和access_control.grant_group属性）.这个对于非特权系统用户运行系统范围的软件是很有用的，这个借口是稳定的，所以第三方软件包可以依赖它。
+
+D-Bus接口
+==========
+如果HAL编译的时候没有ConsoleKit支持（例如没有--enable-console-kit）,那么访问各种D-Bus借口进通过D-Bus的安全配置文件（例如使用at_console限制在RedHat系统上的控制台用户。）来进行保护控制，在一定的情况下，这只限于超级用户。
+
+如果Consolekit支持被应用了，那么访问D-Bus借口仅限于在系统控制台的活动用户（？？）。如果PolicyKit支持被应用了，那么PolicyKit库会负责决定权限，PolicyKit权限定义文件在/etc/PolicyKit/privileges.
+
+
+第四章 锁定
+
+由于HAL是一个能够让在桌面会话中的程序强行执行用户选择的策略，这可能会发生一些非预期的行为。例如，如果用户在分区磁盘驱动器的过程中，这需要防止桌面在没有做好一个合适的文件系统的时候进行挂载。实际上，在这种情况下如果一个磁盘卷具有旧的文件系统签名标志它是可以挂载，同时另外一个程序往这个未好的块些数据，会可能会发生数据丢失.automounters使用的机制，HAL,提供了锁定元素，来避免这种情况的发生。
+另外，对于多用户系统，有几个桌面会话在一个系统上运行，每一个都有他们自己的显示。假设一个会话空闲了，在那个会话中的电源管理守护进程认为应该进行suspend了，这样会导致其他用户看到系统也suspend了，但其他用户并没有空闲他们也不想suspend。所以，所有会话中的电源管理守护进程需要进行协调，保证只有当所有会话空闲的时候系统才进行suspend。每个电源管理守护进程使用的机制，HAL，提供了锁定元素，来达到这个目的。
+
+总览
+====
+Hal提供了一套机制，可以锁定指定设备或者所有设备的D-Bus接口，这样调用者就无法访问了。
+前者通过一个在每个设备对象执行的org.freedesktop.Hal.Device接口上面的AcquireInterfaceLock()和ReleaseInterfaceLock()函数来实现。使用这个接口，调用者可以阻止任何其他调用者发起指定对象给定接口上的远程调用。如果其他人调用了，那么他们将会看到一个错误：org.freedesktopHal.Device.InterfaceLocked.锁定者可以指定这个锁是否是互斥锁，这样就可以决定在同一时间是多客户端可以持有这个锁，还是只能一个客户端能够持有。如果一个客户端没有访问设备接口的权限，那它尝试锁定的时候就会以一个org.freedesktop.Hal.PermissionDenied例外而失败。如果一个客户断在持有所得时候丢失了设备的访问（如果他的会话在使用快速用户切换的时候被切换走了），它将会丢失这个锁，这个可以通过侦听信号InterfaceLockReleased来进行跟踪。
+
+如果别的客户已经持有了一个互斥锁，那么其他客户申请锁将会导致org.freedesktop.Hal.Device.InterfaceAlreadyLocked例外而失败（即使它有访问这个设备的权限）。
+
+另外，使用在/org/freedesktop/Hal/Manager对象上面org.freedesktop.Hal.Manager接口的AcquireGlobalInterfaceLock()和ReleaseGlobalInterfaceLock()函数，客户程序可以锁定它可访问的所有设备.如果调用的时候指定的话全局锁也可以是互斥的。和锁定某个设备接口不同，它在锁定时间的时候不被检测锁定者是否访问了指定设备，而在调用者想要访问接口的时候才进行检测?????????????。
+The algorithm used for determining if a caller is locked out is shown below. A caller A is locked out of an interface IFACE on a device object DEVICE if, and only if,
+判断一个调用这是否被锁在了外面，如下所示。调用者A被锁在了设备DEVICE接口IFACE外面，当且仅当：
+	1.
+	另外一个调用者B持有在设备DEVICE的IFACE上面的锁，并且A没有这上面的全局锁或者没有锁。
+	2.
+	另外一个调用者B持有在DEVICE的IFACE上面的全局锁并且B已经访问了DEVICE并且A没有在这上面的全局所或者锁。
+	也就是说，调用者A可以获得一个全局所，但是这并不意味这A能够把所有其他的客户程序锁在A没有访问的设备的外面。特别地，调用者如果持有相应设备上的全局锁或者锁的话，那么它一定不会被锁在外面。然而，如果两个客户程序拥有设备上面的所，那么两者都能够访问它。为了保证每个都被锁在外面，调用者需要使用互斥锁。
+	需要注意的是，一个特定接口也会检查是否在别的设备对象上面有其他的被持有的锁。这个指定在单接口基准（？？？？？）见后面D-Bus interfaces.
+	如果一个进程持有锁，但是断开了从系统总线上面的连接，那么这个锁也会被释放。
+
+一些指导
+=========
+
+第五章 设备属性
+
+属性是一个key/value对，它在namespaces中以'.'做为分隔符号。value具有许多不同的类型，目前主要类型是:int32, double, bool, UTF8 strings和UTF8 string lists也被支持。属性的key一般是一个没有空白的ASCII字符串。当一个属性改变的时候，HAL将会发送一个应用程序可以捕捉到的D-Bus信号。
+
+一般属性
+========
+info namespace
+------
+info namespace包含了设备对象的基本数据。这些属性一般都是可以使用的。
+例如：
+key为info.udi(string) 
+values可能为/org/fredesktop/Hal/devices/pci_10ec_8129
+Mandatory可能为Yes
+描述：这个info.udi唯一地标识了HAL的设备id。
+当然还有许多其他的属性，那些属性请参考hal官方文档。
+
+Callouts
+------
+Callouts是当设备对象被添加或者移走的时候运行的程序。这样，callouts能够用来维护系统策略。例如改变设备节点的访问权限，更新系统的/det/fstab文件或者配置网络子系统。
+
+有三种类型的callouts。运行一个callout会依次运行在string list里面的所有可执行程序。
+所有的callouts都在一个尽可能简单的环境下面被搜索。另外，设备对象的UDI在环境变量UDI中被导出。所有的设备对象属性都在以HAL_PROP为前缀的环境导出。如果一个设备被添加或者移除会被在环境HALD_ACTION中被导出。callout的搜索路径包含以下路径：
+1)$libexecdir(一般地/usr/libexec(例如ReadHat)或者/usr/lib/hal(例如Debian))
+2)$libdir/hal/scripts(一般地/usr/lib/hal/scripts或者/usr/lib64/hal/scripts)
+3)$bindir/ (一般地/usr/bin)
+在系统初始化的时候，HAL守护进程包含$PATH并且启动。根据发行的版本，经常包括的有：/sbin, /usr/sbin, /bin, /usr/sbin.如果将要执行的程序没有在这些路径中找到，那么它就不会被运行。为了在各个操作系统之间的可移植性，第3方软件包提供的callouts必须只使用$libdir/hal/scripts.
+如果对ConsoleKit的支持被打开了，那么变量CK_NUM_SEATS(座位号)，CK_NUM_SESSIONS（会话数）等也会被导出。
+需要注意的是所有的ConsoleKit对象路径给出的都是基本的名字，实际的D-Bus对象路径能够通过在给定的标识的前面添加/org/freedesktop/consoleKit/ 来得到。
+为了减少错误以及增加私有性，callouts应该使用HALD_DIRECT_ADDR变量指定的点对点的D-Bus连接和Hal守护进程进行通信。在libhal中有很方便的API来做这些。
+info.callouts.add (string list) 使用string list来指定当设备被添加到GDL(全局设备列表)中时应该被执行的程序，但是在通过D-BUS通知之前。
+info.callouts.remove (string list) 使用string list来指定当设备从GDL被移除的时候被执行的程序。这个设备在最后的callout被完成的时候，不会被移除。
+info.callouts.preprobe (string list)使用string list指定设备被检测之前执行的程序，也能够被用来避免不必要的I/O.
+info.callouts.session_add (string list) 使用string list 指定当一个session被添加的时候执行的程序。（这个仅在HAL以ConsoleKit支持编译的时候使用）
+info.callouts.session_remove (string list) 使用string list指定当一个session被移除的时候需要执行的程序。(这个仅在HAL以ConsoleKit支持编译的时候使用)
+
+Addons
+------
+Addons是在设备对象的生存期间运行的程序。它们的搜索和执行在和callouts一样的环境中进行(例如设置的设备属性的环境是类似HAL_PROP_*的)，它们先于设备在D-Bus上被通知而运行(但是在所有的callouts完成之后)。当设备对象消失的时候，HAL将会给进程发送一个SIGTERM消息。
+Key:info.addons (strlist) 
+Mandatory:No
+Description:列出了当设备被添加时候的程序。每个程序将会调用AddonIsReady()方法，这样设备在D-Bus上面出现。
+
+Method calls
+------------

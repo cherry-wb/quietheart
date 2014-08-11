@@ -1,0 +1,59 @@
+程序功能：一个输入法程序，包括：
+1）软键盘
+2）数字键盘
+3）中文手写
+
+环境：
+Qt/Embeded 4.5
+
+目前进度：
+20091026
+*基本软件盘程序编写完毕，有待改善细节。
+20091027
+*编写好输入法接口，可以存储输入数据以及处理结果，
+把所有处理结果显示到一个标签中，有待改善，添加选择处理的结果。
+20091027
+*编写好输入法引擎接口，以及整理好引擎所需的字典,初步集成到输入法中。
+无法在嵌入式环境中显示中文,没有做选择输入以及翻译等细节的处理。
+20091030
+*编写好选择字体的构件，可以实现翻页功能。
+问题无法显示中文,界面太丑了。
+20091030
+*增加了选择结果的响应，可以选择显示中文
+问题，如果直接用键盘敲入的话总是显示两次,其他程序需要安装相应字体才行。
+
+20091113
+当前存在的问题：
+
+
+
+==============
+还没有直接增加切换输入法的功能。利用
+-qws选项在qvfb中启动程序之后，默认是软键盘，如果想要用拼音输入法的功能，需要做的是：
+修改src/inputwidget.cpp中的构造函数相关语句如下：
+	select = KEYBOARD_METHOD;
+	//select = PINYIN_METHOD;
+	//setMethodWidget(KEYBOARD_METHOD);
+	setMethodWidget(select);
+	改为：
+	select = PINYIN_METHOD;
+	setMethodWidget(select);
+==
+移植到arm板子上面遇到的问题：
+在arm环境下面编译的时候，无法编译通过，错误主要是：
+1）uitools的缺少。
+解决方案：
+在源代码目录中tools里面的designer里面有关于qtuitools相关的目录，将它用qmake&&make之后源代码中的lib目录下面多了关于QtUi的库，将include和lib下的QtUitools相关文件都拷过去。
+sudo cp libQtUiTools.prl libQtUiTools.a /usr/local/qte-4.5.0_arm/lib
+
+2）引擎包含algo.h文件是低版本编译器
+解决方案：
+*修改scim_pinyin.h,包含的头文件
+#include <algo.h>
+改为：#include <algorithm>
+*修改PinyinPhrase.cpp添加如下:
+#include <cstring>
+*修改scim_pinyin.cpp添加如下:
+#include <cstring>
+
+作者：吕凯

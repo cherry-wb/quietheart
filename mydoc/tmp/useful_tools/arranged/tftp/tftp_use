@@ -1,0 +1,52 @@
+tftp服务简单配置
+通过tftp服务可以在两台主机之间传输文件。本文介绍配置和使用tftp服务的方法。
+
+[简介]
+通过tftp服务可以在两台主机之间传输文件。在嵌入式系统中，开发板启动的时候，经常通过tftp服务器将操作系统内核下载下来到本地开发板内存的某个位置，然后启动内核(前提是开发板的BootLoader支持tftp传输)。这样开发的时候，不必每次都将最新的操作系统内核烧写到板子中，节省了空间，简化了开发过程。
+
+[举例]
+这里，以CenterOS为例讲述搭建tftp服务的过程。
+*配置tftp服务
+1)安装tftp客户/服务端:
+#yum install tftp.i386
+#yum install tftp-server.i386
+这里，如果不行就先运行"#yum makecache"试试。
+
+2)编辑/etc/xinetd.d/tftp
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+这里，disable是指关闭还是打开tftp服务，取值yes/no.通过server_args指定tftp服务在本地机器上的导出目录，这里的文件可以通过tftp访问。其它参数具体含义参见“info xinetd.conf”.
+
+3)重启服务：
+#/etc/init.d/xinetd restart
+至此tftp服务搭建完毕。
+
+*使用tftp传输文件
+可以使用如下方法，传输文件，测试前面的配置是否正确。
+1)服务器上建立好待共享的文件
+#>>/tftpboot/mytest
+这里，服务器就是刚才配置好tftp服务的服务器，mytest就是待共享的文件，必须在/tftpboot导出目录中。
+
+2)客户机器上访问服务器上的文件
+#tftp <服务器的ip地址>
+#get mytest
+这样，就将服务器上面的文件下载到客户机上了，命令和ftp的命令差不多，如果想退出，可以输入"[Ctrl]D"，如果在客户机器的当前目录看到mytest说明成功。
+
+
+[其它]
+以上是最简单的配置和使用tftp的步骤。
+
+作者：QuietHeart
+Email:quiet_heart000@126.com
+时间：2010年12月27日

@@ -1,0 +1,295 @@
+route [-CFvnee]
+route [-v]  [-A family] add [-net|-host] target [netmask Nm] [gw Gw] [metric N] [mss M] [window W] [irtt I] [reject] [mod] [dyn] [reinstate] [[dev] If]
+route [-v] [-A family] del [-net|-host] target [gw Gw] [netmask Nm] [metric N] [[dev] If]
+route [-V] [--version] [-h] [--help]
+
+[功能]
+设定和操作路由器表。
+
+[描述]
+route用来操作管理内核的IP路由表。它的作用是在使用ifconfig命令配置好网络接口之后，通过网络接口设定到特定主机或者网络的静态路由表。
+当使用add或者del选项的时候，route修改路由表。如果没有这些选项，那么route会显示当前路由表中的内容。
+
+常用选项：
+-n：不使用主机名称而直接使用主机IP或端口号。
+-ee：使用详细信息显示。
+
+增加(add)和删除(del)选项的参数：
+-net：表示后面所指定的是为一个网络。
+-host：表示后面所指定的是一个主机的路由。
+netmask：和网络相关，可以设定netmask来决定网络大小。
+gw：表示gateway（网关），后面连接其IP。
+dev：指定连接的设备（网卡），例如eth0。
+
+
+[举例]
+1、需要预先了解的内容：
+（1）路由可为各种品牌路由（例如cisco），PC为访问网络的设备（例如主机）。
+（2）路由器上面至少有两类网口，一个可连接WLAN，一个可连接PC组成LAN。
+（3）PC只有一个网口，要么连接WLAN，要么连接路由组成LAN。
+（4）路由可与PC直连，与之组成LAN；路由也可再与WAN相连，使其LAN内主机可经它访问WAN；也可PC直连到WAN。
+（5）内网：又叫LAN，是路由和PC组成的内部局域网，其网内主机假设为172.168.1.*。
+（6）外网：又叫WAN，是外部一个更大的局域网，其网内主机假设为10.1.10.*。
+（7）PC内网网址(LAN)：可静态指定，也可通过路由的dhcp服务动态获取（例如172.168.1.105）。
+（8）路由内网网址(LAN)：连接到路由的PC以它作为默认网关，PC也可通过它登陆并配置路由（如172.168.1.14）。
+（9）PC外网网址(WAN)：可静态指定，也可通过WAN网中的dhcp服务动态获取（如10.1.10.182）。（似PC从路由）
+（10）路由的外网网址(WAN)：可静态指定，也可通过WAN网中的dhcp服务获取（如10.1.10.32）。（似PC从外网）
+
+
+2、当把路由器插连接WLAN，然后pc连接路由器组成LAN之后：
+pc的网址(LAN)：172.168.1.105(可以pc自己指定静态的，也可通过路由的dhcp服务动态获取)。
+cisco的网址(LAN)：172.168.1.14。
+pc的网关设置成(LAN)：172.168.1.14。
+*查看PC机器ip信息：
+# ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:24:7e:03:62:14  
+          inet addr:172.168.1.105  Bcast:172.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::224:7eff:fe03:6214/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:1776511 errors:12 dropped:1 overruns:0 frame:8
+          TX packets:1174511 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:934065225 (934.0 MB)  TX bytes:107898203 (107.8 MB)
+          Interrupt:16 Memory:fc500000-fc520000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:310438 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:310438 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:28063379 (28.0 MB)  TX bytes:28063379 (28.0 MB)
+
+*查看当前路由如下：
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         172.168.1.14    0.0.0.0         UG    0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+172.168.1.0     *               255.255.255.0   U     1      0        0 eth0
+可以看到机器路由，其中(其他参见man手册)：
+Destination:目标网络或者主机。
+Gateway:网关地址，如果没有设置则为*。
+Genmask:目标网络掩码；如果目标主机则用"255.255.255.255"，如果默认路由则用"0.0.0.0"。
+Flags标志说明:
+U Up表示此路由当前为启动状态
+H Host，表示此网关为一主机
+G Gateway，表示此网关为一路由器
+R Reinstate Route，使用动态路由重新初始化的路由
+D Dynamically,此路由是动态性地写入
+M Modified，此路由是由路由守护程序或导向器动态修改
+! 表示此路由当前为关闭状态
+Metric:到目标的距离（一般为跳数），当前kernel可能不用，但是路由守护进程可能会需要它。
+Ref:此路由引用数目（当前kernel不用）。
+Use:对此路由的查找。
+Iface:对于这个路由，数据包将要发送到那个接口（网卡）。
+
+*查看路由信息的另外一个方法：
+# netstat -rn
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+0.0.0.0         172.168.1.14    0.0.0.0         UG        0 0          0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0
+172.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+这里，信息类似，速度稍快，不象route需要等待一段时间，(区别是什么？)。然后可以用如下命令查看连通性：
+# ping 10.1.10.100
+PING 10.1.10.100 (10.1.10.100) 56(84) bytes of data.
+From 172.168.1.14 icmp_seq=1 Destination Net Unreachable
+From 172.168.1.14 icmp_seq=2 Destination Net Unreachable
+可见无法ping通（这里10.1.10.100是外网的一台机器），原因是因为没有给route插入外网网线，而是只将route的lan口与机器相连，当将外网和route的wan口相连之后，就可以ping通了。
+
+# ping 172.168.1.14
+PING 172.168.1.14 (172.168.1.14) 56(84) bytes of data.
+64 bytes from 172.168.1.14: icmp_req=1 ttl=64 time=0.457 ms
+64 bytes from 172.168.1.14: icmp_req=2 ttl=64 time=0.425 ms
+可见可以ping通本网段（这里172.168.1.14是路由器）。
+
+3、让pc直接连接到外部网络，不经过路由器：
+pc的网址：10.1.10.182。
+外网其网内主机ip是10.1.10.*。
+
+*查看PC基本信息:
+# ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:24:7e:03:62:14  
+          inet addr:10.1.10.182  Bcast:10.1.10.255  Mask:255.255.255.0
+          inet6 addr: fe80::224:7eff:fe03:6214/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:1776739 errors:12 dropped:2 overruns:0 frame:8
+          TX packets:1174650 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:934090706 (934.0 MB)  TX bytes:107913085 (107.9 MB)
+          Interrupt:16 Memory:fc500000-fc520000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:310442 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:310442 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:28063715 (28.0 MB)  TX bytes:28063715 (28.0 MB)
+
+*查看PC路由信息：
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+
+# netstat -rn
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+0.0.0.0         10.1.10.254     0.0.0.0         UG        0 0          0 eth0
+10.1.10.0       0.0.0.0         255.255.255.0   U         0 0          0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0
+在这个路由信息的基础上，测试连通性： 
+# ping 10.1.10.119
+PING 10.1.10.119 (10.1.10.119) 56(84) bytes of data.
+64 bytes from 10.1.10.119: icmp_req=1 ttl=64 time=3.72 ms
+这里，10.1.10.119是网内另外一台主机。
+
+
+*添加一个192.168.1.0网络：
+# route add -net 192.168.1.0 netmask 255.255.255.0 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+
+*再添加192.0.0.0和192.0.0.0网络：
+# route add -net 192.0.0.0 netmask 255.255.0.0 dev eth0
+# route add -net 192.0.0.0 netmask 255.0.0.0 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.0.0.0       *               255.255.255.0   U     0      0        0 eth0
+192.0.0.0       *               255.255.0.0     U     0      0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+这里，网络地址结合子网掩码来标识。
+
+*删除192.0.0.0：
+# route del 192.0.0.0
+SIOCDELRT: No such process
+# route del -net 192.0.0.0
+SIOCDELRT: Invalid argument
+# route del -net 192.0.0.0 netmask 255.255.0.0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.0.0.0       *               255.255.255.0   U     0      0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+# route del -net 192.0.0.0 netmask 255.255.255.0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         gateway.amazon. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+从这里可知，如果没有指定子网掩码，那么如果有两个一样的ip的网络就无法删除成功。
+
+*添加一台主机：
+# route add -host 10.1.10.47 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         gateway.amazon. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+quietheart      *               255.255.255.255 UH    0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+# netstat -rn
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+0.0.0.0         10.1.10.254     0.0.0.0         UG        0 0          0 eth0
+10.1.10.0       0.0.0.0         255.255.255.0   U         0 0          0 eth0
+10.1.10.47      0.0.0.0         255.255.255.255 UH        0 0          0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+# ping 10.1.10.47
+PING 10.1.10.47 (10.1.10.47) 56(84) bytes of data.
+64 bytes from 10.1.10.47: icmp_req=1 ttl=64 time=8.02 ms
+64 bytes from 10.1.10.47: icmp_req=2 ttl=64 time=9.49 ms
+从这里我们可以看出，主机10.1.10.47名称是"quietheart"，注意，添加主机的时候，不指定netmask。添加之后，仍然可以ping通。
+
+*添加一个默认的网关：
+# route add default gw 10.1.10.1
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         10.1.10.1       0.0.0.0         UG    0      0        0 eth0
+default         gateway.amazon. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+quietheart      *               255.255.255.255 UH    0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+这里，默认的路由"default"在没有其他路由匹配的时候，会被使用到，可以有特殊的命令修改默认路由（例如"route add default gw mango-gw"会添加mango-gw主机），具体可以参见"man"手册。
+
+*删除一个默认网关:
+# route del default gw 10.1.10.1
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         gateway.amazon. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+quietheart      *               255.255.255.255 UH    0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+
+*为一台主机添加一个特定网关：
+# route add -host  10.1.10.47 gw 10.1.10.1 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         gateway.amazon. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+quietheart      10.1.10.1       255.255.255.255 UGH   0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+这里10.1.10.47的主机名称为quietheart，这里如果gw后面指定的ip地址是不存在的，则命令运行失败，例如：
+# route add -host 10.1.10.47 gw 172.168.1.1 dev eth0
+SIOCADDRT: No such process
+这里，172.168.1.1是不存在的，但是192.168.1.1是存在的，因为路由表中有192.168.1.0的网络，可是实际上192.168.1.1不可达。
+
+*添加一个不可达的路由也无法正常工作，例如：
+# route add -host 10.1.10.47 gw 192.168.1.1 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+quietheart      192.168.1.1     255.255.255.255 UGH   0      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+# ping 10.1.10.47
+PING 10.1.10.47 (10.1.10.47) 56(84) bytes of data.
+因为192.168.1.1不可达，所以即使添加上去了，也不能正常工作。
+
+*删除一个主机：
+# route del -host 10.1.10.47 dev eth0
+# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         ns.amazon.esdl. 0.0.0.0         UG    0      0        0 eth0
+10.1.10.0       *               255.255.255.0   U     1      0        0 eth0
+link-local      *               255.255.0.0     U     1000   0        0 eth0
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+
+[其它]
+有待更新。
+
+参考资料：
+http://www.2cto.com/os/201203/125081.html
+http://blog.chinaunix.net/uid-22646981-id-3048260.html
+man手册

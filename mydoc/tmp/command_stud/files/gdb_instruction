@@ -1,0 +1,104 @@
+http://blog.sina.com.cn/s/blog_6234a2f00100fkvx.html
+GDB的print命令只能打印基本数据类型，像QString这样的复杂类型就不行了。<br>
+如果在调试过程中（命令行，或者xcode中）不能看QString的值，岂不是很不爽。幸好，gdb提供了扩展功能，可以自定义宏命令。<br>
+把自定义的命令放到$HOME/.gdbinit文件中，每次启动gdb时就可以自动加载了。<br>
+<br>
+下面的代码是从网上摘录的，直接复制到$HOME/.gdbinit文件中就可以了。原文（http://silmor.de/46）<br>
+    define printqstring
+        printf "(QString)0x%x (length=%i): \"",&$arg0,$arg0.d->size
+        set $i=0
+        while $i < $arg0.d->size
+            set $c=$arg0.d->data[$i++]
+            if $c < 32 || $c > 127
+                    printf "\\u0x%04x", $c
+            else
+                    printf "%c", (char)$c
+            end
+        end
+        printf "\"\n"
+    end
+
+使用方法与print一样。 <br>
+
+
+
+http://hi.baidu.com/yy73/blog/item/3aa83cad810a860c4a36d623.html
+A Printing routine for QString in GDB
+
+GDB supports the command print to print out the content of variables. This works pretty well with all basic types, but becomes annoying at best with complex types like QString. GDB has its own macro language, so it is possible to write routines for printing these types.
+
+When GDB starts it reads in the file $HOME/.gdbinit to load macros that should be available at runtime. In the following two sections I show a macro to print QString objects. If you copy this macro into your .gdbinit file it will be automatically available each time you call gdb.
+
+Example session:
+
+(gdb) print myString
+$2 = {static null = {<No data fields>}, static shared_null = {ref = {atomic = 39},
+    alloc = 0, size = 0, data = 0x82174ca, clean = 0, simpletext = 0, 
+    righttoleft = 0, asciiCache = 0, reserved = 0, array = {0}}, 
+    static shared_empty = {ref = {atomic = 1}, alloc = 0, size = 0, 
+    data = 0xf5f71aca, clean = 0, simpletext = 0, righttoleft = 0,
+    asciiCache = 0, reserved = 0, array = {0}}, d = 0x8260b48, 
+    static codecForCStrings = 0x0}
+(gdb) printqstring myString
+(QString)0x8217658 (length=26): "this is an example QString"
+(gdb)
+
+As you see above, print myString prints the QString as an object. Since the actual data is hidden in the element "d" it is not immediately visible - even print myString.d would not be very satisfactory, since QString stores its data in unicode format.
+
+The form printqstring myString prints out a more readable version.
+Qt 3.x
+
+This macro was posted by David Faure to the KDE maillist in 2001:
+
+define printqstring
+    set $i=0
+    while $i < $arg0.d->len
+ print $arg0.d->unicode[$i++].cl
+    end
+end
+
+It already prints out each character of the QString onto a single line.
+
+A much refined version was posted by Arnaud de Muyser to the qt-interest list the same year:
+
+define pqs
+    set $i=0
+    set $unicode=$arg0.d->unicode
+
+    printf "Getting QString...\n"
+    while $i < $arg0.d->len
+        set $c=$unicode[$i++].cl
+        if $c < 32 
+          printf "\\0%o", $c
+        else
+          if $c <= 127
+            printf "%c", $c
+          else 
+            printf "\\0%o", $c
+          end 
+        end
+    end
+    echo \n
+end
+
+Qt 4.x
+
+The internal representation of QString changed for Qt 4.x: the length is now stored in d->size and it uses UCS-16 instead of UTF-8 for internal storage. The fact that QStrings are now implicitly shared does not matter in this context though.
+
+So this is my adapted version of the macro:
+
+define printqstring
+    printf "(QString)0x%x (length=%i): \"",&$arg0,$arg0.d->size
+    set $i=0
+    while $i < $arg0.d->size
+        set $c=$arg0.d->data[$i++]
+        if $c < 32 || $c > 127
+                printf "\\u0x%04x", $c
+        else
+                printf "%c", (char)$c
+        end
+    end
+    printf "\"\n"
+end
+其他
+http://carduus.spaces.live.com/blog/cns!393B17CE6DFEF864!424.entry

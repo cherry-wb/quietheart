@@ -1,0 +1,167 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/amazon/!svn/ver/667/Management/wifi/test_suite/scenarios/ap/cisco
+END
+scenario_logout_wrt.py
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.py
+END
+scenario_set_security_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.json
+END
+scenario_set_wireless_SSID_wrt.json
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.json
+END
+scenario_login.py
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/amazon/!svn/ver/668/Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.py
+END
+scenario_logout.py
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/amazon/!svn/ver/668/Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.py
+END
+scenario_set_wireless_SSID.json
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/amazon/!svn/ver/641/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.json
+END
+scenario_set_wireless_SSID_Broadcast.py
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/amazon/!svn/ver/641/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.py
+END
+scenario_set_wireless_mode.py
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/amazon/!svn/ver/667/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/amazon/!svn/ver/399/Management/wifi/test_suite/scenarios/ap/cisco/__init__.py
+END
+scenario_set_wireless_passphrase.json
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/amazon/!svn/ver/660/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.json
+END
+scenario_set_channel.py
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.py
+END
+scenario_set_ChannelWidth.py
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.py
+END
+scenario_set_radio_off.json
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/amazon/!svn/ver/660/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.json
+END
+scenario_login_wrt.json
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.json
+END
+scenario_set_security_mode.py
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_security_mode.py
+END
+scenario_logout_wrt.json
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout_wrt.json
+END
+scenario_set_wireless_SSID_wrt.py
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_wrt.py
+END
+scenario_login.json
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/amazon/!svn/ver/636/Management/wifi/test_suite/scenarios/ap/cisco/scenario_login.json
+END
+scenario_logout.json
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/amazon/!svn/ver/636/Management/wifi/test_suite/scenarios/ap/cisco/scenario_logout.json
+END
+scenario_set_wireless_SSID.py
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/amazon/!svn/ver/641/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID.py
+END
+scenario_set_wireless_mode.json
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/amazon/!svn/ver/660/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_mode.json
+END
+scenario_set_wireless_SSID_Broadcast.json
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/amazon/!svn/ver/641/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_SSID_Broadcast.json
+END
+scenario_set_wireless_passphrase.py
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/amazon/!svn/ver/660/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_wireless_passphrase.py
+END
+scenario_set_radio_off.py
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/amazon/!svn/ver/660/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_radio_off.py
+END
+scenario_set_channel.json
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_channel.json
+END
+scenario_set_ChannelWidth.json
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/amazon/!svn/ver/659/Management/wifi/test_suite/scenarios/ap/cisco/scenario_set_ChannelWidth.json
+END
+scenario_login_wrt.py
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scenarios/ap/cisco/scenario_login_wrt.py
+END

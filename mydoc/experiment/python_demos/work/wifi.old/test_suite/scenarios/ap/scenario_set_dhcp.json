@@ -1,0 +1,7 @@
+{
+	"name":"set_dhcp",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_set_dhcp.py"},
+	"reporter":["success","fail"],
+	"description":"set wireless DHCP ap"
+}

@@ -1,0 +1,131 @@
+这里主要介绍dut上面测试wifi case常用的命令。
+
+假设使用"adb shell"进入板子。
+Step1,加载驱动：
+（1）如果是broadcom芯片：
+#insmod /system/lib/modules/bcmdhd.ko firmware_path=/system/etc/wifi/firmware.bin
+#setprop wlan.driver.status ok
+
+（2）如果使TI的：
+#insmod /system/lib/modules/wl12xx_sdio.ko
+#setprop wlan.driver.status ok
+
+这里，如果驱动已经加载了，那么：
+"getprop wlan.driver.status"命令返回"ok"；并且运行"lsmod"的时候，我们可以看到"bcmdhd"(BROADCOM驱动)或者"wl12xx_sdio"（TI驱动）
+
+
+Step2,启动supplicant：
+#setprop ctl.start "wpa_supplicant:-iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -C/data/misc/wifi/sockets"
+启动成功之后，"getprop init.svc.wpa_supplicant"应该返回"running"。
+
+Step3,测试相关（有待实践）
+*查看dhcp客户端是否启动：
+#getprop init.svc.dhcpcd_wlan0
+如果启动则返回"running"，否则返回其它。
+
+*停止dhcp客户：
+#setprop ctl.stop dhcpcd_wlan0
+
+*操作dhcp之后的状态设置为failed：
+#setprop dhcp.wlan0.result failed
+
+*使用dhcp申请地址：
+#setprop ctl.start "dhcpcd_wlan0:wlan0"
+运行成功之后使用"getprop dhcp.wlan0.result"会返回"ok"；如果错误了，可以通过"getprop dhcp.wlan0.reason"查看错误的原因，可以通过"getprop dhcp.wlan0.server"查看dhcp连接的服务器。
+
+*查看网络状态：
+#wpa_cli status
+类似输出如下：
+Using interface 'wlan0'
+wpa_state=SCANNING
+ip_address=10.126.1.105
+address=f0:a2:25:ee:bc:ab
+这里没有连接任何网络。
+如果连接上网络则类似输出如下：
+root@android:/ # wpa_cli status                                                
+Using interface 'wlan0'
+bssid=08:86:3b:67:45:d6
+ssid=belkin_5d6_126
+id=3
+mode=station
+pairwise_cipher=CCMP
+group_cipher=CCMP
+key_mgmt=WPA2-PSK
+wpa_state=COMPLETED
+ip_address=192.168.2.2
+address=f0:a2:25:ee:bc:ab
+这里，连接了belkin_5d6_126网络并且使用wpa2方式进行连接。
+
+
+*添加一个网络：
+#wpa_cli add_network
+添加之后，返回一个数字，可以使用list_networks命令查看。
+
+**设置网络的属性：
+这里，设置网络的时候，子命令"set_network"后面分别是网络id、一个待设置的属性、以及用双引号括起来的值。例如设置ssid的命令为:
+#wpa_cli set_network 1 ssid "belkin_5d6_126"
+如果"set_network"子命令后面没有参数，则可以列出设置的变量列表。可以使用"#wpa_cli get_network 1 ssid"之类的命令来获得相应的值，设置之后，使用"select_network"子命令可以连接到刚刚设置的网络。
+
+*连接wpa2或者wpa方式，并且密码为"12345678"的网络：
+假设无线路由设置为WPA2方式加密，并且密码为"12345678"，那么使用如下方式连接：
+#wpa_cli set_network 1 ssid "belkin_5d6_126"
+#wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+#wpa_cli set_network 1 key_mgmt "WPA-PSK"
+#wpa_cli set_network 1 proto "WPA RSN"
+#wpa_cli set_network 1 pairwise "CCMP TKIP"
+#wpa_cli set_network 1 psk "12345678"
+#wpa_cli select_network 1
+这里，如果无线路由（ap）上面设置了wpa2方式，那么设备(station)需要使用"wpa_cli set_network"设置好网络，再使用"wpa_cli select_network"命令才能连接到刚刚设置的网络上面，使用"wpa_cli status"可以看到连接的结果(wpa_state=COMPLETED)。
+
+*连接没有加密（或者无线网络的security被禁用）的网络：
+#wpa_cli set_network 1 ssid "belkin_5d6_126"
+#wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+#wpa_cli set_network 1 key_mgmt "NONE"
+#wpa_cli select_network 1
+关键在于设置key_mgmt为"NONE"。
+
+*连接WEP64 bit的网络，使用wep generate出来的密码假设为aabbccddee：
+#wpa_cli set_network 1 ssid "belkin_5d6_126"
+#wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+#wpa_cli set_network 1 key_mgmt "NONE"
+#wpa_cli set_network 1 wep_key0 "aabbccddee"
+#wpa_cli set_network 1 wep_tx_keyidx "0"
+#wpa_cli select_network 1
+
+*连接没有加密并且ap的ssid为hidden的情况：
+#wpa_cli set_network 1 ssid "belkin_5d6_126"
+#wpa_cli set_network 1 group "CCMP TKIP WEP40 WEP104"
+#wpa_cli set_network 1 key_mgmt "NONE"
+#wpa_cli set_network 1 scan_ssid "1"
+#wpa_cli select_network 1
+这里，假设ap没有设置无线网络加密，并且ssid为hidden，那么需要在设备端指定ssid,关键在于设置scan_ssid为"1"。
+**
+
+*断开wifi网络连接：
+#wpa_cli disconnect
+
+*使网络1不可用：
+#wpa_cli disable_network 1
+
+*移除网络：
+#wpa_cli remove_network 1
+
+
+
+
+Step4,清除
+停止supplicant:
+#setprop ctl.stop wpa_supplicant
+停止成功之后，"getprop init.svc.wpa_supplicant"应该返回"stopped"。
+
+
+卸载驱动：
+（1）如果是BROADCOM芯片：
+#rmmod bcmdhd.ko
+#setprop wlan.driver.status unloaded
+
+（2）如果是TI芯片：
+#rmmod wl12xx_sdio.ko
+#setprop wlan.driver.status unloaded
+
+以上设置属性的值，例如"failed","stopped"等，具体是android的framework中的代码逻辑中确定的。

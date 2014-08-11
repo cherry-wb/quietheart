@@ -1,0 +1,7 @@
+
+[举例]
+*将sudo su登录的shell挂起：
+#suspend
+输入之后，输出如下：
+[1]+  Stopped                 sudo su
+

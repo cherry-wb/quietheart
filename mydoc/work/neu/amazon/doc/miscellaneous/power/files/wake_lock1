@@ -1,0 +1,86 @@
+
+http://blog.csdn.net/sfrysh/article/details/6608118
+Wake Lock是一种锁的机制, 只要有人拿着这个锁,系统就无法进入休眠，
+可以被用户态程序和内核获得. 这个锁可以是有超时的或者是没有超时的,
+超时的锁会在时间过去以后自动解锁. 如果没有锁了或者超时了, 内核就
+会启动休眠的那套机制来进入休眠.
+(一).内核维护了:
+1).两个链表，active_wake_locks[WAKE_LOCK_TYPE_COUNT]
+   active_wake_locks[0]维护的是suspend lock.
+   active_wake_locks[1]维护的是idle lock.
+2).一个链表，inactive_locks来记录所有处于inactive状态的锁.
+ 
+ (二). 下面讲述应用层申请的锁怎么传到kernel下面的，来理解
+       整个wakelock的框架。
+       比如/sys/power/wake_lock 下面的PowerManagerService
+       的生成过程。
+    
+     1). Android 提供了现成 android.os.PowerManager 类 ,类中
+      提供 newWakeLock(int flags, String tag)方法来取得相应
+      层次的锁， 此函数的定义
+         frameworks/base/core/java/android/os/PowerManager.java
+      下面，应用程序在申请wake_lock时都会有调用。
+       实例：
+        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wl = pm.newWakeLock
+                                                   (PowerManager.SCREEN_DIM_WAKE_LOCK, “My Tag”);
+        wl.acquire();//申请锁这个里面会调用PowerManagerService里面acquireWakeLock()
+ 
+ ***********************
+        wl.release(); //释放锁，显示的释放，如果申请的锁不在此释放系统就不会进入休眠。
+ 
+ 
+2). frameworks层
+/frameworks/base/services/java/com/android/server/
+ PowerManagerService.java
+这个类是来管理所有的应用程序申请的wakelock。比如音视
+频播放器，camera等申请的wakelock都是通过这个类来管理的。
+static final String PARTIAL_NAME = "PowerManagerService"
+Power.acquireWakeLock(Power.PARTIAL_WAKE_LOCK,
+                                                                   PARTIAL_NAME);
+这个函数调用Power类里面的acquireWakeLock()，此时的
+PARTIAL_NAME作为参数传递到底层去。
+ 
+
+ 
+
+/frameworks/base/core/java/android/os/Power.java
+public static native void acquireWakeLock(int lock, String id);
+注：native申明的方法在Power类中没有实现，其实现体在
+       frameworks/base/core/jni/android_os_Power.cpp中，所
+       以调用Power类的acquireWakeLock()方法时会调用JNI
+       下的实现方法。
+ 
+
+ 
+
+ 
+
+   3).JNI层的实现
+     路径：frameworks/base/core/jni/android_os_Power.cpp
+    static void acquireWakeLock(JNIEnv *env, jobject clazz,
+                                                          jint lock, jstring idObj)
+  {
+    **************
+      const char *id = env->GetStringUTFChars(idObj, NULL);
+      acquire_wake_lock(lock, id);
+      env->ReleaseStringUTFChars(idObj, id);
+  }
+     注：在acquireWakeLock()中调用了
+             路径下hardware/libhardware_legacy/power/power.c下面
+ 的acquire_wake_lock(lock, id)
+ 
+
+ 
+
+4).与kernel层的交互
+在power.c下的acquire_wake_lock(lock, id)函数如下：
+ int acquire_wake_lock(int lock, const char* id)
+ {  
+ **************
+     return write(fd, id, strlen(id));
+ }
+注： fd就是文件描述符，在此表示”/sys/power/wake_lock”
+         id就是从PowerManagerService类中传下来的参数即：
+         PARTIAL_NAME = "PowerManagerService"
+         到此就是通过文件系统来与kernel层交互的地方。

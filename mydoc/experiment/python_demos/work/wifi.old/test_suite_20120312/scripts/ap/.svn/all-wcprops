@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/amazon/!svn/ver/667/Management/wifi/test_suite/scripts/ap
+END
+cisco_wrt54gl.py
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/amazon/!svn/ver/556/Management/wifi/test_suite/scripts/ap/cisco_wrt54gl.py
+END
+cisco_e3200.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/scripts/ap/cisco_e3200.py
+END
+base.py
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/amazon/!svn/ver/370/Management/wifi/test_suite/scripts/ap/base.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/amazon/!svn/ver/543/Management/wifi/test_suite/scripts/ap/__init__.py
+END
+cisco_e3000.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/amazon/!svn/ver/668/Management/wifi/test_suite/scripts/ap/cisco_e3000.py
+END

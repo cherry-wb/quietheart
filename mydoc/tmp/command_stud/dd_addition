@@ -1,0 +1,7 @@
+dd
+
+*向myprof写3988个0，但是跳过前108个字节：
+dd if=/dev/zero of=myprof bs=1 count=3988 seek=108
+
+*读取./test文件，每次20字节，读取5次显示到屏幕上面：
+dd bs=20 count=5 <./test

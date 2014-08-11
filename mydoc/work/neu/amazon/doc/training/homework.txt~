@@ -1,0 +1,111 @@
+File: case-DalianHotel.pcap
+================================
+1. On which channel was this captured?
+    Radiotap Header: 
+        Channel: 1  2412MHz
+
+----->from [radio tap header] :channel 2G, 
+----->from [management frame] :channel 1
+
+2. How many APs are there? 13 APs
+    00:15:70:b5:18:b0 SSID:"InterContinental"
+    00:15:70:b5:18:b1 SSID:"manager"
+    00:15:70:b6:2a:d0 SSID:"InterContinental" "InterContinen\345al" No.14 No.39
+    00:15:70:27:2a:d1 SSID:"manage\362" 
+    00:15:70:b6:2a:d1 SSID:"manager"
+    00:15:70:b6:08:d1 SSID:"InterContinental"
+    SymbolTe_b6:2a:2a No.59 No SSID
+    b3:14:70:86:f5:c8 No.25 Malformed packet
+    00:15:bc:58:90:d4 No.58
+    00:15:7c:dc:ea:0e No.62
+    88:80:70:b6:4a:b4 No.103
+    6a:19:16:b5:b2:22 No.122 SSID:"InterContinental"
+    00:95:b0:b2:2a:d1 No.124 SSID:"manager"
+
+
+
+    STA: 80:5d:70:b5:18:b1 No.157 SSID:"\357....."
+         Apple_57:fd:b7 is trying to connect to AP:00:15:70:b5:18:b0
+
+    Q:
+    1. What is Malformed Packet. How does it occur.
+    2. Sometimes, APs broadcast different SSIDs, how does it occur?
+    3. No.76 SSID:00:15:70:b6:2a:d0 BSSID:00:15:70:b6:2a:d0
+       NO.94 SSID:00:15:70:b6:08:d1 BSSID:00:15:70:b6:2a:d0
+       How do different APs work in a same BSS?        
+    4. Maybe there is something wrong with 00:15:70:b6:2a:d0.A lot of frames from the AP is marked Malformed
+       
+
+
+3. Which are not protected?
+    None of APs are protected.
+------->from [beacon frame]
+
+    
+File: case-BeijingAirport.pcap
+================================
+Answer:
+1，On which channel was this captured?
+The way to find that is the same as before.
+
+
+2，How many APs are there?
+The way to find that is the same as before.
+
+
+3，Which are not protected? 
+The way to find that is the same as before.
+
+4，Are there APs with the same SSID?
+filter by ssid and see the mac.
+
+Q:
+ 1，how to filter by mac and broad case and count them?
+ 2，how to filter by specific tag or field in every frame and count them?
+
+
+
+File: case-ARP.pcap
+================================
+Observation
+1，Packets #1 and #3 are both broadcast packets.
+Why is #1 acknowledged? 
+Why is #3 not acknowledged?
+
+Answer:
+#1 is Qos and get normal acknowledged. arp reply only once.
+
+File: case-Deauth.pcap
+================================
+Observation
+DUT failed to connect.
+1，Was association successful at some point?
+2，When was DUT rejected?
+3，Why was it rejected?
+
+Answer:
+(1)success before exchange authentication information.
+(2)4-way hand shake time out when exange key.
+
+Q:
+ does ack contains status or others useful for these information?
+
+
+File: case-Ping.pcap
+================================
+1，Observation
+192.168.2.104 pings 192.168.2.111.
+Which one is a wireless station?
+How many ping requests were not answered? 
+How many packets will be reported as “loss” by the PING app on 192.168.2.104?
+Why were they lost?
+
+Answer:
+(1)192.168.1.104 
+------->judge from IEEE 802.11 and it's icmp request.
+(2)one.
+------->4 icmp  , 2 for request ,2 for the same reply.
+(3)two, one icmp request ,and one reply.
+(4)request because no reply, reply because two same reply for ping. and also due to ttl.
+
+

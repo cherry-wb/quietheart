@@ -1,0 +1,41 @@
+mdev可以自动创建设备节点，以及检测热插拔动态创建节点（实际是被热插拔程序调用）。
+关于mdev的资料可以参考网上，这里是我使用的一些总结：
+
+假设我要配置检测sd卡的热插拔事件，那么：
+1)系统启动时,启动mdev,这里我添加到inittab了，如下:
+::sysinit:mount -t tmpfs mdev /dev
+::sysinit:echo "/sbin/mdev" > /proc/sys/kernel/hotplug
+::sysinit:/sbin/mdev -s
+这里，echo /sbin/mdev > /proc/sys/kernel/hotplug ，表示那么当有热插拔事件产生时，内核就会调用位于/sbin目录的mdev。这时mdev通过环境变量中的 ACTION 和DEVPATH，（这两个变量是系统自带的）来确定此次热插拔事件的动作以及影响了/sys中的那个目录。
+
+2)配置热插拔时候调用的脚本：
+mmcblk[0-9] 0:0 0664  * /usr/local/qtex/bin/hd-msg.sh                           
+mmcblk[0-9]p[0-9] 0:0 0664  * /usr/local/qtex/bin/hd-msg.sh
+#mmcblk[0-9] 0:0 0664  @(/usr/local/qtex/bin/hd-msg.sh)                         
+#mmcblk[0-9]p[0-9] 0:0 0664  @(/usr/local/qtex/bin/hd-msg.sh)
+这里，会匹配第一个，当我拔出的时候输出：
+good!!!!!!!!!
+mmcblk0p1!
+remove!
+good!!!!!!!!!
+mmcblk0!
+remove!
+插入的时候，输出：
+good!!!!!!!!!
+mmcblk0p1!
+add!
+good!!!!!!!!!
+mmcblk0!
+add!
+如果用含有@符号的，那么拔出的时候没有输出.
+
+3)调用的脚本：
+#myscript.sh
+echo "good!!!!!!!!!" >/dev/ttyS0
+echo "$MDEV!" >/dev/ttyS0
+echo "$ACTION!" >/dev/ttyS0
+这里，$MDEV就是设备，例如:mmcblk0p1;$ACTION是动作，例如:add或remove等。
+输出不直接echo "good"而是echo "good" >/dev/ttyS0,因为否则可能看不到输出，mdev自己开了一个shell我们无法看到其输出。这里ttyS0是我启用的串口设备。
+
+
+综上，当我插拔的时候，会调用myscript.sh了。

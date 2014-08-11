@@ -1,0 +1,115 @@
+
+
+
+ 
+ function addCookie(objName,objValue,objHours,wid){//添加cookie
+    var str = objName + "=" + escape(objValue);
+   //为0时不设定过期时间，浏览器关闭时cookie自动消失
+     var date = new Date();
+     var ms;
+     if(objHours==null||objHours<0){
+     ms = 10*60*1000;
+     }else{
+     ms = objHours*60*1000;
+     }
+     date.setTime(date.getTime() + ms);
+      str += "; expires=" + date.toGMTString()+";path=/";  
+      document.cookie = str;   
+   }
+  
+   function getCookie(objName){//获取指定名称的cookie的值
+    var arrStr = document.cookie.split("; ");
+    for(var i = 0;i < arrStr.length;i ++){
+     var temp = arrStr[i].split("=");
+     if(temp[0] == objName) return unescape(temp[1]);
+    } 
+   }  
+   function deletecookie(name) {  //删除名称为name的Cookie  
+    var exp = new Date();    
+    exp.setTime (exp.getTime() - 1);    
+    var cval = getCookie (name);     
+    document.cookie = name + "=" + cval + "; expires=" + exp.toGMTString()+";path=/";   
+}  
+   var str_100fenlm_pv ='';
+   var fen100_jin = 1; 
+  		
+if(fen100_jin==1){ 
+		 var groupMode_pv = 1;
+		 var adsOrder = 1;
+		 var cookieString = "";
+		 var rIds_pv = '2296,2259,2339,2343'.replace(/\s/g,'').split(",");
+		 var rIds_pv2 = '2296,2259,2339,2343'.replace(/\s/g,'');
+		 var rid_pv ='';
+		 
+						if(groupMode_pv==1){     //富媒体 
+    						cookieString = 'group_100fenlm_1_pv';
+						} else{ //退弹
+		  					cookieString = 'group_100fenlm_2_pv';
+						}
+	function getPvRid(){
+		  if(adsOrder==2){ //顺序
+		 	var x = true;//是否全部播放
+	 	 	for(var i=0;i<rIds_pv.length;i++){ 
+	 	 		if(getCookie(rIds_pv[i]+'100fenlm')==undefined){ //找到未播过的发布
+	 	 			addCookie(rIds_pv[i]+'100fenlm','unionAdIsDown',60*24,33928);
+	 	 			str_100fenlm_pv = rIds_pv[i];
+	 	 			x = false; 
+	 	 			 break;
+	 	 		} 
+	 	 	}
+	 	 	if(x){//已经全部播放，未找到未播放过的ID
+	 	 	for(var i=0;i<rIds_pv.length;i++){ 
+	 	 			if(i==0){ 
+	 	 			str_100fenlm_pv = rIds_pv[i];
+	 	 			 }
+	 	 			else{
+	 	 			deletecookie(rIds_pv[i]+'100fenlm');
+	 	 			} 
+	 	 		}
+	 	 		}
+		 }else if(adsOrder==1){  //随机
+			 if(getCookie(cookieString)==undefined||getCookie(cookieString)=='undefined'||getCookie(cookieString)==''){ //首次进入
+			 }else{//非首次进入
+				rIds_pv =  getCookie(cookieString).replace(/\s/g,'').split(","); 
+			 } 
+			 var nextId =Math.floor((Math.random()*(rIds_pv.length))); 
+	 		 var rIds_pv_str = ''; 
+	 		 for(var z=0;z<rIds_pv.length;z++){ 
+	 	      if(z!=nextId){   
+	 	       rIds_pv_str =rIds_pv_str+rIds_pv[z]+',';
+	 	       }
+	 	     } 
+	 	     rIds_pv_str = rIds_pv_str.substring(0,rIds_pv_str.length-1);  
+	 	     addCookie(cookieString,rIds_pv_str,60*24,33928); 
+	 		 str_100fenlm_pv = rIds_pv[nextId];
+	 		 if(isNaN(str_100fenlm_pv)){
+	 		     rIds_pv='2296,2259,2339,2343'.replace(/\s/g,'').split(",");
+	 		     str_100fenlm_pv=rIds_pv[Math.floor((Math.random()*(rIds_pv.length)))];
+	 		 }
+		  }else{
+	 	 	  str_100fenlm_pv = rIds_pv[0];   
+		 	} 
+		 rid_pv = str_100fenlm_pv; 
+	}
+	function getPvRid2(){			//获得发布ID 如果是被锁定的就重新获得直到获得正常的
+				getPvRid();
+				var zzz =0;
+				while(rIds_pv2.indexOf(rid_pv)==-1){
+					zzz++;
+					getPvRid();
+					if(zzz>=10)
+						break;
+				}
+			}
+			getPvRid2();
+		               if(groupMode_pv==1){    //富媒体
+    						   str_100fenlm_pv = 'http://engine.100fenlm.cn/js/pv2.jsp?divid=lm100fen'+rid_pv+'&rid='+str_100fenlm_pv+'&wid=33928&w=300&h=300&stype=5&minute=0';
+		
+						} else{ //退弹
+		  					  str_100fenlm_pv = 'http://engine.100fenlm.cn/js/pv2.jsp?divid=lm100fen'+rid_pv+'&rid='+str_100fenlm_pv+'&wid=33928&w=0&h=0&stype=3&minute=0';
+                    	}
+		            str_100fenlm_pv = "<script language='javascript' src="+str_100fenlm_pv+"></script>";
+	 	 			document.writeln(str_100fenlm_pv);
+	  }
+		  
+ 

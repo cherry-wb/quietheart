@@ -1,0 +1,261 @@
+#!/usr/bin/python
+import sys
+import os
+import json
+
+import parser_api
+import lib.log_api as log_api
+
+main_dir = sys.path[0]
+scenarios_dir = main_dir + os.sep + "scenarios"
+scripts_dir = main_dir + os.sep + "scripts"
+scripts_parser = scripts_dir + os.sep + "parser"
+
+parserLog = log_api.initLogger("parserLog")
+
+
+
+class ScenarioBase:
+    ''' a scenario.
+
+        '''
+    def __init__(self):
+        self.m_name = ""
+        self.m_vendor = ""
+        self.m_serial = ""
+        self.m_mac = ""
+        self.m_type = ""
+        self.m_description = ""
+        self.m_script = ""
+        self.m_parameters = {}
+        self.m_scenarios = []
+
+    def set_name(self, n):
+        self.m_name = name
+
+    def set_type(self, t):
+        self.m_type = t
+
+    def set_script(self, fname):
+        self.m_script = fname
+
+    def action(self):
+        ''' excute the scenario.
+
+            '''
+        parserLog.info("Begin to action Scenario: %s ." %(self.m_name))
+        if(0 != len(self.m_script)):#XXX scripts take priority of subscenarios.
+            submodule = self.m_script.replace(os.sep, '.')
+            submodule = submodule.replace('.py', '.run(self)')
+            submodule = submodule[submodule.find("scenarios"):]
+            exec "import " + submodule[:submodule.find(".run")]
+            parserLog.info("module to run is: %s ." %(submodule))
+            exec submodule
+        else:
+            for scenario in self.m_scenarios:
+                parserLog.info("subscenario:{")
+                scenario.action()
+                parserLog.info("}")
+
+class ScenarioParser(parser_api.Parser):
+    def __init__(self):
+        parser_api.Parser.__init__(self)
+        self.m_script = {"":""}
+        self.m_vendor = ""
+        self.m_serial = ""
+        self.m_mac = ""
+
+    def __str__(self):
+        ret = parser_api.Parser.__str__(self)
+        ret += "m_script:" + str(self.m_script) + "\n"
+        ret += "m_reporter:" + str(self.m_reporter) + "\n"
+        return ret
+
+    def parse_json(self, fname):
+        ''' parse a json file into this object.
+    '''
+        f = file(fname)
+        s = json.load(f)
+        f.close()
+        self.parse_jsons(s)
+
+    def parse_jsons(self, jstr):
+        ''' parse a json string into this object.
+    '''
+        parser_api.Parser.parse_jsons(self, jstr)
+        for key in jstr.keys():
+            if "script" == key:
+                self.m_script = jstr["script"]
+            if "vendor" == key:
+                self.m_vendor = jstr["vendor"]
+            if "serial" == key:
+                self.m_serial = jstr["serial"]
+            if "mac" == key:
+                self.m_mac = jstr["mac"]
+
+    def parse_scenario(self, s_fname, s_type_nam, s_type_param, s_param):
+        parserLog.info("Begin to parse scenario.")
+        if "none" == s_fname:
+            return none
+        s_fname = scenarios_dir + os.sep + s_fname
+        if "none" == s_type_nam:
+            return none
+        scenario = ScenarioParser()
+        scenario.parse_json(s_fname)
+
+        scenario_obj = ScenarioBase()
+        scenario_obj.m_name = scenario.m_name
+        scenario_obj.m_vendor = scenario.m_vendor
+        scenario_obj.m_serial = scenario.m_serial
+        scenario_obj.m_mac = scenario.m_mac
+        if "seq" == s_type_nam:
+            scenario_obj.m_type = scenario.m_type
+        scenario_obj.m_description = scenario.m_description
+
+        if scenario.m_script.has_key("fname"):
+            scenario_obj.m_script += scenarios_dir + os.sep
+            scenario_obj.m_script += scenario.m_vendor.split(':')[0] + os.sep
+            scenario_obj.m_script += scenario.m_vendor.split(':')[1] + os.sep
+            scenario_obj.m_script += scenario.m_script["fname"]
+            scenario_obj.m_parameters = s_param
+        scenario.parse_subscenario(scenario_obj)
+        return scenario_obj
+
+    def parse_subscenario(self, obj):
+        for scenario in self.m_scenarios:
+            scenario_fname = ""
+            scenario_type_name = ""
+            scenario_type_param = ""
+            scenario_param = {}
+            if(0 == len(scenario.keys())):
+                return none
+
+            if("fname" in scenario[scenario.keys()[0]]):
+                scenario_fname = scenario[scenario.keys()[0]]["fname"]
+
+            if("type" in scenario[scenario.keys()[0]]):
+                if("name" in scenario[scenario.keys()[0]]["type"]):
+                    scenario_type_name = scenario[scenario.keys()[0]]["type"]["name"]
+                if("parameter" in scenario[scenario.keys()[0]]["type"]):
+                    scenario_type_param = scenario[scenario.keys()[0]]["type"]["parameter"]
+            if("parameter" in scenario[scenario.keys()[0]]):
+                scenario_param = scenario[scenario.keys()[0]]["parameter"]
+
+            parserLog.info("Scenario name:%s " %(scenario_fname))
+            sub_scenario = self.parse_scenario(scenario_fname, scenario_type_name, \
+                    scenario_type_param, scenario_param)
+            obj.m_scenarios.append(sub_scenario)
+
+class CaseParser(parser_api.Parser):
+    def __init__(self):
+        parser_api.Parser.__init__(self)
+
+    def __str__(self):
+        ret = parser_api.Parser.__str__(self)
+        return ret
+
+    def parse_json(self, fname):
+        ''' parse a json file into this object.
+    '''
+        parserLog.info("Begin to parse case.")
+        f = file(fname)
+        s = json.load(f)
+        f.close()
+        self.parse_jsons(s)
+
+    def parse_jsons(self, jstr):
+        ''' parse a json string into this object.
+    '''
+        parser_api.Parser.parse_jsons(self, jstr)
+
+    def parse_scenario(self, s_fname, s_type_nam, s_type_param, s_param):
+        parserLog.info("Begin to parse scenario.")
+        if "none" == s_fname:
+            return none
+        s_fname = scenarios_dir + os.sep + s_fname
+        if "none" == s_type_nam:
+            return none
+        scenario_obj = ScenarioBase()
+        scenario = ScenarioParser()
+        scenario.parse_json(s_fname)
+
+        scenario_obj.m_name = scenario.m_name
+        scenario_obj.m_vendor = scenario.m_vendor
+        scenario_obj.m_serial = scenario.m_serial
+        scenario_obj.m_mac = scenario.m_mac
+        if "seq" == s_type_nam:
+            scenario_obj.m_type = scenario.m_type
+        scenario_obj.m_description = scenario.m_description
+
+        if scenario.m_script.has_key("fname"):
+            scenario_obj.m_script += scenarios_dir + os.sep
+            scenario_obj.m_script += scenario.m_vendor.split(':')[0] + os.sep
+            scenario_obj.m_script += scenario.m_vendor.split(':')[1] + os.sep
+            scenario_obj.m_script += scenario.m_script["fname"]
+            scenario_obj.m_parameters = s_param
+        scenario.parse_subscenario(scenario_obj)
+        return scenario_obj
+
+    def __get_scenario(self,scenario):
+        scenario_fname = ""
+        scenario_type_name = ""
+        scenario_type_param = {}
+        scenario_param = {}
+        if(0 == len(scenario.keys())):
+            return none
+
+        if("fname" in scenario[scenario.keys()[0]]):
+            scenario_fname = scenario[scenario.keys()[0]]["fname"]
+
+        if("type" in scenario[scenario.keys()[0]]):
+            if("name" in scenario[scenario.keys()[0]]["type"]):
+                scenario_type_name = scenario[scenario.keys()[0]]["type"]["name"]
+            if("parameter" in scenario[scenario.keys()[0]]["type"]):
+                scenario_type_param = scenario[scenario.keys()[0]]["type"]["parameter"]
+        if("parameter" in scenario[scenario.keys()[0]]):
+            scenario_param = scenario[scenario.keys()[0]]["parameter"]
+
+        parserLog.info("Scenario path:%s " %(scenario_fname))
+        scenario_obj = self.parse_scenario(scenario_fname, \
+                scenario_type_name, scenario_type_param, scenario_param)
+        return scenario_obj
+
+    def action(self):
+        parserLog.info("Begin to action Case: %s ." %(self.m_name))
+
+        if "seq" == self.m_type["name"]:
+            for scenario in self.m_scenarios:
+                scenario_obj = self.__get_scenario(scenario)
+                scenario_obj.action()
+        elif "loop" == self.m_type["name"]:
+            if self.m_type.has_key("parameter"):
+                if self.m_type["parameter"].isdigit():
+                    count = int(self.m_type["parameter"])
+                    for i in range(1,count+1):
+                        for scenario in self.m_scenarios:
+                            scenario_obj = self.__get_scenario(scenario)
+                            scenario_obj.action()
+
+def run(case_dir):
+    cases_dir = main_dir + os.sep + case_dir
+    level = log_api.getLogLevel()
+    log_api.setLogLevel(parserLog,level)
+    if os.path.isfile(cases_dir) and (os.path.splitext(cases_dir)[1] == '.json'):#single file
+        c = CaseParser()
+        c.parse_json(cases_dir)
+        parserLog.info("Case name:%s " %(c.m_name))
+        c.action()
+    else:
+        file_type = ['.json']
+        cases_list = parser_api.list_type(cases_dir, file_type)
+        cases_list.sort()
+        for fname in cases_list:
+            c = CaseParser()
+            c.parse_json(fname)
+            parserLog.info("Case name:%s " %(c.m_name))
+            c.action()
+    
+######Main function.######
+if "__main__" == __name__:
+    cases_dir = main_dir + os.sep + "cases"
+    run(cases_dir)

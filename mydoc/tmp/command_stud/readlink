@@ -1,0 +1,11 @@
+readlink [OPTION]... FILE
+[功能]
+显示符号连接的值。
+
+[举例]
+*显示一个符号链接的值：
+$ln -s main mainslink
+$readlink mainslink
+输入之后，输出如下：
+main
+这里，如果用硬链接(ln main mainlink)这样没有任何输出。

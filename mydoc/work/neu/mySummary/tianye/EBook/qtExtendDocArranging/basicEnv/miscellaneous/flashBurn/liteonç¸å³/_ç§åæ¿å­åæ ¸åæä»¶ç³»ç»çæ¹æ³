@@ -1,0 +1,115 @@
+烧写liteon的步骤：
+第一次烧写：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)插入sd卡,上电,进入uboot,设置uboot为uart终端,再重启，进入uboot
+这里，设置的uboot启动参数是：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=ext2 rootdelay=5 console=ttyS0,115200 uart_dma
+3)烧写内核：
+Aspenite>> mmcinfo 0
+这会查看sd卡的信息。这里必须是vfat系统要不不能用fatload.
+Aspenite>> nand erase 0x920000 0x400000
+Aspenite>> nand erase 0xd20000 0x14000000
+在写入之前先擦写，因为nand只能支持从1到0的单方向变化，所以写数据之前要擦写。
+Aspenite>> fatload mmc 0 0x1000000 zImage
+从卡中向nand中拷贝数据。这里原来的命令是"fatload mmc 0 zImage 0x1000000"是错误的.
+Aspenite>> nand write 0x1000000 0x920000 0x400000
+4)重启系统
+
+不是第一次烧写（更新内核和文件系统）：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)拷贝rootfs.tgz文件到sd卡上。
+3)插入sd卡,启动系统
+4)这时候会自动升级,升级之后会自动重启。
+5)拔出sd卡或者删除sd卡中的updater
+
+wifi驱动：
+1)把sd8686.bin 和 helper_sd.bin移动到/lib/firmware/mrvl
+2)把sd8686.ko 移动到 /lib/modules/
+3)insmod sd8686.ko
+
+usb部件：
+1)把g_ether.ko移动到/lib/modules/
+2)insmod g_ether.ko
+3)运行“ifconfig usb0 192.168.1.1 up” 设置usb以太网。
+
+
+操作时候遇到的问题：
+Aspenite>> fatls mmc 0
+     2419   bar.jpg 
+    19312   bg.jpg 
+     4100   font.psf 
+  1130978   uploader 
+  3810224   zimage 
+            8686/
+            gadget/
+
+5 file(s), 2 dir(s)
+
+Aspenite>> fatload mmc 0 zimage 0x1000000
+reading 0x1000000
+
+** Unable to read "0x1000000" from mmc 0:1 **
+
+
+[一个例子过程]
+一、烧写内核：
+1)拷贝Firmware/*.*的文件到sd卡上。
+2)插入sd卡,上电,进入uboot
+3)依次运行如下命令：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=vfat rootdelay=5 console=ttyS0,115200 uart_dma
+Aspenite>> save
+Aspenite>> mmcinfo 0
+Aspenite>> nand erase 0x920000 0x400000
+Aspenite>> nand erase 0xd20000 0x14000000
+Aspenite>> fatload mmc 0 0x1000000 zImage
+Aspenite>> nand write 0x1000000 0x920000 0x400000
+4)重启系统,打印的全部log信息
+参见附件：kernelburnlog1
+
+******其它注意的信息：
+(1)这里拷贝firmware/*.*到sd卡上之前，sd卡必须格式化成为vfat系统,要不不能用fatload.
+(2)启动uboot之后，运行"Aspenite>> fatls mmc 0"，输出如下：
+     2419   bar.jpg 
+    19312   bg.jpg 
+     4100   font.psf 
+  1130978   uploader 
+  3810224   zimage 
+            8686/
+            gadget/
+
+5 file(s), 2 dir(s)
+(3)按照文档，烧写文件系统的最后一条命令文档给出的是“fatload mmc 0 zImage 0x1000000"是错误的,提示的错误信息如下：
+Aspenite>> fatload mmc 0 zimage 0x1000000
+reading 0x1000000
+** Unable to read "0x1000000" from mmc 0:1 **
+(4)可能是因为没有文件系统，所以导致不断地重启板子，加载内核，再重启板子。
+
+二、启动系统
+1,尝试用vfat方式启动：
+1）拷贝文件系统到sd卡。
+无法拷贝文件系统,因为当前sd卡是vfat格式的，所以无法拷贝文件系统。
+
+2,尝试用vfat方式启动2：
+1)用vfat重新格式化sd卡
+2)拷贝rootfs.tgz到sd卡，此时的sd卡是vfat格式的。
+3)拷贝firmware/*.*到sd卡.
+4）重新启动。
+这时候会发现正在烧写文件系统，烧写完毕之后，又自动重启。
+5）在自动重启加载内核之前，赶快将卡拔出，再重启。如果不是vfat格式的sd卡文件系统，那么无法将sd卡中的文件系统烧写。
+打印的启动log信息参见附件：vfatlog
+
+2,用ext2方式启动：
+1）先将sd卡格式化成ext2格式。
+2)将文件系统拷贝到sd卡.
+3)启动板子，无法加载内核以及文件系统。
+设置uboot信息：
+Aspenite>> setenv bootargs root=/dev/mmcblk0p1 rootfstype=vfat rootdelay=5 console=ttyS0,115200 uart_dma
+Aspenite>> save
+4)重启系统，打印的全部log信息
+参见附件：ext2Log
+
+无法启动按照提供的支持：
+1)"root=/dev/mtdblock4 rootdelay=3 rootfstype=jffs2 console=ttyS0,115200"
+=> Please change bootargs to " rootfstype=yaffs2 root=/dev/mtdblock4 rootdelay=3 console=ttyS0,115200”
+2)"root=/dev/mmcblk0p1 rootfstype=ext2 rootdelay=3 console=ttyS0,115200 uart_dma"
+=> Please change bootargs to " rootfstype=ext2 root=/dev/mmcblk0p1 rootdelay=3 console=ttyS0,115200”

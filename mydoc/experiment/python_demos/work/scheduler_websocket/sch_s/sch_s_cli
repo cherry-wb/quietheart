@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+
+"""Scheduler Server - Command Line Interface, (SCH-S-CLI)
+SCH-S-CLI runs in the caller's process, it is an synchronized call.
+
+SCH-S-CLI is an executable program, can add it to the system PATH if needed.
+"""
+
+import logging
+import os
+import sys
+
+from gevent import monkey; monkey.patch_all()
+from ws4py.client.threadedclient import WebSocketClient
+import gevent
+
+from CLI import cmdln
+
+
+"""
+==== WHY SCH_S_CLI USE ITS OWN LOG ====
+In serial connection, sch_s_cli is called from /dev path or other path,
+so MyLog.getMyLog() cause program crashed since log file relative path.
+
+About sch_s_cli log, it just print something which can be transfer to
+another console by pipe.
+
+SCH/S reports not use LTP format for avoiding KATS log confusion.
+"""
+
+if "DISPLAY" not in os.environ:
+    os.environ["DISPLAY"] = ":0"
+
+class Lab126Client(WebSocketClient):
+    def received_message(self, m):
+        self.handle_message(m) 
+
+    def handle_message(self, m):
+        print "===> In Client, received message from server is: %s" % str(m)
+        self.send("Continue Message from client.")
+        import time
+        time.sleep(1)
+
+
+class SCH_S_CLI(cmdln.Cmdln):
+    """Usage:
+        sch_s_cli SUBCOMMAND
+        sch_s_cli help SUBCOMMAND
+
+    This is designed for scheduling jobs by command line.
+
+    ${command_list}
+    ${help_list}
+    Please contact LarryYu(yujj@neusoft.com) if you have any questions.
+
+    """
+    name = "sch_s_cli"
+
+    SCH_S_SERVER = "http://localhost:7000/"
+
+
+    def __init__(self, *args, **kwargs):
+        cmdln.Cmdln.__init__(self, *args, **kwargs)
+        cmdln.Cmdln.do_help.aliases.append("h")
+        self.tag = "SCH_S_CLI"
+
+        self.logger = logging.getLogger(self.tag)
+        console = logging.StreamHandler()
+        formatter = logging.Formatter('%(name)-4s %(asctime)s %(levelname)-6s: %(message)s')
+        console.setFormatter(formatter)
+        self.logger.addHandler(console)
+        self.logger.setLevel(logging.DEBUG)
+
+
+
+
+    @cmdln.option("--callback", metavar='ARG',
+                  help='specify job callback')
+    @cmdln.option("--resource", metavar='ARG',
+                  help='specify job the resource')
+    def do_register(self, subcmd, opts, *args):
+        """${cmd_name}: register a job to scheduler server queue
+
+        Usage:
+            sch_s_cli register [OPTIONS...]
+
+        ARG value must be lower case,
+            --resource:
+                describes resource which required by this job
+            --callback:
+                run action when job resource is satisfied
+
+        ${cmd_option_list}
+
+        """
+
+        job_id = 0
+        return job_id
+
+
+
+    @cmdln.option("--job_id", metavar='ARG',
+                  help='specify the job id')
+    def do_cancel(self, subcmd, opts, *args):
+        """${cmd_name}: cancel a job in scheduler queue
+
+        Usage:
+            sch_s_cli cancel [OPTIONS...]
+
+        ARG value must be lower case,
+            --job_id:
+                job id which allocated by register
+
+        ${cmd_option_list}
+
+        """
+
+        return 0
+
+
+
+    @cmdln.alias('job-list')
+    def do_job_list(self, subcmd, opts, *args):
+        """${cmd_name}: show jobs in scheduler queue
+
+        Usage:
+            sch_s_cli job_list [OPTIONS...]
+
+        ${cmd_option_list}
+
+        """
+
+        return 0
+
+
+if __name__ == "__main__":
+    cli = SCH_S_CLI()
+    sys.exit(cli.main(loop=cmdln.LOOP_IF_EMPTY))

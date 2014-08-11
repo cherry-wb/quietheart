@@ -1,0 +1,69 @@
+关于电源管理，
+
+一些概念的澄清：
+-------------
+简介：
+sleep相关的术语在不同的人有不同的观点。
+
+开发gnome-power-manager(一个在hal中的电源管理)的时候许多人会混淆一些概念。
+
+当机器被以某种形式设置为sleep的时候：
+KEY_SLEEP 发送Suspend给RAM（Suspend在技术上叫做"standby"）
+
+希望这篇文档能够让一些不正式的软件遵守最常用的命名方式。
+
+-------------
+Standby
+	Standby是这样的一种动作：Cpu以一种低电耗的状态运行着，但是并没有数据被保存在RAM或者硬盘上。standby和resume一般会耗费很少的一点时间，如果你在便携式电脑上面工作的时候移走了电池，那么，你的工作将会丢失。
+
+推荐的术语：
+	正向动作:STANDBY
+	反向动作：CONTINUE(或者在用户手册或翻译的时候使用RESUME)
+
+-------------
+Suspend
+	Suspend是这样的一种动作：电脑会冻结一切的活动，把工作数据拷贝到RAM上面。然后关闭掉屏幕，以非常低电耗的状态模式运行。suspend一般会花费几秒钟，resume也会花费几秒钟。
+
+推荐的术语：
+	正向动作：SUSPEND
+	反向动作:RESUME
+
+	Suspend非常适合描述计算机进入一个临时睡眠但是没有完全断电的状态。用户应该能理解,suspending工作和hibernating是不一样的。你在hibernated的时候可以启动到其他的操作系统，或者更换电池。
+	Resume非常适合描述用户un-suspends电脑，然后重新开始所有的工作。这之前也在pm-tools,HAL,和kernel以及Microsoft Windows里面使用。
+
+不好的术语：
+	Sleep
+	Standby
+	Suspend-to-RAM
+
+	Sleep没有涉及到时间相关的内容，所以它并不是好的描述方式，并且sleep在过去许多年来都用来表示standby和suspend以及hibernate.
+	Standby并没有指明究竟发生了什么，“standby什么呢？”，并且在内核中使用了，在ACPI电源保存状态的时候，很少会使用到。
+	Suspend-to-RAM也是个不好的描述，它让用户感觉需要知道抽象的硬件知识。s-t-r可能对于程序员来说是不错的，但是对于新用户来说并不直观。
+
+---------------
+Hibernate
+	Hibernate是这样的一种动作：计算机冻结所有的活动，把数据转存到硬盘上面，关闭掉显示器，并且关闭电源。可能Hibernate会消耗超过一分钟的时间把数据从ram上面转存到硬盘上.并且可能在thaw的时候会消耗将近40秒。
+
+推荐的术语：
+	正向动作：HIBERNATE
+	反向动作：THAW(或者在用户手册或翻译的时候使用RESUME)
+
+	Hibernate已经在pm-tools,HAL,kernel和Microsoft Windows使用了。
+	反向动作的名字对于最终用户IMO并不是很重要了。用户可能会点击一个Suspend按钮，但是不会是Resume按钮。这样，把thaw翻译成为非英语的语言的困难，我想可能是允许加入用户可见部分的hibernate和resume为合法的描述.
+
+不好的术语：
+	Wake
+	Suspend-to-disk
+
+	Wake和它的反义词sleep（不是hibernate）一样是不好的描述，Wake在过去用于从standby中wakeup,从hibernate中wakeup以及从suspend中wakeup。
+	Suspend-to-disk也是个不好的描述，它让用户觉得应该明白硬件的知识，用户凭什么需要知道写到RAM中要比写到硬盘中要快呢?
+
+-------------------------
+总结
+	当人们使用了正确的词汇来描述问题的时候，以及用户知道suspend在GNOME和KDE上面是一样的。我认为把这6个词汇弄清楚，会对整体的框架有一个很大的改观。
+
+-------------------------
+注意：这篇文章是在我学习电源管理的时候从一个源代码里面的文档中翻译过来的，找不到作者了，所以在此声明一下防止版权“纠纷”.^_^.
+应该是在：
+http://ftp.gnome.org/pub/GNOME/sources/gnome-power-manager
+中的源代码doc里面的sleep-names.html里面介绍。

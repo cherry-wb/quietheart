@@ -1,0 +1,101 @@
+
+链接wifi可以通过wpa_supplicant指定配置直接连接，这样就不用iwconfig或者wpa_cli之类的了。
+举例：
+路由器设置为
+WIFI_CAM， wpa加密，
+密码为:"12345678"
+
+那么编写wpa_supplicant配置文件如下：
+ctrl_interface=DIR=/tmp/wpa_supplicant.conf GROUP=root
+network={
+    ssid="WIFI_CAM"
+    scan_ssid="WIFI_CAM"
+    proto=WPA
+    key_mgmt=WPA-PSK
+    psk="12345678"
+    pairwise=CCMP TKIP
+    priority=5
+}
+
+加载驱动成功后
+
+启动无线网卡：
+ifconfig wlan0 up
+
+然后启动wpa_supplicant:
+wpa_supplicant -B -C /tmp/wpa_supplicant -c /tmp/wpa_supplicant.conf -i wlan0
+这里，-B表示后台daemon方式运行，-C指定控制用的套接字为/tmp/wpa_supplicant，-c指定配置文件为/tmp/wpa_supplicant.conf -i指定无线网卡接口为wlan0。
+
+最后获取ip地址：
+dhcpcd wlan0
+
+这样就可以通过配置中的参数连接无线路由并且上网了。
+
+
+停止的方法是：
+killall -9 wpa_supplicant
+ifconfig wlan0 down
+
+
+
+------------------------------
+关于wpa_supplicant参考资料：
+http://hi.baidu.com/left99/item/420089abfd685c9f151073f0
+
+http://www.360doc.com/content/11/1103/23/532901_161507982.shtml
+笔记本只安装了debian基本系统，没有图形界面。基本系统只支持有线网络上网，由于在家只有无线网络，需要进行一些配置才能连接网络，进而安装整个系统。
+
+下面为配置全过程，注意，配置过程中需要一台能联网的电脑，下载安装包。
+
+debian/lenny系统
+
+查看 /lib/firmware/是否存在固件 iwlwifi-*.ucode
+如果没有就安装：firmware-iwlwifi_0.14+lenny2_all.deb
+
+查看是否存在命令 iwlist/iwconfig/wpa_supplicant
+如果不存在就安装：wireless-tools_29-1.1_amd64.deb/wpasupplicant_0.6.4-3_amd64.deb
+可能会要求安装依赖包，按要求把包装上（我的是64位系统）
+
+目前可以使用wireless-tools 或wpa_supplicant工具来配置无线网络。请记住重要的一点是，对无线网络的配置是全局性的，而非针对具体的接口。wpa_supplicant是一个较好的选择，但缺点是它不支持所有的驱动。请浏览wpa_supplicant网站获得它所支持的驱动列表。另外，wpa_supplicant目前只能连接到那些你已经配置好ESSID的无线网络。wireless-tools支持几乎所有的无线网卡和驱动，但它不能连接到那些只支持WPA的AP。
+
+wireless-tools方式（支持很多无线网卡，仅能访问WEP加密AP）
+1. 找到无线网卡接口（假设为wlan0）：ifconfig -a
+2. 启动无线网卡：ifconfig wlan0 up
+3. 扫描AP（假设为MYESSID）：iwlist wlan0 scanning
+4. 配置MYESSID：iwconfig wlan0 essid MYSSID
+5. 密码：iwconfig wlan0 key s:xxxxx/xxxxxxxxxxxxx（40－bit为5个ASSIC字符，128－bit为13个ASSIC字符，以字符为密钥时，密钥之前需要加s:表示字符）
+
+wpa_supplicant方式（支持少量无线网卡，能访问WPA加密AP）
+1. 增加配置文件 /etc/wpa_supplicant/wpa_supplicant.conf：（WPA_PSK加密方式）
+内容
+ctrl_interface=/var/run/wpa_supplicant
+network={
+                ssid="MYESSID"
+                psk="mimamima"
+                priority=5
+}
+更详细的配置可参考手册man wpa_supplicant.conf
+
+2. 运行wpa_supplicant：
+wpa_supplicant -B -c/etc/wpa_supplicant/wpa_supplicant.conf -iwlan0
+更详细的选项可参考手册man wpa_supplicant
+
+------------------------------------------------------------------------------------------------------------------
+wicd无线和有线管理工具
+Wicd 是一个适用于 Linux 系统的无线网络连接管理器。此工具的主要功能包括：能够在系统引导时自动连接网络，可以在静态 IP 地址与 DHCP 之间选择，在连接中止后能够自动恢复，支持加密（如 WPA 1/2、WEP、LEAP、TTLS、EAP、PEAP 等），可以查看有关网络的信息，能够保存不同的静态 IP、网关、子网掩码、DNS 服务器地址，等等。wicd工具可以像 Windows 一样通吃各种无线网络环境了。
+
+
+
+
+WPA方式：
+wpa_supplicant.conf
+ctrl_interface=DIR=/tmp/wpa_supplicant GROUP=root
+network={
+    ssid="WIFI_CAM"
+    scan_ssid=1
+    proto=WPA
+    key_mgmt=WPA-PSK
+    psk="12345678"
+    pairwise=CCMP TKIP
+    priority=5
+}

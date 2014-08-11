@@ -1,0 +1,11 @@
+size
+[功能]
+查看可执行文件的文本段和数据段的大小,以及总大小。
+
+[举例]
+*查看一个可执行文件的段信息：
+$size 06_dragEvent
+输入之后，输出如下：
+   text	   data	    bss	    dec	    hex	filename
+  14836	    684	    144	  15664	   3d30	06_dragEvent
+这里，06_dragEvent就是那个可执行文件的名称。

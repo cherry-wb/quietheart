@@ -1,0 +1,4 @@
+*把文件file1拷贝到directory目录中并指定权限为读写执行：
+$install -m 777 file1 directory
+这里，1)directory必须存在,并且不能是当前目录;2)如果directory目录中有file1了则覆盖;3)如果directory中指定了文件名字file2，那么directory中的目录可以是当前目录，也可以是已经存在的目录。
+

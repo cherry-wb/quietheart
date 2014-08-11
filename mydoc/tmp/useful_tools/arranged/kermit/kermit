@@ -1,0 +1,102 @@
+kermit
+[功能]
+一个串口传工具。可以传送文件。
+
+[描述]
+C-kermit是一款集成了网络通信、串口通信的工具，它有如下多种功能:
+1.支持kermit文件传输协议
+2.自定义了一种脚本语言，它强大而易于使用，可用于自动化工作
+3.无论是网络通信，还是串口通信，操作是一致的，并支持多种硬件、软件平台
+4.有安全认证、加密功能
+5.内建FTP、HTTP客户端功能及ssh接口
+6.支持字符集转换 
+
+[举例]
+*安装
+$sudo apt-get install ckermit
+这样就安装了c-kermit
+
+*配置
+$vi $HOME/.kermrc
+...
+这里，是在$HOME主目录下，建立.kermrc配置文件，文件内容是：
+set line /dev/ttyS0
+set speed 115200
+set carrier-watch off
+set handshake none
+set flow-control none
+robust
+set file type bin
+set file name lit
+set rec  pack 1000
+set send pack 1000
+set window 5
+这里，kermit在启动时会查找~/.kermrc文件，调用里面的命令来初始化kermit。只要将你所需的命令写到~/.kermrc文件里，启动后就不用手动敲这些命令配置了。
+
+#运行的时候直接进入命令模式：
+$kermit
+这里没有-c就进入默认的命令模式了。
+kermit在启动时会查找~/.kermrc文件，调用里面的命令来初始化kermit。只要将你所需的命令写到~/.kermrc文件里，启动后就不用手动敲入命令配置了。
+
+*运行的时候，直接进入非命令模式:
+$kermit -c
+这里，加上-c表示进入非命令模式，相当于在命令模式下面运行了connect或者c.在连接好了板子之后，这样就可以连接到串口上面了,当然不要忘记将设备打开，否则你敲入东西的时候是没有反应的。
+
+*进入命令模式,步骤如下：
+1)输入"[Ctrl]\".
+2)输入"c".
+这样进入kermit的命令模式可以进行各种命令(支持TAB补全)，例如HELP可以查看帮助,输入"?"列出所有命令。
+
+*从命令模式退回com终端：
+输入"connect".
+或输入"c".
+这样又切换会了串口界面（例如在uboot下面）。
+
+*在命令模式下查看当前主机目录文件：
+输入"ls".
+
+*在命令模式下查看当前路径：
+输入"pwd".
+
+*在命令模式下进入指定的主机目录/home/test：
+输入"cd /home/test".
+
+*传输文件file到板子的flash上面：
+输入"send file".
+这里，在命令行下的发送命令就是send。如果之前在Uboot下使用了loadb 0xc0008000进入的命令模式，那么发送的文件将会被放在了这个地址上面。
+
+*退出串口程序：
+输入"exit".
+当然，这里指的是在命令行下面。
+
+[其他]
+*一个简单的完整例子：
+启动板子uboot之后，我想传一个文件/root/test.sh到地址0xc0008000
+步骤如下：
+1）$kermit -c
+这样，就连接到串口上面了。
+2）输入"loadb 0xc0008000"
+3)输入"[Ctrl]\"
+4)输入"c"
+这样进入命令模式.
+5)输入"send /root/test.sh"
+6)输入"connect".
+这样就传完了。ckermit好像只支持kermit协议。
+
+*注意，在网上，据说：
+mincom和ckermit均不带xmodem和zmodem之类的协议，所以需要安装lrzsz这个软件，否则就会遇到传输不了文件或者timeout之类的错误。
+下载和解压lrzsz后，进入目录执行 ./configure --prefix=/usr/local/lrzsz ，然后make，make install 最后建立软链接。
+这个说法使用的配置文件是：
+set line /dev/ttyS0 //COM1
+set speed 115200
+set carrier-watch off
+set handshake none
+set flow-control none
+robust
+set file type bin
+set file name lit
+set rec pack 1000
+set send pack 100000 //这里可以改大一点，方便下载内核
+set window 5
+set protocol xmodem //vivi use xmodem
+set protocol zmodem //board Linux usually use rz/sz

@@ -1,0 +1,4 @@
+mount 中有一个shortname选项，例如
+#busybox mount -t vfat -o shortname=winnt /dev/sxs_blk0 /demo1/SxS/
+这里，shortname如果没有的话，不会处理长文件名以及文件名称的大小写。
+具体参见man手册。

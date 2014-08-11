@@ -1,0 +1,240 @@
+http://blog.csdn.net/gabazi/archive/2005/11/17/531962.aspx
+C++异常处理语法
+
+　　C++语言的后期改造者们，他们在标准C++语言中专门集成了异常处理的相关语法（与之不同的是，所有的C 标准库异常体系都需要运行库的支持，它不是语言内核支持的）。当然，异常处理被加到程序设计语言中，也是程序语言发展和逐步完善的必然结果。我们看到，C++不是唯一集成异常处理的语言。
+
+　　C++的异常处理结构为：
+
+    CODE:  
+    try
+    {
+    //可能引发异常的代码
+    }
+    catch(type_1 e)
+    {
+    // type_1类型异常处理
+    }
+    catch(type_2 e)
+    {
+    // type_2类型异常处理
+    }
+    catch (...)//会捕获所有未被捕获的异常，必须最后出现
+    {
+    }
+
+而异常的抛出方式为使用throw(type e)，try、catch和throw都是C++为处理异常而添加的关键字。看看这个例子：
+
+    CODE:  
+    #include <stdio.h>
+    //定义Point结构体（类）
+    typedef struct tagPoint
+    {
+    　int x;
+    　int y;
+    } Point;
+    //扔出int异常的函数
+    static void f(int n)
+    {
+    　throw 1;
+    }
+
+    //扔出Point异常的函数
+    static void f(Point point)
+    {
+    　Point p;
+    　p.x = 0;
+    　p.y = 0;
+    　throw p;
+    }
+
+    int main()
+    {
+    　Point point;
+    　point.x = 0;
+    　point.y = 0;
+
+    　try
+    　{
+    　　f(point); //抛出Point异常
+    　　//f(1); //抛出int异常
+    　}
+    　catch (int e)
+    　{
+    　　printf("捕获到int异常：%d\n", e);
+    　}
+    　catch (Point e)
+    　{
+    　　printf("捕获到Point异常:(%d,%d)\n", e.x, e.y);
+    　}
+
+    　return 0;
+    } 
+
+　　函数f定义了两个版本：f(int)和f(Point)，分别抛出int和Point异常。当main函数的try{…}中调用f(point)时和f(1)时，分别输出：
+
+　　捕获到Point异常:(0,0)
+
+　　和
+
+　　捕获到int异常：1
+
+　　在C++中，throw抛出异常的特点有：
+
+　　（1）可以抛出基本数据类型异常，如int和char等；
+
+　　（2）可以抛出复杂数据类型异常，如结构体（在C++中结构体也是类）和类；
+
+　　（3）C++的异常处理必须由调用者主动检查。一旦抛出异常，而程序不捕获的话，那么abort()函数就会被调用，程序被终止；
+
+　　（4）可以在函数头后加throw([type-ID-list])给出异常规格，声明其能抛出什么类型的异常。type-ID-list是一个可选项，其中包括了一个或多个类型的名字，它们之间以逗号分隔。如果函数没有异常规格指定，则可以抛出任意类型的异常。
+
+
+2 标准异常
+
+下面给出了C++提供的一些标准异常：
+
+    CODE:  
+    namespace std
+    {
+    　//exception派生
+    　class logic_error; //逻辑错误,在程序运行前可以检测出来
+
+    　//logic_error派生
+    　class domain_error; //违反了前置条件
+    　class invalid_argument; //指出函数的一个无效参数
+    　class length_error; //指出有一个超过类型size_t的最大可表现值长度的对象的企图
+    　class out_of_range; //参数越界
+    　class bad_cast; //在运行时类型识别中有一个无效的dynamic_cast表达式
+    　class bad_typeid; //报告在表达试typeid(*p)中有一个空指针p
+
+    　//exception派生
+    　class runtime_error; //运行时错误,仅在程序运行中检测到
+
+    　//runtime_error派生
+    　class range_error; //违反后置条件
+    　class overflow_error; //报告一个算术溢出
+    　class bad_alloc; //存储分配错误
+    } 
+
+　　请注意观察上述类的层次结构，可以看出，标准异常都派生自一个公共的基类exception。基类包含必要的多态性函数提供异常描述，可以被重载。下面是exception类的原型：
+
+    CODE: 
+    class exception
+    {
+    　public:
+    　　exception() throw();
+    　　exception(const exception& rhs) throw();
+    　　exception& operator=(const exception& rhs) throw();
+    　　virtual ~exception() throw();
+    　　virtual const char *what() const throw();
+    }; 
+
+　　其中的一个重要函数为what()，它返回一个表示异常的字符串指针。下面我们从exception类派生一个自己的类：
+
+    CODE:
+    #include <iostream>
+    #include <exception>
+    using namespace std;
+
+    class myexception:public exception
+    {
+    　public:
+    　myexception():exception("一个重载exception的例子")
+    　{}
+    };
+
+    int main()
+    {
+    　try
+    　{
+    　　throw myexception();
+    　}
+    　catch (exception &r) //捕获异常
+    　{
+    　　cout << "捕获到异常：" << r.what() << endl;
+    　}
+    　return 0;
+    } 
+
+　　程序运行，输出：
+
+　　捕获到异常：一个重载exception的例子
+
+　　一般的，我们直接以基类捕获异常，例如，本例中使用了
+
+    CODE:  
+    catch (exception &r) 
+
+　　然后根据基类的多态性进行处理，这是因为基类中的what函数是虚函数。
+
+3 异常处理函数
+
+　　在标准C++中，还定义了数个异常处理的相关函数和类型（包含在头文件中）：
+
+    CODE: 
+    namespace std
+    {
+    　//EH类型
+    　class bad_exception;
+    　class exception;
+
+    　typedef void (*terminate_handler)();
+    　typedef void (*unexpected_handler)();
+
+    　// 函数
+    　terminate_handler set_terminate(terminate_handler) throw();
+    　unexpected_handler set_unexpected(unexpected_handler) throw();
+
+    　void terminate();
+    　void unexpected();
+
+    　bool uncaught_exception();
+    } 
+
+　　其中的terminate相关函数与未被捕获的异常有关，如果一种异常没有被指定catch模块，则将导致terminate()函数被调用，terminate()函数中会调用ahort()函数来终止程序。可以通过set_terminate(terminate_handler)函数为terminate()专门指定要调用的函数，例如：
+
+    CODE:  
+    #include <cstdio>
+    #include <exception>
+    using namespace std;
+    //定义Point结构体（类）
+    typedef struct tagPoint
+    {
+    　int x;
+    　int y;
+    } Point;
+    //扔出Point异常的函数
+    static void f()
+    {
+    　Point p;
+    　p.x = 0;
+    　p.y = 0;
+    　throw p;
+    }
+    //set_terminate将指定的函数
+    void terminateFunc()
+    {
+    　printf("set_terminate指定的函数\n");
+    }
+
+    int main()
+    {
+    　set_terminate(terminateFunc);
+    　try
+    　{
+    　　f(); //抛出Point异常
+    　}
+    　catch (int) //捕获int异常
+    　{
+    　　printf("捕获到int异常");
+    　}
+    　//Point将不能被捕获到,引发terminateFunc函数被执行
+
+    　return 0;
+    } 
+
+　　这个程序将在控制台上输出 "set_terminate指定的函数" 字符串，因为Point类型的异常没有被捕获到。当然，它也会弹出对话框（因为调用了abort()函数）。
+
+　　上述给出的仅仅是一个set_terminate指定函数的例子。在实际工程中，往往使用set_terminate指定的函数进行一些清除性的工作，其后再调用exit(int)函数终止程序。这样，abort()函数就不会被调用了，也不会输出图1所示对话框。
+
+　　关于标准C++的异常处理，还包含一些比较复杂的技巧和内容，学员可以查阅《more effective C++》的条款9～条款15。

@@ -1,0 +1,130 @@
+建站过程中试用了不少WordPress插件，做一个总结。插件来源为其他网友推荐及wordpress.org插件中心评分排行靠前的和下载排行靠前的插件。所有插件都一一试用过一遍，做简单点评。以下点评中标注了“不错的插件”及“很不错的插件”表示推荐，本站所有在用插件皆属其中。
+
+鉴于萝卜青菜各有所爱，还是全列一下，依字母序。如下：
+
+Add Post URL 增加文章版权声明及本文网址，很不错的插件
+
+Add to Any: Share/Bookmark/Email Button 会在日志浏览下面添加一个按钮，点击后跳转到另一网站，可将网址添加到很多网络收藏夹、邮箱、博客等等；按钮不是很好看，不太协调，功能一般
+
+AJAXed WordPress 为评论回复提供了ajax支持，不错的插件
+
+Akismet 评论过滤插件，默认安装，需WP API KEY，据说效果不错，Key获取方法可参考教你如何获得一个WP的API key
+
+All In One SEO Pack 拿来做SEO的辅助插件
+
+Audio Player 音频播放插件，最高支持2.5.1
+
+Author Complete Post List 显示同作者的文章列表（包括合作者身份的文章）
+
+Branded Login Screen 可使用自定义Logo的登陆界面
+
+Brian’s Threaded Comments 评论回复显示，还不错的插件
+
+Calendar 可增加日历功能，可增加事件，不错的插件
+
+Collapsing Categories 折叠分类，可展开显示文章列表
+
+Delete-Revision 删除日志的修订版本，很不错的插件
+
+External Links 改变外部链接显示样式，不错的插件
+
+Get The Image 可生成日志图片缩略图，用法可参考wordpress首页显示日志缩略图的实现
+
+Google Analyticator Google Analysis浏览统计，不错的插件
+
+Google XML Sitemaps sitemap生成，不错的插件
+
+HTML-Javascript Adder 在侧边栏增加HTML显示模块，不错的插件，需修改，改掉捐助功能
+
+JS Banner Rotate 滚动横幅
+
+Maintenance Mode 站点维护，全站不可访问，不错的插件，最高兼容WP2.7.1
+
+MP3 Player plugin MP3播放插件，不错的插件
+
+My Category Order 调整分类显示顺序，不错的插件，用法可参考WordPress入门视频教程14 实现页面、分类、链接排序的插件
+
+My Link Order 调整连接顺序，不错的插件
+
+My Page Order 调整页面顺序，不错的插件
+
+Page Links To 将页面链接至外部链接，不错的插件，用法：http://wordpress.org/extend/plugins/page-links-to/installation/
+
+Permalinks Moved Permanently 永久链接跳转，不错的插件，最高兼容wp2.6
+
+Piwik Analytics 方便地使用Piwik进行访问统计，不错的插件
+
+Post-Plugin Library 单独不具有任何功能，为Similar Posts, Recent Posts, Random Posts, Recent Comments4个插件提供支持
+
+Random Posts 随机显示几篇文章
+
+Recent Comments 最新评论，自定义项较多，不错的插件
+
+Recent Posts 最新文章，不错的插件
+
+Register Plus 增强注册界面，丰富的设置能满足几乎所有注册需求，很不错的插件
+
+Revision Control 日志或页面的修订版本控制，可禁用或保留最后的几个修订版本，不错的插件
+
+Scissors 图片处理，提供对图片的裁剪、缩放、旋转、水印功能，不错的插件
+
+ShareThis 提供文章或页面的分享功能，需要注册sharethis.com账户，用法：http://wordpress.org/extend/plugins/share-this/installation/
+
+Shockingly Simple Favicon 网站Favicon设定，不错的插件，简单易用
+
+Sidebar Login 侧边栏登陆小工具，很不错的插件
+
+Similar Posts 相似文章，不错的插件，仍有问题需测试
+
+Simple Tags 标签功能增强，很不错的插件
+
+Streampad Audio Player 自动替换文章中的.mp3链接，不是很好
+
+Subscribe To Comments 通过邮件订阅评论回复，不错的插件
+
+SyntaxHighlighter Evolved SyntaxHighlighter语法高亮，且带有工具栏及行号标尺，不错的插件
+
+TinyMCE Advanced 文本编辑器增强插件，很不错的插件
+
+WordPress Database Backup 数据库备份，很不错的插件
+
+WordPress Download Monitor 下载管理及下载界面，很不错的插件
+
+WordPress Mobile Edition 根据User Agent自动使用手机版界面，不错的插件
+
+WordPress Related Posts 相关文章，配置简单，不及Similar Posts插件，但显示样式不错
+
+WordPress Toolbar 外部链接打开界面顶部增加含有返回日志等操作的工具栏，很不错的插件
+
+WP-Ban 可禁止特定IP、IP段、主机名、Referer Url、User Agent的用户浏览站点，可编辑禁止浏览提示页面，很不错的插件
+
+WP-Cumulus Flash方式显示标签云
+
+WP-Mail-SMTP 使用SMTP发送邮件，用wp_mail() 替换原来的mail()，最高支持2.7
+
+WP-PageNavi 分页导航增强，有点是双重序号间隔设置，不错的插件
+
+WP-Polls 投票，很不错的插件
+
+WP-PostRatings 文章评分，不错的插件，用法：http://www.capson.cn/?p=6
+
+WP-PostViews 文章浏览量显示，用法：http://www.26seo.com/?p=100
+
+WP-PostViews Widget 浏览最多的文章，需WP-PostViews插件为基础，不错的插件
+
+WP-RecentComments 最新评论，相对Recent Comments插件来说配置简单，很不错的插件
+
+WP-RelativeDate 使用类似“今天”，“昨天”，“2天前”，“2周前”，“2秒钟前”，“2分钟前”，“2小时前”这样的词汇来描述文章发布距离当前的时间。不错的插件
+
+WP-Stats 显示统计信息，不错的插件
+
+WP-Syntax 语法高亮组件，功能不及SyntaxHighlighter Evolved插件
+
+WP Page Numbers 分页导航增强，显示样式丰富，不错的插件
+
+以上所有插件提供打包下载，皆为截止2009年8月16日最新版，部分插件增加了汉化语言包，请点击60个常用WordPress插件打包下载。 
+
+
+
+y
+http://wordpress.org/extend/plugins/collapsing-categories/installation/

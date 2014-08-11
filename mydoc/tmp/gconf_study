@@ -1,0 +1,40 @@
+程序的功能在源代码注释里面说明了，这里说下gconf的相关工具，不用编程实现键值的修改与获取。
+gconf就是一个系统公共的服务似的东西，类似注册表。
+它以树状目录组织。
+两个程序如果通过它通信，那么这两个程序都是客户端，一个程序改键值，一个程序可以侦听该键值的变化。
+可以编程实现修改获取键值，也可利用工具。
+
+
+http://www.ibm.com/developerworks/cn/linux/l-cn-gconf/#6.%E5%88%A9%E7%94%A8%20GConf%20API%20%E7%BC%96%E7%A8%8B%E7%A4%BA%E4%BE%8B
+命令行工具：
+gconftool-2
+
+*打印 /desktop/gnome/url-handlers/https/command 的值:
+cbz: ~$gconftool-2 -g /desktop/gnome/url-handlers/https/command
+输入之后，输出如下类似：
+firefox %s 
+
+*设置 /desktop/gnome/url-handlers/https/command 对应的值为 ”test”:
+$gconftool-2 --type string -s /desktop/gnome/url-handlers/https/command test
+之后可以查看是不是正确的,如果没有这个目录，那么会添加一个这个目录然后再设置。
+
+*设置 /desktop/gnome/url-handlers/https/command 对应的值为系统默认值：
+~$gconftool-2 --unset /desktop/gnome/url-handlers/https/command
+这样把上面的设置恢复为"firefox %s"了。
+
+*检查目录在 GConf 系统中是否存在:
+~$gconftool-2 --dir-exists=/desktop/gnome/url-handlers
+~$echo $?
+存在则显示0。
+
+*递归打印 /desktop/gnome/url-handlers 目录中的子目录和选项：
+$gconftool-2 --recursive-list  /desktop/gnome/url-handlers
+
+*列举 /desktop/gnome/url-handlers 的所有子目录:
+$gconftool-2 --all-dirs /desktop/gnome/url-handlers
+
+
+
+图形化工具：
+gconf-editor
+

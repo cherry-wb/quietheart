@@ -1,0 +1,116 @@
+Option Explicit
+Public Declare Function OpenProcess Lib "Kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByRef dwProcessId As Long) As Long
+Public Declare Function GetExitCodeProcess Lib "Kernel32" (ByVal hProcess As Long, ByVal exitcode As Long) As Long
+Public Declare Function CloseHandle Lib "Kernel32" (ByVal hobject As Long) As Long
+Public Const PROCESS_QUERY_INFORMATION = &H400
+Public Const STATUS_PENDING = &H103&
+Public Declare Sub Sleep Lib "kernel32" (ByVal dwMillSecond as Long)
+
+Sub MyScript()
+'
+' mytest Macro
+'
+    Dim objExcel As Application
+    Set objExcel = CreateObject("Excel.Application")
+    objExcel.Visible = True
+    objExcel.Workbooks.Add
+
+    Sheets("App").Select
+    
+    'XXX 迭代获得每一个单元格直到最后
+    Dim i, start, after_end As Integer
+    start = 1520
+    i = start
+    While Not IsEmpty(Cells(i, 2))
+        objExcel.Cells(i, 2).Value = Cells(i, 2).Value
+        objExcel.Cells(i, 5).Value = Cells(i, 5).Value
+        i = i + 1
+    Wend
+    after_end = i
+    objExcel.Columns("B:E").AutoFit
+    
+    '构造命令用
+    Dim cmpapp, dir1, param1, dir2, param2, shell_cmd, resultfile As String
+
+    'XXX 配置命令参数
+    'dir1 = Chr(34) & "D:\windows_tmpwork\code_statistic\codes\vxworkssource" & Chr(34)
+    'dir2 = Chr(34) & "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo" & Chr(34)
+    dir1 = "D:\windows_tmpwork\code_statistic\codes\vxworkssource"
+    dir2 = "D:\windows_tmpwork\code_statistic\codes\export_svn\diablo"
+    resultfile = "D:\Program Files\diffcount\myresult.txt"
+    
+    '输入路径，例如：D:\...\diablo
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+    'dir2 = InputBox("修改后代码中diablo目录的路径:" & dir2)
+
+    'cmpapp="D:\Program Files\diffcount\diffcount.exe"
+    cmpapp="D:\Program Files\diffcount\diffcount.bat"
+    'cmpapp = InputBox("比较工具的路径:" & cmpapp)
+
+    'XXX 配置忽略的前几个字符...\diablo
+    Dim ignore_stri As Integer
+    ignore_stri = 10
+
+    '命令
+    'Dim oShell As Object
+    'Set oShell = CreateObject("WSCript.shell")
+
+    'Dim pid,hProcess as long
+    Dim ProcessId, hProcess, exitcode As Long
+
+
+	i = start
+    While i < after_end
+        param1 = objExcel.Cells(i, 2)
+        param2 = objExcel.Cells(i, 5)
+
+        If Not IsEmpty(param2) Then
+            param1 = chr(34) & dir1 & chr(34) & Mid(param1, ignore_stri + 1, Len(param1))
+            param2 = chr(34) & dir2 & chr(34) & Mid(param2, ignore_stri + 1, Len(param2))
+            shell_cmd = chr(34) & cmpapp & chr(34) & " " & param1 & " " & param2
+            'objExcel.Cells(i-start, 6).Value=shell_cmd
+
+            '开始执行
+            'ret = oShell.Run(shell_cmd, 0, True)
+            ProcessId = Shell(shell_cmd, 1) '此处利用了 Shell当函数使用时返回的任务标识
+            hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, False, ProcessId)
+            Do
+            exitcode = GetExitCodeProcess(hProcess, exitcode)
+            DoEvents
+            Loop While exitcode = STATUS_PENDING
+            CloseHandle (hProcess)
+            
+        End If
+	'睡眠
+	Sleep(300)
+        i = i + 1
+    Wend
+        '读取本次执行结果
+	i = start
+	Dim fso As Object
+	Set fso = CreateObject("Scripting.FileSystemObject")
+	Dim f
+	Const ForReading = 1
+	Set f = fso.OpenTextFile(resultfile, ForReading, False)
+	Dim retstring as string
+	Do While f.AtEndOfStream <> True   '是否在 TextStream 文件末尾用这个判断
+    		retstring = f.ReadLine    '读取一行
+		Dim tmpPos as Integer
+		'Total
+		tmpPos = InStr(retstring,"otal:")
+		'objExcel.Cells(i,6).Value = tmpPos
+		
+		If tmpPos > 0 Then
+		retstring = Mid(retstring, tmpPos, Len(retstring))
+		objExcel.Cells(i,6).Value = retstring
+		i = i + 1
+		End If
+	Loop
+	
+	f.Close
+    objExcel.Columns("B:F").AutoFit
+	Dim kk As String
+	kk = Application.GetOpenFilename("EXCEL (*.XLS), *.XLS", Title:="提示：请打开一个EXCEL文件：")
+	msgbox kk
+    'dir1 = InputBox("原始代码中diablo目录的路径:" & dir1)
+End Sub

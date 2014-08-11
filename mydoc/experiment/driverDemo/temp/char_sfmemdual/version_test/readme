@@ -1,0 +1,31 @@
+NAME
+flashup - test the driver of spi flash with read and write.
+
+SYNOPSIS
+flashup Option... FILE...
+
+DESCRIPTION
+This program used to test the availability of spi flash driver, which will be used for version upgrade in EU11 project.
+
+
+EXAMPLES:
+This list the use example of this program.
+(1) write the file:
+$flashup -w -s 100 -l 200 srcfile desfile
+This will write the file "srcfile" to the specified offset of file "desfile". i.e. write the content of "srcfile" to the 100th byte of "desfile", with the content length of 200 bytes.
+
+
+(2) read the file:
+$flashup -r -s 100 -l 200 srcfile desfile
+This will read from specified offset of the file "srcfile" to "desfile". i.e. read from the 100th byte of srcfile and write it to desfile, with the length of 200 bytes.
+
+TESTS:
+This shows the way of test the spi flash in avp17 or avp13 board:
+(1) write to spi flash:
+$flashup -w -s 100 -l 200 inputdatafile /dev/sfmem
+
+(2) read from spi flash:
+$flashup -r -s 100 -l 200 /dev/sfmem outputdatafile
+
+BUGS
+If there is any bug , please report to: <lv-k@neusoft.com>

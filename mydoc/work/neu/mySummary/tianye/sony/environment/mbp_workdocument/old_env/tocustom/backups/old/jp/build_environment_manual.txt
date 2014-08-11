@@ -1,0 +1,219 @@
+﻿コンパイル環境構築及びコンパイル手順に関する説明
+
+【概要】
+本書はコンパイル環境構築及びコンパイル方法を説明するものである。
+
+【詳細内容】
+一、ソースコードパス
+二、svn基本使用(非図示)
+三、コンパイルについて
+四、新しい項目を追加する方法
+五、補足
+
+=========================
+一、ソースコードパス
+=========================
+http://10.1.29.125/svn/sony/trunk/Source/
+svnを利用して抽出すべきである。
+
+http://10.1.29.125/svn/sony/trunk/Source/Rootfs/diablo/diabloMainCpu
+これは今度ベースリリース時に変更を行ったsvnディレクトレである。
+
+smb://10.1.29.125/SonyFS/src/MediaBlock_MXFS6_Release_20100727-01.zip
+svnソースコードは上記パスにあるソースを修正して取得したものである。
+現在、最新のソースコードをsvnにマージしてある。
+
+
+=========================
+二、svn基本使用(非図示)
+=========================
+1、ソースコード抽出
+svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/
+抽出後、ローカルに作業用コピーが生成されたので、これをベースとして変更する。
+変更後にロカールで変更した内容(後記参照)をsvnサーバーに提出して、他人に更新時(後記参照)に使用させる。
+抽出時に2回のアカウントとパスワードの入力が要求される。
+1回はローカルPCのアカウントとパスワードであり、もう一回はサーバーのアカウントとパスワードである。
+2、提出前チェック
+svn status
+提出前にどれらのファイルを変更、削除(svn delete)、追加(svn add)したかをチェックする。また、どれらのファイルにバージョンコントロールを追加していないか、何をしたかをチャックできる。コマンド出力の意味について「svn help status」を参照して、提出前に今度の操作が正しいかどうかを確認する。
+3、変更分提出
+svn commit -m "<説明しておきたい内容を追加>"
+ここの"<説明しておきたい内容を追加>"は後記で説明する「svn log」に出力される。
+
+4、以前提出時のログを閲覧する。
+svn log
+毎回提出時のログが出力される。
+
+5、最新版取得
+svn update
+通常、最新版を基にすることを保証するために、作業する度に（すなわちローカルコピーを修正する前に）この手順を行う必要がある。
+
+6、旧版取得
+svn update -r <version>
+<version>のコピーを取得する。<version>は具体的に何なのか、「svn log」を参照のこと。
+
+7、ファイル追加/削除
+svn add <filename>
+svn delete <filename>
+svnに新規作成したファイルを管理させるには、「svn add」を使う必要がある。
+削除時に「svn delete」を使う。この2つのコマンドを実行後、「svn commit」を実行してサーバーに反映させる必要がある。
+また、addされていないファイルは「svn commit」時に提出されない。「svn status」で当該ファイルがaddされているかを確認できる。
+
+8、バージョンライブラリで管理されているファイルを確認する。
+svn ls
+
+9、現在のパスから取得する作業用コピーの全般情報を確認する。
+svn info
+このコマンドによって現在のパスから取得する作業用コピーのサーバーパス及び最新の変更など情報が表示される。
+10、変更をキャンセルする。
+svn revert
+提出前に変更が間違えた、またはファイルの追加/削除が間違えたと気づいた時、このコマンドを実行して、再度ローカルコピーを変更できる。
+
+[注意事項]
+上記コマンドは通常に再帰的に現在のディレクトリで行われ、親ディレクトリのその他のファイルやディレクトリに影響を与えない。通常、上記コマンドでもう1つのファイル/ディレクト引数を追加して、指定のファイル/ディレクトを管理できる。
+svnの使用サイクルは以下の通り。
+1)ローカルコピーを更新する。
+svn update
+2)ソースコードを変更する。
+3)新規ファイルを追加する。(その必要がある場合)
+svn add/delete
+4)変更状態を確認する。
+svn status
+5)変更内容を提出する。
+svn commit -m ""
+さらにsvn情報を確認したい場合、下記をご参照ください。http://i18n-zh.googlecode.com/svn-history/r734/www/svnbook-1.4/index.html
+
+
+=========================
+三、コンパイルについて
+=========================
+1、環境構築
+1.1)centerosインストール（略）
+1.2)yum設定
+$sudo vi /etc/yum.conf
+下記ラインを追加する。
+Proxy=http://user:passwd@dl-proxy.neusoft.com:8080/
+$sudo yum update
+1.3)コンパイル環境インストール
+1.3.1)クロスインストール用ツールチェーンのインストール
+smb://10.1.29.125/share/ALL/SONY-CE-Linux-5.0.4.1-ARM.iso
+install_en.txtには関連文書がある。
+1.3.2)カーネルコンパイル
+カーネルをコンパイルするには、下記パスを環境変数に追加する。
+/usr/local/arm-sony-linux-gnueabi/devel/bin/
+その後、smb://10.1.29.125/SonyFS/Documents/TechnologyDoc/CELinux/CELinux/diablo/20100326/linux-5_0_DIABLO_20100326-src-kernel.tar.gzをダウンロードする。
+解凍後、順番に
+./setup-avp13
+make
+make kernel_headers
+sudo make kernel_headers_installを実行すると、アプリをコンパイルできるようになる。
+アプリをコンパイルするには、下記パスを環境変数に追加する。
+/usr/local/arm-sony-linux-gnueabi/bin
+
+[注意事項]
+カーネルコンパイル時に環境変数に「/usr/local/arm-sony-linux-gnueabi/devel/bin/」を追加する。
+アプリコンパイル時に環境変数に「/usr/local/arm-sony-linux-gnueabi/bin」を追加する。
+開発便宜上、シェルを起動する度に手動で追加するのではなくて、下記のように/etc/bashrcに追加しておいたほうがいい。
+#カーネルコンパイル時
+export PATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH
+#アプリコンパイル時
+export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH
+
+2、ソースコードコンパイル
+2.1)開発時
+ソースコードを変更した際、以下のようにコンパイルする。
+$export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH
+$cd build
+$./build.sh
+タイムスタンプによって最新の内容がコンパイルされることになる。
+はじめてコンパイルする時またはファイルを追加、削除する場合、./build.sh dependを実行する必要がある。
+詳細は「四、新しい項目を追加する方法」をご参照ください。
+コンパイル時に生成されたログ情報は全部「build_Diablo.log」に保存される。
+コンパイルエラーの場合、エラー情報が「error.log」に保存される。
+前回コンパイル時のログとエラー情報はそれぞれれ「build_Diablo.old.log」と「error.old.log」に保存される。
+また、$./build.sh cleanによってこの前のコンパイル時の中間ファイルを削除する。
+
+
+2.2)リリース時
+*カーネルコンパイル
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+[注意事項]
+*カーネルをコンパイルする前に、環境変数を「exportPATH=/usr/local/arm-sony-linux-gnueabi/devel/bin/:$PATH」に設定する。
+*生成されるカーネルはavp13Build/vmlinux.binとなる。
+
+*アプリをコンパイルしファイルシステムのイメージを作成する。
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Rootfs
+$cd makerootfs
+$./makerootfs.sh all
+[注意事項]
+*実行する前に環境変数を「export PATH=/usr/local/arm-sony-linux-gnueabi/bin:$PATH」に設定する。
+*生成されるイメージはtarget/*.imgとなる。
+*スクリプトの詳細情報についてはmakerootfs/readmeをご参照ください。
+
+3、実行方法
+開発時はnfsでファイルシステムをマウントし実行してみたほうがいい。
+その他の文書には詳細な説明があるが、主な内容は以下のとおり。
+コンパイル済みのファイルはbuild/diablo.binにある。
+diablo.binをファイルシステムにコピーしておく。
+次にosWrapper中の関連のライブラリファイルをファイルシステムにコピーする。
+それからコピー後のosWrapperライブラリパスを環境変数LD_LIBRARY_PATHに追加する。
+./diablo.binを実行する。 
+
+
+=========================
+四、新しい項目を追加する方法
+=========================
+以下に例を挙げて説明する。
+仮にtest.h test.cが含まれているUser_testディレクトリを追加したい場合、
+1)ファイルbuild/incpaths.mkを編集する。
+1.1)コメント「# Main DIR」の箇所を探して、以下の新ディレクトリと該当する変数文を追加する。
+USER_TEST= $(SRCROOT)/User_test
+1.2)変数「ALL_PATHS」の定義を探して、最後のところにさっきの新変数を追加する。
+以下のとおり。
+############
+$(USER_TEST) \
+
+2)ファイルUser_test/usertest.mkを新規作成する。内容は以下のとおり。
+
+USER_TEST_SOURCES=    \   
+    test.c
+USER_TEST_OBJS :=  $(addprefix $(TARGETDIR)/, $(USER_TEST_SOURCES:%.c=%.o))
+USER_TEST_DEPS :=  $(addprefix $(TARGETDIR)/, $(USER_TEST_SOURCES:%.c=%.dep))
+
+vpath %.c $(USER_TEST)
+############
+
+3)ファイルbuild/diablo_objects.mkを編集して、最後に以下の内容を追加する。
+include $(USER_TEST)/usertest.mk
+
+4)Diablo.makeを編集して、変数OBJECTSの最後に以下の内容を追加する。
+$(USER_TEST_OBJS) \
+
+5)依頼を再度作成する。
+./build.sh clean
+./build.sh depend
+
+6)コンパイル
+./build.sh
+上記をご参照ください。
+
+詳細はスクリプトbuild.shをご参照ください。
+
+
+=========================
+五、補足
+=========================
+x86版のコンパイルとデバッグを行えるdiabloMainCpuのソースコードはSVNに更新済みである。
+利用方法は以下の通り。
+diabloMainCpu/build/build.shを編集して、
+PLATFORMPARAM="USE_ARM=yes" //ARM版をコンパイルする。
+PLATFORMPARAM="USE_ARM=no" //x86 debug版をコンパイルする。
+この2版のコンパイル結果はいずれもdiablo.binになる。
+
+
+
+Neusoft
+2010年11月11日

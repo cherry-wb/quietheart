@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=pluginname 
+Category=permanent
+X-status-bar-plugin=libpluginname.so

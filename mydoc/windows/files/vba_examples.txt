@@ -1,0 +1,211 @@
+http://seawavenews.javaeye.com/blog/312746
+
+Excel与VBA编程中的常用代码
+用过VB的人都应该知道如何声明变量，在VBA中声明变量和VB中是完全一样的！
+使用Dim语句
+Dim a as integer '声明A为整形变量
+Dim a '声明A为变体变量
+Dim a as string '声明A为字符串变量
+Dim a,b,c as currency '声明A,b,c为货币变量
+......
+声明变量可以是：Byte、Boolean、Integer、Long、Currency、Single、Double、Decimal（当前不支持）、Date、String（只限变长字符串）、String * length（定长字符串）、Object、Variant、用户定义类型或对象类型。
+强制声明变量
+Option Explicit
+说明：该语句必在任何过程之前出现在模块中。
+---------------------------------------------------
+声明常数，用来代替文字值。
+Const 
+' 常数的默认状态是 Private。
+Const My = 456
+' 声明 Public 常数。
+Public Const MyString = "HELP"
+' 声明 Private Integer 常数。
+Private Const MyInt As Integer = 5
+' 在同一行里声明多个常数。
+Const MyStr = "Hello", MyDouble As Double = 3.4567 
+---------------------------------------------------
+在EXCEL97中，有一个十分好的功能，他就是把鼠标放置在一个有效数据单元格中，执行该段代码，你就可以将连在一起的一片数据全部选中。只要将该段代码加入到你的模块中。
+Sub My_Select
+Selection.CurrentRegion.Select
+End sub
+---------------------------------------------------
+删除当前单元格中数据的前后空格。
+sub my_trim
+Trim(ActiveCell.Value)
+end sub
+---------------------------------------------------
+使单元格位移
+sub my_offset
+ActiveCell.Offset(0, 1).Select'当前单元格向左移动一格
+ActiveCell.Offset(0, -1).Select'当前单元格向右移动一格
+ActiveCell.Offset(1 , 0).Select'当前单元格向下移动一格
+ActiveCell.Offset(-1 , 0).Select'当前单元格向上移动一格
+end sub
+如果上述程序产生错误那是因为单元格不能移动，为了解除上述错误，我们可以往
+sub my_offset 之下加一段代码 on error resume next
+---------------------------------------------------
+注意以下代码都不再添加 sub “代码名称” 和end sub请自己添加!
+给当前单元格赋值：
+ActiveCell.Value = "你好！！！"
+给特定单元格加入一段代码:
+例如：在Ａ１单元格中插入"ＨＥＬＬＯ"
+Range("a1").value="hello"
+又如：你现在的工作簿在sheet1上，你要往sheet2的Ａ１单元格中插入"ＨＥＬＬＯ"
+1.
+sheets("sheet2").select
+range("a1").value="hello"
+或
+2.
+Sheets("sheet1").Range("a1").Value = "hello"
+说明：
+1.sheet2被打开，然后在将“HELLO"放入到A1单元格中。
+2.sheet2不被打开，将“HELLO"放入到A1单元格中。
+---------------------------------------------------
+隐藏工作表
+'隐藏SHEET1这张工作表
+　　sheets("sheet1").Visible=False
+'显示SHEET1这张工作表
+　　sheets("sheet1").Visible=True
+---------------------------------------------------
+有时候我们想把所有的EXCEL中的SHEET都打印预览，请使用该段代码，它将在你现有的工作簿中循环，直到最后一个工作簿结束循环预览。
+Dim my As Worksheet
+For Each my In Worksheets
+my.PrintPreview
+Next my
+---------------------------------------------------
+得到当前单元格的地址
+msgbox ActiveCell.Address
+---------------------------------------------------
+得到当前日期及时间
+msgbox date & chr(13) & time
+---------------------------------------------------
+保护工作簿
+ActiveSheet.Protect 
+取消保护工作簿
+ActiveSheet.Unprotect
+---------------------------------------------------
+给当前工作簿改名为 "liu"
+ActiveSheet.Name = "liu"
+---------------------------------------------------
+打开一个应用程序
+AppActivate (Shell("C:\WINDOWS\CALC.EXE"))
+---------------------------------------------------
+增加一个工作簿
+Worksheets.Add
+删除当前工作簿
+activesheet.delete
+---------------------------------------------------
+打开一个文件
+Workbooks.Open FileName:="C:\My Documents\Book2.xls"
+关闭当前工作簿
+ActiveWindow.Close
+---------------------------------------------------
+当前单元格定为：左对齐
+Selection.HorizontalAlignment = xlLeft
+当前单元格定为：中心对齐
+Selection.HorizontalAlignment = xlCenter
+当前单元格定为：右对齐
+Selection.HorizontalAlignment = xlRight
+---------------------------------------------------
+当前单元格为百分号风格
+Selection.Style = "Percent"
+---------------------------------------------------
+当前单元格字体为粗体
+Selection.Font.Bold = True
+当前单元格字体为斜体
+Selection.Font.Italic = True
+当前单元格字体为宋体20号字
+With Selection.Font
+.Name = "宋体"
+.Size = 20
+End With
+---------------------------------------------------
+With 语句
+With 对象
+.描述
+End With
+---------------------------------------------------
+让你的机器发出响声
+BEEP
+---------------------------------------------------
+清除单元格中所有文字、批注、格式、所有的东西！
+ActiveCell.Clear
+---------------------------------------------------
+测试选择状态的单元格的行数
+MsgBox Selection.Rows.Count
+测试选择状态的单元格的列数
+MsgBox Selection.Columns.Count
+---------------------------------------------------
+测试选择状态的单元格的地址
+Selection.Address
+---------------------------------------------------
+让所有的错误不再发生
+ON ERROR RESUME NEXT
+---------------------------------------------------
+产生错误时让错误转到另一个地方
+on error goto l
+'code
+l:
+'code
+---------------------------------------------------
+删除一个文件
+kill "c:\1.txt"
+---------------------------------------------------
+定制自己的状态栏
+Application.StatusBar = "现在时刻: " & Time
+恢复自己的状态栏
+Application.StatusBar = false
+---------------------------------------------------
+在运行期执行一个宏
+Application.Run macro:="text"
+---------------------------------------------------
+滚动窗口到a1的位置
+ActiveWindow.ScrollRow = 1
+ActiveWindow.ScrollColumn = 1
+---------------------------------------------------
+定制系统日期
+Dim MyDate, MyDay
+MyDate = #12/12/69#
+MyDay = Day(MyDate)
+---------------------------------------------------
+今天的年限
+Dim MyDate, MyYear
+MyDate = Date 
+MyYear = Year(MyDate)
+MsgBox MyYear 
+---------------------------------------------------
+产生一个inputbox<输入框>
+InputBox ("Enter number of months to add")
+---------------------------------------------------
+得到一个文件名：
+Dim kk As String
+kk = Application.GetOpenFilename("EXCEL (*.XLS), *.XLS", Title:="提示：请打开一个EXCEL文件：")
+msgbox kk
+---------------------------------------------------
+打开zoom对话框
+Application.Dialogs(xlDialogZoom).Show
+---------------------------------------------------
+激活字体对话框
+Application.Dialogs(xlDialogActiveCellFont).Show
+---------------------------------------------------
+打开另存对话框
+Dim kk As String
+kk = Application.GetSaveAsFilename("excel (*.xls), *.xls")
+Workbooks.Open kk
+---------------------------------------------------
+此段代码寻找字符串中特定字符的位置，需要建立一个窗体，并在窗体中，放入TEXTBOX1,TEXTBOX2和TEXTBOX3(3个文本框）及COMMANDBUTTON1(按钮)，如下图所示：
+Private Sub CommandButton1_Click()
+a = TextBox1.Text
+b = TextBox2.Text
+aa = Len(a)
+i = 1
+Dim YY As String
+If b = "" Then Exit Sub
+Do
+If InStr(i, a, b, vbTextCompare) = 0 Then Exit Do
+kk = InStr(i, a, b, vbTextCompare)
+YY = YY & CStr(kk) & "/"
+i = kk + 1
+Loop While aa >= i
+TextBox3.Text = YY
+End Sub   

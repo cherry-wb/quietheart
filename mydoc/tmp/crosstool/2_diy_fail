@@ -1,0 +1,140 @@
+Do It Youself
+自己制作交叉编译工具链。
+
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.3.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+
+4)编译安装gcc:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.3.2.tar.gz
+$mkdir build-gcc
+$cd gcc-4.3.2/
+$vi gcc/config/arm/t-linux
+	...修改一个标志如下：
+	TARGET_LIBGCC2_CFLAGS = -fomit-frame-pointer -fPIC -Dinhibit_libc -D__gthr_posix_h
+	...修改完毕
+$cd ../build-gcc/
+$../gcc-4.3.2/configure --target=arm-linux --prefix=$PRJROOT/tools --without-headers --enable-languages=c --disable-threads --disable-shared --disable-libmudflap --disable-libssp
+$make
+$make install
+-------
+这里，生成的gcc实际是bootstrap gcc，要用它来编译生成glibc库。修改TARGET_LIBGCC2_CFLAGS标志就是为了让gcc不依赖于其它库，以后编译好了glibc之后再编译生成完整的gcc。这一步的make编译过程大约需要等10分钟就可能出错了。
+另外注意：
+**配置gcc-4.3.2的时候，编译之前的配置时生成如下错误(pc机用的就是4.3.2的版本)：
+configure: error: Building GCC requires GMP 4.1+ and MPFR 2.3.2+.
+关于GMP:
+THE GNU MP LIBRARY
+GNU MP is a library for arbitrary precision arithmetic, operating on signed
+integers, rational numbers, and floating point numbers. It has a rich set of
+functions, and the functions have a regular interface.
+关于MPFR:(http://mpfr.loria.fr/mpfr-current/mpfr.html#Introduction-to-MPFR)
+MPFR is a portable library written in C for arbitrary precision arithmetic on floating-point numbers. It is based on the GNU MP library. It aims to extend the class of floating-point numbers provided by the GNU MP library by a precise semantics. 
+解决这个错误，需要安装这两个库，命令就是：
+$sudo apt-get install libgmp4-dev
+$sudo apt-get install libmpfr-dev
+**编译gcc-4.3.2的时候，输出了如下错误：
+----
+$../gcc-4.3.2/configure --target=arm-linux --prefix=$PRJROOT/tools --enable-languages=c --disable-threads --disable-shared
+$make
+...
+checking for C compiler default output file name... configure: error: C compiler cannot create executables
+See `config.log' for more details.
+---
+若:
+$../gcc-4.3.2/configure --target=arm-linux --prefix=$PRJROOT/tools --enable-languages=c --disable-threads --disable-shared --disable-libmudflap --disable-libssp
+$make
+...
+checking for library containing strerror... configure: error: Link tests are not allowed after GCC_NO_EXECUTABLES.
+make[1]: *** [configure-target-libiberty] Error 1
+---
+若:
+$../gcc-4.3.2/configure --target=arm-linux --prefix=$PRJROOT/tools --without-headers --enable-languages=c --disable-threads --disable-shared --disable-libmudflap --disable-libssp
+$make
+...
+checking for library containing strerror... configure: error: Link tests are not allowed after GCC_NO_EXECUTABLES.
+make[1]: *** [configure-target-libiberty] Error 1
+
+
+5)获得内核头文件：
+-------
+$cd $PRJROOT/kernel
+$tar -xjvf linux-2.6.32.tar.bz2
+$cd linux-2.6.32/
+$make ARCH=arm CROSS_COMPILE=arm-linux- menuconfig
+$make include/linux/version.h
+$
+$mkdir -p $PRJROOT/tools/arm-linux/include
+$cp -r /home/quietheart/lvkTmp/mkCrossTool/kernel/linux-2.6.32/include/linux/ $PRJROOT/tools/arm-linux/include
+#$cp -r /home/quietheart/lvkTmp/mkCrossTool/kernel/linux-2.6.32/include/asm-arm/ $PRJROOT/tools/arm-linux/include/asm
+$cp -r /home/quietheart/lvkTmp/mkCrossTool/kernel/linux-2.6.32/include/asm-generic/ $PRJROOT/tools/arm-linux/include/asm
+-------
+
+这里，不需要编译内核，只是通过配置生成（glibc）所需的头文件。
+配置的时候这里选择的处理器是:
+System Type-->ARM system type-->Marvell Kirkwood.
+配置完了之后，若include/linux/中有version.h和autoconf.h就说明配置生成了正确的头文件了?。
+问题是：
+这里并没有生成相应的文件？
+$make include/linux/version.h
+就有include/linux/version.h了
+没有$PRJROOT/kernel/linux-2.6.32/include/asm-arm这个目录？
+
+网上的参考(未尝试)：
+在menuconfig里面load一个别人的2410的配置然后退出并保存
+>make ARCH=arm CROSS_COMPILE=arm-linux- #这个不用等编译结束，开始一两分钟就用Ctrl+C中止。
+@复制kernel头文件到目标
+>sudo cp -a include/linux /usr/local/arm/4.3.2/include/linux
+>sudo cp -a include/asm-arm /usr/local/arm/4.3.2/include/asm
+>sudo cp -a include/asm-generic /usr/local/arm/4.3.2/include/asm-generic
+#低版本的内核若没有文件则不做以下两步
+>sudo cp -a arch/arm/include/asm /usr/local/arm/4.3.2/include
+>sudo cp -a arch/arm/mach-s3c2410/include/mach /usr/local/arm/4.3.2/include/asm

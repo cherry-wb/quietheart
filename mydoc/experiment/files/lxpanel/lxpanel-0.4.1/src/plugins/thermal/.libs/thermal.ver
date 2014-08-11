@@ -1,0 +1,3 @@
+{ global:
+thermal_plugin_class;
+local: *; };

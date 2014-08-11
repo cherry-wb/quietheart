@@ -1,0 +1,33 @@
+{
+	"name":"connect_ap",
+	"type":{"name":"loop","parameter":"1"},
+	"description":"connect to ap.",
+	"scenarios":[{
+		"login":{
+			"fname":"ap/cisco/scenario_login.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ip":"192.168.1.1"
+			}
+		}},
+		{"set_wireless_mode":{
+			"fname":"ap/cisco/scenario_set_wireless_mode.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"netMode":{"5G":"M","2G":"M"}
+			}
+		}},
+		{"logout":{
+			"fname":"ap/cisco/scenario_logout.json", 
+			"type":{"name":"seq"}
+		}},
+		{"connect_ap":{
+			"fname":"device/tate/scenario_connect_ap.json", 
+			"type":{"name":"seq"}, 
+			"parameter":{
+				"ssid":"Cisco34585",
+				"password":"12345678"
+			}
+		}
+	}]
+}

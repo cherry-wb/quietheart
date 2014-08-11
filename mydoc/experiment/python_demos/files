@@ -1,0 +1,9 @@
+http://apps.hi.baidu.com/share/detail/17341968
+Python中的浅拷贝与深拷贝 
+字典方法copy()可返回一个新字典，是原始字典的一个“浅”拷贝。在浅拷贝中，新字典的元素只是对原始字典的元素的引用。
+而深拷贝则是复制原始字典中的元素到一个独立的字典中，Python提供copy模块用于深拷贝，比如：
+from copy import deepcopy
+deepcp = deepcopy(ori_dic)
+
+其实还可以用其他方法进行深拷贝的，比如：
+deepcp = originalList[:]

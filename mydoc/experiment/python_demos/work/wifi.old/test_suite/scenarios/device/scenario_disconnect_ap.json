@@ -1,0 +1,8 @@
+{
+    "name":"disconnect_ap",
+    "vendor":"device:tate",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_disconnect_ap.py"},
+    "reporter":["success","fail"],
+    "description":"disconnect from a ap"
+}

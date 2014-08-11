@@ -1,0 +1,11 @@
+#!/bin/bash
+#assign
+a="hello world"
+#print
+echo "value of a is" $a
+echo "value of a is $a"
+echo "${a} is value of a"
+echo $a "is value of a"
+echo "${a}is value of a"
+echo "$a is value of a"
+#echo "$ais value of a"#this is wrong

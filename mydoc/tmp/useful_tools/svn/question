@@ -1,0 +1,7 @@
+svn如果更换当前svn工作拷贝的使用用户？
+$ svn info
+路径：.
+地址(URL)：http://10.1.29.125/svn/sony
+
+$svn switch??????
+

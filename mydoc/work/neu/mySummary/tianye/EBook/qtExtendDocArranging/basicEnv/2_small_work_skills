@@ -1,0 +1,140 @@
+1)如何独立编译自己的项目？以src/plugins/inputmethods/pinyin为例：
+只要进入自己项目的目录下面，运行：
+$../../../../../build/bin/qbuild
+这里运行的qbuild有可能不同程序层次不同，应该就是build下面的qbuild。
+这样会在build中相应位置生成你的项目的目标文件。
+如果运行
+$../../../../../build/bin/qbuild image
+这样只生成你自己模块的image相应文件。
+
+2）如何添加库和其他的源／头文件?以src/3rdparty/plugins/inputmethods/pkim为例，
+如果你的程序，需要用到其他的库，并且修改源代码的时候需要在原来的基础上面添加源文件，那么可以把库文件拷贝到/opt/qte-dep/lib中，并且修改pkim下的qbuild.pro文件，添加相应的源文件以及加上一句：
+LIBS+=-lmylib
+如果想要把自己的库文件放在自己的源代码中那么：
+LIBS+= -L $$path(.,project) -lmylib
+
+3）如何打印出log
+启动板子之后：
+$pkill qpe
+$. /etc/qpe.env
+$/usr/local/qtex/bin/qpe&
+这样在代码里面的cout语句就可以打印出来了。
+
+4)如果QA有问题，需要启到svn上面的qa上面。
+5)打印log
+#include <QtDebug>
+qDebug()<<"test";
+会自动换行。
+
+6)在qtex/qtopiacore/qt中修改了qt库之后，在
+../build/qtopiacore/target/src/gui下运行make可以生成新的qt库。
+
+7)开发eb306的时候，需要
+ifconfig usb0 192.168.100.1
+telnet 192.168.100.200
+之后mount才能调试板子中的程序。
+telnet之后系统很慢，可以先挂在一个nfs文件系统。然后进入目录ls一下，这样就快了。
+
+8）在交叉调试的时候，如果想要打印QString的值，需要在gdb中定义一个如下的宏定义：
+define printqstring
+    printf "(QString)0x%x (length=%i): \"",&$arg0,$arg0.d->size
+    set $i=0
+    while $i < $arg0.d->size
+        set $c=$arg0.d->data[$i++]
+        if $c < 32 || $c > 127
+                printf "\\u0x%04x", $c
+        else
+                printf "%c", (char)$c
+        end
+    end
+    printf "\"\n"
+end
+
+这样在gdb中运行如下：
+(gdb)printqstring mystr
+就会打印QString mystr的值了。
+
+9)发送消息：
+参考：http://qtextended.org/doc/qtextended4.4/qcop-tool.html
+http://qtextended.org/doc/qtextended4.4/services.html
+例如代码中是：
+QtopiaServiceRequest svreq("RotationManager",
+		"setCurrentRotation(int)");
+svreq << 270;
+svreq.send();
+实际在命令行中使用：
+qcop service send RotationManager "setCurrentRotation(int)" 270就行了。
+
+qcop
+执行这个会查看帮助。
+qcop list
+会列出所有具有的服务
+
+10)快速获得帮助：
+安装了qt的话，直接运行：
+assistant
+就可以获得帮助信息了。
+
+10)gdb调试的方法：
+关于如何使用gdb调试qt extended下面的程序，可以参考：
+=====================
+http://qtextended.org/doc/qtextended4.4/debug-qtextended.html
+这里大致介绍了如何调试程序，以及使用qlog()的方法。
+关于调试，这里简单介绍如下：
+(1)开发主机上面，编译源代码之前修改qbuild.pro，添加如下代码：
+CONFIG += debug
+这样和给configure传递-debug选项是一样的。
+(2)编译源代码，可以用../../../.../qbuild
+(3)在目标机器上面运行gdb服务：
+#gdbserver :22222 qpe
+这里，在开发板子上面将会侦听22222端口
+(4)在开发主机上面，运行对应的qpe程序。
+/opt/toolchains/.../bin/arm-linux-gdbtui /opt/Qtopia/bin/qpe
+这里的qpe程序在开发主机上面，不一定是板子上面的那个qpe，但是两者应该是同
+一个版本的。
+(5)连接开发板子上面的gdb服务：
+(gdb) target remote REMOTE_IP_ADDRESS:22222
+这里，REMOTE_IP_ADDRESS是开发板子的ip地址，例如192.168.100.200
+(6）正常运行gdb命令，就可以调试了。
+
+11)关于使用qLog来规范打印log的方法：
+=====================
+参考：
+http://qtextended.org/doc/qtextended4.4/debug-qtextended.html
+这里只说使用的方法：
+(1)在类似/usr/local/qtex/etc/default/Trolltech目录中的Log.conf文件中，添
+加如下：
+[EB306Desktop]
+Enabled = 1        
+Name[] = EB306 Home Desktop        
+Help[] = Logging related to the eb306 home desktop application. 
+(2)在程序的源代码中添加：
+#include <qtopialog.h>
+QTOPIA_LOG_OPTION(CategoryIdentifier)
+qLog(EB306Desktop)<<"print log!";
+这里，QTOPIA_LOG_OPTION是声明log由配置文件来决定其特征。还有其他的方式就
+请参见文档。
+(3)启动log打印：
+将前面Log.conf中相应的Enabled设置为1就能打印log了，例子中的log信息如下：
+EB306Desktop :  print log!
+(4)关闭log打印：
+将前面Log.conf中相应的Enabled设置为0就能禁止打印log了.
+(5)自定义log打印的格式：
+修改类似/usr/local/qtex/etc/default/Trolltech目录中的Log.conf文件,添加如
+下代码：
+[MessageHandler]
+Format = %t %p %n: %s
+这里，
+%s:你的log字符串。
+%t:一个时间啜，以微妙计算。所有的进程使用同一个起点，以便于进程之间进行
+时间的比较。
+%p:当前进程的PID.
+%n:当前进程名，同QCoreApplication::applicationName()返回,无
+QCoreApplication就是可执行文件名。
+这样定制之后，前面的打印信息变成这样：
+45909 511 qpe: EB306Desktop :  print log!
+另外，
+实践发现，用qDebug打印的东西在声明了
+QTOPIA_LOG_OPTION(CategoryIdentifier)之后好像也打印和qlog一样的信息了。
+
+3) Q_UNUSED(e);这个宏的作用就是使用一下e,防止出现没有使用的变量e的warning。

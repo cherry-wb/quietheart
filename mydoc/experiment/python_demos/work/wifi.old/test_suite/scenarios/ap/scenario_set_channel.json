@@ -1,0 +1,8 @@
+{
+    "name":"set_channel",
+    "type":{"name":"seq"},
+    "script":{"fname":"scenario_set_channel.py"},
+    "reporter":["success","fail"],
+    "description":"set channel of cisco ap"
+}
+

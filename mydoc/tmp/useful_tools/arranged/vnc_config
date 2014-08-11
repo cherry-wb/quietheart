@@ -1,0 +1,78 @@
+vnc服务配置
+
+        VNC (Virtual Network Computing)是虚拟网络计算机的缩写。VNC 是一款优秀的远程控制工具软件，是基于UNIX和Linux操作系统的免费的开源软件（也可以支持Windows等操作系统），远程控制能力强大，高效实用，其性能可以和 Windows 和 MAC 中的任何远程控制软件媲美。本文简单介绍在Ubuntu的Linux发行版下VNC服务的配置和使用。
+
+假设系统信息如下：
+服务端：Ubuntu 11.04 \n \l
+客户端：Ubuntu 11.04 \n \l
+其他系统中配置的过程和原理大致类似。
+
+1,服务端
+=======================
+(1)安装vnc服务程序
+#sudo apt-get install vnc4server
+这里，有可能还需要安装"vnc4-common"。
+
+(2)设置连接vnc服务的密码
+#vncpasswd
+这样会提示你输入密码，客户通过这个密码来进行连接，这里密码假设为12345678。
+
+(3)配置启动桌面
+*配置方法1：
+#cp /etc/X11/Xsession ~/.vnc/xstartup 
+这里配置的是客户连接之后，在客户端显示什么样的图形桌面。这里直接使用vnc服务器所在系统的桌面环境配置了。如果不进行配置，那么客户端登陆的时候就只能启动默认的窗口管理器非常简单不好用。
+
+*配置方法2：
+#vim ~/.vnc/xstartup
+修改内容如下：
+#!/bin/sh 
+# Uncomment the following two lines for normal desktop: 
+unset SESSION_MANAGER 
+#exec /etc/X11/xinit/xinitrc
+exec /etc/X11/Xsession
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+这里，注意如果用"exec /etc/X11/xinit/xinitrc"替代"exec /etc/X11/Xsession"则需要修改"xinitrc"文件的权限，如："chmod 755 /etc/X11/xinit/xinitrc"，否则客户端无法启动图形桌面环境。
+
+
+(4)启动vnc服务：
+#vncserver :1
+这样在1号窗口桌面上面启动vncserver，客户端会根据这个号码来连接指定桌面的窗口。
+
+(5)修改系统按键映射
+#gconf-editor 
+找到“Apps->Metacity->Global keybingdings”中的“show desktop”，将其默认值<Super>D改为<Control><Alt>D。
+这里，客户端已经可以通过vnc远程登陆服务器，但是在客户端的vnc远程桌面客户程序窗口下按下字母”d”时，会被错误的当做返回桌面的快捷方式(Super+d)，导致”d”无法输入，所以需要用这里的方式修改。而产生这个现象的原因是：ubuntu 11.04里把Windows键定义为Super键，当客户端通过客户端软件远程登陆到这个server的时候。
+
+(6)终止指定桌面号上的vnc服务：
+#vncserver -kill :1
+这里使用":1"分配桌面号码，并且将相应桌面上面的vncserver终止。
+
+更多信息参见"man vncserver"。
+
+2,客户端
+=======================
+(1)安装一个vnc客户端：
+#apt-get install gvncviewer
+这里，也可以安装其他客户端程序"xvnc4viewer"来替代gvncviewer等。
+
+(2)连接指定机器上面的指定桌面号：
+#gvncviewer 10.1.10.39:1
+当然，这里的机器（也就是前面安装vnc服务的机器10.1.10.39）上面应该事先启动好"vncserver :1"。
+
+输入密码之后，至此，vnc客户端所在的机器便可以通过vnc实现对vnc服务所在机器进行远程桌面控制了。
+
+3,其他
+=======================
+待添加。
+
+
+参考资料
+http://baike.baidu.com/view/160932.htm
+http://huangro.iteye.com/blog/621608
+
+以上只是对vnc配置和使用的简单描述，更多信息以及其中可能会有的错误的纠正，可通过下述方式联系，谢谢。
+
+作者：QuietHeart
+EMail：quiet_heart000@126.com
+日期：2012-08-21

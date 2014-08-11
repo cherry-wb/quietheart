@@ -1,0 +1,249 @@
+参考：
+http://blog.sina.com.cn/s/blog_474b787d0100dyy0.html
+并整理。
+
+我们可以在C源程序中插入传给编译程序的各中指令，这些指令被称为预处理器指令，它们扩充了程序设计的环境。现把常用的预处理命令总结如下：
+
+1.预处理程序
+按照ANSI标准的定义，预处理程序应该处理以下指令：
+#if
+#ifdef
+#ifndef
+#else
+#elif
+#endif
+#define
+#undef
+#line
+#error
+#pragma
+#include
+显然，上述所有的12个预处理指令都以符号#开始，，每条预处理指令必须独占一行。
+
+2.#define
+#define指令定义一个标识符和一个串（也就是字符集），在源程序中发现该标识符时，都用该串替换之。这种标识符称为宏名字，相应的替换称为宏代换。一般形式如下：
+
+#define macro-name char-sequence
+这种语句不用分号结尾。宏名字和串之间可以有多个空白符，但串开始后只能以新行终止。
+例如：我们使用LEFT代表1，用RIGHT代表0，我们使用两个#define指令：
+
+#define LEFT 1
+#define RIGHT 0
+每当在源程序中遇到LEFT或RIGHT时，编译程序都用1或0替换。
+定义一个宏名字之后，可以在其他宏定义中使用,例如：
+
+#define ONE 1
+#define TWO ONE+ONE
+#define THREE ONE+TWO
+
+宏代换就是用相关的串替代标识符。因此，如果希望定义一条标准错误信息时，可以如下定义：
+#define ERROR_MS “Standard error on input \n”
+
+如果一个串长于一行，可在行尾用反斜线”\”续行，如下：
+#define LONG_STRING “This is a very very long \
+String that is used as an example”
+
+3.#error
+#error指令强制编译程序停止编译，它主要用于程序调试。#error指令的一般形式是：
+#error error-message
+注意，宏串error-message不用双引号包围。遇到#error指令时，错误信息被显示，可能同时还显示编译程序作者预先定义的其他内容。
+例如main.cpp文件内容如下：
+  1 #include<iostream>
+  2 using std::cout;
+  3 using std::cin;
+  4 using std::endl;
+  5 #ifdef MMM
+  6 #error myerror //如果执行了这个就会阻止编译通过
+  7 #endif
+  8 int main(int argc, char *argv[])
+  9 {
+ 10     cout<<"hello world!"<<endl;
+ 11     return 0;
+ 12 }
+编译过程如下：
+[quietheart@lv-k pre_test]$ ls
+main.cpp
+[quietheart@lv-k pre_test]$ make CXXFLAGS+=MMM main
+g++ MMM    main.cpp   -o main
+g++: MMM：没有那个文件或目录
+make: *** [main] 错误 1
+[quietheart@lv-k pre_test]$ ls
+main.cpp
+[quietheart@lv-k pre_test]$ make main
+g++     main.cpp   -o main
+[quietheart@lv-k pre_test]$ ls
+main  main.cpp
+[quietheart@lv-k pre_test]$ ./main 
+hello world!
+
+4.#include
+程序中的#include指令要求编译程序读入另一个源文件。被读入文件的名字必须用双引号(“”)或一对尖括号(<>)包围，例如：
+#include “stdio.h”
+#include <stdio.h>
+都使C编译程序读入并编译头文件以用于I/O系统库函数。
+包含文件中可以包含其他#include指令，称为嵌套包含。允许的最大嵌套深度随编译器而变。
+文件名被双括号或尖括号包围决定了对指定文件的搜索方式。文件名被尖括号包围时，搜索按编译程序作者的定义进行，一般用于搜索某些专门放置包含文件的特殊目录。当文件名被双括号包围时，搜索按编译程序实时的规定进行，一般搜索当前目录。如未发现，再按尖括号包围时的办法重新搜索一次。
+通常，绝大多数程序员使用尖括号包围标准的头文件，双引号用于包围与当前程序相关的文件名。
+
+5.条件编译指令
+若干编译指令允许程序员有选择的编译程序源代码的不同部分，这种过程称为条件编译。
+
+5.1#if、#else、#elif #endif
+条件编译指令中最常用的或许是#if,#else,#elif和#endif。这些指令允许程序员根据常数表达式的结果有条件的包围部分代码。
+
+#if的一般形式是：
+#if constant-expression
+ Statement sequence
+#endif
+如#if后的常数表达式为真，则#if和#endif中间的代码被编译，否则忽略该代码段。#endif标记#if块的结束。
+ 
+#else指令的作用与C语言的else相似，#if指令失败时它可以作为备选指令。例如：
+#include <stdio.h>
+#define MAX 100
+
+int main(void)
+{
+ #if MAX>99
+ printf(“Compiled for array greater than 99.\n”);
+ #else
+ printf(“Complied for small array.\n”);
+ #endif
+ return 0;
+}
+注意，#else既是标记#if块的结束，也标记#else块的开始。因为每个#if只能写一个#endif匹配。
+
+#elif指令的意思是“否则，如果”，为多重编译选择建立一条if-else-if（如果-否则-如果链）。如果#if表达式为真，该代码块被编译，不测试其他#elif表达式。否则，序列中的下一块被测试，如果成功则编译之。一般形式如下：
+#if expression
+ Statement sequence
+#elif expression1
+ Statement sequence
+#elif expression2
+ Statement sequence
+#elif expression
+ Statement sequence
+#endif
+
+5.2#ifdef和#ifndef
+条件编译的另一个方法是使用编译指令#ifdef和#ifndef，分别表示“如果已定义”和“如果未定义”。#ifdef的一般形式如下：
+#ifdef macro-name
+ Statement sequence
+#endif
+如果macro-name原先已经被一个#define语句定义，则编译其中的代码块。
+#ifndef的一般形式是：
+#ifndef macro-name
+ Statement sequence
+#endif
+如果macro-name当前未被#define语句定义，则编译其中的代码块。
+#ifdef和#ifndef都可以使用#else或#elif语句。
+
+#inlucde <stdio.h>
+#define T 10
+int main(void)
+{
+ #ifdef t
+ printf(“Hi T\n”);
+ #else
+ printf(“Hi anyone\n”);
+ #endif
+ #ifndef M
+ printf(“M Not Defined\n”);
+ #endif
+ Return 0;
+}
+
+6.#undef
+#undef指令删除前面定义的宏名字。也就是说，它“不定义”宏。一般形式为：
+#undef macro-name
+
+7.使用defined
+
+除#ifdef之外，还有另外一种确定是否定义宏名字的方法，即可以将#if指令与defined编译时操作符一起使用。defined操作符的一般形式如下：
+defined macro-name
+如果macro-name是当前定义的，则表达式为真，否则为假。
+例如，确定宏MY是否定义，可以使用下列两种预处理命令之一：
+#if defined MY
+或
+#ifdef MY
+
+也可以在defined之前加上感叹号”!”来反转相应的条件。例如，只有在DEBUG未定义的情况下才编译。
+#if !defined DEBUG
+ printf(“Final Version!\n”);
+#endif
+使用defined的一个原因是，它允许由#elif语句确定的宏名字存在。
+
+8.#line
+#line指令改变__LINE__和__FILE__的内容。__LINE__和__FILE__都是编译程序中预定义的标识符。标识符__LINE__的内容是当前被编译代码行的行号，__FILE__的内容是当前被编译源文件的文件名。#line的一般形式是：
+#line number “filename”
+其中，number是正整数并变成__LINE__的新值；可选的“filename”是合法文件标识符并变成__FILE__的新值。#line主要用于调试和特殊应用。
+例如main.cpp文件内容如下:
+  1 #include<iostream>
+  2 using std::cout;
+  3 using std::cin;
+  4 using std::endl;
+  5 #line 2 "myfile.h"
+  6 int main(int argc, char *argv[])
+  7 {
+  8     cout<<__LINE__<<":"<<__FILE__<<endl;
+  9     return 0;
+ 10 }
+
+编译运行输出如下：
+[quietheart@lv-k pre_test]$ ls
+main.cpp
+[quietheart@lv-k pre_test]$ make main
+g++     main.cpp   -o main
+[quietheart@lv-k pre_test]$ ls
+main  main.cpp
+[quietheart@lv-k pre_test]$ ./main 
+4:myfile.h
+由上面输出可以看出，__LINE__的内容变成了相对#line宏的内容，即#line下面的第一行就是line指定的2;同时__FILE__变成了#line指定的"myfile.h".
+
+
+9.#pragma
+#pragma是编译程序实现时定义的指令，它允许由此向编译程序传入各种指令。例如，一个编译程序可能具有支持跟踪程序执行的选项，此时可以用#pragma语句选择该功能。编译程序忽略其不支持的#pragma选项。#pragma提高C源程序对编译程序的可移植性。
+
+10. 预处理操作符#和##
+有两个预处理操作符：#和##，它们可以在#define中使用。
+操作符#通常称为字符串化的操作符，它把其后的串变成用双引号包围的串。例如：
+#include <stdio.h>
+#define mkstr(s) #s
+int main(void)
+{
+ printf(mkstr(I like C));
+ Return 0;
+}
+
+ 
+
+预处理程序把以下的语句：
+printf(mkstr(I like C));
+变成
+printf(“I like C”);
+操作符##把两个标记拼在一起，形成一个新标记。例如：
+#include <stdio.h>
+#define concat(a,a) a##b
+int main(void)
+{
+ int xy = 10;
+ printf(“%d”,concat(x,y));
+ Return 0;
+}
+
+预处理程序把以下语句：
+printf(“%d”,concat(x,y));
+变成
+printf(“%d”,xy);
+操作符#和##主要作用是允许预处理程序对付某些特殊情况，多数程序中并不需要。
+
+11. 预定义宏
+C规范了5个固有的预定义宏，它们是：
+__LINE__
+__FILE__
+__DATE__
+__TIME__
+__STDC__
+
+__LINE__和__FILE__包含正在编译的程序的行号和文件名。
+__DATE__和内容形如month/day/year(月/日/年)的串，代表源文件翻译成目标码的日期。
+__TIME__中的串代表源代码编译成目标码的时间，形如hour:minute:second(时：分：秒)
+如果__STDC__的内容是十进制常数1，则表示编译程序的实现符合标准C。

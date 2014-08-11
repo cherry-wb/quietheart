@@ -1,0 +1,22 @@
+http://www.linuxidc.com/Linux/2010-12/30782.htm
+这个 Tips 是给 CLI 控的，当然前提是你要开着 X server 。
+
+　　在终端下通过命令行截图
+
+　　1、在 X Terminal 下截图
+
+　　打开 gnome terminal 并输入
+
+　　sleep 5; import -window root screen.png
+
+　　通过 sleep 5 命令在截图前等待5秒，在这段时间你可以缩小 Terminal ，以便截取整个桌面。import 是 ImageMagick 工具集中的一个小工具，可捕获 X server 上任何可见窗口并输出图像，详细的使用方法可以 man import 。
+
+　　2、在 Console 下截图
+
+　　当你通过快捷键 CTRL+ALT+F1 ~ F6 切换到 Ubuntu Console 后，X server 依然是跑在 CTRL+ALT+F7 上，这时你同样可以截取 X server 里的窗口图像，先通过以下命令获取显示号码，一般输出为 0.0 。
+
+　　$ echo $DISPLAY
+
+　　随后就可以配合 chvt 工具来截图了，下面的样例假定你在 F3 console 上，也就是 tty3
+
+　　chvt 7; sleep 5; import -window root screen.png -display :0.0 ; chvt 3

@@ -1,0 +1,6 @@
+#!/bin/bash
+a=1
+b=2
+c=5
+expr c = `expr a + b`
+echo $c

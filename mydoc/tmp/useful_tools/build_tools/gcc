@@ -1,0 +1,90 @@
+gcc
+[未整理]
+*指定编译标准的编译：
+gcc -std=c99 hello.c
+这样会使用c99扩展标准对程序进行编译。例如，restrict是c99添加的，而默认gcc若不支持restrict关键字，那么使用这个命令，就行了。
+
+打开编译起所有警告的选项：
+-Wall
+
+**自动产生依赖相关：
+使用-M选项。
+例如，
+main.cpp包含头文件如下：
+//main.cpp
+#include "mycustom.h"
+#include <stdio.h>
+其中,mycustom.h中有包含如下：
+#include "mycustom2.h"
+*查看完整依赖：
+$gcc -M main.cpp
+输出如下：
+main.o: main.cpp mycustom.h mycustom2.h /usr/include/stdio.h \
+  /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-32.h \
+  /usr/lib/gcc/i386-redhat-linux/4.1.2/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+  /usr/include/bits/wchar.h /usr/include/gconv.h \
+  /usr/lib/gcc/i386-redhat-linux/4.1.2/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h
+
+*不考虑标准库的依赖:
+$gcc -MM main.cpp
+输出如下：
+main.o: main.cpp mycustom.h mycustom2.h
+注意，识别是否是标准库的方法是看"#include"是'#include <headerfile>'还是'#include "headerfile"'，后者不是标准库的包含。
+
+**
+gcc的-E选项
+# gcc -E myfile.c > myfile.pre
+命令执行后，对 myfile.c 做预处理的结果将被输出到 myfile.pre 文件中。几乎所有编译器都支持这个选项。这项功能尤其是在宏函数无法正常工作时显得格外重要。
+
+
+
+gcc的-D选项：
+可以在编译的时候给程序添加一个宏定义。例如我的程序test.c中没有定义'MY'这个宏，我可以利用如下命令：
+ gcc -o test test.c -DMY
+ 这样就相当于在我的源代码中添加了一个宏定义'#define MY'
+ gcc -o test test.c -DMY=1
+ 相当于添加了一个宏定义：'#define MY 1'
+ 取消宏定义用'-U'选项。
+
+gcc有一个-static选项，编译的时候静态链接，防止出现运行在其他的平台上面不行。
+编译之后强制用静态库链接，最终生成的结果连libc.so都不用依赖了。
+
+**关于共享(shared)库和静态(static)库的混合连接
+涉及-W1,option选项：
+默认情况下，假如共享库可用，连接器会使用共享库。但是-Bdynamic和-Bstatic提供了很好控制库的方法。它们可以决定用共享库还是用静态库。
+假设我有libfoo.a,libfoo.so,libbar.a,libbar.so,
+传-Bdynamic和-Bstatic选项给连接器，如下操作：
+# gcc -o main main.o -Wl,-Bstatic \
+    -lfoo -Wl,-Bdynamic -lbar
+这样会使用libfoo.a和libbar.so进行编译。
+# gcc -o main main.o -Wl,-Bstatic -lfoo -lbar
+告诉连接器所有的库(象libc等等)都使用静态的版本.
+这样可能会出现问题，因为libgcc_s.so没有静态的libgcc_s.a版本的话会提示错误，所以最后加上-Wl,-Bdynamic
+
+需要注意：
+-Wl,option	是gcc的编译选项（l是linker的意思，不是数字），用来把链接器选项option传递给链接器。
+-Bstatic	是链接器ld的选项，其后的所有-l将会用静态版本库进行链接。
+-dynamic	是链接器ld的选项，其后的所有-l将会用动态版本库进行链接。
+**
+
+-include <file>
+这个选项的意思是，相当于给源文件添加了一个"#include "file""这行，可以有多个-include选项。
+(待实践)
+
+*gcc的-pipe选项：
+-pipe
+      在编译过程的不同阶段间使用管道而非临时文件进行通信.这个选项在某些系统上无法
+      工作,因为那些系统的 汇编器不能从管道读取数据. GNU 的汇编器没有这个问题.
+看起来好像速度会快，实际上，对于一个大的项目，测试如下：
+不使用-pipe进行编译：
+Time is :2011年 12月 31日 星期六 17:35:50 CST--2011年 12月 31日 星期六 17:40:07 CST
+Time is :2011年 12月 31日 星期六 17:41:53 CST--2011年 12月 31日 星期六 17:46:11 CST
+
+使用-pipe进行编译：
+Time is :2011年 12月 31日 星期六 17:48:08 CST--2011年 12月 31日 星期六 17:52:17 CST
+Time is :2011年 12月 31日 星期六 17:53:18 CST--2011年 12月 31日 星期六 17:57:36 CST

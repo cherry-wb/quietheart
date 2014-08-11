@@ -1,0 +1,6 @@
+ldd
+ldd是Library Dependency Display缩写, 它的作用是显示一个可执行程序必须使用的共享库.
+
+	$ ldd /usr/bin/mesg
+	libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0xb7eaf000)
+/lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0xb7feb000) 

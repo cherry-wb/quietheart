@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libgpewidget
+Description: GPE Widget Library
+Version: @VERSION@
+Requires: gtk+-2.0
+Libs: -L${libdir} -lgpewidget
+Cflags: -I${includedir}

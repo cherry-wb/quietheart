@@ -1,0 +1,196 @@
+*svn中查看本地和服务器上面的更新对比并且不更新：
+$svn status -u
+
+*svn中查看本地和本地修改之间的对比：
+$svn status
+
+*查看本地工作拷贝和修改之前的差别：
+$svn diff <你要查看的文件名>
+这里，可以直接"svn diff"查看当前目录下所有的修改。
+
+*使用checkout导出，并且不递归：
+$svn checkout http://<svn path> -N
+这里，<svn path>就是版本库的svn路径。-N指明不递归。默认是递归的，不递归就只导出一层目录，这在有时候很有用。
+其他命令例如update也有类似的操作。
+如果只检出目录不检出文件用："svn checkout url --depth empty".
+
+**创建一个svn库
+======
+svn import是将未版本化文件导入版本库的最快方法，会根据需要创建中介目录。具体步骤如下：
+1,创建svn库:
+$mkdir -p /home/quietheart/svn_repos/test_repos
+$svnadmin create /home/quietheart/svn_repos/test_repos
+这样,就创建好了原始的svn库test_repos，
+*查看刚刚创建的库中有什么如下：
+$ls /home/quietheart/svn_repos/test_repos
+conf  dav  db  format  hooks  locks  README.txt
+
+2,将目录svn_study纳入版本控制：
+$svn import svn_study file:///home/quietheart/svn_repos/test_repos/mystudy/test -m "Initial import"
+这样，就把svn_study中的内容纳入到版本控制系统中了，实际纳入的是拷贝且原始的test_char_driver不变。实际版本库也可以在别的机器上面，但是访问的时候就不能用file://来指定了。
+运行之后，输出如下：
+新增           svn_study/test_char_driver
+新增           svn_study/test_char_driver/00_widget_dev
+新增           svn_study/test_char_driver/00_widget_dev/testDemo
+新增           svn_study/test_char_driver/00_widget_dev/testDemo/main.c
+新增           svn_study/test_char_driver/00_widget_dev/widgetdrv_simple.c
+新增           svn_study/test_char_driver/00_widget_dev/readme
+新增           svn_study/test_char_driver/00_widget_dev/Makefile
+新增           svn_study/test_char_driver/00_widget_dev/widgetdrv_api.h
+新增           svn_study/test_char_driver/00_widget_dev/widgetdrv_simple.h
+
+提交后的修订版为 1。
+
+3,查看纳入到版本库中的文件：
+$svn ls file:///home/quietheart/svn_repos/test_repos/mystudy/test
+test_char_driver/
+这里，注意我们纳入svn_study实际上是把svn_study中的子目录等内容纳入了，而svn_study并没有在svn ls中看到。
+*如果使用ls查看版本库目录,会发现文件系统结构实际没有变化：
+$ls /home/quietheart/svn_repos/test_repos/
+conf  dav  db  format  hooks  locks  README.txt
+至此，我们已经把svn_study下的test_char_driver纳入到版本库中了，。
+
+4,使用版本库：
+在导入后，原来的目录树并没转化成工作拷贝，为了开始工作，需要运行svn checkout导出一个工作拷贝。
+1)本地导出：
+*导出版本库的命令如下：
+svn checkout file:///home/quietheart/svn_repos/test_repos/mystudy/test
+这样会把test导出，查看当前目录文件内容如下：
+$ ls -a
+.  ..  test
+$ls -a test
+.  ..  .svn  test_char_driver
+可见，test内的内容纳入了版本控制。
+
+*查看当前版本库的日志：
+$ cd test/
+[quietheart@lv-k test]$ svn log
+------------------------------------------------------------------------
+r1 | quietheart | 2011-01-19 15:38:58 +0800 (三, 19  1月 2011) | 1 line
+
+Initial import
+------------------------------------------------------------------------
+这里，就可以看到导入时候写的日志。
+之后我们可以再这个工作拷贝上进行其他svn操作了。
+
+2)从局域网其它主机导出:
+2.1)在服务端运行：
+$svnserve -d -r /home/quietheart/svn_repos/
+这里，服务段就是import整个svn库所在的主机(假设ip为10.1.29.44),-d表示守护进程，-r指定把本地的特定目录作为外部访问的根目录，这样安全。实际svnserve还可以指定端口号。
+
+2.2)在客户端运行：
+$svn checkout svn://10.1.29.44/test_repos/mystudy/test
+这里，test_repos就是服务端svn_repos的子目录，通过刚才svnserve的-r选项把服务器的/home/quietheart/svn_repos/变成客户端访问的根，这样隐藏了细节，增加了服务器端的安全。另外，如果是windows分区，那么可能checkout的时候提示无法更改.svn的权限等，那么使用sudo svn checkout ***即可。"svn://"方式的访问速度快，但是安全的控制不太好（没有加密）。
+
+
+5,其他:
+*权限控制(待实践)：
+*启动服务进程：
+$svnserve -d -r /home/quietheart/svn_repos/
+这里，服务段就是import整个svn库所在的主机(假设ip为10.1.29.44),-d表示守护进程，-r指定把本地的特定目录作为外部访问的根目录，这样安全。实际svnserve还可以指定端口号。
+
+*修改/home/quietheart/svn_repos/test_repos/conf/svnserve.conf:
+添加如下行(实际仔细阅读该文件注释即可知)：
+anon = none
+auth-access = write
+password-db = passwd
+authz-db = authz
+这里，注意要修改成"anon = none",默认的是"anon = read",否则后面svn checkout的时候会提示"svn: 未授权打开根进行编辑操作"这个错误。
+
+*修改/home/quietheart/svn_repos/test_repos/conf/passwd:
+在[users]下添加如下行：
+lv-k = test
+
+*修改/home/quietheart/svn_repos/test_repos/conf/authz
+添加
+[test_repos:/]
+lv-k = rw
+这个表示访问的时候，给lv-k开启test_repos库的根权限。当前需要注意的是这个"[test_repos:/]"是基于前面那个"$svnserve -d -r /home/quietheart/svn_repos/"命令的。
+
+*从别的主机将svn_repos中相应的内容导出：
+$sudo svn checkout svn://10.1.29.44/test_repos/mystudy/test --username lv-k
+不知为什么，没有输入密码。
+
+
+推荐的版本库布局：
+/trunk
+/branches
+/tags
+
+======
+**
+
+**使用分支：
+假设当前目录结构如下：
+$pwd
+/home/quietheart/test/svn_study/test
+$tree
+.
+|-- branches
+|-- tag
+`-- trunk
+    |-- busybox-1.4.2.tar.bz2
+    `-- test_char_driver
+        `-- 00_widget_dev
+            |-- Makefile
+            |-- readme
+            |-- testDemo
+            |   `-- main.c
+            |-- widgetdrv_api.h
+            |-- widgetdrv_simple.c
+            `-- widgetdrv_simple.h
+$du -sh
+2.0M
+
+$cd /home/quietheart/svn_repos/test_repos
+$du -sh
+1.8M
+$cd $_
+
+创建一个分支：
+$ svn copy trunk/ branches/quietheart_branch
+A         branches/quietheart_branch
+$ svn status
+A  +   branches/quietheart_branch <=====这里'+'表示是用svn copy创建的一个工作拷贝。
+$ tree
+.
+|-- branches
+|   `-- quietheart_branch
+|       |-- busybox-1.4.2.tar.bz2
+|       `-- test_char_driver
+|           `-- 00_widget_dev
+|               |-- Makefile
+|               |-- readme
+|               |-- testDemo
+|               |   `-- main.c
+|               |-- widgetdrv_api.h
+|               |-- widgetdrv_simple.c
+|               `-- widgetdrv_simple.h
+|-- tag
+`-- trunk
+    |-- busybox-1.4.2.tar.bz2
+    `-- test_char_driver
+        `-- 00_widget_dev
+            |-- Makefile
+            |-- readme  
+            |-- testDemo
+            |   `-- main.c
+            |-- widgetdrv_api.h
+            |-- widgetdrv_simple.c
+            `-- widgetdrv_simple.h
+$du -sh
+7.0M
+$cd /home/quietheart/svn_repos/test_repos
+$du -sh
+1.8M
+$cd $_
+
+由上可知，创建分支，虽然在本地工作拷贝中，文件系统中文件的大小变化了，但实际上，再svn库中大小没有多大变化，所以svn的创建分支是“廉价”的拷贝。
+
+
+*合并主干的内容到分支：
+$svn merge -r 6:7 file:///home/quietheart/svn_repos/test_repos/mystudy/test/trunk /home/quietheart/test/svn_study/test/branches/quietheart_branch/
+这样，会把主干上版本6:7上面的修改合并到分支上面。然后可以用svn commit将合并的结果提交。注意，这里目标是/home/quietheart/test/svn_study/test/branches/quietheart_branch/，它是本地工作拷贝的目录。
+实际最后一个参数可以省略，这样会以当前路径作为合并目标，运行如下：
+$cd /home/quietheart/test/svn_study/test/branches/quietheart_branch
+$svn merge -r 6:7 file:///home/quietheart/svn_repos/test_repos/mystudy/test/trunk

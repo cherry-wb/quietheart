@@ -1,0 +1,1 @@
+﻿document.write('<a href="http://www.tuidc.com" target="_blank"><img src="http://img.jb51.net/imgby/tengyou370.gif" width=370 height=60 /></a>');

@@ -1,0 +1,9 @@
+{
+	"name":"restore_factory_default",
+	"vendor":"ap:cisco:e3000",
+	"type":{"name":"seq"},
+	"script":{"fname":"scenario_restore_factory_default.py"},
+	"reporter":["success","fail"],
+	"description":"restore factory default"
+}
+

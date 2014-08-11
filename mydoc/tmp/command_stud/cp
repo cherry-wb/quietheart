@@ -1,0 +1,21 @@
+杂乱:
+cp -a
+这个-a选项是归档标志(目的是为了copy一个完整的目录树)等价于dpR,
+也就是d代表不跟踪symbolics,p代表保留权限,R代表递归。有个事实：假设1m的一个文件a,为它建立了一个硬链接a.hardlink,然后两者拷贝到同一个目录adir中。备份的时候，用cp -r adir adir.bak会发现adir.bak是2M，如果用cp -a adir adir.bak那么adir.bak就是1M.
+
+cp -u file1 file
+这个-u选项拷贝的是当源比目标更新的时候才进行拷贝。也就是拷贝相对以前所有更新的文件以及不存在的文件。
+
+
+*拷贝的时候，自动创建参数中源文件的路径：
+#cp --parents parentdir1/parentdir2/sourcefile destdir/
+这样拷贝的时候，会在目标路径中创建源文件参数中的所有父目录层级(不止是一层父目录)，然后将源文件拷贝进去。实践证明，使用--parent也行。
+这里的具体过程和其中的结果如下：
+[quietheart@lv-k cpp_test]$ ls ../install_test/
+[quietheart@lv-k cpp_test]$ ls
+a.out  class_test  const_cast_test  cppDemo  libtest  main.debuginfo  main.stripdebug  temp
+[quietheart@lv-k cpp_test]$ cp --parent class_test/a.out ../install_test/
+[quietheart@lv-k cpp_test]$ ls ../install_test/
+class_test
+可见，拷贝当前class_test/a.out文件到../install_test之后，../install_test中也同时创建了a.out文件的目录结构而不仅仅是拷贝文件。
+

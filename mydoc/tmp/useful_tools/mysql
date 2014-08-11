@@ -1,0 +1,63 @@
+一些杂乱的mysql命令：
+
+*查看表的信息：
+mysql>desc <表名>
+
+*查看建立表的命令：
+mysql>show create table <tablename>;
+
+*建立表的时候自动创建主键：
+mysql> create table mytable(id int AUTO_INCREMENT PRIMARY KEY, visitor VARCHAR(40));
+这样，建立mytable的时候，自动创建id主键，并且键为自动递增。
+
+*将test数据库中的settings表内容导出为xml格式：
+$mysql -X -uroot -p12345678 test -e "select * from settings;" >out.xml
+这里，-X指定为xml格式（或者--xml），-u指定用户为root，-p指定密码为12345678，test是数据库名称，-e指定执行的sql语句，执行结果会打印到屏幕上面。
+
+**其它
+创建查询数据库或者表是否存在的语句：
+mysql>create database if not exists db_name;
+这样创建db_name数据库。
+
+mysql>create table if not exists tABLE_name;
+这样创建table_name表。
+
+mysql>drop database if exists db_name
+这样删除db_name数据库。
+**
+
+#mysql -uroot -p12345678
+可以访问本地。
+
+#mysql -uroot -h127.0.0.1 -p12345678
+也是本地。
+
+但是访问别机器需要：
+(1)vim /etc/mysql/my.cnf
+将"bind-address"由127.0.0.1修改成机器ip。
+
+然后
+#mysql -uroot -h 127.0.0.1 -p 12345678
+mysql> use mysql;
+mysql> select * from user;
+将其中的host字段还要授权。
+
+
+
+#####创建用户
+This is designed for how to manage ACS Server which based on MySQL acs database.
+Must create a acs@localhost account identified by 'acs1234' in MySQL,
+using following SQL in MySQL interactive CLI manually,
+------------------------------------------------------------------
+mysql> CREATE USER acs@localhost IDENTIFIED BY 'acs1234';
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'acs'@'localhost';
+or
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'acs'@'localhost' IDENTIFIED BY 'acs1234' WITH GRANT OPTION;
+If you want to delete an account, you can use
+mysql> DROP USER 'acs'@'localhost';
+sometimes, you need to flush privileges,
+mysql> FLUSH PRIVILEGES
+------------------------------------------------------------------
+
+获取最新的十本书
+"SELECT name FROM books ORDER BY pub_date DESC LIMIT 10"

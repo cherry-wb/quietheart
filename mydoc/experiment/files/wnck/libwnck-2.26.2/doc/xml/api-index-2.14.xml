@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexdiv PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<indexdiv>
+<indexdiv><title>C</title>
+<indexentry><primaryie linkends="WnckClientType"><link linkend="WnckClientType">WnckClientType</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>M</title>
+<indexentry><primaryie linkends="WnckMotionDirection"><link linkend="WnckMotionDirection">WnckMotionDirection</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>S</title>
+<indexentry><primaryie linkends="wnck-screen-get-workspace-index"><link linkend="wnck-screen-get-workspace-index">wnck_screen_get_workspace_index</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-screen-get-workspace-neighbor"><link linkend="wnck-screen-get-workspace-neighbor">wnck_screen_get_workspace_neighbor</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-set-client-type"><link linkend="wnck-set-client-type">wnck_set_client_type</link></primaryie></indexentry>
+</indexdiv>
+<indexdiv><title>W</title>
+<indexentry><primaryie linkends="wnck-window-is-above"><link linkend="wnck-window-is-above">wnck_window_is_above</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-make-above"><link linkend="wnck-window-make-above">wnck_window_make_above</link></primaryie></indexentry>
+<indexentry><primaryie linkends="wnck-window-unmake-above"><link linkend="wnck-window-unmake-above">wnck_window_unmake_above</link></primaryie></indexentry>
+</indexdiv>
+</indexdiv>

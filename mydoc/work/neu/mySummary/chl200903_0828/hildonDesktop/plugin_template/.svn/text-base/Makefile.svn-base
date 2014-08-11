@@ -1,0 +1,2 @@
+libtaskmanager.so: taskmanager.c
+	gcc -shared `pkg-config --cflags --libs libhildonwm libhildondesktop  libosso hildon-1` -o libtaskmanager.so taskmanager.c

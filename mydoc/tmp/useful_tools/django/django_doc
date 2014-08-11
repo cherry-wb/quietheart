@@ -1,0 +1,124 @@
+使用django开发简介-1
+
+        django 是一套web开发框架，可以通过django方便地建立web server，进行相关的开发。django其实是用python实现的一系列python库，所以使用django开发需要有一些python的知识。这里通过例子简单介绍使用django开发的过程。
+
+主要内容：
+安装
+测试安装
+创建最简单的站点
+为站点添加自己的内容
+传递参数
+注意
+
+1,安装
+=====================================
+#apt-get install python-django
+这里，我们使用ubuntu进行安装，更详细的内容参见：https://www.djangoproject.com/download/。
+
+2,测试安装
+=====================================
+$python
+>>> import django
+>>> django.VERSION
+如果没有错误，那么将会输出django的版本信息。
+
+3,创建最简单的站点
+=====================================
+$django-admin startproject mysite
+$cd mysite
+$ ls
+__init__.py  __init__.pyc  manage.py  settings.py  settings.pyc  urls.py
+$./manage.py runserver 0.0.0.0:8000
+这样，我们可以通过在浏览器上键入"<你的ip地址>:8000"来访问站点。注意，这里通过0.0.0.0指定外部可以访问本地机器，否则只能用127.0.0.1来进行访问。
+
+4,为站点添加自己的内容
+=====================================
+(4.1)helloworld:
+$vim view.py
+from django.http import HttpResponse
+
+def myHello(request):
+    return HttpResponse("My Hello World")
+
+$vim urls.py
+...
+...add "(r'^hello/$', 'view.myHello')," to urlpatterns.
+...
+
+$python manage.py runserver
+这样，我们可以通过向本地浏览器键入"127.0.0.1:8000/hello/"来访问"My Hello World"网页。
+
+(4.2)root page:
+$vim root_page.py
+from django.http import HttpResponse
+
+def rootPageTip(request):
+    return HttpResponse("My Hello World")
+$vim urls.py
+...
+...add "(r'^$', 'root_page.rootPageTip')," to urlpatterns
+...
+
+(4.3)动态内容:
+$vim view.py
+...
+...add the following:
+def showTime(request):
+    now = datetime.datetime.now()
+    html = "<html><body>The time now is: %s</body></html>" %now
+    return HttpResponse(html)
+...
+
+$vim urls.py
+...
+...add "(r'^showtime/$', 'view.showTime')," to urlpatterns.
+...
+
+$python manage.py runserver
+
+这样，我们可以通过"127.0.0.1:8000/showtime/"在我们自己的机器上显示当前时间。
+
+5,传递参数
+=====================================
+$vim view.py
+...
+...add the following:
+def showArg(request,arg):
+    html = "<html><body>The argument is: %s</body></html>" %arg
+    return HttpResponse(html)
+...
+
+$vim urls.py
+...
+...add "(r'^showarg/(\d{1,2})$', 'view.showArg')," to urlpatterns.
+...
+
+$python manage.py runserver
+
+这样我们可以"http://127.0.0.1:8000/showarg/xx/"来显示"xx"部分的内容("xx"是两位以内的数字),url中的"()"部分界定要传入的参数位置，也可使用关键字。
+
+6,注意
+=====================================
+*urls里面的'/'字符应当被包含，但是是否必须在浏览器中键入'/'取决于'APPEND_SLASH'设置。
+
+*urls.py其实是对url的配置(URLconf)，它在'settings.py'里的'ROOT_URLCONF'变量指定。
+
+*urlpatterns中的第一个部分是正则表达式的形式。
+
+*默认django的时区使用America/Chicago,我们可以通过settings.py来设置。
+
+*如果发生错误，那么django显示在浏览器上的错误输出包含了足够的信息，我们可以在code中使用'asswert False'来主动出发错误信息。
+
+*这个server同一个时刻只能处理一个请求。
+
+
+参考：
+http://djangobook.py3k.cn/2.0/
+http://djangobook.py3k.cn/2.0/chapter02/
+http://djangobook.py3k.cn/2.0/chapter03/
+
+
+
+作者：QuietHeart
+Email：quiet_heart000@126.com
+日期：2012年7月18日

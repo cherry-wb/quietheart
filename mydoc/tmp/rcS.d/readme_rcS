@@ -1,0 +1,502 @@
+###############################
+#内容:
+#对/etc/rcS.d/README的翻译
+#注意
+#S01mountkernfs.sh
+#S02hostname.sh
+#S06keyboard-setup.sh
+#S08hwclockfirst.sh
+#S08loopback.sh
+#S10udev
+#S11hwclock.sh
+#S11mountdevsubfs.sh
+#S13pcmciautils
+#S15module-init-tools
+#S17procps
+#S20checkroot.sh
+#
+#
+##############################
+
+
+对/etc/rcS.d/README的翻译
+=========================
+在/etc/rcS.d/目录中的以S为开头的脚本在系统启动的时候会被执行，even当系统直接以单用户模式启动。
+
+这里面的脚本全是符号链接，链接的目标在/etc/init.d/中。
+如果disable一个此目录中的脚本，那么就将这个脚本重新命令，使它文件名的首字符为K.
+关于更多的信息可以参见/etc/init.d/README
+The following sequence points are defined at this time:
+
+*在S40脚本已经执行了之后，所有的本地系统被挂载，并且网络也会可用。所有的设备驱动会被初始化。
+*在S60脚本被执行之后，系统始终被设置，NFS系统会被挂载（除非系统依赖于automounter,这将在后面启动），并且文件系统被清理。
+
+注意
+==========
+脚本开始的两行：
+. /lib/lsb/init-functions
+. /lib/init/mount-functions.sh
+是引用一些系统中预先定义的变量和函数，在脚本中会用到。
+
+S01mountkernfs.sh
+================================20090729
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          mountkernfs
+# Required-Start:
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 挂载内核虚拟文件系统.
+# Description:       挂载内核提供的虚拟文件系统初始集合，所有东西都需要它们。
+### END INIT INFO
+
+脚本过程：
+0,载入文件：
+/lib/lsb/init-functions
+/lib/init/mount-functions.sh
+1,如果参数是start,做如下工作（调用dostart函数）
+*在/proc上面挂载proc文件系统
+*在/sys上面挂载sysfs文件系统(即作为sysfs)
+*为tmpfs挂载/var/run和/var/lock
+*如果检测了"宽带处理器单元",在/spu上面挂载spufs
+*把文件$file从initramfs拷贝到我们的新的/var/run,如下：
+		cp -a "$file" "/var/run/${x#/dev/.initramfs/varrun/}"
+*如果目录/var/run/sendsigs.omit.d/不存在，则建立/var/run/sendsigs.omit.d/ 
+(???这里，挂载文件系统用到的是/lib/init/mount-functions.sh中的domount函数。)
+
+2,否则如果参数是空，提醒一个警告之后用和start参数一样的方式工作。
+
+3,否则如果参数是restart|reload|force-reload，报错不支持并返回3。
+4,否则如果参数是stop,什么也不做。
+5,否则如果参数是其它，则报错提醒使用脚本的方式，并返回3。
+
+S02hostname.sh
+================================
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          hostname
+# Required-Start:
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 设置主机名称.
+# Description:
+### END INIT INFO
+
+运行过程：
+0,载入文件：
+/lib/lsb/init-functions
+/lib/init/mount-functions.sh
+1,如果参数是空或者start,做如下工作（调用dostart函数）
+*设置主机名称HOSTNAME
+*如果无法设置主机名称则设置HOSTNAME=localhost
+*如果VERBOSE变量不为no,那么提示设置的主机名（i.e.显示HOSTNAME变量值）
+(这里变量VERBOSE应该在/lib/init/vars.sh里面设置。)
+(这里利用/lib/lsb/initfunctions中的log_action_begin_msg函数提示)
+*利用hostname设置主机名（hostname "$HOSTNAME"）
+*根据上次运行状态提示相应信息。
+(这里利用/lib/lsb/initfunctions中的log_action_end_msg函数提示)
+2,否则如果参数是restart|reload|force-reload，报错不支持并返回3。
+3,否则如果参数是stop,什么也不做。
+4,否则如果参数是其它，则报错提醒使用脚本的方式，并返回3。
+
+
+S06keyboard-setup.sh
+================================
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          keyboard-setup
+# Required-Start:    mountkernfs udev
+# Required-Stop:
+# X-Start-Before:    checkroot
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 设置初始keymap（键映射）
+# Description:       尽早设置控制台的键盘，这样在文件系统检测时候管理员可以交互，
+#                    在这个启动进程的阶段，只支持ASCII码字符.
+### END INIT INFO
+
+运行过程：
+*首先设置如果这个脚本中某个命令返回非0则立即退出（用set -e）.
+*检测/bin/setupcon是否是常规文件。
+（这个/bin/setupcon脚本文件用来设置linux控制台下的键盘和字体）
+1)如果/lib/lsb/init-functions是常规文件则载入它。
+2)否则定义两个函数：log_action_begin_msg和log_action_end_msg,
+	前者打印所有参数;后者如果传入0打印done,如果传入1打印failed.
+*对于传入本脚本的参数：
+1)如果参数是stop,什么也不做。
+2)否则如果参数是start|force-reload|restart|reload，进行如下步骤：
+2.1)如果usplash在运行的话，
+2.1.*)不管我们是否在控制台上，强制设置键盘不是字体。
+(设前调log_action_begin_msg,以提示正在设初始键映射,设后调log_action_end_msg)
+(usplash应该是一个系统启动时运行在用户空间的东西，包括一个图片进度条和不断更新的启动输出文本。)
+(setupcon是一个设置linux控制台键盘和字体的程序)
+3）如果传入参数是其它，则提示使用方法，然后退出，退出码为1.
+(Usage: /etc/init.d/keyboard-setup {start|reload|restart|force-reload|stop})
+
+S08hwclockfirst.sh
+=====================
+脚本信息：
+#hwclock.sh:根据/etc/default/rcS的内容，设置和调整CMOS时钟(格林威治时间)
+#注意:在修改这个文件之前，需要阅读:
+#/usr/share/doc/util-linux/README.Debian.hwclock
+#否则你的时钟可能会不正常。
+#
+### BEGIN INIT INFO
+# Provides:          hwclockfirst
+# Required-Start:    mountdevsubfs
+# Required-Stop:     umountroot
+# Default-Start:     S
+# Default-Stop:      0 6
+### END INIT INFO
+
+运行过程：
+*如果/sbin/hwclock不可执行，返回0。
+*导入/etc/default/rcS(设置时间用)
+*导入/lib/lsb/init-functions（一些将要使用的函数）
+*执行一个[ "$GMT" = "-u" ] && UTC="yes"
+*对于$UTC(这个变量在rcS里面已经设置为yes了.)
+1)如果$UTC是"no"或者""的情况把$GMT设置为"--localtime"
+然后根据一些变量和/etc/localtime的值来确定是否打印信息"System clock was not updated at this time"
+2)否则如果$UTC是yes,设置$GMT和$UTC为"--utc"
+3)否则如果$UTC是其他值，则输出"Unknown UTC setting: \"$UTC\""，并返回1
+*对于$BADYEAR
+1)如果值为no则设置$BADYEAR为""
+2)否则如果值为yes则设置$BADYEAR为"--badyear"
+3)否则如果值为其它，则输出信息"unknown BADYEAR setting: \"$BADYEAR\""然后返回1
+*对于传入的参数：
+1)如果是start,
+	1.1)向/etc/adjtime写入"0.0 0 0.0";
+	1.2)若/etc/adjtime不可写NOADJ设置为"--noadjfile",可写则设置为""
+	1.3)若$HWCLOCKACCESS不是no,提示"Setting the system clock",并且:
+		1.3.1)如果
+		利用正确的时间区域，把硬件时钟拷贝到系统时钟，并且设置内核时间区域。
+		(利用/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ命令)
+		1.3.2)否则提示无法设置系统时钟。
+	1.4)否则提示"Not setting System Clock".
+2)如果是stop|restart|reload|force-reload,
+	2.1)若$HWCLOCKACCESS不是no,提示"Saving the system clock",并且:
+		2.1.1)如果更新了系统时间,提示"Hardware Clock updated to `date`"
+		(利用/sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR命令)
+		2.1.2)否则提示"Not saving System Clock"
+3)如果是show)
+	3.1)若$HWCLOCKACCESS不是no,则显示系统时间。
+	(利用/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR命令)
+4)如果是其他参数：
+提示使用方法以及其他一些信息，然后就返回1.
+
+
+S08loopback.sh
+=====================
+脚本信息：
+引入回环网络设备(127.0.0.1)，以便DHCP和其他的一些功能能够工作。
+
+运行过程：
+*检查如果/sbin/ifup不可执行，那么返回0
+*导入如下文件(文件中有相关的变量和函数声明)：
+. /lib/lsb/init-functions
+. /etc/default/rcS
+*检查传入脚本的参数：
+1)如果是start,
+	*建立目录/var/run/network
+	*提示"Starting basic networking..."
+	*运行ifup --allow auto lo(实际是/etc/network/interfaces里面相关的设置,引入网络接口)
+	*根据ifup的运行状况执行log_end_msg??(/lib/lsb/init-functions里面的函数)
+2)否则如果是stop,
+	*提示"Stopping basic networking..."
+	*运行ifdown lo(和ifdown差不多相反)
+	*根据ifdown的运行状况执行log_end_msg??(/lib/lsb/init-functions里面的函数)
+3)否则如果是restart|force-reload,则以0退出。
+4)否则如果是其他参数，提示帮助信息,退出1.
+(实际帮助信息就是"Usage: /etc/init.d/loopback {start|stop|restart|force-reload}")
+*最后以0退出.
+
+S10udev
+=====================
+脚本信息：
+对udev进行初始化。
+
+运行过程：
+*检查/sbin/udevd是否可以运行，不能运行则以0退出。
+*导入如下文件(文件中有相关的变量和函数声明)：
+. /lib/lsb/init-functions
+. /etc/default/rcS
+*检查传入脚本的参数：
+1)如果是start,
+	1.1)若文件/sys/class/mem/null/uevent存在,
+	*)若/dev是挂载点则：
+	卸载/dev/.static/dev(命令umount -l /dev/.static/dev)
+	卸载/dev(命令umount -l /dev)
+	*)否则若/dev不是挂载点则退出１。
+	1.2)若/dev不是挂载点则：
+	    挂载/dev到/etc/udev上?(命令mount -n --bind /dev /etc/udev)
+	    挂载udev到/dev上？(命令mount -n -t tmpfs -o mode=0755 udev /dev)
+	    建立目录/dev/.static/dev（命令mkdir -m 0700 -p /dev/.static/dev)
+	    移动挂载点/etc/udev到/dev/.static/dev（命令mount -n --move /etc/udev /dev/.static/dev)
+	1.3)拷贝设备树。/lib/udev/devices/*到/dev
+	(命令cp -a -f /lib/udev/devices/* /dev)
+	1.4)若存在/proc/sys/kernel/hotplug则执行:
+	    echo "" > /proc/sys/kernel/hotplug
+	1.5)启动udev守护进程服务
+	(命令：start-stop-daemon --start --quiet --exec /sbin/udevd -- --daemon)
+	1.6)发送相关命令运行usplash守护进程？？？
+	(命令:usplash_write "TIMEOUT 360" ||:
+	    trap "usplash_write 'TIMEOUT 15' ||:" 0)
+	1.7)登记能够触发的事件???
+	(命令：/sbin/udevadm monitor -e >/dev/.udev.log &)
+	1.8)加载硬件驱动
+	(命令:
+	/sbin/udevadm trigger
+	/sbin/udevadm settle)
+	1.9)杀掉udevadm monitor
+	(命令：kill $UDEV_MONITOR_PID,杀掉在后台运行的最有一个作业$!,即monitor)
+
+	(udevadm monitor侦听内核uevent事件和udev rules 发送的事件，并且打印事件的devpath到控制台，一般用来通过时间戳分析事件时间？)
+	(udevadm trigger请求内核设备uevent一般用来在系统coldplug重现事件)
+	(udevadm settle查看udev事件队列,如果所有的当前事件被处理了则退出)
+2)如果是stop,
+	2.1)停止内核事件管理。
+	(命令start-stop-daemon --stop --quiet --oknodo --exec /sbin/udevd
+	umount -l /dev/.static/dev
+	umount -l /dev)
+3)如果是restart,
+	3.1)拷贝/lib/udev/devices/*中所有的更新的文件到/dev
+	(命令：cp -au /lib/udev/devices/* /dev)
+	3.2)加载硬件驱动
+	(命令:
+	/sbin/udevadm trigger
+	/sbin/udevadm settle)
+4)如果是reload|force-reload,
+	重新加载内核事件管理器??，
+	(命令start-stop-daemon --stop --signal 1 --exec /sbin/udevd)
+5)如果是其他参数，
+	提示命令错误和使用方法并且返回1
+
+
+S11hwclock.sh
+=====================
+脚本信息：
+根据UTC在/etc/default/rcS中的设置和调整CMOS时钟(可以查看man 5 rcS)
+1)S11hwclock.sh start由硬件时钟设置内核（系统）时钟
+2)S11hwclock.sh stop | reload由内核（系统）时钟设置硬件时钟
+3)S11hwclock.sh show显示硬件时钟。
+注意:在修改这个文件前最好参考/usr/share/doc/util-linux/README.Debian.hwclock
+     否则你的时钟将会有很严重的问题
+### BEGIN INIT INFO
+# Provides:          hwclock
+# Required-Start:    mountdevsubfs
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:      0 6
+### END INIT INFO
+
+运行过程：
+*先设置一个FIRST变量为"no"
+*检测/sbin/hwclock,如果不可执行则返回0
+*载入如下文件/etc/default/rcS和/lib/lsb/init-functions
+*如果"$GMT" = "-u"那么设置UTC="yes"(UTC在/etc/default/rcS里面默认设置为"no")
+*检查"$UTC":
+	1,如果"$UTC"为"no"或者空，
+	1.1)设置GMT="--localtime"以及UTC=""
+	1.2)如果FIRST变量为"yes"并且/etc/localtime是不可读的若变量$TZ是空的，提示系统始终这次没有被更新,并且返回1。
+	2,如果"$UTC"为"yes"，设置GMT="--utc"以及UTC="--utc"
+	3,如果"$UTC"是其他值，那么提示是未知的UTC设置，并且返回1.
+*检查"$BADYEAR":
+	1,如果"$BADYEAR"为"no"或者空，设置BADYEAR为空。
+	2,如果"$BADYEAR"为"yes"，设置BADYEAR="--badyear"
+	3,如果"$BADYEAR"是其他值，那么提示是未知的BADYEAR设置，并且返回1.
+*检查传入的参数$1:
+	1,如果参数是start
+	1.1)如果/etc可写，并且正规文件adjtime不存在则建立文件并写入"0.0 0 0.0"
+	1.2)如果/etc/adjtime不可写，那么
+		设置变量NOADJ="--noadjfile"
+		否则将变量NOADJ为空。
+	1.3)如果FIRST为"yes"则什么也不做，仅仅将当前返回状态变量置0.
+	1.4)如果$HWCLOCKACCESS不是no,那么
+	根据前面运行设置的相关变量，根据硬件时间设置系统时间.
+	(命令：/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ)
+	(这里hwclock可以请求和设置硬件时间,hctosys指定根据硬件设置系统设置之后根据成功与否会有所提示)
+
+	2,如果参数是stop|restart|reload|force-reload
+	如果"$HWCLOCKACCESS"不是no,则根据系统时间更新硬件时间(将覆盖任何硬件时钟的改动),也就是保存系统时间。
+	(如果"$GMT" = "-u"那么设置GMT="--utc",这里GMT是hwclock的选项.)
+	(命令/sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR)
+
+	3,如果参数是show:
+	如果"$HWCLOCKACCESS"不是no,则读取并打印硬件时钟。
+	(命令/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR)
+
+	4,如果参数是其他值:
+	提示使用方法，以及每个参数大致的功能，并返回1。
+
+
+
+S11mountdevsubfs.sh
+=====================
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          mountdevsubfs mountvirtfs
+# Required-Start:    mountkernfs
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 挂载在/dev下面的特殊文件系统.
+# Description:      挂载虚拟文件系统。内核提供在/dev文件系统下面的正常生存期？
+### END INIT INFO
+
+运行过程：
+*先设定如下变量:
+	PATH=/lib/init:/sbin:/bin
+	TTYGRP=5
+	TTYMODE=620
+*如果/etc/default/devpts存在则载入它
+	(这里devpts文件中指明TTYGRP是tty的GID，以及TTYMODE)
+*再定义一个变量
+	TMPFS_SIZE=
+	如果/etc/default/tmpfs存在则载入它
+	(这里tmpfs文件的内容表示，SHM_SIZE设置了/dev/shm tmpfs最大值，如果它没有设置，那么默认大小是TMPFS_SIZE)
+*定义一个KERNEL保存系统内核名（命令uname -s实际一般是Linux）
+	载入/lib/lsb/init-functions和/lib/init/mount-functions.sh
+*对于传入脚本中的参数:
+	1)如果是空或者是start那么
+		1.1)若SHM_SIZE非空则设置SHM_OPT为"-osize=$SHM_SIZE"
+		在/dev/shm上面挂载tmpfs
+		(命令domount tmpfs shmfs /dev/shm $SHM_OPT）
+		1.2)挂载/dev/pts
+		(命令domount devpts "" /dev/pts -ogid=$TTYGRP,mode=$TTYMODE)
+	2)如果参数是restart|reload|force-reload,提示不支持这个选项，并且退出3.
+	3)如果参数是stop,不做任何操作。
+	4)如果参数是其他值,则使用方法错误，提示使用方法，并返回3.
+
+S13pcmciautils
+=====================
+脚本信息：
+#
+### BEGIN INIT INFO
+# Provides:          pcmcia
+# Required-Start:    udev
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: PCMCIA 支持
+# Description:       这个服务为运行在2.6.13-rc1系统以上的版本提供PCMCIA硬件支持。
+### END INIT INFO
+#
+运行过程：
+*设置如果有一个命令没有运行成功(返回非0)那么就退出。
+(设置的语句是:set -e)
+*检测如果/sbin/pccardctl不存在则以0退出。
+(pccardctl是一个PCMCIA卡的控制工具，用来监控和控制PCMCIA的套接字状态)
+*若/lib/lsb/init-functions存在则载入,否则定义一些相应的函数（主要打印消息的函数）
+(这里/lib/lsb/init-functions实际就是包含了一些函数定义的文件)
+*载入/etc/default/pcmciautils文件。
+(这个文件的作用？??)
+*若$PCMCIA是no或者false则返回0.
+*载入/etc/default/rcS
+(rcS脚本是一些rcS.d脚本的一些基本设置信息关于rcS更多信息可以参见man 5 rcS)
+*初始化一些关于PCMCIA桥driver的相关信息(如果这个驱动已经在内核中了就退出0)。
+(这里会先ls/sys/class/pcmcia_socket/*,成功后运行run_by_init即检测$previous和$runlevel或者检测"$runlevel" = S ??????????)
+*检查支持的内核，以及检测$previous和$runlevel或者检测"$runlevel" = S,出错则提示:
+"pcmciautils requires Linux >= 2.6.13-rc1; use pcmcia-cs instead"
+然后以1退出。
+*检查如果"$PCIC"为空，并且检测$previous和$runlevel或者检测"$runlevel" = S,如果有问题了，则提示：
+"No PCMCIA bridge module specified"(没有指定PCMCIA桥模块)
+并以1退出。
+*检查/dev/.udev的文件，以及运行run_by_init(见前面提过这个函数)，有问题则提示：
+"pcmciautils requires udev to be enabled"(pcmciautils需要激活udev)
+并以1退出。
+*检查如果"$VERBOSE" = "no"则MODPROBE_OPTIONS="$MODPROBE_OPTIONS -Q"并导出MODPROBE_OPTIONS.
+(作用？？？？？？)
+*最后检查传入脚本的参数：
+1)如果是start:加载PCMCIA桥驱动模块.
+(相关的命令可能有：
+modprobe -Qb pcmcia_core $CORE_OPTS
+以及modprobe -Qb $PCIC $PCIC_OPTS)
+2)否则如果是stop，那么什么也不做。
+3)否则如果是restart,那么先以参数stop运行该脚本，再以参数start运行该脚本，然后退出。
+4)否则如果是reload|force-reload:那么什么也不做。
+5)否则如果传入的是其他的参数，那么提示使用方法是传入前面的参数，然后以2退出。
+
+
+S15module-init-tools
+=====================
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          module-init-tools
+# Required-Start:    
+# Required-Stop:     
+# Should-Start:      checkroot
+# Should-stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 处理/etc/modules.
+# Description:       加载/etc/modules里面列出的模块.
+### END INIT INFO
+运行过程：
+*若/proc/modules不存在或者/proc/ksysms存在或者/sbin/modprobe无法执行则以0退出。
+(modprobe是添加和卸载内核模块用的。)
+*初始化一些变量。
+(. /etc/default/rcS)
+(. /lib/lsb/init-functions)
+*设置模块加载的路径：在/etc/module***相关的目录中，根据情况采用不同的目录.
+*加载模块，
+（如果verbose=no则提示加载内核模块，再提示加载手动模块；否则只提示加载手动）
+(这里的verbose在/etc/default/rcS中默认设置为no)
+
+
+S17procps
+=====================
+脚本信息：
+#执行/etc/init.d/procps,根据/etc/sysctl.conf设置内核变量。
+### BEGIN INIT INFO
+# Provides:          procps
+# Required-Start:    mountkernfs
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 配置内核启动时候的参数
+# Description:  加载/etc/sysctl.conf指定的内核参数
+### END INIT INFO
+运行过程;
+*加载一些初始化的配置信息等
+(. /etc/default/rcS)
+(. /lib/lsb/init-functions)
+*寻找sysctl如果没有则以0退出。
+*检查传入脚本中的参数：
+1)如果是start|restart|force-reload:
+利用sysctl根据文件/etc/sysctl.conf和/etc/sysctl.d/*.conf进行配置
+2)如果是stop,那么不做任何动作。
+3)如果是其他参数，那么提示使用方式是应该传入前面的两个参数，然后以3退出。
+
+S20checkroot.sh
+=====================
+脚本信息：
+### BEGIN INIT INFO
+# Provides:          checkroot
+# Required-Start:    mountdevsubfs
+# Required-Stop:     
+# Should-Start:      keymap hwclockfirst
+# Should-stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: 检查根文件系统
+### END INIT INFO
+
+根据/etc/default/rcS来设置SULOGIN,决定是否sulogin,(即Single-user login)
+以下过程根据/etc/fstab的内容迭代进行：
+1)读取/etc/fstab,获得相应参数以及选项
+2)确定是否激活在/etc/fstab中的交换分区。(在Linux中如果fstab中有"swap"则不激活了，没有就激活)
+3)处理/etc/fstab中匹配的相关(针对根文件系统):检查fstab中的root设备是否和实际的设备匹配(用mountpoint)，如果不匹配我们尝试使用/dev/root,如果失败我们建立一个临时的/dev/shm
+4)如果前面匹配的时候失败了，我们打印错误信息，提示：根文件系统的设备节点丢失或者不正确，或者在/etc/fstab中没有关于根文件系统的项。但是如果你在/dev/shm中建立一个临时节点的话系统也是可以使用的(/dev/shm/root),这意味这你将要手动地修正这个问题。
+5)决定是否检查文件系统。查看机器是否是交流电源（用on_ac_power)，如果是则文件检测否则不检测了;查看是否有/fastboot,如果有也不检测根文件系统了。
+6)如果检查文件系统：则开始设置检测的选项并且检测文件系统。
+检查文件系统之前首先把rootdev用只读的方式重新mount一下，如果不行就不检测了。
+检测的日志文件存放在
+FSCK_LOGFILE=/var/log/fsck/checkroot
+7)检查磁盘检测的返回状态：
+如果失败了，状态码大于3就进入单用户模式;大于1就重新启动。
+8)再次重新挂载到最终状态。
+9)创建或修改/etc/mtab，如果这个文件是/proc/mount的链接就不写了。
+挂载相应文件系统，然后删除如下：
+rm -f /dev/shm/root

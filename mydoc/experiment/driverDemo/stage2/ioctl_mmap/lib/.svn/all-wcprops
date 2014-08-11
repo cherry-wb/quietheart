@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/EST81002_PFX/!svn/ver/1695/software/branches/PFX_T-Kernel_Proting/diabloMainCpu/testdrivers/cpu1comm/lib
+END
+cpucomm_api.h
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/EST81002_PFX/!svn/ver/1639/software/branches/PFX_T-Kernel_Proting/diabloMainCpu/testdrivers/cpu1comm/lib/cpucomm_api.h
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/svn/EST81002_PFX/!svn/ver/1639/software/branches/PFX_T-Kernel_Proting/diabloMainCpu/testdrivers/cpu1comm/lib/Makefile
+END
+cpucomm_api.c
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/EST81002_PFX/!svn/ver/1695/software/branches/PFX_T-Kernel_Proting/diabloMainCpu/testdrivers/cpu1comm/lib/cpucomm_api.c
+END

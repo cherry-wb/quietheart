@@ -1,0 +1,91 @@
+Do It Youself
+自己制作交叉编译工具链(再次尝试)。
+
+步骤：
+1)所需资源：
+-------
+linux-2.6.32.tar.bz2
+binutils-2.20.tar.gz
+gcc-4.3.2.tar.gz
+glibc-2.11.tar.gz
+glibc-linuxthreads-2.3.4.tar.gz
+gmp-4.3.0.tar.bz2
+mpfr-2.4.1.tar.bz2
+-------
+这里，
+linux内核下载：http://www.kernel.org/
+Binutils信息在：http://www.gnu.org/software/binutils/,下载:http://ftp.gnu.org/gnu/binutils/
+Gcc信息在：http://gcc.gnu.org/releases.html,下载:http://ftp.gnu.org/gnu/gcc/
+glibc下载:http://ftp.gnu.org/gnu/glibc/
+glibc-linuxthreads下载:http://ftp.gnu.org/gnu/glibc/
+gmp-4.3.0.tar.bz2下载:http://ftp.gnu.org/gnu/gmp/
+mpfr-2.4.1.tar.bz2下载:http://ftp.gnu.org/gnu/mpfr/
+
+2)准备目录：
+-------
+$mkdir /home/quietheart/lvkTmp/mkCrossTool
+$cd /home/quietheart/lvkTmp/mkCrossTool
+$mkdir build-tools kernel tools
+$export PRJROOT=/home/quietheart/lvkTmp/mkCrossTool
+-------
+这里，build-tools存放待编译资源的源代码，kernel是linux内核源代码，tools存放编译好的目标文件。
+
+3)编译安装Binutils:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf binutils-2.20.tar.gz
+$mkdir build-binutils
+$cd build-binutils
+$../binutils-2.20/configure --target=arm-linux --prefix=$PRJROOT/tools
+$make
+$make install
+-------
+这里，建立的build-binutils是一个编译目录，这样编译的中间文件就不用放在源代码目录中了。
+这一步进行的时间不长，总共不到10分钟。make install之后，在$PRJROOT/tools/中会生成许多文件。
+另外注意:
+*执行make的时候报错如下：
+../../binutils-2.20/gas/config/tc-arm.c:2489: error: suggest braces around empty body in an ‘if’ statement
+修改tc-arm.c源代码如下：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+修改成：
+2488   if (frag->tc_frag_data.last_map != NULL)
+2489   {
+2490     know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+2491   }
+然后就解决编译报错的问题了。
+
+4)编译安装gcc:
+-------
+$cd $PRJROOT/build-tools
+$tar -xzvf gcc-4.3.2.tar.gz
+$mkdir build-gcc
+$cd gcc-4.3.2/
+$vi gcc/config/arm/t-linux
+	...修改一个标志如下：
+	TARGET_LIBGCC2_CFLAGS = -fomit-frame-pointer -fPIC -Dinhibit_libc -D__gthr_posix_h
+	...修改完毕
+$cd $PRJROOT/build-tools
+$tar -xjvf gmp-4.3.0.tar.bz2
+$tar -xjvf mpfr-2.4.1.tar.bz2
+$mv gmp-4.3.0 gcc-4.3.2/gmp
+$mv mpfr-2.4.1 gcc-4.3.2/mpfr
+$cd build-gcc/
+$../gcc-4.3.2/configure --target=arm-linux --prefix=$PRJROOT/tools --without-headers --enable-languages=c --disable-threads --disable-shared --disable-libmudflap --disable-libssp
+$make
+这里，花费的时间16:20~16:45
+因为要支持软浮点（Soft Float），GCC需要同时编译GMP和MPFR。GMP是实现任意精度算术运算的软件包，可以完成有符号整数、有理数和浮点数的运算。只要计算机内存的满足需要，GMP的运算精度没有任何限制。MPFR是一个用于高精度浮点运算的C库。让GCC支持GMP和MPFR有两种方法，一是分别编译安装GMP和MPFR，把路径通过configure告诉GCC，这样在编译GCC的时候就会去找到GMP和MPFR；另一种更简单的方法是把GMP和MPFR源代码拷贝到GCC源代码目录内，两个文件夹分别命名为gmp和mpfr，这样在编译GCC的过程中就会自动去编译GMP和MPFR。我们采用第二种方法.
+但是这里编译出错信息为：
+/tmp/ccvgTFl4.s: Assembler messages:
+/tmp/ccvgTFl4.s:23: Error: selected processor does not support `ldfs f1,[sp],#4'
+/tmp/ccvgTFl4.s:29: Error: selected processor does not support `mvfnes f0,f1'
+/tmp/ccvgTFl4.s:30: Error: selected processor does not support `mvfeqs f0,#1'
+/tmp/ccvgTFl4.s:38: Error: selected processor does not support `fmls f1,f1,f1'
+/tmp/ccvgTFl4.s:40: Error: selected processor does not support `fmlnes f0,f0,f1'
+/tmp/ccvgTFl4.s:48: Error: selected processor does not support `frdlts f0,f0,#1'
+make[2]: *** [_powisf2.o] Error 1
+make[2]: Leaving directory `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc/arm-linux/libgcc'
+make[1]: *** [all-target-libgcc] Error 2
+make[1]: Leaving directory `/home/quietheart/lvkTmp/mkCrossTool/build-tools/build-gcc'
+make: *** [all] Error 2
+

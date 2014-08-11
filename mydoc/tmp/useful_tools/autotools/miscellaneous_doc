@@ -1,0 +1,18 @@
+http://www.gnu.org/software/autoconf/manual/autoconf.html#Site-Configuration
+
+使用CONFIG_SITE变量设置config.site，应该为绝对路径。如果没有设置，那么就会寻找prefix/share/config.site文件，如果没有就使用prefix/etc/config.site文件。
+注意实践发现，
+config.site
+文件设置变量值，如果变量值中有空格，要用""。
+例如：
+CFLAGS+="-Os -fomit-frame-pointer -Wno-format -Wno-unused-label -Wno-unused-variable"
+而不是
+CFLAGS+=-Os -fomit-frame-pointer -Wno-format -Wno-unused-label -Wno-unused-variable
+后者会提醒错误。
+
+
+交叉编译一个工具：
+假设我的交叉编译工具的名字是arm-sony-linux-gnueabi-gcc等。
+如果一个工具想要使用configure配置成交叉编译的方式，那么使用类似如下命令：
+[root@lv-k strace-4.5.20]# ./configure --host=arm-sony-linux-gnueabi
+当然不能一概而论，具体需要参见相应的"./configure --help"的输出说明。

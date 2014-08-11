@@ -1,0 +1,44 @@
+fvwm下载：
+http://www.fvwm.org/download/
+
+依赖
+如果缺少libstroke:
+到如下网址下载：
+http://etla.net/libstroke/
+fvwm的rpm文件如果还是无法安装，那么直接解压它然后复制。
+
+
+
+主题：
+
+http://fvwm-themes.sourceforge.net/
+下载fvwm-themes-0.7.0.tar.gz和fvwm-themes-extra-0.7.0.tar.gz
+参照fvwm-themes-0.7.0.tar.gz中的README
+#tar -xzvf fvwm-themes-0.7.0.tar.gz
+#./configure
+#make install
+# fvwm-themes-config --site --install fvwm-themes-extra-0.7.0.tar.gz 
+Theme nanogui is successfully installed in /usr/share/fvwm
+Theme mech is successfully installed in /usr/share/fvwm
+Theme sa is successfully installed in /usr/share/fvwm
+Theme qnx is successfully installed in /usr/share/fvwm
+Theme minimal is successfully installed in /usr/share/fvwm
+Theme ice is successfully installed in /usr/share/fvwm
+Theme e17 is successfully installed in /usr/share/fvwm
+Theme brushedmetal is successfully installed in /usr/share/fvwm
+Theme plainbow is successfully installed in /usr/share/fvwm
+Theme spruce is successfully installed in /usr/share/fvwm
+Theme unsafe is successfully installed in /usr/share/fvwm
+Theme underground is successfully installed in /usr/share/fvwm
+Theme metal is successfully installed in /usr/share/fvwm
+Theme awol is successfully installed in /usr/share/fvwm
+Theme blackbox is successfully installed in /usr/share/fvwm
+Theme osx is successfully installed in /usr/share/fvwm
+Theme celticbow is successfully installed in /usr/share/fvwm
+Installation of fvwm-themes-extra-0.7.0 is completed
+Now "Refresh with no cache" and have fun...
+
+修改配置文件：
+/etc/sysconfig/desktop
+#export DESKTOP=fvwm
+

@@ -1,0 +1,30 @@
+初步总结一些概念性的东西
+#############################
+1.关于GNOME,GTK
+GNOME是桌面管理器，它基于窗口管理器，桌面管理器比窗口管理器更为友好。
+窗口管理器（例如：WindowMaker,Enlightenment,FVWM等）是用户与X Window System之间的接口，处理窗口上的图形以及控制运行的应用程序的有关事项。可定制性很强。
+桌面管理器（如GNOME)不只是在窗口管理器上面提供了一组按钮，还提供了一组服务，这组服务设计来规范用户在所用的应用程序中给出的界面。所有窗口使用类似的界面，这样容易上手。ＧNOME使用GTK+库实际地描绘它们的用户界面。
+KDE实际既是窗口管理器，也是桌面管理器，它利用QT。
+GTK+是GNOME开发最著名的库了，它由GDK（GNOME Drawing Kit）提供，当然也有其他的库，这些库都可能有的基于GTK+,或者GLib.GDK依赖于GLib严格来说不是真正的库。
+##############################
+２．关于Hildon
+虽然 GTK+ 工作在相当多的桌面区域，但它需要为一些小屏幕设备改进， 像 MID 。例如，手持设备可能支持指触操作，通常需要比运行在桌面系统上相同应用程序大的窗口部件和字体。因为用户首选应用程序操作是使用手写笔或手指，该接口需要简单和直接，点击数应该优先，并容易让用户通过手指拖拉操作文字和对象。通过模仿消费电子产品用法， MID 应用程序需要更生动外貌和简单布局，与为桌面系统所写应用程序不同。小屏幕尺寸影响植入程序的最小化按钮、菜单选项及其它 GUI 窗体部件在窗口中呈现，用户期待触摸起来平滑、粗大，并容易在设备的小屏幕上易读。很多需求不能单纯使用 GTK+ 完成，它需要被改进。
+Nokia 拥有 Maemo 开源项目，提出增进窗体部件和其它可用库，产生一个基于 GTK+ 的 GUI ，使其更适合手持设备。该增进以及相关工具被称为 Hildon ，它逐渐的组成一个应用程序框架在 Meamo 平台上。 Hildon 是基于 GTK 和某些其它 GNOme 框架的技术。 Hildon 增进 GTK+ 在嵌入 Linux 设备上。增进包括 Hildon 窗体部件、加速改进 Sapwood 主题引擎、图像服务器、任务浏览器、控制面板、状态条、触摸屏输入方法、手写笔支持和高像素屏幕窗口管理.
+Maemo 应用程序被建立在 Hildon 框架顶层。简单的应用程序单独连接 Hildon 库、 GTK+ 、 Glib 和 LibOSSO 来使用 GUI 元素。
+#################################
+3.关于Moblin
+市场上出现了一种新的设备，它能够访问Internet上丰富的内容，同时没有与PC相关的复杂性。这些设备以各种形式出现，从移动互联网设备（Mobile Internet Devices，MID）、便携式媒体播放器（PMP）到个人导航设备（PND）、数码机顶盒（STB）到笔记本电脑。
+　　Moblin.org项目由Intel于2007年7月正式启动，它的目的是推动此类设备所需的最新技术的发展。
+################################
+4.UME(Ubuntu Mobile and Embedded)
+#  What is the Ubuntu Mobile and Embedded Project?
+# The Ubuntu Mobile and Embedded project aims to derive an operating system for mobile internet devices using Ubuntu as a base. Sponsored by Canonical and Intel, the project has been launched at UDS-Sevilla following a preliminary announcement to the Ubuntu community. We will extend Ubuntu by providing infrastructure for mobile development. All of the necessary components will be integrated into the Ubuntu package archive, ready to install and run, or to tailor for custom mobile applications. 
+#########others##########
+1）Gtk+(GIMP ToolKit,GIMP工具包），（General Image Manipulation Program,GIMP）
+2）Gtk+是在Gdk(GIMP Drawing Kit,GIMP绘图包）的基础上创建的。G d k是对低级窗口函数的包装(对X window系统来说就是X l i b )。一般用G T K代表软件包和共享库，用G t k +代表G T K的图形构件集。
+3）G t k +依赖于g l i b。
+G t k +包中包含了G d k，它是对底层的X Wi n d o w系统库X l i b的简化。由于G t k +使用了G d k而不
+是直接调用X l i b，因此G d k的移植版本允许G t k +运行在不同于X 但只有相对较少的修改的窗口
+系统上。G n o m e在基本G t k +构件集合的基础上添加了许多其他构件。
+4）注意信号与事件的区别，GTK+把来自X的信号解释为自己的事件来处理（参见GTK+/GNome程序设计），因为GTK有除了X的信号以外的信息所以叫做事件。连接信号的回调函数两个参数返回值void，连接事件的则三个参数返回值bool。回调函数返回true则表示用事件机制处理，步调用信号的默认函数了否则反之。
+5)注意，某一事件/信号所对应的回调函数的格式（返回值和参数的数目）是预先确定的，如果不按照这个预定的格式定义回调函数的话，程序运行时有可能会出现错误（比如需要某一个参数却没有等），也有可能无错误。

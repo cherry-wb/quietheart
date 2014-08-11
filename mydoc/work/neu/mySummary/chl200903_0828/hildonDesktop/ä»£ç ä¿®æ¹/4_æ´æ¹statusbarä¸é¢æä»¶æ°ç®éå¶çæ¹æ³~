@@ -1,0 +1,8 @@
+可能修改文件：hildon-desktop-panel-expandable.c
+方法1,函数hildon_desktop_panel_expandable_constructor中：
+  语句panel = HILDON_DESKTOP_PANEL_EXPANDABLE (object);的语句后面添加下面这句话：
+panel->priv->items_p_row = 17;/**/
+
+方法2,在函数hildon_desktop_panel_expandable_add_button中：
+  语句g_return_if_fail (GTK_IS_WIDGET (button));的后面添加：
+ex_panel->priv->items_p_row=17;//

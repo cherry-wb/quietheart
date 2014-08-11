@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper]{article}
+
+%中文支持
+\usepackage{fontspec}
+%这里使用的是宋体字
+\setmainfont{AR PL UMing CN}
+%中文断行,如果没有这个中文断行就可能会有问题
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt 
+
+\begin{document}
+
+%tabular环境提供了最简单的表格功能。
+%\hline命令代表横线
+%|l|c|r中:|代表竖线,|l|c|r|表示分别是每个栏目用左,中,右方式对齐。
+%表格内容用&来分栏.
+
+
+\begin{tabular}{|l|c|r|}
+\hline
+操作系统 & 发行版 & 编辑器 \\
+\hline
+Windows & MikTeX & TeXnicCenter \\
+\hline
+Unix/Linux & TeX Live & Emacs \\
+\hline
+Mac OS & MacTeX & TeXShop \\
+\hline
+\end{tabular}
+
+%控制栏位的宽度,将其对齐方式参数从l、c、r改为p{宽度}.
+%实际这里如果没有竖线'|'那么表格中字体还是按照表的方式进行只是没有竖线分割。
+\begin{tabular}{|p{100pt}|p{100pt}|p{100pt}|}
+\hline
+操作系统 & 发行版 & 编辑器 \\
+\hline
+Windows & MikTeX & TeXnicCenter \\
+Unix/Linux & TeX Live & Emacs \\
+Mac OS & MacTeX & TeXShop \\
+\hline
+\end{tabular}
+
+%嵌套的表格
+\begin{tabular}{p{100pt}p{100pt}p{100pt}p{100pt}}
+\hline
+操作系统 & 发行版 & 
+%第一层子表格
+\begin{tabular}{c}
+常用工具 \\
+	\hline
+	\begin{tabular}{c|c}
+	编辑器 & SHELL \\
+	\end{tabular}
+\end{tabular} \\ %不要忘记这里的\\
+
+\hline
+Windows & MikTeX & TeXnicCenter & Bash \\
+Unix/Linux & TeX Live & Emacs Sh \\
+Mac OS & MacTeX & TeXShop Tsh \\
+\hline
+\end{tabular}
+
+\end{document}

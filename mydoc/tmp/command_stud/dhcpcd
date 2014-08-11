@@ -1,0 +1,19 @@
+dhcpcd
+
+可以通过dhcp获取ip地址的工具。
+
+*安装：
+$sudo apt-get install dhcpcd
+
+*通过dhcp获取eth0的ip：
+$sudo rm -rf /var/run/dhcpcd-eth0.pid
+$sudo dhcpcd eth0
+这里，假设当前eth0没有ip，如果存在dhcpcd-eth0.pid则无法启动dhcpcd。
+
+*停止dhcp：
+$sudo kill -9 dhcpcd
+这样的方法不是很好，它同时会将相应的网络接口down掉。
+
+*停止指定接口的dhcpcd
+#dhcpcd -k eth0
+这样会将"dhcpcd eth0"的进程杀掉，同时down掉eth0接口。

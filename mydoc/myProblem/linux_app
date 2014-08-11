@@ -1,0 +1,46 @@
+讲述一些感觉有用的linux应用方面问题，明确之后可能会整理的。
+待解决
+
+解决的
+
+待解决
+=================
+1，linux<->linux, window<->linux之间远程桌面登录，和拷贝？
+vnc,samba
+
+2，如何查看网络状态
+哪个ip连自己，自己连哪个ip，以及网关等。
+traceroute
+tracepath
+netstat
+iperf
+ping
+router
+ifconfig
+arp -a
+curl
+
+3，系统管理：
+*查看登录的用户：
+
+4，
+
+解决的
+=================
+
+3，系统管理：
+*查看系统版本：
+#cat /etc/issue
+这个根椐系统可能有所不同。这里的系统是'Ubuntu 11.10 '。
+
+*修改机器用户名(oldname->newname)
+#usermod -l newname oldname
+
+*修改用户主目录：
+#usermod -d newdir newname
+这里把newname的主目录修改成newdir。
+
+*修改主机名称：
+#hostname newhost
+这里，没有参数的"hostname"是查看主机名称。修改之后，若重启机器则又回到原来的主机名称了。如果永久地修改，则需修改配置文件，'Ubuntu 11.10 '的配置文件是"/etc/hostname"(根据机器系统这个配置文件的名称可能有所不同)。
+

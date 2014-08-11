@@ -1,0 +1,36 @@
+作者：赵惠鹏
+
+在Ubuntu上，安装Samba服务器非常简单：
+
+# apt-get install samba
+
+Samba服务器的配置可以做得非常复杂，但如果只是想让这个Samba服务器工作，那么配置起来也不复杂。
+
+打开 /etc/samba/smb.conf 文件，输入下面的内容。
+
+----------------------------------------------------
+[global]
+workgroup = WORKGROUP /* 工作组名，例如WORKGROUP */
+server string = "Ubuntu 8.04" /* 服务器名（随便起），例如MySamba */
+netbios name = "Games" /* 服务器描述（随便写），例如Movie、SourceCode */
+security = share
+hosts allow = 192.168.0.2 /* 允许访问的IP，多个IP之间用空格隔开 */
+
+[share]  /* 共享路径名，也可以起别的名字，将在Windows上被看到 */
+path = /root/samba/ /* 在Linux上欲共享的绝对路径 */
+available = yes
+browseable = yes
+public = yes
+writeable = yes
+----------------------------------------------------
+
+保存smb.conf文件之后，重启Samba服务器。
+
+# /etc/init.d/samba restart
+
+在Windows端，映射一个网络驱动器：
+
+右键开始菜单中的“我的电脑”，映射网络驱动器，将Z:盘映射为：
+\\192.168.0.5\share
+
+之后打开Z:盘即可进入Ubuntu系统所共享的share路径，读写数据。

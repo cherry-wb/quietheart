@@ -1,0 +1,24 @@
+关于格式化：
+格式化的命令是：
+mnt     <------进入maintenance模式
+format  <------执行format命令
+1       <------指定format的slot，这里为1表示slot0
+2       <------指定format时候的文件系统,这里为2表示UDF2.5
+0       <------指定format命令的选项,0表示quick format
+exit    <------结束maintenance模式
+
+格式化之前的注意事项：
+1,运行如下命令：
+mnt
+mstatus
+之后，显示的对话框的media status正常应当是07才表示卡的状态正常。
+
+2,还有在格式化之前，应当运行
+nvmcurrentshow
+察看其中variableParam.debug.fileSystemType = 0x00000002
+如果是2表示可以用udf，否则1就是fat的。
+
+3,我要格式化成udf，所以要把它设置成2，运行如下命令：
+nvmcardudf
+如果想要格式化成fat的，那么运行如下：
+nvmcardfat

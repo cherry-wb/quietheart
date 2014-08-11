@@ -1,0 +1,434 @@
+rsync
+rsync [OPTION]... SRC DEST
+rsync [OPTION]... SRC [USER@]HOST:DEST
+rsync [OPTION]... [USER@]HOST:SRC DEST
+rsync [OPTION]... [USER@]HOST::SRC DEST
+rsync [OPTION]... SRC [USER@]HOST::DEST
+rsync [OPTION]... rsync://[USER@]HOST[:PORT]/SRC [DEST]
+
+[功能]
+更快更好地远程拷贝文件（可以替代rcp）。
+
+[描述]
+rsync的命令格式可以为以下六种：
+rsync [OPTION]... SRC DEST
+rsync [OPTION]... SRC [USER@]HOST:DEST
+rsync [OPTION]... [USER@]HOST:SRC DEST
+rsync [OPTION]... [USER@]HOST::SRC DEST
+rsync [OPTION]... SRC [USER@]HOST::DEST
+rsync [OPTION]... rsync://[USER@]HOST[:PORT]/SRC [DEST]
+对应于以上六种命令格式，rsync有六种不同的工作模式：
+1)拷贝本地文件。当SRC和DES路径信息都不包含有单个冒号":"分隔符时就启动这种工作模式。如：rsync -a /data /backup
+2)使用一个远程shell程序(如rsh、ssh)来实现将本地机器的内容拷贝到远程机器。当DST路径地址包含单个冒号":"分隔符时启动该模式。如：rsync -avz *.c foo:src
+3)使用一个远程shell程序(如rsh、ssh)来实现将远程机器的内容拷贝到本地机器。当SRC地址路径包含单个冒号":"分隔符时启动该模式。如：rsync -avz foo:src/bar /data
+4)从远程rsync服务器中拷贝文件到本地机。当SRC路径信息包含"::"分隔符时启动该模式。如：rsync -av root@172.16.78.192::www /databack
+5)从本地机器拷贝文件到远程rsync服务器中。当DST路径信息包含"::"分隔符时启动该模式。如：rsync -av /databack root@172.16.78.192::www
+6)列远程机的文件列表。这类似于rsync传输，不过只要在命令中省略掉本地机信息即可。如：rsync -v rsync://172.16.78.192/www
+由此可知，rsync可以像cp一样从本地拷贝文件备份，可以像scp一样远程拷贝，也可以以rsync服务的方式拷贝文件（隐藏了本地具体目录名称，增强了安全性），关于rsync服务的搭建，后面有专门讲解。注意rsync不能实现直接控制远程机器和远程机器之间的拷贝。
+
+rsync参数的具体解释如下：
+-v, --verbose 详细模式输出
+-q, --quiet 精简输出模式
+-c, --checksum 打开校验开关，强制对文件传输进行校验
+-a, --archive 归档模式，表示以递归方式传输文件，并保持所有文件属性，等于-rlptgoD
+-r, --recursive 对子目录以递归模式处理
+-R, --relative 使用相对路径信息
+-b, --backup 创建备份，也就是对于目的已经存在有同样的文件名时，将老的文件重新命名为~filename。可以使用--suffix选项来指定不同的备份文件前缀。
+--backup-dir 将备份文件(如~filename)存放在在目录下。
+-suffix=SUFFIX 定义备份文件前缀
+-u, --update 仅仅进行更新，也就是跳过所有已经存在于DST，并且文件时间晚于要备份的文件。(不覆盖更新的文件)
+-l, --links 保留软链结
+-L, --copy-links 想对待常规文件一样处理软链结
+--copy-unsafe-links 仅仅拷贝指向SRC路径目录树以外的链结
+--safe-links 忽略指向SRC路径目录树以外的链结
+-H, --hard-links 保留硬链结
+-p, --perms 保持文件权限
+-o, --owner 保持文件属主信息
+-g, --group 保持文件属组信息
+-D, --devices 保持设备文件信息
+-t, --times 保持文件时间信息
+-S, --sparse 对稀疏文件进行特殊处理以节省DST的空间
+-n, --dry-run现实哪些文件将被传输
+-W, --whole-file 拷贝文件，不进行增量检测
+-x, --one-file-system 不要跨越文件系统边界
+-B, --block-size=SIZE 检验算法使用的块尺寸，默认是700字节
+-e, --rsh=COMMAND 指定使用rsh、ssh方式进行数据同步
+--rsync-path=PATH 指定远程服务器上的rsync命令所在路径信息
+-C, --cvs-exclude 使用和CVS一样的方法自动忽略文件，用来排除那些不希望传输的文件
+--existing 仅仅更新那些已经存在于DST的文件，而不备份那些新创建的文件
+--delete 删除那些DST中SRC没有的文件
+--delete-excluded 同样删除接收端那些被该选项指定排除的文件
+--delete-after 传输结束以后再删除
+--ignore-errors 及时出现IO错误也进行删除
+--max-delete=NUM 最多删除NUM个文件
+--partial 保留那些因故没有完全传输的文件，以是加快随后的再次传输
+--force 强制删除目录，即使不为空
+--numeric-ids 不将数字的用户和组ID匹配为用户名和组名
+--timeout=TIME IP超时时间，单位为秒
+-I, --ignore-times 不跳过那些有同样的时间和长度的文件
+--size-only 当决定是否要备份文件时，仅仅察看文件大小而不考虑文件时间
+--modify-window=NUM 决定文件是否时间相同时使用的时间戳窗口，默认为0
+-T --temp-dir=DIR 在DIR中创建临时文件
+--compare-dest=DIR 同样比较DIR中的文件来决定是否需要备份
+-P 等同于 --partial
+--progress 显示备份过程
+-z, --compress 对备份的文件在传输时进行压缩处理
+--exclude=PATTERN 指定排除不需要传输的文件模式
+--include=PATTERN 指定不排除而需要传输的文件模式
+--exclude-from=FILE 排除FILE中指定模式的文件
+--include-from=FILE 不排除FILE指定模式匹配的文件
+--version 打印版本信息
+--address 绑定到特定的地址
+--config=FILE 指定其他的配置文件，不使用默认的rsyncd.conf文件
+--port=PORT 指定其他的rsync服务端口
+--blocking-io 对远程shell使用阻塞IO
+-stats 给出某些文件的传输状态
+--progress 在传输时现实传输过程
+--log-format=formAT 指定日志文件格式
+--password-file=FILE 从FILE中得到密码
+--bwlimit=KBPS 限制I/O带宽，KBytes per second
+-h, --help 显示帮助信息
+一般同步传输目录都使用azv选项.
+
+
+[举例]
+*拷贝10.1.2.213上面的一个文件到本地机器：
+$ rsync -v quietheart@10.1.2.213:/home/quietheart/tmpTrans/linux.tar.gz ./
+输入之后输出如下：
+quietheart@10.1.2.213's password:
+linux.tar.gz
+sent 42 bytes  received 191867441 bytes  8924068.98 bytes/sec
+total size is 191843888  speedup is 1.00
+这里，根据提示，输入密码之后就开始传输了。
+
+*“假装”拷贝10.1.2.213上面的一个文件到本地机器：
+$ rsync -n quietheart@10.1.2.213:/home/quietheart/tmpTrans/linux.tar.gz ./
+输入之后输出如下：
+quietheart@10.1.2.213's password:
+这里，根据提示，输入密码之后就结束了，并不实际拷贝内容，而是假执行一下。
+
+*“假装”拷贝10.1.2.213上面的一个文件到本地机器,显示详细信息：
+$ rsync -nv quietheart@10.1.2.213:/home/quietheart/tmpTrans/linux.tar.gz ./
+quietheart@10.1.2.213's password: 
+linux.tar.gz
+sent 26 bytes  received 97 bytes  49.20 bytes/sec
+total size is 191843888  speedup is 1559706.41
+这里，将会看到，实际并没有把文件linux.tar.gz拷贝到本地机器上面。
+
+*拷贝文件并且显示进度：
+$ rsync --progress quietheart@10.1.2.213:/home/quietheart/tmpTrans/linux.tar.gz ./
+如果当前目录刚刚拷贝了linux.tar.gz，那么输入之后，输出如下：
+quietheart@10.1.2.213's password: 
+linux.tar.gz
+   191843888 100%   45.42MB/s    0:00:04 (xfer#1, to-check=0/1)
+
+sent 97020 bytes  received 55549 bytes  17949.29 bytes/sec
+total size is 191843888  speedup is 1257.42
+
+如果当前目录没有linux.tar.gz，那么输入之后输出如下：
+quietheart@10.1.2.213's password:
+linux.tar.gz
+   191843888 100%    8.67MB/s    0:00:21 (xfer#1, to-check=0/1)
+
+sent 42 bytes  received 191867441 bytes  8164573.74 bytes/sec
+total size is 191843888  speedup is 1.00
+这里，文件，我们可以看到，如果当前文件是存在的，那么拷贝的速度会大大加快，因为rsync只拷贝文件中改动的部分。这个命令在拷贝文件的时候想要了解拷贝的进度的时候挺有用。使用scp拷贝也会显示进度。
+
+*以递归方式传输目录中的文件(不含最外层目录)，显示进度和传输详细信息，并保留所有文件所有属性：
+$ rsync --progress -av openoffice/ quietheart@10.1.2.213:/home/quietheart/tmpTrans/
+输入之后，输出如下：
+quietheart@10.1.2.213's password: 
+building file list ... 
+3 files to consider
+./
+OOo_3.3.0_Linux_x86-64_install-rpm-wJRE_en-US.tar.gz
+   191843888 100%    9.41MB/s    0:00:19 (xfer#1, to-check=1/3)
+good.conf
+           7 100%    0.01kB/s    0:00:00 (xfer#2, to-check=0/3)
+
+sent 191867568 bytes  received 70 bytes  8527450.58 bytes/sec
+total size is 191843895  speedup is 1.00
+这里，将文件传输到10.1.2.213机器上，使用-a选项，等价于使用-rlptgoD选项，-v选项显示详细信息，--progress显示进度,注意传输完毕之后，会发现目标机器上面的/home/quietheart/tmpTrans中将会出现openoffice中的内容，但是不会有openoffice目录。实践发现，如果目标目录的某个文件被改变了，那么这样复制就会用源文件覆盖目标同名的文件，也就是说改变就丢失了。
+
+*递归传输目录中的文件(不含最外目录)，对备份文件传输时压缩处理，显示进度和传输详细信息，并保留所有文件所有属性：
+$ rsync --progress -azv openoffice/ quietheart@10.1.2.213:/home/quietheart/tmpTrans/
+输入之后，输出如下：
+quietheart@10.1.2.213's password: 
+building file list ... 
+3 files to consider
+./
+OOo_3.3.0_Linux_x86-64_install-rpm-wJRE_en-US.tar.gz
+   191843888 100%    9.67MB/s    0:00:18 (xfer#1, to-check=1/3)
+good.conf
+           7 100%    0.04kB/s    0:00:00 (xfer#2, to-check=0/3)
+
+sent 191908555 bytes  received 70 bytes  8529272.22 bytes/sec
+total size is 191843895  speedup is 1.00
+这里，使用-z选项在传输之前进行了压缩处理，但是由于这里文件都压缩过了所以也没有看到有什么不同。
+
+*以递归方式传输目录中的文件(含最外层目录)，显示进度和传输详细信息，并保留所有文件所有属性：
+$ rsync --progress -av openoffice quietheart@10.1.2.213:/home/quietheart/tmpTrans/
+输入之后，输出如下：
+quietheart@10.1.2.213's password: 
+building file list ... 
+3 files to consider
+./
+OOo_3.3.0_Linux_x86-64_install-rpm-wJRE_en-US.tar.gz
+   191843888 100%    9.41MB/s    0:00:19 (xfer#1, to-check=1/3)
+good.conf
+           7 100%    0.01kB/s    0:00:00 (xfer#2, to-check=0/3)
+
+sent 191867568 bytes  received 70 bytes  8527450.58 bytes/sec
+total size is 191843895  speedup is 1.00
+这里，注意如果保留最外层目录，那么就去掉在源目录名后面的'/'目录分割符号，将目录传输到10.1.2.213机器上，使用-a选项，等价于使用-rlptgoD选项，-v选项显示详细信息，--progress显示进度,注意传输完毕之后，会发现目标机器上面的/home/quietheart/tmpTrans中将会出现openoffice目录，里面有相应的内容。
+
+**传输目录中包含非压缩文件，不用-z选项和使用-z选项的差别:
+一般传输大量数据的时候都使用-avz，使用-z选项在传输之前会将文件压缩并传输，这样减少传输的数据量，参见后面的对比。
+*不用-z选项：
+$rsync --progress -av quietheart@10.1.2.213:/home/quietheart/tmpTrans/openoffice ./
+quietheart@10.1.2.213's password: 
+receiving file list ... 
+3 files to consider
+openoffice/
+openoffice/OOo_3.3.0_Linux_x86-64_install-rpm-wJRE_en-US.tar
+   196096000 100%   10.32MB/s    0:00:18 (xfer#1, to-check=1/3)
+openoffice/good.conf
+           7 100%    0.05kB/s    0:00:00 (xfer#2, to-check=0/3)
+
+sent 70 bytes  received 196120191 bytes  9121872.60 bytes/sec
+total size is 196096007  speedup is 1.00
+这里，没有使用-z压缩选项，传输的数据为：196120191，最后大小：196096007。
+
+*使用-z选项
+$ rsync --progress -azv quietheart@10.1.2.213:/home/quietheart/tmpTrans/openoffice ./
+quietheart@10.1.2.213's password: 
+receiving file list ... 
+3 files to consider
+openoffice/
+openoffice/OOo_3.3.0_Linux_x86-64_install-rpm-wJRE_en-US.tar
+   196096000 100%   10.49MB/s    0:00:17 (xfer#1, to-check=1/3)
+openoffice/good.conf
+           7 100%    0.01kB/s    0:00:00 (xfer#2, to-check=0/3)
+
+sent 70 bytes  received 191871852 bytes  8924275.44 bytes/sec
+total size is 196096007  speedup is 1.02
+这里，使用压缩的-z选项，传输的数据为：191871852，最后大小为：196096007。
+**
+
+*同步文件的时候，在目标中删除源中没有的文件：
+$ rsync --delete --progress -azv quietheart@10.1.2.213:/home/quietheart/tmpTrans/openoffice ./
+quietheart@10.1.2.213's password: 
+receiving file list ... 
+3 files to consider
+deleting openoffice/aa
+openoffice/         
+
+sent 26 bytes  received 156 bytes  72.80 bytes/sec
+total size is 196096007  speedup is 1077450.59
+这里，本地中的office中有个aa文件在源目录中没有，使用--delete选项，所以就把它删除了(如果目标是远程机器，也会删除远程机器上面多余的文件)。如果不确定，可以实现使用-n假运行查看一下，输出都一样，不过不做实际的删除和传输。
+
+**使用rsync服务
+*不输入密码查看rsync服务器指定目录下的文件：
+$export RSYNC_PASSWORD=123456
+$ rsync --list-only quietheart@10.1.2.213::QuietHeart_tmpTrans
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+drwxrwxr-x        4096 2011/04/20 15:59:55 .
+-rw-r--r--        2245 2010/10/23 11:09:33 CentOS-Base.repo
+-rw-rw-r--   549402908 2010/11/22 17:04:13 RO50ForLinBeta.tar.gz
+-rwxr-xr-x       94304 2011/03/23 11:29:16 diablo
+-rw-rw-r--   127412115 2011/04/06 10:47:26 eclipse-linuxtools-helios-SR2-incubation-linux-gtk.tar.gz
+-rw-rw-r--      653338 2011/04/06 15:45:06 gtest-1.5.0.tar.bz2
+-rw-r--r--           0 2011/04/20 15:59:55 log_error
+-rw-rw-r--       11315 2011/04/15 19:41:31 log_error_20110415_19_37
+-rw-r--r--    12916624 2011/04/06 11:34:35 site-1.6.17.zip
+drwx------        4096 2011/04/25 09:56:12 zh-CN
+这里，rsync服务器10.1.2.213通过一个配置文件配置用户名，密码，以及QuietHeart_tmpTrans(服务器展现给外面用于访问共享目录的虚拟目录名称)，具体在后面配置rsync时候会说。事先设置好RSYNC_PASSWORD变量可以不用输入密码直接传输。
+
+*输入密码查看rsync服务器指定目录下的文件：
+$ unset RSYNC_PASSWORD
+$ rsync --list-only quietheart@10.1.2.213::QuietHeart_tmpTrans
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password: 
+drwxrwxr-x        4096 2011/04/20 15:59:55 .
+-rw-r--r--        2245 2010/10/23 11:09:33 CentOS-Base.repo
+-rw-rw-r--   549402908 2010/11/22 17:04:13 RO50ForLinBeta.tar.gz
+-rwxr-xr-x       94304 2011/03/23 11:29:16 diablo
+-rw-rw-r--   127412115 2011/04/06 10:47:26 eclipse-linuxtools-helios-SR2-incubation-linux-gtk.tar.gz
+-rw-rw-r--      653338 2011/04/06 15:45:06 gtest-1.5.0.tar.bz2
+-rw-r--r--           0 2011/04/20 15:59:55 log_error
+-rw-rw-r--       11315 2011/04/15 19:41:31 log_error_20110415_19_37
+-rw-r--r--    12916624 2011/04/06 11:34:35 site-1.6.17.zip
+drwx------        4096 2011/04/25 09:56:12 zh-CN
+
+$ rsync --list-only quietheart@10.1.2.213::QuietHeart_tmpTrans/zh-CN
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password:
+drwx------        4096 2011/04/25 09:56:12 zh-CN
+$ rsync --list-only quietheart@10.1.2.213::QuietHeart_tmpTrans/zh-CN/
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password:
+drwx------        4096 2011/04/25 09:56:12 .
+-rwxrwxr-x        3910 2010/06/22 20:30:45 update
+drwx------        4096 2010/06/22 20:30:45 DEBS
+drwx------        4096 2010/06/22 20:33:01 RO
+drwx------        4096 2010/06/22 20:30:45 licenses
+drwx------        4096 2011/04/25 09:55:34 readmes
+
+这里，连续执行了三次查看。如果不设置那个RSYNC_PASSWORD变量（这里使用unset取消这个变量之前的设置），那么就需要输入密码了。可以查看子目录的内容（例如这里的zh-CN），如果目录后面有'/'那么可以看到目录里面，如果没有'/'那么只显示那个目录名。
+
+
+*将文件通过服务形式拷贝到本地：
+$ rsync --progress -avz quietheart@10.1.2.213::QuietHeart_tmpTrans ./
++++++++++++++++++++++++++++   
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password:
+receiving file list ...
+112 files to consider
+./
+CentOS-Base.repo
+        2245 100%    2.14MB/s    0:00:00 (xfer#1, to-check=110/112)
+RO50ForLinBeta.tar.gz
+   549402908 100%    4.21MB/s    0:02:04 (xfer#2, to-check=109/112)
+...剩下的省略...
+这样，将10.1.2.213::QuietHeart_tmpTrans中的内容拷贝到当前目录，这里注意拷贝之后没有最外层的QuietHeart_tmpTrans目录。
+
+*将文件通过服务形式拷贝到服务器(失败的情况)：
+$ rsync --progress -avz ./rsynctest quietheart@10.1.2.213::QuietHeart_tmpTrans
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password: 
+building file list ... 
+2 files to consider
+ERROR: module is read only
+rsync error: syntax or usage error (code 1) at main.c(747) [receiver=2.6.8]
+rsync: connection unexpectedly closed (4 bytes received so far) [sender]
+rsync error: error in rsync protocol data stream (code 12) at io.c(463) [sender=2.6.8]
+这里，我配置了服务目录只读(参见后面配置文件中的read only选项)，所以拷贝失败。
+
+*将文件通过服务形式拷贝到服务器(成功的情况)：
+$ rsync --progress -avz ./rsynctest quietheart@10.1.2.213::QuietHeart_tmpTrans
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password: 
+building file list ... 
+2 files to consider
+rsynctest/
+rsynctest/aaa
+           0 100%    0.00kB/s    0:00:00 (xfer#1, to-check=0/2)
+
+sent 138 bytes  received 44 bytes  72.80 bytes/sec
+total size is 0  speedup is 0.00
+这里，我添加了可写权限(参见后面配置文件中的read only选项)，所以拷贝成功。
+**
+[其它]
+1,配置rsync服务：
+这里，介绍rsync服务的配置过程：
+1)建立配置文件如下：
+[root@lv-k test]#mkdir /etc/rsyncd
+[root@lv-k test]#>> /etc/rsyncd/rsyncd.conf
+[root@lv-k test]#>> /etc/rsyncd/rsyncd.secrets
+[root@lv-k test]#chmod 600 /etc/rsyncd/rsyncd.secrets
+[root@lv-k test]#>> /etc/rsyncd/rsyncd.motd
+这里，rsyncd.conf是rsync服务的配置文件，rsyncd.secrets存放使用rsync服务的用户名和密码（有说用户名应该是主机上存在的用户，但是实践发现可以不是主机上面已经存在的，密码随意），rsyncd.motd存放登陆时候的欢迎信息。
+
+2）配置文件内容如下：
+rsyncd.conf文件:
+######################
+# Minimal configuration file for rsync daemon
+# See rsync(1) and rsyncd.conf(5) man pages for help
+pid file = /var/run/rsyncd.pid  
+port = 873
+address = 10.1.2.213
+#uid = nobody
+#gid = nobody   
+uid = root  
+gid = root  
+use chroot = yes 
+read only = yes 
+
+#limit access to private LANs
+#hosts allow=192.168.1.0/255.255.255.0 10.0.2.0/255.255.254.0 
+hosts allow=*
+#hosts deny=*
+
+max connections = 5
+motd file = /etc/rsyncd/rsyncd.motd
+
+#This will give you a separate log file
+#log file = /var/log/rsync.log
+
+#This will log every file transferred - up to 85,000+ per user, per sync
+#transfer logging = yes
+
+log format = %t %a %m %f %b
+syslog facility = local3
+timeout = 300
+
+[QuietHeart_tmpTrans]  
+path = /home/quietheart/tmpTrans  
+list=yes
+ignore errors
+auth users = quietheart lv-k test1
+secrets file = /etc/rsyncd/rsyncd.secrets 
+comment = quietheart tmpfile transfer dir
+#exclude =   home/  samba/   
+######################
+这里，文件的内容不细说了，自己应该能够悟出来，或者可以参见"man rsyncd.conf"一个关键的地方就是："hosts allow"可以设置访问的IP；以及后面设置可以访问的目录的组模块内容，组名就是给客户端看的名字例如这里的"QuietHeart_tmpTrans"。另外，如果设置read only = no那么别人就可以通过服务向这个地方写了。
+
+rsyncd.secrets文件:
+######################
+quietheart:123456
+lv-k:123456
+test1:test1
+######################
+这个文件存放密码信息,管理可以使用rsync的用户以及相应的密码。
+
+rsyncd.motd文件：
+######################
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+######################
+这里只存放一些登陆的时候打印的信息，motd意思是："Message Of The Day"。
+
+3)测试配置：
+[root@lv-k test]#rsync --daemon  --config=/etc/rsyncd/rsyncd.conf 
+[root@lv-k test]#rsync --list-only quietheart@10.1.2.213::QuietHeart_tmpTrans
++++++++++++++++++++++++++++
++ QuietHeart  rsync  2011
++++++++++++++++++++++++++++
+
+Password:
+drwxrwxr-x        4096 2011/04/20 15:59:55 .
+-rw-r--r--        2245 2010/10/23 11:09:33 CentOS-Base.repo
+-rw-rw-r--   549402908 2010/11/22 17:04:13 RO50ForLinBeta.tar.gz
+-rwxr-xr-x       94304 2011/03/23 11:29:16 diablo
+-rw-rw-r--   127412115 2011/04/06 10:47:26 eclipse-linuxtools-helios-SR2-incubation-linux-gtk.tar.gz
+-rw-rw-r--      653338 2011/04/06 15:45:06 gtest-1.5.0.tar.bz2
+-rw-r--r--           0 2011/04/20 15:59:55 log_error
+-rw-rw-r--       11315 2011/04/15 19:41:31 log_error_20110415_19_37
+-rw-r--r--    12916624 2011/04/06 11:34:35 site-1.6.17.zip
+drwx------        4096 2011/04/25 09:56:12 zh-CN
+这里，先指定用配置文件rsyncd.conf启动rsync 服务器，然后使用"--list-only"选项运行客户端（可以在其它机器上运行）,当出现Password密码的时候，输入"123456即可".
+
+**参考：
+http://linux.chinaunix.net/techdoc/system/2008/09/20/1033351.shtml
+http://www.linuxsir.org/main/?q=node/256

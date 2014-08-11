@@ -1,0 +1,65 @@
+ctags [options] [file(s)]
+etags [options] [file(s)]
+[功能]
+生成源代码的tag文件。
+默认生成的tag存放在了文件tags中。
+
+[描述]
+ctags和etags，下面就用ctags来引用代表两者了。
+
+[举例]
+*递归生成当前目录下面所有文件的tags文件：
+$ctags -R ./
+这样，会在当前目录下面生成一个默认的tags文件，这个文件是所有源文件的tags索引文件。
+
+*递归生成当前目录下tags文件，指定文件名称为testTags:
+$ctags -R -f testTags  ./
+这样，会在当前目录下面生成一个testTags文件，这个文件是所有源文件的tags索引文件。
+
+*为当前目录下所有的.c文件生成tags文件：
+$ctags *.c
+
+
+*列出文件名和程序语言的映射：
+$ctags --list-maps
+输入之后，输出如下：
+Asm      *.asm *.ASM *.s *.S *.A51 *.29[kK] *.[68][68][kKsSxX] *.[xX][68][68]
+Asp      *.asp *.asa
+Awk      *.awk *.gawk *.mawk
+Basic    *.bas *.bi *.bb *.pb
+BETA     *.bet
+C        *.c
+C++      *.c++ *.cc *.cp *.cpp *.cxx *.h *.h++ *.hh *.hp *.hpp *.hxx *.C *.H
+C#       *.cs
+Cobol    *.cbl *.cob *.CBL *.COB
+Eiffel   *.e
+Erlang   *.erl *.ERL *.hrl *.HRL
+Fortran  *.f *.for *.ftn *.f77 *.f90 *.f95 *.F *.FOR *.FTN *.F77 *.F90 *.F95
+HTML     *.htm *.html
+Java     *.java
+JavaScript *.js
+Lisp     *.cl *.clisp *.el *.l *.lisp *.lsp *.ml
+Lua      *.lua
+Make     *.mak *.mk [Mm]akefile
+Pascal   *.p *.pas
+Perl     *.pl *.pm *.plx *.perl
+PHP      *.php *.php3 *.phtml
+Python   *.py *.pyx *.pxd *.scons
+REXX     *.cmd *.rexx *.rx
+Ruby     *.rb *.ruby
+Scheme   *.SCM *.SM *.sch *.scheme *.scm *.sm
+Sh       *.sh *.SH *.bsh *.bash *.ksh *.zsh
+SLang    *.sl
+SML      *.sml *.sig
+SQL      *.sql
+Tcl      *.tcl *.tk *.wish *.itcl
+Vera     *.vr *.vri *.vrh
+Verilog  *.v
+Vim      *.vim
+YACC     *.y
+
+
+[其他]
+想要知道的功能：
+生成指定名称的tags?
+生成指定文件的tags?

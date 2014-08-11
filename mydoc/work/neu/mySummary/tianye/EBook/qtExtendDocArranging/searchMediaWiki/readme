@@ -1,0 +1,5 @@
+这里简单介绍了如何从mediawiki网站提取网站的信息。
+
+项目地址：https://sourceforge.net/projects/pywikipediabot/
+检出地址：svn co http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia pywikipedia
+这里是python库，好像是访问wikipedia的api接口的一些python脚本集合。

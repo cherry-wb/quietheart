@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svnroot/quietheart/!svn/ver/82/trunk/codes/pythonDemo/00_miscellaneous/package2/package/subpackage
+END
+subpkg1.py
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svnroot/quietheart/!svn/ver/82/trunk/codes/pythonDemo/00_miscellaneous/package2/package/subpackage/subpkg1.py
+END
+subpkg2.py
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svnroot/quietheart/!svn/ver/82/trunk/codes/pythonDemo/00_miscellaneous/package2/package/subpackage/subpkg2.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svnroot/quietheart/!svn/ver/82/trunk/codes/pythonDemo/00_miscellaneous/package2/package/subpackage/__init__.py
+END

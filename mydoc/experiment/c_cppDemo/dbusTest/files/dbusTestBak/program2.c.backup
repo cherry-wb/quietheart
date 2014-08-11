@@ -1,0 +1,96 @@
+#include<gtk/gtk.h>
+//# include <dbus/dbus.h> /* Pull in all of D-Bus headers . */
+#include<libosso.h>
+/*相应的变量定义*/
+# define SYSNOTE_NAME  "org.freedesktop.program2"/*公用服务名字*/
+# define SYSNOTE_OPATH "/org/freedesktop/program2"/*对象路径*/
+# define SYSNOTE_IFACE "org.freedesktop.program2"/*对象接口名字*/
+
+osso_context_t *osso_context;
+/*method to be call by program1*/
+static void print(const gchar *message)
+{
+	g_print("in function of program2 called by the program1");
+}
+
+/*dbus related for receive message*/
+static void terminateOnError ( const char* msg ,
+		const DBusError * error )
+{ 
+	//assert (msg != NULL);
+	//assert (error != NULL);
+	if(NULL == msg && NULL == error)
+	{
+		exit(1);
+	}
+	if ( dbus_error_is_set (error ))
+	{
+		fprintf (stderr , msg);
+		fprintf (stderr , " DBusError .name: %s\n", error ->name);
+		fprintf (stderr , " DBusError . message : %s\n", error -> message );
+		exit(1);
+	}   
+}
+
+gint dbus_req_handler (const gchar * interface , const gchar * method ,
+		GArray * arguments , gpointer data ,
+		osso_rpc_t * retval )
+{
+	g_print(method);
+	g_print("good!Message transfered********\n");
+
+	return OSSO_OK ;
+
+}
+
+
+static void dbus_related()
+{
+	/*osso_return_t result ;
+	osso_context = osso_initialize(SYSNOTE_NAME, "0.0.1", TRUE, NULL);
+	if (osso_context == NULL) {
+		g_print ("Error initialize osso in homearea\n");
+		return;
+	}
+	result = osso_rpc_set_cb_f(osso_context,
+			SYSNOTE_NAME,
+			SYSNOTE_OPATH,
+			SYSNOTE_IFACE,
+			dbus_req_handler , NULL);
+	if ( result != OSSO_OK )
+	{
+		g_print ("Error setting D-BUS callback (%d) in statusbar\n", result );
+		return ;
+	}*/
+  DBusGProxy *bus_proxy;
+  GError *error = NULL;
+  guint result;
+}
+
+gint delete_event(GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+	osso_deinitialize(osso_context);
+	gtk_main_quit();
+	return FALSE; 
+}
+gint main(gint argc, gchar *argv[])
+{
+	GtkWidget *window;
+	GtkWidget *label;
+	gtk_init(&argc, &argv);
+
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	g_signal_connect(G_OBJECT(window), "delete_event",
+			G_CALLBACK(delete_event), NULL);
+	gtk_window_set_title(GTK_WINDOW(window), "testDbus_program2");
+	gtk_container_set_border_width(GTK_CONTAINER(window),50);
+	
+	
+	label = gtk_label_new("this is program2 wait for message send by program1");
+	gtk_container_add(GTK_CONTAINER(window), label);
+
+	gtk_widget_show_all(window);
+	dbus_related();
+	gtk_main();
+	return 0;
+}

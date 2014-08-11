@@ -1,0 +1,41 @@
+系统
+Ubuntu 12.04 LTS
+
+sudo apt-get install vsftpd
+命令执行过程中，安装程序会给本地创建一个名为“ftp”的用户组，命令执行完之后会自动启动FTP服务。新安装的vsftpd默认是可以匿名不需要密码直接访问。
+
+
+开启、停止、重启vsftpd服务也很简单：
+service vsftpd start | stop | restart
+
+
+创建用户ftptest用于访问：
+#sudo useradd -m -g ftp ftptest
+这里，指定组为ftp。
+
+设置访问密码：
+quietheart@quietheart-ThinkPad-E420:~/work$ sudo passwd ftptest
+输入新的 UNIX 密码： 
+重新输入新的 UNIX 密码： 
+passwd：已成功更新密码
+
+
+修改vsftpd的配置文件:
+#sudo vi /etc/vsftpd.conf
+修改内容如下：
+#禁止匿名访问
+anonymous_enable=NO
+#接受本地用户
+local_enable=YES
+#可以上传
+write_enable=YES
+#启用在chroot_list_file的用户只能访问根目录
+#chroot_list_enable=YES
+#chroot_list_file=/etc/vsftpd.chroot_list
+
+
+这里，默认会对登录的用户chroot到自己的主目录，如果设置chroot_list_enable为YES，那么可同时设置chroot_list_file并
+#echo "ftptest" >> /etc/vsftpd.chroot_list
+指定哪些用户不chroot，而是登录后直接可访问根目录。
+
+

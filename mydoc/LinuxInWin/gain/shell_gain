@@ -1,0 +1,57 @@
+when I study shell program,I learned the following:
+1,when you declare a variable,you wouldn't add space for example:
+a = "hello world"#this is wrong
+a="hello world"#this is right
+2,when you run the shell script(file name is "test"),you can:
+1)bash test
+2)./test
+3,when output an variable you can(take the a in 1 as example):
+1)echo "a is" $a
+2)echo "a is $a"
+4,when use "{}" to reference an variable,don't be wrong:
+echo "{$a}is value of a"#it is wrong,it will output '{hello world}is value of a
+echo "${a}is value of a"#this is right,output'hello worldis value of a
+5,when use expr to compute the value of expression:
+1)expr 8+8#wrong,the parameters will be spilt by space as '2)'
+2)expr 8 + 8 #right
+3)expr 8 * 8 #wrong,* can't be used directly
+4)expr 8 \* 8 #right
+6,when use the if...fi syntax,:
+1)the following is wrong
+#!/bin/sh
+
+if ["$SHELL" = "/bin/bash" ]; then #this is wrong ,because there isn't a space after'['
+   echo "your login shell is the bash (bourne again shell)"
+else
+   echo "your login shell is not bash but $SHELL"
+fi
+2)the following is wrong
+#!/bin/sh
+
+if[ "$SHELL" = "/bin/bash" ]; then #this is wrong ,because there isn't a space before '['after the if.
+   echo "your login shell is the bash (bourne again shell)"
+else
+   echo "your login shell is not bash but $SHELL"
+fi
+
+3)the following example is right
+#!/bin/sh
+if [ "$SHELL" = "/bin/bash" ]; then
+   echo "your login shell is the bash (bourne again shell)"
+else
+   echo "your login shell is not bash but $SHELL"
+fi
+
+7.short form of "if..fi"
+1) [ condition ] && operation  #if the condition is true ,do the operation
+2) [ condition ] || operation  #if the condition is false,do the operation
+
+8.use of select:
+
+#!/bin/bash #if the "/bin/sh" not in used then use "/bin/bash"
+echo "which is you current operation system?"
+select var in "WindowsXP" "WindowsME" "Fedora" "Ubuntu";do#notice the space
+break;
+done
+echo "you have selected $var"
+#we should notice that

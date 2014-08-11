@@ -1,0 +1,243 @@
+20090410
+************************************************************************************************************
+注意：
+所有的资料我会放到：
+smb://10.1.14.90/public/Marvell-MID/Study_doc/lvkai总结
+然后所有的源代码我会放到：
+smb://10.1.14.90/public/Marvell-MID/Study_doc/lvkai总结/参考资料
+其中：
+a），hello-world-app_2.1.tar.gz是从官方网站上面下载的hello-world插件的源代码。
+b),helloworld_status_homearea_dbus_sucess20090410.tar.gz是修改之后可以实现通信的插件源代码。
+************************************************************************************************************
+
+
+
+
+
+利用DBUS实现两个插件之间的通信：
+我们以hello-world_statusbar和hello-world_homearea两个插件为例，前者是状态栏上面的插件，后者是homearea上面的插件。
+*************************************************************************************************************
+1.首先下载hello-world_statusbar和hello-world_homearea两个插件的源代码。
+地址：http://repository.maemo.org/pool/maemo4.1/free/h/hello-world-app/
+把hello-world-app_2.1.tar.gz下载下来（在我的总结里面也有）。
+
+*************************************************************************************************************
+2，提取有用的文件并且编译
+hello-world_statusbar:libhelloworld.c,libhelloworld.h,hello-world-statusbar.c,hello-world-statusbar.h
+hello-world_homearea:hello-world-home.c,hello-world-home.h,libhelloworld.c,libhelloworld.h
+编译命令：
+1)hello-world_statusbar:
+>gcc -shared `pkg-config gtk+-2.0 libosso hildon-1 libhildondesktop --libs --cflags` libhelloworld.c hello-world-statusbar.c -o libhelloworld_sb.so
+2)hello-world_homearea:
+>gcc -shared `pkg-config gtk+-2.0 libosso hildon-1 libhildondesktop --libs --cflags` libhelloworld.c hello-world-statusbar.c -o libhelloworld_sb.so
+
+*************************************************************************************************************
+3，写好两个插件的配置文件，先确保插件可以在hildon-desktop里面运行：
+1），在statusbar.conf中加入:
+[/usr/share/applications/hildon-status-bar/hildon-status-bar-hello_world.desktop]
+2）在home.conf中加入：
+[usr/share/applications/hildon-home/hello-world-home.desktop]
+3）在/usr/share/applications/hildon-status-bar/建立hildon-status-bar-hello_world.desktop文件,内容为：
+[Desktop Entry]
+Name= helloworld_sb
+Icon=hello-world
+Category = temporal
+Type= default
+X-Path= libhelloworld_sb.so
+4）在usr/share/applications/hildon-home/建立hello-world-home.desktop文件，内容为：
+[Desktop Entry]
+Name=Hello, World!
+Comment=Example Home plugin
+Type=default
+X-Path=libhelloworld-home.so
+5）拷贝编译好的插件文件到/usr/lib/hildon-desktop/中
+两个插件就是：libhelloworld_sb.so和libhelloworld-home.so.so:
+至此，插件就可以运行了，但是还没有图标，所以看不见。
+6)为插件图标：
+6.1)进入：
+/usr/share/icons/hicolor/40x40/hildon
+把想要显示的图标放进去，名字为hello-world.png
+6.2)更新缓存：
+gtk-update-icon-cache -f /usr/share/icons/hicolor
+6.3)重新启动：
+af-sb-init restart
+这样就可以显示相应的插件了。
+
+*************************************************************************************************************
+4,启动hildon-desktop，同时加载两个插件。
+运行：af-sb-init.sh start
+如果成功加入两个插件之后，我们开始修改代码，使得两个插件可以互相通信（我打算用homearea的插件上的一个按钮，控制statusbar上面helloworld图标按钮的显示与否）
+
+*************************************************************************************************************
+5,修改代码（关键）
+5.1）hello-world_statusbar：
+hello-world-statusbar.c文件中做如下修改：
+5.1.1)开始加入如下：（在#include "hello-world-statusbar.h"语句的前面）
+# define OSSO_EXAMPLE_NAME       "hello_statusbar"
+# define OSSO_EXAMPLE_SERVICE    "com.nokia."OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_OBJECT     "/com/nokia/"OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_IFACE      "com.nokia."OSSO_EXAMPLE_NAME
+5.1.2)
+在hildon_status_bar_helloworld_init函数之前定义如下函数：
+gint dbus_req_handler (const gchar * interface , const gchar * method ,
+                       GArray * arguments , gpointer data ,
+                       osso_rpc_t * retval )
+{/*这个函数作用：实现接收到消息后采取的动作*/
+/*其它的函数参数不用管，只要记住，从其它进程传过来的消息是method字符串就可以了*/
+    	g_print(method);/*打印传送来的消息*/
+      g_print("good!Message transfered from homearea to statusbar");
+
+	/*下面根据传来的消息的不同，采取不同的动作，这里我只比较了method的第一个字符*/
+	if(method[0] == 'h')
+		gtk_widget_hide(GTK_WIDGET(data));
+	else
+		gtk_widget_show(GTK_WIDGET(data));
+
+    return OSSO_OK ;
+
+}
+
+5.1.3）
+修改函数：static void hildon_status_bar_helloworld_init(HildonStatusBarHelloWorld *helloworld)
+如下：
+static void hildon_status_bar_helloworld_init(HildonStatusBarHelloWorld *helloworld)
+{
+
+    HildonStatusBarHelloWorldPrivate *info = 
+    HILDON_STATUS_BAR_HELLOWORLD_GET_PRIVATE(helloworld);
+    osso_return_t result ;/*for dbus*/
+    ULOG_OPEN("hildon-sb-helloworld");
+
+    g_return_if_fail(info);
+
+    info->icon = gtk_image_new_from_pixbuf(NULL);
+    info->button = gtk_toggle_button_new();/*lkcomment button on the status bar*/
+
+    set_helloworld_icon("hello-world", info);
+
+    gtk_container_add(GTK_CONTAINER(info->button),
+                      GTK_WIDGET(info->icon));/*lkdel*/
+
+    gtk_container_add(GTK_CONTAINER(helloworld), info->button);
+
+ /**************************从这里开始涉及到DBUS通信！！******************************************/
+    
+    info->osso = osso_initialize("hildon_sb_helloworld", "1.0", FALSE, NULL);/*初始化通信相关变量*/
+    if (!info->osso)
+        ULOG_WARN("%s: error while initializing osso\n", __FUNCTION__);
+
+
+    /*关键，连接收到消息之后的处理函数*/
+    result = osso_rpc_set_cb_f(info->osso,
+			                    OSSO_EXAMPLE_SERVICE ,
+			                    OSSO_EXAMPLE_OBJECT ,
+			                    OSSO_EXAMPLE_IFACE ,
+			                    dbus_req_handler , info->button);
+    if ( result != OSSO_OK )
+     {
+      g_print ("Error setting D-BUS callback (%d) in statusbar\n", result );
+      return ;
+     }
+
+    gtk_widget_show_all(GTK_WIDGET(helloworld));
+}
+
+----------------------至此，statusbar上插件的接收消息代码添加完毕------------------------------------------
+5.2）hello-world_homearea：
+修改hello-world-home.c如下：
+5.2.1)
+在开始（HD_DEFINE_PLUGIN (HelloHomePlugin, hello_home_plugin, HILDON_DESKTOP_TYPE_HOME_ITEM);的语句之前）
+添加宏定义和包含文件：
+
+#include <libosso.h>
+# define OSSO_EXAMPLE_NAME       "hello_statusbar"
+# define OSSO_EXAMPLE_SERVICE    "com.nokia."OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_OBJECT     "/com/nokia/"OSSO_EXAMPLE_NAME
+# define OSSO_EXAMPLE_IFACE      "com.nokia."OSSO_EXAMPLE_NAME
+#define OSSO_EXAMPLE_MESSAGE "hide"
+5.2.2)
+在hello_home_plugin_init 函数之前添加按钮的回调函数：
+static void my_button(GtkWidget *button, gpointer data)
+{
+    osso_context_t *osso_context;
+    osso_return_t ret;
+
+    /*初始化通信相关的变量 */
+    osso_context = osso_initialize(OSSO_EXAMPLE_SERVICE, "0.0.1", TRUE, NULL);
+    
+    static gint flag = 0;/*flag标志表示显示(0)还是隐藏(1)statusbar上面的插件*/ 
+    
+    if (osso_context == NULL) {/* 检测初始化是否正确 */
+        	g_print ("Error initialize osso in homearea\n");
+		return;
+    }
+
+  /*关键!!发送消息,发送的消息在倒数第三个参数上面*/
+    ret = osso_rpc_run(osso_context, 
+			OSSO_EXAMPLE_SERVICE, 
+			OSSO_EXAMPLE_OBJECT, 
+			OSSO_EXAMPLE_IFACE, 
+			(flag^=1)==1?OSSO_EXAMPLE_MESSAGE:"show", NULL, DBUS_TYPE_INVALID);
+
+  /*释放资源*/
+    osso_deinitialize(osso_context);
+    g_print("home button1 test\n");
+}
+5.2.3)
+修改hello_home_plugin_init的代码如下：
+static void
+hello_home_plugin_init (HelloHomePlugin *home_plugin)
+{
+  GtkWidget *button;
+  GtkWidget *button1;/*单击此按钮实现隐藏和显示statusbar上的helloworld插件*/
+  GtkWidget *hbox;
+  
+  hbox = gtk_hbox_new(TRUE, 0);
+  gtk_container_add (GTK_CONTAINER (home_plugin), hbox);
+
+  button = hello_world_button_new (10);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (hello_world_dialog_show),
+		    NULL);
+
+  gtk_box_pack_start(GTK_BOX(hbox),button, TRUE, TRUE, 0);
+  
+  
+  button1 = gtk_button_new_with_label("show_hide");
+/*将该按钮连接到回调函数上，回调函数实现消息的发送*/
+  g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(my_button), NULL);
+
+  gtk_box_pack_start(GTK_BOX(hbox),button1, TRUE, TRUE, 0);
+
+
+  hildon_desktop_home_item_set_resize_type (HILDON_DESKTOP_HOME_ITEM (home_plugin),
+                                            HILDON_DESKTOP_HOME_ITEM_RESIZE_BOTH);
+
+  gtk_widget_show_all(hbox);
+}
+----------------------至此，homearea上插件的发送消息代码添加完毕------------------------------------------
+--------------------------------------------至此，应该修改的代码都已经修改完毕了-------------------------------------------
+
+
+*************************************************************************************************************
+6，修改配置文件：
+我们至此已经把该有的代码都编写完毕了，但是这样还是不能够运行，我们需要建立D-Bus的服务配置文件.如下：
+6.1)
+>cd /usr/share/dbus-1/services/
+6.2)
+>touch com.nokia.hello_statusbar.service
+6.3)修改com.nokia.hello_statusbar.service文件，内容如下：
+###################################################################
+# Sample service description file
+[D-BUS Service]
+Name=com.nokia.hello_statusbar
+Exec=/usr/lib/hildon-desktop/libhelloworld_sb.so
+###################################################################
+这样，再按照第2，3步的过程，对插件进行编译和配置就可以了。
+
+*************************************************************************************************************
+本文参考的资料：
+1）,http://maemo.org/development/documentation/tutorials/maemo_4-0_tutorial/
+2），http://maemo.org/api_refs/4.0/libosso/group__RPC.html#gec4a3469c8fde01d2a4a0cfbc6db6fa7
+
+

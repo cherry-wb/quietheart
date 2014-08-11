@@ -1,0 +1,35 @@
+{
+    "name":"ap_set_transmissonRate",
+    "type":{"name":"seq"},
+    "ap":[
+             {"model":    "ap:dlink:dir655",    "mac":    "84:c9:b2:4c:3b:88"}
+         ],
+    "description":"set ap transmisson rate.",
+    "scenarios":
+        [
+            {
+                "login":{
+                             "catagory":"ap",
+                             "fname":"scenario_login.json", 
+                             "type":{"name":"seq"}
+                        }
+            },
+            {
+                "set_channel":{
+                                   "catagory":"ap",
+                                   "fname":"scenario_set_wireless_transmissionRate.json", 
+                                   "type":{"name":"seq"}, 
+                                   "parameter":{
+                                                   "transmissonRate":{"5G":"48","2G":"12"}
+                                               }
+                              }
+            },
+            {
+                "logout":{
+                              "catagory":"ap",
+                              "fname":"scenario_logout.json", 
+                              "type":{"name":"seq"}
+                         }
+            }
+        ]
+}

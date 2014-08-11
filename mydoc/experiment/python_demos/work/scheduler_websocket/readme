@@ -1,0 +1,4 @@
+mygunicornclient向sch_s发送请求
+sch_s负责向mygunicornserver申请资源并且回送给mygunicornclient
+通过websocket通信，sch_s实际就是一个调度机制。
+

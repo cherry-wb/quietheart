@@ -1,0 +1,111 @@
+head [OPTION]... [FILE]...
+[功能]
+打印文件的开头部分。
+
+[描述]
+默认head命令打印其相应文件的开头10行。
+
+[举例]
+*查看的测试文件内容：
+[root@lv-k samba]# cat smb.conf 
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+security = share
+
+[public1]
+path = /home/mysamba
+public = yes
+writable = yes
+
+[public2]
+path = /root/mysamba
+public = yes
+writable = yes
+browseable = yes
+hosts allow = 10.1.2.213 10.1.2.217
+
+[public3]
+path = /tmp/mysamba
+public = yes
+writable = yes
+browseable = yes
+security = user
+valid users = quietheart lv-k
+create mask = 0700
+directory mask = 0700
+
+*打印文件的开始10行：
+[root@lv-k samba]# head smb.conf 
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+security = share
+
+[public1]
+path = /home/mysamba
+public = yes
+
+*打印文件的开始12个字节：
+[root@lv-k samba]# head -c 12 smb.conf 
+[global]
+wor
+
+*打印文件的除了最后12个字节以外的内容：
+[root@lv-k samba]# head -c -12 smb.conf 
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+security = share
+
+[public1]
+path = /home/mysamba
+public = yes
+writable = yes
+
+[public2]
+path = /root/mysamba
+public = yes
+writable = yes
+browseable = yes
+hosts allow = 10.1.2.213 10.1.2.217
+
+[public3]
+path = /tmp/mysamba
+public = yes
+writable = yes
+browseable = yes
+security = user
+valid users = quietheart lv-k
+create mask = 0700
+directory 
+
+*打印文件的头5行：
+[root@lv-k samba]# head -n 5 smb.conf 
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+
+*打印除了最后20行的内容：
+[root@lv-k samba]# head -n -20 smb.conf 
+[global]
+workgroup = MY_GROUP
+server string = "MySamba"
+netbios name = "MySamba Server ip"
+hosts allow = 127. 192.168.12. 192.168.13. 10.1.2.
+security = share
+
+[public1]
+这里，我们可以看出来，使用"-"前缀的数字表示指明不会显示相应大小的内容。
+
+
+[其它]
+更多的信息，可以参考"info head".

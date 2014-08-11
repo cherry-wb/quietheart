@@ -1,0 +1,47 @@
+http://publish.it168.com/2008/0411/20080411027901.shtml
+
+
+Excel是我们常用的报表处理软件之一，对于大多数人来说只是使用它进行打印报表，没有注意其他功能，其实利用Excel内嵌的 VBA 语言完全可以快速开发出自己企业的应用系统来，而且应用系统界面与其它专业编程语言相当相似。下面笔者简单通过一个实例说明如何利用VBA创建多级选单。
+首先，我们对Excel中两个重要的内置函数auto_open() 和 auto_close()作一简单说明。
+　　auto_open() ：在打开工作簿时系统将自动执行该函数，因此我们可以在该函数中调用自己应用程序的选单函数以及其它需要初始化设置的函数及宏语句；
+　　auto_close()：在关闭工作簿时系统将自动执行该函数。所以我们需要在该函数中放置删除用户自定义选单语句，否则只有退出Excel才能恢复EXCEL的系统选单。
+　　在以下语句中，我们定义了选单设置函数 OpenMyMenu()，用于设置多级选单，其他有关说明见程序内注释，详细代码如下：
+
+
+
+Sub OpenMyMenu() ′自定义多级选单函数
+On Error Resume Next ′忽略错误
+MenuBars("MyMenu").Delete ′删除自定义选单
+MenuBars.Add ("MyMenu") ′自定义选单项
+Sheets("sheet1").Select
+MenuBars("MyMenu").Menus.Add Caption:="金融"
+′增加第一个选单项“金融”
+′以下三句为在“金融”选单下增加“银行法、货币政策和条例”三项选单项
+MenuBars("MyMenu").Menus("金融").MenuItems.Add Caption:="银行法", OnAction:="银行法"
+MenuBars("MyMenu").Menus("金融").MenuItems.Add Caption:="货币政策", OnAction:="货币政策"
+MenuBars("MyMenu").Menus("金融").MenuItems.Add Caption:="条例", OnAction:="条例"
+′以下为创建如图所示的多级选单
+MenuBars("MyMenu").Menus.Add Caption:="经济" '建立选单项“经济”
+′以下三句为在“经济”选单下增加“农业、工业和第三产业”三项选单项
+MenuBars("MyMenu").Menus("经济").MenuItems.Add Caption:="农业", OnAction:="农业"
+MenuBars("MyMenu").Menus("经济").MenuItems.Add Caption:="工业", OnAction:="工业"
+MenuBars("MyMenu").Menus("经济").MenuItems.AddMenu Caption:="第三产业"
+′以下三句为在“第三产业”选单下增加“概况、范畴”二项选单项和“饮食服务业”子选单
+MenuBars("MyMenu").Menus("经济").MenuItems("第三产业").MenuItems.Add Caption:="概况", OnAction:="概况"
+MenuBars("MyMenu").Menus("经济").MenuItems("第三产业").MenuItems.Add Caption:="范畴", OnAction:="范畴"
+MenuBars("MyMenu").Menus("经济").MenuItems("第三产业").MenuItems.AddMenu Caption:="饮食服务业"
+′以下二句为在“饮食服务业”选单下增加“酒店1、酒店2”二项选单项
+MenuBars("MyMenu").Menus("经济").MenuItems("第三产业").MenuItems("饮食服务业").MenuItems.Add Caption:="酒店1", OnAction:="酒店1"
+MenuBars("MyMenu").Menus("经济").MenuItems("第三产业").MenuItems("饮食服务业").MenuItems.Add Caption:="酒店2", OnAction:="酒店2"
+MenuBars("MyMenu").Activate ′激活自定义选单
+End Sub
+Sub auto_open() ′系统自动打开运行宏
+OpenMyMenu ′调用用户选单函数
+End Sub
+Sub auto_close() ′系统自动关闭运行宏
+On Error Resume Next ′忽略错误
+MenuBars("MyMenu").Delete ′删除自定义选单 
+End Sub
+
+
+大家可以在自己的工作簿选单“工具”中的“宏”下，创建以上三个函数并将以上函数语句拷贝到其中即可运行。

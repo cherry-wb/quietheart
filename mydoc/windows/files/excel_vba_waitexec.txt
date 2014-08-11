@@ -1,0 +1,35 @@
+http://www.exceltip.net/post-6997-0-lastpage.html
+Q：在VBA中使用Shell对象调用外部程序时，怎样可以等待外部程序结束以后继续执行VBA中的后续语句?
+A：在使用Shell对象调用外部程序时，默认情况下会在执行外部程序的同时，继续运行VBA中的后续代码。例如以下代码本意希望能够调用外部DIR命令，将C盘目录下的所有文件夹列表输出到MSGbox中显示： Sub ListAD()
+
+Shell "cmd.exe /c dir c: /ad  > c:\list.txt", vbHide
+
+Open "c:\list.txt" For Input As #1
+
+MsgBox StrConv(InputB$(LOF(1), 1), vbUnicode)
+
+Close #1
+
+Kill "c:\list.txt"
+
+End Sub
+复制公式或代码但实际运行中，如果外部程序运行速度比较慢，会造成第二条语句中的“list.txt”文件尚未生成时，已在继续执行第三条语句中的打开“list.txt”文件的命令。这样就会造成“无法找到文件”的错误。为此，需要在程序中加入等待外部程序执行完毕的代码。
+
+要等待外部程序执行完毕，有不少方法，下面以Shell.Run方法中的参数设置进行解决： Sub ListAD()
+
+Set oShell = CreateObject("WSCript.shell")
+
+ret = oShell.Run("cmd.exe /c dir c: /ad  > c:\list.txt", 0, True)    '第三参数设置为True表示等待程序结束
+
+Open "c:\list.txt" For Input As #1
+
+MsgBox StrConv(InputB$(LOF(1), 1), vbUnicode)
+
+Close #1
+
+Kill "c:\list.txt"
+
+Set oShell = Nothing
+
+End Sub
+复制公式或代码Run方法的第三参数设置为True，可以强制等待外部程序执行结束以后再继续执行后续语句。

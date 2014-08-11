@@ -1,0 +1,4 @@
+create_volume_window
+mixer_fd
+vol_spin
+volume_plugin_class

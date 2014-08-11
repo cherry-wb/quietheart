@@ -1,0 +1,165 @@
+http://www.linuxsir.org/main/node/296
+用kexec迅速切换内核
+
+作者：d00m3d
+来自： LinuxSir.Org
+声明：本文旨在技术探讨，任何人如因本文而引起任何损毁，资料及精神损失等，或一切问题，本人绝不负责，You are at your own risks！
+
+前言
+
+很早以前就希望实现如何不重置起动（冷起动 System reboot）就使用新建成或者测试不同版本的内核，这个话题好像比较少人探讨，我以前曾经提问过，http://www.linuxsir.org/bbs/showthread.php?t=211738
+
+也很感谢有兄弟提供正面的回覆，可是因为当时水平有限，未能成功。今天为了纪念 linuxsir 重光，特书本文以示热烈庆祝，欢贺一番：）
+
+
+部骤
+
+首先，有两个先要满足条件（Pre-requisites）：
+
+1.  内核版本必需为 2.6.13 或以上，因为自该版本起内置了 kexec 系统呼叫的程序。
+
+2.  系统需要安装 kexec-tools
+
+内核方面，主流发行版的内核其实都已加入支持，所以用发行版内核的话，基本不用担心支援问题。
+
+只要检查 /boot/config-2.6.xxxxxxxx 就知道了
+
+egrep KEXEC /boot/config-2.6.xxxxxxx
+
+或者
+
+cat /boot/config-2.6.xxxxxxx |grep KEXEC
+
+答案是 y 便行。
+
+如果内核是自己动手编译的话，请谨记加入 kexec 系统呼叫的支援：
+
+Processor type and features --->
+
+[*] kexec system call (EXPERIMENTAL)
+
+至於安装 kexec-tools 方面，可以编译源码或者用发行版提供的：
+
+如要编译就先下载 kexec-tools 源码，可以到内核官方网站，路径是：
+
+http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/
+
+今天为止，最新版本是 2.0.0：
+http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/kexec-tools-2.0.0.tar.bz2
+
+tar xf kexec-tools-2.0.0.tar.bz2
+cd kexec-tools-2.0.0
+./configure --prefix=/usr
+make
+
+再以 root 身分执行
+
+make install
+
+以上会把下列东西安装：
+/usr/lib/kexec-tools/kexec_test
+/usr/sbin/kdump
+/usr/sbin/kexec
+
+一般发行版或教材都是将命令放在 /sbin 里的，没关系，就移一下吧：
+
+mv /usr/sbin/kdump /sbin/kdump
+mv /usr/sbin/kexec /sbin/kexec
+
+如果用发行版的就简单一点，直接 apt-get，yum 回来，比如：
+
+apt-get install kexec-tools 或 emerge -av kexec-tools 之类，总之就是为了加入 /sbin/kexec 这个系统命令。
+
+如果一切顺利，现在就有戏了。先检查一下 /boot 里安装了哪些内核：
+
+d00m3d@BlackMesa:~$ ll /boot
+total 11224
+-rw-rw-r-- 1 root root  794675 Sep 24  2007 System.map-2.6.22.7
+-rw-rw-r-- 1 root root  853714 Jan 26  2008 System.map-2.6.24
+-rw-rw-r-- 1 root root  858565 Sep 16 16:13 System.map-2.6.25.14
+-rw-rw-r-- 1 root root  856752 May 27 13:15 System.map-2.6.25.4
+-rw-rw-r-- 1 root root   44436 Sep 24  2007 config-2.6.22.7
+-rw-rw-r-- 1 root root   47026 Jan 26  2008 config-2.6.24
+-rw-rw-r-- 1 root root   54631 Sep 16 16:13 config-2.6.25.14
+-rw-rw-r-- 1 root root   54581 May 21 10:49 config-2.6.25.4
+drwxr-xr-x 2 root root    4096 May 28 09:06 grub
+-rw-rw-r-- 1 root root 1866424 Sep 24  2007 lfskernel-2.6.22.7
+-rw-rw-r-- 1 root root 1947800 Jan 26  2008 lfskernel-2.6.24
+-rw-rw-r-- 1 root root 2024732 Sep 16 16:13 lfskernel-2.6.25.14
+-rw-rw-r-- 1 root root 2017244 May 27 13:15 lfskernel-2.6.25.4
+d00m3d@BlackMesa:~$
+
+再检查下 /boot/grub/menu.lst 里加载内核的语句，如：
+
+title LFS-SVN-20060528, kernel 2.6.25.4
+root (hd0,5)
+kernel /boot/lfskernel-2.6.25.4  root=/dev/sda6 ro nomce vga=0x317
+boot
+
+这是待加载内核 2.6.25.4 的内容及相关选项。
+
+要用 /sbin/kexec 加载另一内核，语法是：
+
+kexec -l <kernel-image> --append="<command-line-options>"
+
+也就是将内核映像的名称跟选项对号入座，我的情况就写成：
+
+kexec -l /boot/lfskernel-2.6.25.4 --append="root=/dev/sda6 ro nomce vga=0x317"
+
+即可加载。
+
+我一直不喜欢使用 ramdisk 或者 initramfs 之类，所以没有 initrd，如果系统需要使用 initrd，就将其正确路径加入便行，如：
+
+kexec -l /boot/lfskernel-2.6.25.4 --append="root=/dev/sda6 ro nomce vga=0x317" --initrd=xxxxxxxxxxx
+
+想重启内核，就以 kexec -e 来切换。执行情况如下：
+
+d00m3d@BlackMesa:~$
+d00m3d@BlackMesa:~$ su -
+Password:
+root@BlackMesa:~#
+root@BlackMesa:~# kexec -l /boot/lfskernel-2.6.25.4 --append="root=/dev/sda6 ro nomce vga=0x317"
+setup_linux_vesafb: 1024x768x16 @ e0000000 +300000
+root@BlackMesa:~# cat /proc/version
+Linux version 2.6.25.14 (d00m3d@BlackMesa) (gcc version 4.3.2 (GCC) ) #1 SMP PREEMPT Tue Sep 16 16:10:50 HKT 2008
+root@BlackMesa:~#
+
+当前内核是 2.6.25.14，准备切换成 2.6.25.4
+
+root@BlackMesa:~# kexec -e
+
+经过一轮热起动系统设置後，系统会再次进入登陆状态。重新登陆：
+
+BlackMesa login: root
+Password:
+Last login: Wed May 28 09:40:34 +0800 2008 on tty1.
+No mail.
+root@BlackMesa:~#
+root@BlackMesa:~# cat /proc/version
+Linux version 2.6.25.4 (d00m3d@BlackMesa) (gcc version 4.3.1 20080523 (prerelease) (GCC) ) #1 SMP PREEMPT Tue May 27 12:33:36 HKT 2008
+root@BlackMesa:~#
+
+嘿嘿，大功告成！
+
+补充一句，新加载的内核也可以是：
+
+1. 当前内核本身，不停变更都可以的
+2. 或者是旧版没有编入 kexec 系统呼叫支援的内核，只不过 warm boot 启动後再无法执行 /sbin/kexec 去变更另一版了
+
+结语
+
+很多时候，冷启动重启系统是很讨厌的，花时甚长，有了 /sbin/kexec，只要当前内核加入了 kexec 系统呼叫的支援，就能随意切换另一版本的内核，对经常调试内核或想尝鲜的人提供了方便，好不快哉！
+
+d00m3d 敬上
+（2008年9月25日 Linuxsir 重光纪念）
+
+參考文献
+
+http://www.ibm.com/developerworks/linux/library/l-kexec.html
+
+http://gentoo-wiki.com/TIP_kexec
+
+http://code.google.com/p/atv-bootloader/wiki/Understandingkexec
+
+PS：还有其他小贴士集合在此 【毁灭小贴士】集合 ：）
+http://www.linuxsir.org/bbs/thread329032.html

@@ -1,0 +1,4 @@
+Log for qt3to4 on 周五 10月 16 15:04:28 2009. Number of log entries: 2
+No changes made to file /mnt/myOwn_all/experiment/program/qtTest/tmp/moreWidget.cpp
+In file tmp.pro: Added entry QT +=  qt3support 
+

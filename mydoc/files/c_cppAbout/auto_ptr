@@ -1,0 +1,96 @@
+参考：
+http://zhidao.baidu.com/question/47032245.html
+使用 auto_ptr 与 delete 都是删除 new 的存储区
+那使用上有什么不同呢?
+
+答：
+template<class T>
+    class auto_ptr {
+public:
+    typedef T element_type;
+    explicit auto_ptr(T *p = 0) throw();
+    auto_ptr(const auto_ptr<T>& rhs) throw();
+    auto_ptr<T>& operator=(auto_ptr<T>& rhs) throw();
+    ~auto_ptr();
+    T& operator*() const throw();
+    T *operator->() const throw();
+    T *get() const throw();
+    T *release() const throw();
+    };
+这是auto_ptr类，可知auto_ptr创建的是一个类对象，当这个对象消失时，会自动调用析构函数~auto_ptr();
+让我们来看看~auto_ptr();函数的实现：
+~auto_ptr()
+{if (_Owns)
+  delete _Ptr; }
+这里调用了delete。
+所以它们的不同就是：auto_ptr创建的是一个对象，而new与delete只是函数！使用auto_ptr就不会因为忘了delete掉而出现内存溢出了。
+
+下面是一篇好文章值得一看：
+动态内存使用最多的是在C++应用程序的代码中。有过编程经验的程序员虽然都知道new操作符的使用一定要与delete匹配，在某些场合仍然可能有内存溢出。当异常被掷出时，程序的正常控制流程被改变，因此导致潜在的内存溢出。例如，  
+void g() //可能掷出
+  {
+    if (some_condition == false)
+      throw X();
+  }
+  void func() 
+  {
+    string * pstr = new string;
+    g(); //如果 g 掷出一个异常，内存溢出
+    delete pstr; //如果 g 掷出一个异常，则此行为不能达到的代码行。
+  }
+  int main()
+  {
+    try
+    {
+      func();
+    }
+    catch(...)
+    {}
+  }
+ 
+    当 g 掷出一个异常，异常处理机制展开堆栈：g()退出，同时控制被转移到 main() 的 catch(...)代码块。这时，无论怎样，func()中的delete语句都不会被执行，由此导致pstr的内存溢出。要是使用局部自动串变量，而不是使用动态分配-内存溢出就不会出现了：
+
+string str; //局部自动对象
+g(); //没有内存溢出  
+    许多数据重要的结构以及应用，象链表，STL容器，串，数据库系统以及交互式应用必须使用动态内存分配，因此仍然冒着万一发生异常导致内存溢出的风险。C++标准化委员会意识到了这个漏洞并在标准库中添加了一个特殊的类模板，它就是std::auto_ptr，其目的是促使动态内存和异常之前进行平滑的交互。Auto_ptr保证当异常掷出时分配的对象（即：new操作符分配的对象）能被自动销毁，内存能被自动释放。下面我们就来讨论使用动态内存时，如何正确和有效地使用auto_ptr来避免资源溢出。这个技术适用于文件，线程，锁定以及与此类似的资源。
+
+    Auto_ptr的定义可以在<memory.h>中找到。与标准库中其它的成员一样，它被声明在命名空间std::中。当你实例化auto_ptr对象时，对它进行初始化的方法是用一个指针指向动态分配的对象，下面是实例化和初始化auto_ptr对象的例子：  
+include <memory>
+  #include <string>
+  using namespace std;
+  void func()
+  {
+    auto_ptr<string> pstr (new string); /* 创建并初始化auto_ptr */
+  }
+ 
+    auto_ptr后面的尖括弧里指定auto_ptr指针的类型，在这个例子中是string。然后auto_ptr句柄的名字，在这个例子中是pstr。最后是用动态分配的对象指针初始化这个实例。注意你只能使用auto_ptr构造器的拷贝，也就是说，下面的代码是非法的：  
+auto_ptr<string> pstr  = new string; //编译出错
+ 
+    Auto_ptr是一个模板，因此它是完全通用的。它可以指向任何类型的对象，包括基本的数据类型：  
+auto_ptr<int> pi  (new int);
+ 
+    一旦你实例化一个auto_ptr，并用动态分配的对象地址对它进行了初始化，就可以将它当作普通的对象指针使用，例如：  
+*pstr = "hello world"; //赋值
+  pstr->size(); //调用成员函数
+ 
+    之所以能这样做是因为auto_ptr重载了操作符&,*和->。不要被语法误导，记住pstr是一个对象，不是一个指针。
+
+    auto_ptr是如何解决前面提到的内存溢出问题呢？auto_ptr的析构函数自动摧毁它绑定的动态分配对象。换句话说，当pstr的析构函数执行时，它删除构造pstr期间创建的串指针。你绝不能删除auto_ptr，因为它是一个本地对象，它的析构函数是被自动调用的。让我们看一下函数func()的修订版本,这次使用了auto_ptr：  
+void func() 
+  {
+    auto_ptr<string>  pstr (new string);
+    g();  //如果g()掷出异常，pstr 被自动摧毁 
+  }
+ 
+    C++保证在堆栈展开过程中，自动存储类型的对象被自动摧毁。因此，如果g()掷出异常，pstr的析构函数将会在控制被转移到catch(...)块之前执行。因为pstr的析构函数删除其绑定的串指针，所以不会有内存溢出发生。这样我们在使用动态分配对象时，利用auto_ptr就实现了自动和安全的本地对象。
+
+如何避免使用auto_ptr的缺陷
+
+    auto_ptr并不是完美无缺的，它的确很方便，但也有缺陷，在使用时要注意避免。首先，不要将auto_ptr对象作为STL容器的元素。C++标准明确禁止这样做，否则可能会碰到不可预见的结果。
+    auto_ptr的另一个缺陷是将数组作为auto_ptr的参数：  
+auto_ptr<char>  pstr (new char[12] ); //数组；为定义
+ 
+    记住不管什么时候使用数组的new操作时，必须要用delete[]来摧毁数组。因为auto_ptr的析构函数只对非数组类型起作用。所以数组是不能被正确摧毁的话，程序的行为是不明确的。总之，auto_ptr控制一个由new分配的单对象指针，仅此而已。
+
+
+另外参考资料：http://www.cppblog.com/SmartPtr/archive/2007/07/05/27549.html

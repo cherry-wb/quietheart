@@ -1,0 +1,82 @@
+http://blog.csdn.net/lxmhuendan/archive/2007/09/06/1775163.aspx
+
+C++标准中，wchar_t是宽字符类型，每个wchar_t类型占2个字节，16位宽。汉字的表示就要用到wchar_t 。char，我们都知道，占一个字节，8位宽。其实知道了这个以后，要在wchar_t 和 char两种类型之间转换就不难实现了。
+
+         wchar_t 转换为char 的代码如下：
+
+         有如下的wchar_t和char变量
+
+         wchar_t w_cn = '中';
+         char c_cn[2] = {'0'} ;
+
+char *C2W(wchar_t w_cn , char c_cn[2])
+
+{   
+
+    //following code convert wchar to char
+    c_cn[0] = w_cn >> 8 ;
+    c_cn[1] = w_cn ;
+    c_cn[2] = '\0';
+
+    return c_cn ;
+
+}
+
+        其中需要注意的是一个16位的wchar_t需要用两个8位的char来存储之。我们可以发现另外一个问题，wchar_t的高位字节应该存储在char数组的低位字节。(这里没有仔细研究了，觉得怪怪的)。
+
+        这是完成了wchar_t到char的转化，char到wchar_t的转换类似。
+
+        C++中，你要想这样：cout<<w_cn<<endl;打印wchar_t，那是不行的。why？我想是wchar_t类型没有重载<<运算符吧。要显示，我的方法是
+        string cn(c_cn);
+        cout<<cn<<endl;
+
+这样就能正确的打印wchar_t字符了。是不是感觉好像做了好多事，但是完成的却是很简单的事情？呵呵，其实我也有同感，但是没有办法。更简单的办法，当然是直接用API(我一个是懒的去找了，二一个自己动手转换有些东西看的更清楚咯)，但是这样的转换更灵活，在实际中应该会用到的。
+        有了以上的基础，下面给出wchar_t字符串到char字符串的转换代码：
+
+char *W2C(const wchar_t *pw , char *pc)
+{
+ //cout<<*pw<<endl;  //这样是不能正确显示的，你可以试试看显示的是什么
+    *pc++ = *pw >> 8 ;
+    *pc = *pw ;
+    return 0 ;
+}
+ 
+char *wstr2cstr(const wchar_t *pwstr , char *pcstr, size_t len)
+{
+ char *ptemp = pcstr ;
+    if(pwstr!=NULL && pcstr!=NULL)
+    {
+       
+        size_t wstr_len = wcslen(pwstr) ;
+        len = (len > wstr_len ) ?  wstr_len : len ;
+    while( len -- > 0)
+    {
+
+        W2C(pwstr , pcstr);
+        pwstr++ ;
+        pcstr +=2 ;    //和我们开始说的一样+2，不是+1
+    }
+        *pcstr = '\0';
+        return ptemp ;
+    }
+    return 0 ;
+}   
+
+        上面就是代码，测试：
+
+int main(int arg , char *argv[])
+
+{
+
+    wchar_t pwstr[] = {'我' , '是' , '中' , '国' , '人'};
+ 
+
+    char *pcstr = (char *)new char[2 * wcslen(pwstr)+1] ;
+    memset(pcstr , 0 , 2 * wcslen(pwstr)+1 );
+    wstr2cstr(pwstr , pcstr , wcslen(pwstr)) ;
+
+    str.assign (pcstr);
+    cout<<str<<endl;
+    delete []pcstr ;
+
+}

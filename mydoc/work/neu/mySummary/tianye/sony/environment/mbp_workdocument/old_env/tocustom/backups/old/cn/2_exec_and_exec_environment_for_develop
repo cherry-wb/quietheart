@@ -1,0 +1,150 @@
+题目：开发运行环境搭建，以及运行过程详解
+
+描述：
+本文主要叙述运行环境搭建，以及运行方法。
+这里采用tftp加载内核，挂载nfs文件系统的方法。
+其他文档中有直接在开发板flash中启动内核和文件系统的方法。
+
+详细内容：
+一、pc机端配置
+二、开发板设置
+三、程序运行
+四、补充
+
+
+
+运行环境搭建详细步骤：
+===================
+一、pc机端配置
+===================
+1,配置nfs服务：
+配置nfs服务得目的是让板通过网络把nfs的目录当做板子环境中得根目录。
+(1)编辑/etc/exports
+添加类似如下一行：
+/mynfs *(rw,sync,no_root_squash)
+在配置NFS之前先查看“rpm -q nfs-utils portmap“两个软件包是否安装，默认都是安装的。
+这里，'/mynfs'是你本地的nfs目录，可以随意设置。具体含义参见"info exports".
+(2)重启服务：
+#/etc/init.d/nfs restart
+#/etc/init.d/portmap restart
+(3)关闭防火墙：
+这一步有的人可以不用做。
+具体在："系统"->"管理"->"安全级别和防火墙"
+至此nfs服务搭建完毕，测试方法如下：
+在其它机器上运行：
+#mkdir nfstest
+#mount -t nfs <你的ip>:<你的nfs目录> nfstest
+如果成功则完毕。
+
+2,配置tftp服务：
+配置tftp服务得目地是让板子通过tftp下载内核并启动。
+(1)安装tftp客户/服务端:
+sudo yum install tftp.i386
+sudo yum install tftp-server.i386
+这里，如果不行就先运行"sudo yum makecache"试试。
+(2)编辑/etc/xinetd.d/tftp
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /tftpboot
+        disable                 = no
+        per_source              = 11
+        cps                     = 100 2
+        flags                   = IPv4
+}
+这里，disable是指关闭还是打开tftp服务，取值yes/no.
+server_args指定tftp服务在本地机器上的导出目录。其它参数具体含义参见“info xinetd.conf”.
+(3)重启服务：
+#/etc/init.d/xinetd restart
+至此tftp服务搭建完毕，测试方法如下：
+在本地机器上运行：
+#>>/tftpboot/mytest
+在其它机器上运行：
+#tftp <你的ip地址>
+#get mytest
+然后"[Ctrl]D"退出，如果在那个其他机器得当前目录看到mytest说明成功。
+
+3,配置minicom:
+配置minicom的目的是让pc机可以通过minicom连接开发板。
+(1)#minicom -s
+(2)选择"Serial port setup"
+配置其中的如下配置选项：
+A -    Serial Device      : /dev/ttyS0
+E -    Bps/Par/Bits       : 115200 8N1
+F - Hardware Flow Control : No
+G - Software Flow Control : No
+
+4,准备内核
+即将最新内核拷贝到你机器tftp服务的导出目录。
+(1)取出内核源码：
+svn取出地址应该是:http://10.1.29.125/svn/sony/trunk/Source/Kernel
+(2)交叉编译内核
+$svn checkout http://lv-k@10.1.29.125/svn/sony/trunk/Source/Kernel
+$cd Avp13_Kernel
+$ make avp13_defconfig
+$ make
+
+(3)将编译好得内核(vmlinux.bin)放到tftp的导出目录。
+导出目录按前面配置应该是:/tftpboot
+cp avp13Build/vmlinux.bin /tftpboot/vmlinux.bin
+
+5，准备文件系统
+从svn或smb服务器上面下载文件系统，并拷贝到你配置得nfs目录中去。
+svn地址：http://10.1.29.125/svn/sony/trunk/Source/Rootfs
+smb地址：smb://10.1.29.125/SonyFS/Development/Release/*
+
+
+===================
+二、开发板设置
+===================
+pc端配置好之后，启动minicom，再启动开发板，会自动进入uboot。
+1,先查看默认变量，看配置是否正确：
+print
+正确输出应该如下：
+myip=10.1.29.180                                                                            
+console=on                                                                                  
+servip=10.1.29.44                                                                     
+ethaddr=001112334455a966 
+nfsdir=10.1.29.44:/home/quietheart/nfs
+gateip=10.1.29.1
+
+2,如果输出不对，做如下配置：
+setenv myip 10.1.29.180
+setenv console on
+setenv servip 10.1.29.44
+setenv ethaddr 001112334455a966
+nfsdir=10.1.29.44:/home/quietheart/nfs
+gateip=10.1.29.1
+MAC地址设置可能比较特殊，可能如下形式:"diag ethaddr 00:11:22:33:44:55"
+注意，这里servip是tftp服务器地址,myip是板子ip，ethaddr是板的mac,这根据自己情况设置。nfsdir和gateip只为保留用，可以不设置。
+
+3,配置之后，启动开发板:
+运行
+boot -r -t binary -c "console=ttyS0,115200n8 root=/dev/nfs nfsroot=10.1.29.44:/home/quietheart/nfs ip=10.1.29.180::10.1.29.1:255.255.255.0" net:tftp:vmlinux.bin
+这里，"nfsroot=10.1.29.44:/home/quietheart/nfs"对应你机器的nfs服务目录，“ip=10.1.29.180::10.1.29.1:255.255.255.0“对应你板子的ip地址，需要修改。
+这样，就可以启动开发了。如果在开发板和pc之间通过你的nfs目录相关联，可以通过这个目录在pc和你开发板间传递数据。
+
+===================
+三、程序运行
+===================
+运行程序：
+在开发板根文件系统建立一个目录，用来运行编译好得文件,具体如下.
+假设目录是/home/test,
+1)将编译好的文件build/diablo.bin拷贝到开发板的/home/test下
+2)将编译好的库osWrapper/*.so拷贝到开发板的/home/test/lib下（没有则建立一个）
+3)添加库路径到环境变量LD_LIBRARY_PATH:"export LD_LIBRARY_PATH=/home/test/lib:$LD_LIBRARY_PATH"
+这样，即可通过“./diablo.bin”运行程序了。
+
+===================
+四、补充
+===================
+无
+
+
+以上,有问题请联系Email:lv-k@neusoft.com
+Neusoft
+2010年11月11日

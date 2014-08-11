@@ -1,0 +1,18 @@
+lsmod
+[功能]
+列出内核已载入模块的状态
+
+[描述]
+lsmod 以美观的方式列出/proc/modules的内容。
+
+[举例]
+*列出当前加载的所有模块：
+$lsmod
+输出为：
+Module                  Size  Used by
+i915                   24257  2 
+drm                    65365  3 i915
+autofs4                29253  3 
+lockd                  63337  0 
+...剩下的输出省略...
+这里，实质上lsmod输出的内容都是/proc/modules里面的内容。

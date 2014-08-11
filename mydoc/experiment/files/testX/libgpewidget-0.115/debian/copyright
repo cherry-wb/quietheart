@@ -1,0 +1,39 @@
+This package was debianized by Philip Blundell <pb@debian.org> on
+Thu, 13 Jun 2002 19:30:06 +0100.
+
+It was downloaded from http://gpe.linuxtogo.org/download/source/
+
+Upstream Authors: Phil Blundell <pb@handhelds.org>
+		  Damien Tanner <dctanner@magenet.com>
+		  Robert Mibus <mibus@handhelds.org>
+		  Florian Boor <florian@kernelconcepts.de>
+		  Philippe De Swert <philippedeswert@scarlet.be>
+		  Colin Marquardt <ipaq@marquardt-home.de>
+
+Copyright: 	2001, 2002, 2003, 2004, 2005 Phil Blundell <pb@handhelds.org>
+		2001, 2002 Damien Tanner <dctanner@magenet.com>
+		2002, 2003 Robert Mibus <mibus@handhelds.org>
+		2006  Florian Boor <florian@kernelconcepts.de>
+		2005  Philippe De Swert <philippedeswert@scarlet.be>
+		2002, 2003 Colin Marquardt <ipaq@marquardt-home.de>
+
+License:
+
+    This package is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+
+   On Debian GNU/Linux systems, the complete text of the GNU Lesser General
+   Public License can be found in '/usr/share/common-licenses/LGPL-2'
+

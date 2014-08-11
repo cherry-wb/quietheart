@@ -1,0 +1,85 @@
+arp
+[功能]
+管理系统的arp缓存。
+
+[描述]
+用来管理系统的arp缓存，常用的命令包括：
+arp: 显示所有的表项。
+arp  -d  address: 删除一个arp表项。
+arp  -s address hw_addr: 设置一个arp表项。
+
+常用参数：
+-a 使用bsd形式输出。（没有固定的列）
+-n 使用数字形式显示ip地址，而不是默认的主机名形式。
+-D 不是指定硬件地址而是指定一个网络接口的名称，表项将使用相应接口的MAC地址。一般用来设置ARP代理。
+-H type, --hw-type type: 指定检查特定类型的表项，默认type为ether，还有其他类型。
+-i If, --device If: 指定设置哪个网络接口上面的arp表项。
+-f filename: 作用同'-s',不过它通过文件来指定IP地址和MAC地址的绑定。文件中每行分别是主机和MAC，中间以空格分割。如果没有指定文件名称，则使用/etc/ethers文件。
+
+以下例子中，用主机名称的地方也可以用点分10进制的ip地址来表示。另外输出结果中用"C"表示ARP缓存内容，"M"表示永久性表项，"P"表示公共的表项。
+
+
+[举例]
+*查看arp表：
+#arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+hostname1                ether   44:37:e6:97:92:16   C                     eth0
+hostname2                ether   00:0f:fe:43:28:c5   C                     eth0
+hostname3                ether   00:1d:92:e3:d5:ee   C                     eth0
+hostname4                ether   00:1d:0f:11:f2:a5   C                     eth0
+这里，Flags中的"C"代表此表项目是高速缓存中的内容，高速缓存中的内容过一段时间（一般20分钟）会清空，而"M"则表示静态表项，静态表项的内容不会过一段时间被清空。
+
+*查看arp表，并且用ip显示而不是主机名称：
+# arp -n
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.1.10.254              ether   00:1d:92:e3:d5:ee   C                     eth0
+10.1.10.253              ether   44:37:e6:9b:2c:53   C                     eth0
+10.1.10.178              ether   00:1b:78:83:d9:85   C                     eth0
+10.1.10.119              ether   00:1d:0f:11:f2:a5   C                     eth0
+这里，对于上面的条目，假设当我们"ping 10.1.10.1"通过之后，arp中会多一条"10.1.10.1"相关的信息。
+
+*查看arp表，显示主机名称和ip：
+#arp -a
+ns.amazon.esdl.neusoft.com (10.1.10.254) at 00:1d:92:e3:d5:ee [ether] on eth0
+server.amazon.eadl.neusoft.com (10.1.10.253) at 44:37:e6:9b:2c:53 [ether] on eth0
+D2-baijh.amazon.esdl.neusoft.com (10.1.10.178) at 00:1b:78:83:d9:85 [ether] on eth0
+aplab.local (10.1.10.119) at 00:1d:0f:11:f2:a5 [ether] on eth0
+
+*添加一对IP和MAC地址的绑定：
+# arp -s 10.1.1.1 00:11:22:33:44:55:66
+这里，如果网络无法达到，那么会报告错误，具体如下：
+root@P-D2-LvKai:/home/lv-k# arp -s 10.1.1.1 00:11:22:33:44:55:66
+SIOCSARP: Network is unreachable
+root@P-D2-LvKai:/home/lv-k# arp -n
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.1.10.254              ether   00:1d:92:e3:d5:ee   C                     eth0
+10.1.10.253              ether   44:37:e6:9b:2c:53   C                     eth0
+10.1.10.178              ether   00:1b:78:83:d9:85   C                     eth0
+10.1.10.119              ether   00:1d:0f:11:f2:a5   C                     eth0
+实际上，如果"arp -s"设置成功之后，会增加一个Flags为"CM"的表项，有些系统静态条目不会因为ARP响应而更新，而高速缓存中的条目会因此而更新。如果想要手工设置没有"M"，那么用"temp"选项，例如："arp -s IP MAC temp"类似的命令，实践发现，如果已经设置过IP了，那么再设置也不会改变其Flags。
+
+*删除一个arp表项：
+# arp -d 10.1.10.118
+这里，删除之后只是硬件地址没有了，如下：
+root@P-D2-LvKai:~# arp -n
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.1.10.118              ether   00:25:9c:c2:79:90   CM                    eth0
+10.1.10.254              ether   00:1d:92:e3:d5:ee   C                     eth0
+root@P-D2-LvKai:~# arp -d 10.1.10.118
+root@P-D2-LvKai:~# arp -n
+Address                  HWtype  HWaddress           Flags Mask            Iface
+10.1.10.118                      (incomplete)                              eth0
+10.1.10.254              ether   00:1d:92:e3:d5:ee   C    
+
+*删除eth0上面的一个arp表项：
+# arp -i eth0 -d 10.1.10.118
+
+其它：
+=================
+*指定回复的MAC地址：
+#/usr/sbin/arp -i eth0 -Ds 10.0.0.2 eth1 pub
+当eth0收到IP地址为10.0.0.2的请求时，将会用eth1的MAC地址回答。
+例如，双网卡机器运行这条命令：
+/usr/sbin/arp -i eth0 -Ds 10.0.0.2 eth1 pub
+会多一项：
+10.0.0.2                 *       <from_interface>    MP                    eth0

@@ -1,0 +1,93 @@
+http://www.hzmct.cn/show.html?id=608EC78EB675E096 
+QT多线程编程方法
+发布时间：2009-10-22 17:32:00
+ 
+
+      Qt 是一种基于 C++ 的跨平台 GUI 系统，能够提供给用户构造图形用户界面的强大功能。为了满足用户构造复杂图形界面系统的需求，Qt 提供了丰富的多线程编程支持。Qt 主要从三个方面对多线程编程提供支持：一、构造了一些基本的与平台无关的线程类；二、提交用户自定义事件的 Thread-safe 方式；三、多种线程间同步机制，如信号量，全局锁。本文着重讨论 Qt 中的多线程类及其多线程通信方法，同时介绍了QT在Linux和WINDOWS平台下多线程程序的编译方法。
+
+关键词：QT，QTE，多线程通信，QT编译，linux，windows
+
+一、    QT的线程类
+
+在 Qt 系统中与线程相关的最重要的类是 QThread 类，该类提供了创建一个新线程以及控制线程运行的各种方法。线程是通过 QThread::run() 重载函数开始执行的。
+
+为编写出支持多线程的程序，还需要实现两个不同的线程对共有数据的互斥访问，因此 Qt 还提供了 QMutex 类，一个线程在访问临界数据时，需要加锁，此时其他线程是无法对该临界数据同时加锁的，直到前一个线程释放该临界数据。通过这种方式才能实现对临界数据的原子操作。
+
+二、    QT的线程间通信
+
+在 Qt 系统中，运行着一个GUI 主事件线程，这个主线程从窗口系统中获取事件，并将它们分发到各个组件去处理。在 QThread 类中有一种从非主事件线程中将事件提交给一个对象的方法，也就是 QThread::postEvent()方法，该方法提供了Qt 中的一种 Thread-safe 的事件提交过程。提交的事件被放进一个队列中，然后 GUI 主事件线程被唤醒并将此事件发给相应的对象，这个过程与一般的窗口系统事件处理过程是一样的。当事件处理过程被调用时，是在主事件线程中被调用的，而不是在调用QThread::postEvent 方法的线程中被调用。
+
+1.、系统定义的事件的提交
+
+在 Qt 系统中，定义了很多种类的事件，如定时器事件、鼠标移动事件、键盘事件、窗口控件事件等。通常，事件都来自底层的窗口系统。Qt 的主事件循环函数从系统的事件队列中获取这些事件，并将它们转换为 QEvent，然后传给相应的 QObjects 对象。
+
+如下所示：
+
+QWidget *mywidget;
+
+void MyThread::run()
+
+ {
+
+   QThread::postEvent(MyWidget, new QPaintEvent(QRect(0,0,100,100)));
+
+ }
+
+在MyThread线程中发送重画事件给MyWidget窗体类。
+
+MyWidget的paintEvent事件响应会被自动调用，用以响应MyThread发送过来的重画事件。
+
+void MyWidget::paintEvent(QPaintEvent*)
+
+{
+
+}
+
+
+　　2.、自定义事件的提交
+　　为了满足用户的需求，Qt 系统还提供了一个 QCustomEvent 类，用于用户自定义事件，这些自定义事件可以利用 QThread::postEvent() 或者QApplication::postEvent() 被发给各种控件或其他 QObject 实例，而 QWidget 类的子类可以通过 QWidget::customEvent() 事件处理函数方便地接收到这些自定义的事件。需要注意的是：QCustomEvent 对象在创建时都带有一个类型标识 id 以定义事件类型，为了避免与 Qt 系统定义的事件类型冲突，该 id 值应该大于枚举类型 QEvent::Type 中给出的 "User" 值。
+　　如下所示：
+　　UserEvent类是用户自定义的事件类，其事件标识为346798，显然不会与系统定义的事件类型冲突。
+　　class UserEvent : public QCustomEvent　 //用户自定义的事件类
+　　{
+　　public:
+　　UserEvent(QString s) : QCustomEvent(346798), sz(s) { ; }
+　　QString str() const { return sz; }
+　　private:
+　　QString sz;　　
+　　};
+　　
+　　UserThread类是由QThread类继承而来的子类，在该类中除了定义有关的变量和线程控制函数外，最主要的是定义线程的启动函数UserThread::run()，在该函数中创建了一个用户自定义事件UserEvent，并利用QThread类的postEvent函数提交该事件给相应的接收对象。
+　　class UserThread : public QThread　　　//用户定义的线程类
+　　{
+　　public:
+　　UserThread(QObject *r, QMutex *m, QWaitCondition *c);
+　　QObject *receiver;
+　　}
+　　void UserThread::run()　　 //线程类启动函数，在该函数中创建了一个用户自定义事件
+　　{UserEvent *re = new UserEvent(resultstring);
+　　　QThread::postEvent(receiver, re);
+　　}
+　　UserWidget类是用户定义的用于接收自定义事件的QWidget类的子类，该类利用slotGo()函数创建了一个新的线程recv（UserThread类），当收到相应的自定义事件（即id为346798）时，利用customEvent函数对事件进行处理。
+　　void UserWidget::slotGo()　　//用户定义控件的成员函数
+　　{mutex.lock();　
+　　if (! recv)
+　　recv = new UserThread(this, &mutex, &condition);
+　　recv->start();
+　　mutex.unlock();
+　　}
+　　void UserWidget::customEvent(QCustomEvent *e)　 //用户自定义事件处理函数
+　　{if (e->type()==346798)
+　　{
+　　UserEvent *re = (UserEvent *) e;
+　　　　　　newstring = re->str();
+　　　　}
+　　}
+　　在这个例子中，UserWidget对象中创建了新的线程UserThread，用户可以利用这个线程实现一些周期性的处理（如接收底层发来的消息等），一旦满足特定条件就提交一个用户自定义的事件，当UserWidget对象收到该事件时，可以按需求做出相应的处理，而一般情况下，UserWidget对象可以正常地执行某些例行处理，而完全不受底层消息的影响。
+
+三、    QT多线程程序的编译
+
+先决条件：有编译成功的多线程库 如libqt-mt.so（QT库）或 libqte-mt.so(QTE库)
+
+   WINDOWS下：在qconfig.h 文件中增加一个选项来定义宏 QT_THREAD_SUPPORT
+Linux下：在makefile中的链接选项中加入多线程库-lqt-mt或-lqte-mt，在编译选项中增加-DQT_THREAD_SUPPORT 来增加线程支持宏 QT_THREAD_SUPPORT。 

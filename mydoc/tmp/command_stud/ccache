@@ -1,0 +1,9 @@
+Using ccache
+
+ccache is a compiler cache for C and C++ that can help make builds faster. In the root of the source tree, do the following:
+
+$ export USE_CCACHE=1
+
+$ export CCACHE_DIR=/<path_of_your_choice>/.ccache
+
+$ prebuilt/linux-x86/ccache/ccache -M 20G

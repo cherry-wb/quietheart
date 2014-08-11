@@ -1,0 +1,974 @@
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/init.h>
+#include <linux/cdev.h>
+#include <linux/vmalloc.h>
+#include <asm/io.h>
+#include <asm/system.h>
+#include <asm/uaccess.h>
+
+#include <linux/irqreturn.h>
+#include <mach/irqs.h>
+#include <mach/diablobspCommon.h>
+#include <mach/diabloChip.h>
+
+#include "cpu1comm_drv.h"
+
+/*********Debug Flags************/
+/*Debug switch: 1 to open otherwise close.*/
+#define CPU1COMM_DBG 1
+
+#if CPU1COMM_DBG == 1
+//#define CPU1COMMDRV_DBG_DYNREG /*Dynamic registe for debug*/
+
+/*Log functions : It's best to use this to print log!!!*/
+/*Example:
+*print log:
+*a)cpu1comm_info("your message.\n");
+*b)cpu1comm_info("your string:%s, your integer:%d.\n",strvalue,intvalue);
+*/
+#define cpu1comm_printk(level, format, args...) \
+    printk(level "[CPU1COMM] %s() @%d ====>> " format, \
+           __FUNCTION__, __LINE__, ##args)
+#define cpu1comm_info(format, args...) \
+    cpu1comm_printk(KERN_INFO, format , ##args)/*KERN_INFO*/
+#else
+/*#define cpu1comm_printk(level, format, ...) printk(level format, __VA_ARGS__)*/
+#define cpu1comm_printk(level, format, args...) printk(level format, ## args)
+#define cpu1comm_info(format, args...)
+#endif
+
+/*********Miscellaneous*********/
+MODULE_DESCRIPTION("This module is used for communication with cpu1.");
+MODULE_ALIAS("cpu1comm module");
+/* IRQ */
+#define CPU0_HANDSHAKE_RECV_IRQ   (INT_CROSS_INT1)
+#define HANDSHAKE_INTR_SEND  (1 << 0)
+#define HANDSHAKE_INTR       (DIABLO_SYSC_INT)
+
+#define HANDSHAKE_GEN_CPU0TOCPU1 (DIABLO_SYSC_GENX + (0 * 4))
+#define HANDSHAKE_CPU0TOCPU1_HANDSHAKE_READY   (0x00000001)
+#define HANDSHAKE_CPU0TOCPU1_PERIPHERAL_READY  (0x00000002)
+
+/* WKRAM */
+/*Orignal define.*/
+#define RB_DIABLO_WKRAM_BCT     (DIABLO_WORKRAM_PHYS_BASE + 0x0000)
+#define RB_DIABLO_WKRAM_EXTRACT_INFO    (DIABLO_WORKRAM_PHYS_BASE + 0x0080) /*128*/
+#define RB_DIABLO_WKRAM_LAPTIME_LOG (DIABLO_WORKRAM_PHYS_BASE + 0x0100) /*256*/
+#define RB_DIABLO_WKRAM_SWCOMMON    (DIABLO_WORKRAM_PHYS_BASE + 0x0400) /*1024*/
+#define RB_DIABLO_WKRAM_HFDMA_DESCBASE  (DIABLO_WORKRAM_PHYS_BASE + 0x0800) /*2048*/
+#define RB_DIABLO_WKRAM_HANDSHAKE_BUF0  (DIABLO_WORKRAM_PHYS_BASE + 0x1000) /*4096*/
+#define RB_DIABLO_WKRAM_HANDSHAKE_BUF1  (DIABLO_WORKRAM_PHYS_BASE + 0x1400) /*5120*/
+#define RB_DIABLO_WKRAM_BSPLOGREC_ADR   (DIABLO_WORKRAM_PHYS_BASE + 0x1800) /*6144*/
+#define RB_DIABLO_WKRAM_BSPLOGREC_START (DIABLO_WORKRAM_PHYS_BASE + 0x1804) /*6148*/
+#define RB_DIABLO_WKRAM_BSPLOGREC_END   (DIABLO_WORKRAM_PHYS_BASE + 0x2000) /*8192*/
+#define RB_DIABLO_WKRAM_END     (DIABLO_WORKRAM_PHYS_BASE + 0x2000) /*8K*/
+#define DIABLO_SWCOMINFO_VIRADDR (RB_DIABLO_WKRAM_SWCOMMON - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE)
+
+/*Custom define.*/
+#define WORKRAM_PHYS_BASE DIABLO_WORKRAM_PHYS_BASE
+#define WKRAM_BUF0 (WORKRAM_PHYS_BASE + BUF0_OFF) /*RB_DIABLO_WKRAM_HFDMA_DESCBASE*/
+#define WKRAM_BUF1 (WORKRAM_PHYS_BASE + BUF1_OFF) /*RB_DIABLO_WKRAM_HANDSHAKE_BUF0*/
+#define BUF_END (WORKRAM_PHYS_BASE + 0x1800) /*RB_DIABLO_WKRAM_BSPLOGREC_ADR*/
+
+struct cpu1commdrv_dev {
+    struct cdev cd_cdev;
+    /*other members use for driver*/
+    CPU_COMM_RAM cd_wkram;
+    struct completion cd_read_wait;
+    struct completion cd_write_wait;
+};
+
+#define cpu1comm_error(format, args...) \
+    cpu1comm_printk(KERN_ERR, "Error! " format "\n" , ## args)
+/***********Declarations********/
+static int cpu1commdrv_open(struct inode* inode, struct file* filp);
+static int cpu1commdrv_release(struct inode* inode, struct file* filp);
+static ssize_t cpu1commdrv_read(struct file* filp, char __user* buf,
+                                size_t count, loff_t* ppos);
+static ssize_t cpu1commdrv_write(struct file* filp, const char __user* buf,
+                                 size_t count, loff_t* ppos);
+static loff_t cpu1commdrv_llseek(struct file* filp, loff_t offset, int orig);
+static int cpu1commdrv_mmap(struct file* file, struct vm_area_struct* vma);
+static int cpu1commdrv_ioctl(struct inode* inodep, struct file* filp,
+                             unsigned int cmd, unsigned long arg);
+
+#ifdef CPU1COMMDRV_DBG_DYNREG
+static int cpu1commdrv_major = CPU1COMMDRV_MAJOR;
+#else
+static int cpu1commdrv_major = CPU1COMMDRV_MAJOR;
+static struct cpu1commdrv_dev cpu1comm_dev;
+#endif
+static struct cpu1commdrv_dev* devp;
+
+
+/*******Implementations********/
+/*XXX some Macro control for MEM_MAP not add.*/
+/***Internal***/
+static irqreturn_t data_intr (int irq, void* devId);
+static int init_ram();
+static int init_irq();
+static int init_handshake();
+static int clear_handshake();
+static int set_cpu1_wlength(int status);
+static int get_cpu1_wlength();
+static int set_cpu1_wsent(int length);
+static int get_cpu1_wsent();
+static int get_cpu1_wstatus();
+static int set_cpu1_wstatus(int status);
+static int get_cpu1_wsend_flg();
+static int set_cpu1_wsend_flg(int flag);
+static int get_cpu1_wrecv_flg();
+static int set_cpu1_wrecv_flg(int flag);
+static int set_cpu1_rlength(int status);
+static int get_cpu1_rlength();
+static int set_cpu1_rsent(int length);
+static int get_cpu1_rsent();
+static int get_cpu1_rstatus();
+static int set_cpu1_rstatus(int status);
+static int get_cpu1_rsend_flg();
+static int set_cpu1_rsend_flg(int flag);
+static int get_cpu1_rrecv_flg();
+static int set_cpu1_rrecv_flg(int flag);
+static int send_wb(const char* buf, size_t count);
+static int fake_receive_wb(char* buf, size_t count);
+static int receive_rb(char* buf, size_t count);
+static int notify_read();
+static int notify_write();
+static int wait_for_send();
+static int wait_for_receive();
+static int sync_cpu1_wbrpointer();
+static int sync_cpu1_rbwpointer();
+
+/*XXX receive notify from cpu1.*/
+static irqreturn_t data_intr (int irq, void* devId) {
+    cpu1comm_info("\n");
+    int rcv_stat = get_cpu1_rstatus();
+    int snd_stat = get_cpu1_wstatus();
+    /*int receive_count = 0;*/
+    int cpu1_rsend = 0;
+    /*int send_count = 1;*/
+    int cpu1_wrecv = 0;
+#if 0
+    receive_count = get_cpu1_rlength();
+    if(receive_count > 0)
+#endif
+        cpu1_rsend = get_cpu1_rsend_flg();
+    if(cpu1_rsend) {
+        sync_cpu1_rbwpointer();
+        if(1 == rcv_stat || devp->cd_wkram.read_buf_wp != devp->cd_wkram.read_buf_rp) {
+            /*XXX full or not empty.*/
+            cpu1comm_info("rcv_stat:%d\n", rcv_stat);
+            complete(&devp->cd_read_wait);
+        }
+        set_cpu1_rsend_flg(0);
+        /*set_cpu1_rrecv_flg(1);*/
+    }
+#if 0
+    send_count = get_cpu1_wlength();
+    if(0 == send_count)
+#endif
+        cpu1_wrecv = get_cpu1_wrecv_flg();
+    if(cpu1_wrecv) {
+        sync_cpu1_wbrpointer();
+        if(0 == snd_stat) { /*&& locked*/
+            cpu1comm_info("\n");
+            complete_all(&devp->cd_write_wait);
+        }
+        set_cpu1_wrecv_flg(0);
+        /*set_cpu1_wsend_flg(1);*/
+    }
+    cpu1comm_info("\n");
+    return IRQ_HANDLED;/*XXX*/
+}
+/*XXX attached to the share memory region.*/
+static int init_ram() {
+    cpu1comm_info("\n");
+    DIABLO_SWCOMMON_INFO* pSwCommonInfo = (DIABLO_SWCOMMON_INFO*)(DIABLO_SWCOMINFO_VIRADDR);
+    devp->cd_wkram.write_buf = (R_BUF*)(pSwCommonInfo->pCpuHandShakeSendBufStart
+                                        - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE);/*data buffer start.*/
+    devp->cd_wkram.write_buf_wp = devp->cd_wkram.write_buf->data;
+    devp->cd_wkram.write_buf_rp = devp->cd_wkram.write_buf->data;
+    devp->cd_wkram.diablo_cpu1_status = &devp->cd_wkram.write_buf->info;
+    memset(devp->cd_wkram.write_buf, 0, sizeof(W_BUF));
+    devp->cd_wkram.read_buf = (R_BUF*)(pSwCommonInfo->pCpuHandShakeRcvBufStart
+                                       - DIABLO_WORKRAM_PHYS_BASE + DIABLO_WORKRAM_VIRT_BASE);/*data buffer start.*/
+    devp->cd_wkram.read_buf_wp = devp->cd_wkram.read_buf->data;
+    devp->cd_wkram.read_buf_rp = devp->cd_wkram.read_buf->data;
+    devp->cd_wkram.diablo_cpu0_status = &devp->cd_wkram.read_buf->info;
+    memset(devp->cd_wkram.read_buf, 0, sizeof(R_BUF));
+    return 0;
+}
+
+/*XXX init the interrupt handler.*/
+static int init_irq() {
+    cpu1comm_info("\n");
+    unsigned long readTemp;
+    int rtn = 0;
+    DIABLO_SWCOMMON_INFO* pSwCommonInfo = (DIABLO_SWCOMMON_INFO*)(DIABLO_SWCOMINFO_VIRADDR);
+    if (pSwCommonInfo->vxWoksBootImg != BSP_SWCOMMON_INFO_BOOTIMG_BOOTROM) {
+        /*XXX what's the meaning?*/
+        readTemp = readl(HANDSHAKE_GEN_CPU0TOCPU1);
+        readTemp |= HANDSHAKE_CPU0TOCPU1_PERIPHERAL_READY;
+        writel(readTemp, HANDSHAKE_GEN_CPU0TOCPU1);
+    }
+    /*TODO
+    */
+    rtn = request_irq(CPU0_HANDSHAKE_RECV_IRQ,
+                      (irq_handler_t)data_intr,
+                      0,
+                      CPU1COMM_DEVICE,
+                      NULL);
+    if(rtn != 0) {
+        cpu1comm_error("request_irq:DIABLO_HANDSHAKE_RECV_IRQ,failed!%d\n", rtn);
+        free_irq(CPU0_HANDSHAKE_RECV_IRQ, NULL);
+    } else {
+        /*send*/
+        /*
+        pSwCommonInfo->pCpuHandShakeSendWP = RB_DIABLO_WKRAM_HANDSHAKE_BUF0;
+        pSwCommonInfo->pCpuHandShakeSendRP = RB_DIABLO_WKRAM_HANDSHAKE_BUF0;
+        */
+        pSwCommonInfo->pCpuHandShakeSendWP = WKRAM_BUF0;
+        pSwCommonInfo->pCpuHandShakeSendRP = WKRAM_BUF0;
+        /*
+        pSwCommonInfo->pCpuHandShakeSendBufStart = RB_DIABLO_WKRAM_HANDSHAKE_BUF0;
+        pSwCommonInfo->pCpuHandShakeSendBufEnd = RB_DIABLO_WKRAM_HANDSHAKE_BUF1;
+        */
+        pSwCommonInfo->pCpuHandShakeSendBufStart = WKRAM_BUF0;
+        pSwCommonInfo->pCpuHandShakeSendBufEnd = WKRAM_BUF1;
+        /*receive*/
+        /*
+        pSwCommonInfo->pCpuHandShakeRcvWP = RB_DIABLO_WKRAM_HANDSHAKE_BUF1;
+        pSwCommonInfo->pCpuHandShakeRcvRP = RB_DIABLO_WKRAM_HANDSHAKE_BUF1;
+        */
+        pSwCommonInfo->pCpuHandShakeRcvWP = WKRAM_BUF1;
+        pSwCommonInfo->pCpuHandShakeRcvRP = WKRAM_BUF1;
+        /*
+        pSwCommonInfo->pCpuHandShakeRcvBufStart = RB_DIABLO_WKRAM_HANDSHAKE_BUF1;
+        pSwCommonInfo->pCpuHandShakeRcvBufEnd = RB_DIABLO_WKRAM_BSPLOGREC_ADR;
+        */
+        pSwCommonInfo->pCpuHandShakeRcvBufStart = WKRAM_BUF1;
+        pSwCommonInfo->pCpuHandShakeRcvBufEnd = RB_DIABLO_WKRAM_BSPLOGREC_ADR;
+        readTemp = readl(HANDSHAKE_GEN_CPU0TOCPU1);
+        readTemp |= HANDSHAKE_CPU0TOCPU1_HANDSHAKE_READY;
+        writel(readTemp, HANDSHAKE_GEN_CPU0TOCPU1);
+    }
+    return rtn;
+}
+
+/*init for hand shake.*/
+static int init_handshake() {
+    cpu1comm_info("\n");
+    init_irq();
+    init_ram();
+    init_completion(&devp->cd_read_wait);
+    init_completion(&devp->cd_write_wait);
+    return 0;
+}
+
+/*close hand shake*/
+static int clear_handshake() {
+    cpu1comm_info("\n");
+    free_irq(CPU0_HANDSHAKE_RECV_IRQ, NULL);/*TODO*/
+    return 0;
+}
+
+/*XXX get cpu1 write ring buffer status*/
+static int get_cpu1_wstatus() {
+    cpu1comm_info("\n");
+    /*return (*(devp->cd_wkram.diablo_cpu1_status)&1);*/
+    return devp->cd_wkram.diablo_cpu1_status->status;
+}
+
+/*XXX set cpu1 write ring buffer status*/
+static int set_cpu1_wstatus(int status) {
+    /*set last bit to status, and return whole contains length and status.*/
+    cpu1comm_info("\n");
+    /*
+    *(devp->cd_wkram.diablo_cpu1_status) &= (~1);
+    *(devp->cd_wkram.diablo_cpu1_status) |= status;
+    return *(devp->cd_wkram.diablo_cpu1_status);
+    */
+    devp->cd_wkram.diablo_cpu1_status->status = status;
+    return devp->cd_wkram.diablo_cpu1_status->status;
+}
+
+static int get_cpu1_wsend_flg() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu1_status->send_flg;
+}
+
+static int set_cpu1_wsend_flg(int flag) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu1_status->send_flg = flag;
+    return devp->cd_wkram.diablo_cpu1_status->send_flg;
+}
+
+static int get_cpu1_wrecv_flg() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu1_status->recv_flg;
+}
+
+static int set_cpu1_wrecv_flg(int flag) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu1_status->recv_flg = flag;
+    return devp->cd_wkram.diablo_cpu1_status->recv_flg;
+}
+
+static int set_cpu1_wlength(int length) {
+    cpu1comm_info("\n");
+    /*
+    *(devp->cd_wkram.diablo_cpu1_status) &= 1;
+    *(devp->cd_wkram.diablo_cpu1_status) |= (length << 1);
+    return *(devp->cd_wkram.diablo_cpu1_status);
+    */
+    devp->cd_wkram.diablo_cpu1_status->total_len += length;
+    return devp->cd_wkram.diablo_cpu1_status->total_len;
+}
+
+static int get_cpu1_wlength() {
+    cpu1comm_info("\n");
+    /*
+    return *(devp->cd_wkram.diablo_cpu1_status) >> 1;
+    */
+    return devp->cd_wkram.diablo_cpu1_status->total_len;
+}
+
+static int set_cpu1_wsent(int length) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu1_status->sent_len = length;
+    return devp->cd_wkram.diablo_cpu1_status->sent_len;
+}
+
+static int get_cpu1_wsent() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu1_status->sent_len;
+}
+
+/*XXX get cpu1 read ring buffer status*/
+static int get_cpu1_rstatus() {
+    cpu1comm_info("\n");
+    /*
+    return (*(devp->cd_wkram.diablo_cpu0_status)&1);
+    */
+    return devp->cd_wkram.diablo_cpu0_status->status;
+}
+
+/*XXX set cpu1 read ring buffer status*/
+static int set_cpu1_rstatus(int status) {
+    /*set last bit to status, and return whole contains length and status.*/
+    cpu1comm_info("\n");
+    /**(devp->cd_wkram.diablo_cpu0_status) = status;*/
+    /*
+    *(devp->cd_wkram.diablo_cpu0_status) &= (~1);
+    *(devp->cd_wkram.diablo_cpu0_status) |= status;
+    return *(devp->cd_wkram.diablo_cpu0_status);
+    */
+    devp->cd_wkram.diablo_cpu0_status->status = status;
+    return devp->cd_wkram.diablo_cpu0_status->status;
+}
+
+static int get_cpu1_rsend_flg() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu0_status->send_flg;
+}
+
+static int set_cpu1_rsend_flg(int flag) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu0_status->send_flg = flag;
+    return devp->cd_wkram.diablo_cpu0_status->send_flg;
+}
+
+static int get_cpu1_rrecv_flg() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu0_status->recv_flg;
+}
+
+static int set_cpu1_rrecv_flg(int flag) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu0_status->recv_flg = flag;
+    return devp->cd_wkram.diablo_cpu0_status->recv_flg;
+}
+
+static int set_cpu1_rlength(int length) {
+    cpu1comm_info("\n");
+    /*
+    *(devp->cd_wkram.diablo_cpu0_status) &= 1;
+    *(devp->cd_wkram.diablo_cpu0_status) |= (length << 1);
+    return *(devp->cd_wkram.diablo_cpu0_status);
+    */
+    devp->cd_wkram.diablo_cpu0_status->total_len = length;
+    return devp->cd_wkram.diablo_cpu0_status->total_len;
+}
+
+static int get_cpu1_rlength() {
+    cpu1comm_info("\n");
+    /*return *(devp->cd_wkram.diablo_cpu0_status) >> 1;*/
+    return devp->cd_wkram.diablo_cpu0_status->total_len;
+}
+
+static int set_cpu1_rsent(int length) {
+    cpu1comm_info("\n");
+    devp->cd_wkram.diablo_cpu0_status->sent_len = length;
+    return devp->cd_wkram.diablo_cpu0_status->sent_len;
+}
+
+static int get_cpu1_rsent() {
+    cpu1comm_info("\n");
+    return devp->cd_wkram.diablo_cpu0_status->sent_len;
+}
+
+/*XXX write cpu1's buffer*/
+/*NOTE: should send all data before the buffer is full.*/
+static int send_wb(const char* buf, size_t count) {
+    cpu1comm_info("\n");
+    sync_cpu1_wbrpointer();
+    int sent = 0;
+    int status;
+    status = get_cpu1_wstatus();
+    cpu1comm_info("send start at:0x%x\n", devp->cd_wkram.write_buf_wp);
+    while(count > 0
+            && devp->cd_wkram.write_buf_wp != devp->cd_wkram.write_buf_rp
+            || count > 0 && (!status)) {
+        /*Have data and not full, or have data and empty.*/
+        /*Also check again not full.*/
+        cpu1comm_info("send:%c\n", *buf);
+        *(devp->cd_wkram.write_buf_wp++) = *(buf++);
+        --count;
+        ++sent;
+        if((devp->cd_wkram.write_buf_wp
+                >= devp->cd_wkram.write_buf->data + sizeof(devp->cd_wkram.write_buf->data))) {
+            devp->cd_wkram.write_buf_wp = devp->cd_wkram.write_buf_wp - sizeof(devp->cd_wkram.write_buf->data);
+        }
+        if(devp->cd_wkram.write_buf_wp == devp->cd_wkram.write_buf_rp) {
+            set_cpu1_wstatus(1);
+        }
+        status = get_cpu1_wstatus();
+    }
+    cpu1comm_info("send end at:0x%x\n", devp->cd_wkram.write_buf_wp);
+    if(count > 0) {
+        cpu1comm_info("Buffer full before all the data sent!\n");/*XXX is it error???*/
+    }
+    set_cpu1_wsent(sent);
+    return sent;
+}
+
+/*XXX read from cpu0's buffer*/
+/*Note should excute on cpu1,this used for debug.*/
+static int fake_receive_wb(char* buf, size_t count) {
+    cpu1comm_info("\n");
+    int received = 0;
+    int status = get_cpu1_wstatus();
+    cpu1comm_info("receive start at:0x%x\n", devp->cd_wkram.write_buf_rp);
+    while(count > 0
+            && devp->cd_wkram.write_buf_rp != devp->cd_wkram.write_buf_wp
+            || count > 0 && status) {
+        /*Have data required and not full, or have data required and full.*/
+        /*Also check again not empty.*/
+        *(buf++) = *(devp->cd_wkram.write_buf_rp++);
+        if((devp->cd_wkram.write_buf_rp >= devp->cd_wkram.write_buf + sizeof(W_BUF))) {
+            devp->cd_wkram.write_buf_rp =  devp->cd_wkram.write_buf->data;
+        }
+        set_cpu1_rstatus(0);
+        --count;
+        ++received;
+    }
+    cpu1comm_info("receive end at:0x%x\n", devp->cd_wkram.write_buf_rp);
+    if(count > 0) {
+        cpu1comm_info("Buffer empty before all the data received!\n");/*XXX is it error???*/
+    }
+    return received;
+}
+
+
+/*XXX read from cpu1's buffer*/
+/*Note should receive all the data before the buffer is empty!*/
+static int receive_rb(char* buf, size_t count) {
+    cpu1comm_info("\n");
+    int received = 0;
+    sync_cpu1_rbwpointer();
+    int status = get_cpu1_rstatus();
+    while(count > 0
+            && devp->cd_wkram.read_buf_rp != devp->cd_wkram.read_buf_wp
+            || count > 0 && status) {
+        /*Have data required and not full, or have data required and full.*/
+        /*Also check again not empty.*/
+        *(buf++) = *(devp->cd_wkram.read_buf_rp++);
+        if(devp->cd_wkram.read_buf_rp
+                >= devp->cd_wkram.read_buf->data + sizeof(devp->cd_wkram.read_buf->data)) {
+            devp->cd_wkram.read_buf_rp = devp->cd_wkram.read_buf_rp - sizeof(devp->cd_wkram.read_buf->data);
+        }
+        set_cpu1_rstatus(0);
+        status = get_cpu1_rstatus();
+        --count;
+        ++received;
+    }
+    if(count > 0) {
+        cpu1comm_info("Buffer empty before all the data received!\n");/*XXX is it error???*/
+    }
+    set_cpu1_rsent(received);
+    return received;
+}
+
+/*XXX generate interrupt to cpu1 to notify data have been write.*/
+static int notify_read() {
+    cpu1comm_info("\n");
+    writel (HANDSHAKE_INTR_SEND, HANDSHAKE_INTR);   /* assert */
+    writel (HANDSHAKE_INTR_SEND, HANDSHAKE_INTR);   /* deassert */
+    cpu1comm_info("\n");
+}
+
+/*XXX generate interrupt to cpu1 to notify data have been read.*/
+static int notify_write() {
+    cpu1comm_info("\n");
+    writel (HANDSHAKE_INTR_SEND, HANDSHAKE_INTR);   /* assert */
+    writel (HANDSHAKE_INTR_SEND, HANDSHAKE_INTR);   /* deassert */
+    cpu1comm_info("\n");
+}
+
+/*XXX continue to send data after cpu1 notify cpu0*/
+static int wait_for_send() {
+    cpu1comm_info("\n");
+    int status = get_cpu1_wstatus();
+    if(status & 1) {
+        /*XXX should make sure read==write pointer*/
+        wait_for_completion(&devp->cd_write_wait);
+    }
+    cpu1comm_info("\n");
+}
+
+/*XXX continue to receive data after cpu1 notify cpu0*/
+static int wait_for_receive() {
+    cpu1comm_info("\n");
+    wait_for_completion(&devp->cd_read_wait);
+    cpu1comm_info("\n");
+}
+
+static int sync_cpu1_wbrpointer() {
+    int received;
+    received = get_cpu1_wsent();
+    devp->cd_wkram.write_buf_rp += received;
+    if(devp->cd_wkram.write_buf_rp
+            >= devp->cd_wkram.write_buf->data + sizeof(devp->cd_wkram.write_buf->data)) {
+        devp->cd_wkram.write_buf_rp = devp->cd_wkram.write_buf_rp - sizeof(devp->cd_wkram.write_buf->data);
+    }
+}
+
+static int sync_cpu1_rbwpointer() {
+    int sent = 0;
+    sent = get_cpu1_rsent();
+    devp->cd_wkram.read_buf_wp += sent;
+    if(devp->cd_wkram.read_buf_wp
+            >= devp->cd_wkram.read_buf->data + sizeof(devp->cd_wkram.read_buf->data)) {
+        devp->cd_wkram.read_buf_wp = devp->cd_wkram.read_buf_wp - sizeof(devp->cd_wkram.read_buf->data);
+    }
+}
+
+/***Driver***/
+static const struct file_operations cpu1commdrv_fops = {
+    .owner = THIS_MODULE,
+
+    .llseek = cpu1commdrv_llseek,
+    .read = cpu1commdrv_read,
+    .write = cpu1commdrv_write,
+    .mmap = cpu1commdrv_mmap,
+    .ioctl = cpu1commdrv_ioctl,
+    .open = cpu1commdrv_open,
+    .release = cpu1commdrv_release,
+};
+
+/*TODO */
+static int cpu1commdrv_open(struct inode* inode, struct file* filp) {
+    cpu1comm_info("\n");
+    filp->private_data = devp;
+    cpu1comm_info("open!\n");
+    return 0;
+}
+
+/*TODO */
+static int cpu1commdrv_release(struct inode* inode, struct file* filp) {
+    cpu1comm_info("\n");
+    return 0;
+}
+
+/*XXX May used for receive message from cpu1.*/
+/*Note: need a copy from user space to kernel space.*/
+static ssize_t cpu1commdrv_read(struct file* filp, char __user* buf, size_t count, loff_t* ppos) {
+    /**Receive data from cpu1:
+    *(1)on cpu1,read the cpu1 status, if its read buffer is full then wait, or write.
+    *(2)on cpu1, generate an interrupt to cpu0 after write to notify cpu0 to read.
+    *(3)on cpu0,in the interrupt handler, receive the data, generate interrupt to cpu1 the data have been read.
+    *(4)do (1)-(3) until all the data be received.
+    */
+    struct cpu1commdrv_dev* dev;
+    char* rbuf;
+    int ret;
+    dev = filp->private_data;
+    cpu1comm_info("\n");
+    rbuf = (char*)vmalloc(count);
+    if(!rbuf) {
+        cpu1comm_error("vmalloc failed!");
+        return 0;
+    }
+    do { /*XXX another kthread???*/
+        count -= receive_rb(rbuf, count);
+        notify_write();
+        wait_for_receive();
+    } while(count > 0);
+    ret = copy_to_user((char __user*)buf, rbuf, count);
+    if(0 != ret) {
+        cpu1comm_error("copy to user error %d!", ret);
+        vfree(rbuf);
+        return 0;
+    }
+    vfree(rbuf);
+    return count;
+}
+
+/*XXX May used for send message to cpu1*/
+/*Note: need a copy from user space to kernel space.*/
+static ssize_t cpu1commdrv_write(struct file* filp, const char __user* buf, size_t count, loff_t* ppos) {
+    /**Send data to cpu1:
+    *(1)on cpu0, read the cpu1 status, if its write buffer is full then wait, or write.
+    *(2)on cpu0, generate an interrupt to cpu1 after after write its buffer to notify cpu1 to read.
+    *(3)on cpu1,after cpu1 read, generate interrupt to cpu0 to tell it the data have been read.
+    *(4)do (1)-(3) until all the data be sent.
+    */
+    struct cpu1commdrv_dev* dev;
+    char* wbuf;
+    int tmp;
+    int ret;
+    dev = filp->private_data;
+    cpu1comm_info("write!\n");
+    wbuf = (char*)vmalloc(count);
+    if(!wbuf) {
+        cpu1comm_error("vmalloc failed!");
+        return 0;
+    }
+    ret = copy_from_user(wbuf, (const char __user*)buf, count);
+    if(0 != ret) {
+        cpu1comm_error("copy from user error %d!", ret);
+        vfree(wbuf);
+        return 0;
+    }
+    set_cpu1_wlength(count);
+    do { /*XXX another kthread???*/
+        tmp = send_wb(wbuf, count);
+        count -= tmp;
+        ret += tmp;
+        notify_read();
+        wait_for_send();
+    } while(count > 0);
+    vfree(wbuf);
+    return ret;
+}
+
+/*Not used?*/
+static loff_t cpu1commdrv_llseek(struct file* filp, loff_t offset, int orig) {
+    cpu1comm_info("llseek!\n");
+    return 0;
+}
+
+/*XXX Many commands communicate with cpu1.*/
+/*TODO */
+static int cpu1commdrv_ioctl(struct inode* inodep, struct file* filp, unsigned int cmd, unsigned long arg) {
+    struct cpu1commdrv_dev* dev;
+    dev = filp->private_data;
+    cpu1comm_info("ioctl!\n");
+    switch(cmd) {
+    case CPU1COMM_INIT:
+        break;
+    case CPU1COMM_RELEASE:
+        break;
+    case CPU1COMM_FAKE_WWRITE: {
+        int count;
+        char* buf;
+        int ret;
+        int send;
+        IOCTL_BUF iarg;/*XXX copy to user*/
+        ret = copy_from_user(&iarg, (const void __user*)arg, sizeof(IOCTL_BUF));
+        cpu1comm_info("input address of iarg.data(should equal to user) 0x%x\n", iarg.data);
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        count = iarg.length;
+        cpu1comm_info("data length to send is %d\n", count);
+        buf = (char*)vmalloc(count);
+        if(!buf) {
+            cpu1comm_error("vmalloc failed!");
+            return 0;
+        }
+        copy_from_user(buf, (const void __user*)iarg.data, count);
+        cpu1comm_info("send string %s\n", buf);
+        set_cpu1_wlength(count);
+        send = send_wb(buf, count);
+        cpu1comm_info("data length sent %d\n", send);
+        vfree(buf);
+    }
+    break;
+    case CPU1COMM_FAKE_WREAD: {
+        int count;
+        char* buf;
+        int ret;
+        int receive;
+        IOCTL_BUF oarg;/*XXX copy to user*/
+        ret = copy_from_user(&oarg, (const void __user*)arg, sizeof(IOCTL_BUF));
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        count = oarg.length;/*XXX copy to user*/
+        buf = (char*)vmalloc(count);
+        if(!buf) {
+            cpu1comm_error("vmalloc failed!");
+            return 0;
+        }
+        cpu1comm_info("data length to receive is:%d\n", count);
+        receive = fake_receive_wb(buf, count);
+        cpu1comm_info("data length received is:%d\n", receive);
+        cpu1comm_info("data received is:%s\n", buf);
+        ret = copy_to_user((void __user*)oarg.data, buf, count);
+        if(0 != ret) {
+            cpu1comm_error("copy to user error %d!", ret);
+        }
+        vfree(buf);
+    }
+    break;
+    case CPU1COMM_NOTIFY_READ:
+        notify_read();
+        break;
+    case CPU1COMM_WAIT_FOR_SEND:
+        wait_for_send();
+        break;
+    case CPU1COMM_NOTIFY_WRITE:
+        notify_write();
+        break;
+    case CPU1COMM_WAIT_FOR_RECEIVE:
+        wait_for_receive();
+        break;
+    case CPU1COMM_SEND: {
+        int count;
+        char* buf;
+        int ret;
+        IOCTL_BUF iarg;/*XXX copy to user*/
+        ret = copy_from_user(&iarg, (const void __user*)arg, sizeof(IOCTL_BUF));
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        count = iarg.length;
+        buf = iarg.data;
+        cpu1comm_info("input size is:%d\n", count);
+        set_cpu1_wlength(count);
+        do { /*XXX another kthread???*/
+            wait_for_send();
+            count -= send_wb(buf, count);
+            notify_read();
+        } while(count > 0);
+    }
+    break;
+    case CPU1COMM_RECEIVE: {
+        int count;
+        char* buf;
+        int ret;
+        IOCTL_BUF oarg;/*XXX copy to user*/
+        ret = copy_from_user(&oarg, (const void __user*)arg, sizeof(IOCTL_BUF));
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        count = oarg.length;/*XXX copy to user*/
+        buf = oarg.data;
+        cpu1comm_info("input size is:%d\n", count);
+        do { /*XXX another kthread???*/
+            wait_for_receive();
+            count -= receive_rb(buf, count);    /*TODO only receive data before empty???*/
+            notify_write();
+        } while(count > 0);
+        ret = copy_to_user((void __user*)arg, &oarg, sizeof(IOCTL_BUF));
+        if(0 != ret) {
+            cpu1comm_error("copy to user error %d!", ret);
+        }
+    }
+    break;
+    case CPU1COMM_WKRAM_SBUF:
+        break;
+    case CPU1COMM_WKRAM_RBUF:
+        break;
+    case CPU1COMM_WKRAM_RCVWAIT: {
+        int rcv_stat;
+        rcv_stat = get_cpu1_rstatus();
+        if(1 == rcv_stat || devp->cd_wkram.read_buf_wp == devp->cd_wkram.read_buf_rp) {
+            /*XXX empty.*/
+            wait_for_receive();
+        }
+    }
+    break;
+    case CPU1COMM_SYNC_KRAM: {
+        /*sync the wkram pointer by user.*/
+        int ret;
+        ret = 0;
+        CPU_COMM_RAM usr_wkram;
+        ret = copy_from_user(&usr_wkram, (const void __user*)arg, sizeof(CPU_COMM_RAM));
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        devp->cd_wkram.write_buf_wp = (long)usr_wkram.write_buf_wp - (long)usr_wkram.write_buf
+                                      + (long)devp->cd_wkram.write_buf;
+        devp->cd_wkram.write_buf_rp = (long)usr_wkram.write_buf_rp - (long)usr_wkram.write_buf
+                                      + (long)devp->cd_wkram.write_buf;
+        devp->cd_wkram.read_buf_wp = (long)usr_wkram.read_buf_wp - (long)usr_wkram.read_buf
+                                     + (long)devp->cd_wkram.read_buf;
+        devp->cd_wkram.read_buf_rp = (long)usr_wkram.read_buf_rp - (long)usr_wkram.read_buf
+                                     + (long)devp->cd_wkram.read_buf;
+    }
+    break;
+    case CPU1COMM_SYNC_URAM: {
+        /*sync the wkram pointer by user.*/
+        int ret;
+        ret = 0;
+        CPU_COMM_RAM usr_wkram;
+        ret = copy_from_user(&usr_wkram, (const void __user*)arg, sizeof(CPU_COMM_RAM));
+        if(0 != ret) {
+            cpu1comm_error("copy from user error %d!", ret);
+        }
+        usr_wkram.write_buf_wp = (long)devp->cd_wkram.write_buf_wp - (long)devp->cd_wkram.write_buf
+                                 + (long)usr_wkram.write_buf;
+        usr_wkram.write_buf_rp = (long)devp->cd_wkram.write_buf_rp - (long)devp->cd_wkram.write_buf
+                                 + (long)usr_wkram.write_buf;
+        usr_wkram.read_buf_wp = (long)devp->cd_wkram.read_buf_wp - (long)devp->cd_wkram.read_buf
+                                + (long)usr_wkram.read_buf;
+        usr_wkram.read_buf_rp = (long)devp->cd_wkram.read_buf_rp - (long)devp->cd_wkram.read_buf
+                                + (long)usr_wkram.read_buf;
+        ret = copy_to_user((void __user*)arg, &usr_wkram, sizeof(CPU_COMM_RAM));
+        if(0 != ret) {
+            cpu1comm_error("copy to user error %d!", ret);
+        }
+    }
+    break;
+    case CPU1COMM_WWRITE_TEST:
+        devp->cd_wkram.write_buf->data[0] = WWRITE_CHAR1;
+        devp->cd_wkram.read_buf->data[0] = WWRITE_CHAR2;
+        break;
+    case CPU1COMM_RWRITE_TEST:
+        cpu1comm_info("buf0address:0x%x,buf0[0]:%c\n",
+                      devp->cd_wkram.write_buf->data, devp->cd_wkram.write_buf->data[0]);
+        cpu1comm_info("buf0's r pointer address:0x%x,buf0[0]:%c\n",
+                      devp->cd_wkram.write_buf_rp, devp->cd_wkram.write_buf_rp[0]);
+        cpu1comm_info("buf1address:0x%x,buf1[0]:%c\n",
+                      devp->cd_wkram.read_buf->data, devp->cd_wkram.read_buf->data[0]);
+        cpu1comm_info("buf1's r pointer address:0x%x,buf1[0]:%c\n",
+                      devp->cd_wkram.read_buf_rp, devp->cd_wkram.read_buf_rp[0]);
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
+
+static int cpu1commdrv_mmap(struct file* file, struct vm_area_struct* vma) {
+    /*XXX How to map phy address:[RB_DIABLO_WKRAM_HANDSHAKE_BUF0,RB_DIABLO_WKRAM_BSPLOGREC_ADR]*/
+    /*XXX Should adjust offset by physic address, not this way.*/
+    cpu1comm_info("\n");
+    cpu1comm_info("base addr by _pa:0x%x, by macro:0x%x\n", __pa(DIABLO_WORKRAM_VIRT_BASE),
+                  DIABLO_WORKRAM_PHYS_BASE);
+    cpu1comm_info("mmap offset:%d\n", vma->vm_pgoff); /*alread right shift by kernel.*/
+    long phy_addr;
+    unsigned long offset;
+    unsigned long size;
+    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+    vma->vm_flags |= VM_LOCKED;
+    offset = vma->vm_pgoff << PAGE_SHIFT;/*XXX assume is 12*/
+    size = vma->vm_end - vma->vm_start;
+    if(BUF0_OFF == offset) {
+        /*XXX Should check the size from user space equals to the real size defined in kernel.
+        * And if the phy_addr is page ajustment.*/
+        phy_addr = (long)devp->cd_wkram.write_buf - DIABLO_WORKRAM_VIRT_BASE + DIABLO_WORKRAM_PHYS_BASE;
+        cpu1comm_info("map buffer0 orig 0x%x\n", RB_DIABLO_WKRAM_HANDSHAKE_BUF0);
+        cpu1comm_info("map buffer0 0x%x\n", phy_addr);
+    } else if(BUF1_OFF == offset) {
+        /*XXX Should check the size from user space equals to the real size defined in kernel.
+        * And if the phy_addr is page ajustment.*/
+        phy_addr = (long)devp->cd_wkram.read_buf - DIABLO_WORKRAM_VIRT_BASE + DIABLO_WORKRAM_PHYS_BASE;
+        cpu1comm_info("map buffer1 orig 0x%x\n", RB_DIABLO_WKRAM_HANDSHAKE_BUF1);
+        cpu1comm_info("map buffer1 0x%x\n", phy_addr);
+    } else if(START_OFF == offset) {
+        /*XXX Should check the size from user space equals to the real size defined in kernel.
+        * And if the phy_addr is page ajustment.*/
+        phy_addr = DIABLO_WORKRAM_PHYS_BASE;
+    } else {
+        cpu1comm_error(" Unknown memory map offset!\n");/*XXX*/
+        return -ENXIO;
+    }
+    /*phy_addr must be 4k *n*/
+    cpu1comm_info("Page shift %d,map buffer phy_addr shift:0x%x\n", PAGE_SHIFT, phy_addr >> PAGE_SHIFT);
+    if(remap_pfn_range(vma, vma->vm_start, phy_addr >> PAGE_SHIFT, size, vma->vm_page_prot)) {
+        cpu1comm_error(" remap_pfn_range failed\n");/*XXX*/
+        return -ENXIO;
+    }
+    return 0;
+}
+
+int cpu1commdrv_init(void) {
+    int result;
+    int err;
+    cpu1comm_info("\n");
+    dev_t devno = MKDEV(cpu1commdrv_major, 0);
+#ifdef CPU1COMMDRV_DBG_DYNREG
+    result = alloc_chrdev_region(&devno, 0, 1, CPU1COMM_DEVICE);
+    cpu1commdrv_major = MAJOR(devno);
+#else
+    cpu1comm_info("\n");
+    result = register_chrdev_region(devno, 1, CPU1COMM_DEVICE);
+#endif
+    if(result < 0) {
+        cpu1comm_error(" Register cpu1commdrv result:%d\n", result);/*XXX*/
+        goto register_fail;
+    }
+    cpu1comm_info("sizeof(struct cpu1commdrv_dev):%d, sizeof(CPU_COMM_RAM):%d,major is:%d\n",
+                  sizeof(struct cpu1commdrv_dev), sizeof(CPU_COMM_RAM), MAJOR(devno));
+#ifdef CPU1COMMDRV_DBG_DYNREG
+    devp = kmalloc(sizeof(struct cpu1commdrv_dev), GFP_KERNEL);
+    if(!devp) {
+        result = -ENOMEM;
+        goto malloc_fail;
+    }
+#else
+    devp = &cpu1comm_dev;
+#endif
+    memset(devp, 0, sizeof(struct cpu1commdrv_dev));
+    cdev_init(&devp->cd_cdev, &cpu1commdrv_fops);
+    devp->cd_cdev.owner = THIS_MODULE;
+    err = cdev_add(&devp->cd_cdev, devno, 1);
+    if(err) {
+        cpu1comm_error("Error %d adding cpu1commdrv", err);/*XXX*/
+        goto add_fail;
+    }
+    init_handshake();/*XXX */
+    return result;
+    /*error case*/
+add_fail:
+#ifdef CPU1COMMDRV_DBG_DYNREG
+    ;
+malloc_fail:
+#endif
+    unregister_chrdev_region(devno, 1);
+register_fail:
+    ;
+    return result;
+}
+void cpu1commdrv_exit(void) {
+    cpu1comm_info("\n");
+    cdev_del(&devp->cd_cdev);
+#ifdef CPU1COMMDRV_DBG_DYNREG
+    kfree(devp);
+    unregister_chrdev_region(MKDEV(cpu1commdrv_major, 0), 1);
+#else
+    unregister_chrdev_region(MKDEV(CPU1COMMDRV_MAJOR, 0), 1);
+#endif
+    clear_handshake();
+}
+
+module_init(cpu1commdrv_init);
+module_exit(cpu1commdrv_exit);

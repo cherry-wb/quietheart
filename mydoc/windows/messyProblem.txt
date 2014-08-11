@@ -1,0 +1,27 @@
+小技巧：
+1，去掉windows中beep嗡鸣
+网上的资料是：
+在没有声卡的计算机上运行的Windows XP时常会发出一种令人讨厌的“哔哔”声，这篇技巧文章告诉了我们把一个网络中所有客户端机器上的这种声音禁用的方法。
+
+　　这是一个脚本文件，用以禁用客户端发出噪音的设备。（该设备在“设备管理器”->“非即插即用设备”里可以找到，不过还需要选择“显示隐藏设备”）。将下面的代码复制到记事本里，然后保存为disableBeep.vbs。
+
+　　你需要管理员权限才能运行该脚本文件。
+
+　　客户端计算机必须重启之后才能使改动生效。
+
+　　代码
+
+set WshShell=WScript.CreateObject("WScript.shell")
+WshShell.RegWrite "HKEY LOCAL MACHINE\SYSTEM\CurrentControlSet\Hardware
+Profiles\0001\System\CurrentControlSet\Enum\ROOT\LEGACY BEEP\00000
+\CSConfigFlags",1,"REG DWORD"
+Wshshell.regwrite "HKEY LOCAL MACHINE\SYSTEM\CurrentControlSet\Hardware
+Profiles\Current\System\CurrentControlSet\Enum\ROOT\LEGACY BEEP\0000
+\CSConfigFlags",1,"REG DWORD" 
+Msgbox: "Restart the workstation to disable beep",,"Disable beep." 
+我尝试的方法是：
+“我的电脑”->属性->“硬件”->“设备管理器”->“非即插即用设备”里可以找到，不过还需要选择“显示隐藏设备”beep禁用，然后重新启动。
+
+2,windows屏幕旋转的方法：
+快捷键是:
+[Ctrl][Alt][四个方向箭头]
