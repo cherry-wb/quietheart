@@ -1,0 +1,110 @@
+repo
+
+Android 使用 Git 作为代码管理工具，开发了 Gerrit 进行代码审核以便更好的对代码进行集中式管理，还开发了 Repo 命令行工具，对 Git 部分命令封装，将百多个 Git 库有效的进行组织。 Android 是由 kernel、Dalvik、Bionic、prebuilt、build 等多个 Git 项目组成，所以 Android 项目编写了一个名为 Repo 的 Python 的脚本来统一管理这些项目的仓库，使得 Git 的使用更加简单。
+
+
+
+repo常用命令：
+
+*下载repo并克隆manifest：
+
+$repo init  -u git://172.16.1.31/manifest.git
+
+这里，做完之后，当前目录便出现一个.repo文件。
+
+语法格式是：repo init –u URL [OPTIONS]
+
+-u:指定一个URL，其连接到一个maniest仓库
+
+-m:在manifest仓库中选择一个xml文件
+
+-b:选择一个maniest仓库中的一个特殊的分支
+
+命令repo init 要完成如下操作：
+
+完成repo工具的完整下载，执行的repo脚本只是引导程序;
+
+克隆清单库manifest.git (地址来自于-u 参数);
+
+克隆的清单库位于manifest.git中，克隆到本地.repo/manifests.清单.repo/manifest.xml只是符号链接，它指向.repo/manifests/default.xml;
+
+如果manifests中有多个xml文件，repo init 可以任意选择其中一个，默认选择是default.xml;
+
+
+
+*选择指定的文件清单：
+
+$repo  init  -u git://172.16.1.31/manifest.git –m android.xml
+
+这样选择的是android.xml里面的配置，执行之后，.repo/manifest.xml便指向.repo/manifests/android.xml
+
+这里，指定的清单文件是以xml格式组织的，它里面指明了repo将要管理哪些git库。一个清单库可以包含多个清单文件和多个分支，每个清单文件和分支都有对应的版本。
+
+举个例子：
+
+remote元素，定义了名为korg的远程版本库，其库的基址为git：//172.16.1.31/；
+
+default元素，设置各个项目默认远程版本库为korg，默认的的分支为gingerbread-exdroid-stable。当然各个项目(project元素)还可以定义自己的remote和revision覆盖默认的配置；
+
+project元素，用于定义一个项目，path属性表示在工作区克隆的位置，name属性表示该项目的远程版本库的相对路径；
+
+project元素的子元素copyfile，定义了项目克隆后的一个附件动作，从src拷贝文件到dest。
+
+repo  init 
+
+*下载代码：
+
+$repo sync
+
+也可以选择克隆其中的一个项目:
+
+$repo sync platform/build
+
+这里，语法格式是：repo sync [<project>…]
+
+用于参照清单文件.repo/manifest.xml克隆并同步版本库。如果某个项目版本库尚不存在，则执行repo sync 命令相当于执行git clone，如果项目版本库已经存在，则相当于执行下面的两条指令：
+
+$git remote update
+
+相当于对每一个remote源执行了fetch操作
+
+$git rebase origin/branch
+
+针对当前分支的跟踪分支执行rebase操作。
+
+
+
+
+
+其它：
+
+
+
+fyou’re not in China, please follow with the steps as below
+
+       mkdir ~/bin
+
+      PATH=~/bin:$PATH
+
+      curl https://storage.googleapis.com/git-repo-downloads/repo >~/bin/repo
+
+      chmod a+x ~/bin/repo
+
+      mkdirphilips_eu_jb_repo(this is your working folder)
+
+      cdphilips_eu_jb_repo
+
+      repo init-u ssh://url/philips_eu_jb_repo
+
+8.     repo sync
+
+
+
+
+
+参考资料：
+
+http://blog.csdn.net/skyflying2012/article/details/23742683
+
+http://blog.chinaunix.net/uid-103601-id-2961410.html
+
