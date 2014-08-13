@@ -6,6 +6,7 @@ find the things you want.
 本文档随时间会更新。
 
 ***项目介绍***
+
 存放各类代码和文档相关的信息。
 文档为公开内容，包含可能各类信息，可供查阅。
 文档管理将存放至这里，利用git进行版本控制。
@@ -13,7 +14,9 @@ find the things you want.
 
 
 ***项目管理***
-本项目通过git进行版本控制，目前使用git hub提供的git服务进行管理。使用方式：
+
+本项目通过git进行版本控制，目前使用git hub提供的git服务进行管理。
+使用方式：
 1、通过云服务：
 通过git clone在类似百度云、微云中保存该项目库的分布开发版本。
 添加时，对其工作内容进行添加，保险起见：先git pull；再添加；再git add/commit/push；
@@ -27,5 +30,6 @@ find the things you want.
 
 
 ***目录结构***
+
 test:包含各种内容，用于临时和测试。
 codes:包含各类代码，用于学习和参考等，详见codes/readme。
