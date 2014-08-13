@@ -1,0 +1,1203 @@
+*创建纯库：
+
+$git init --bare
+
+创建一个git库，只有库的内容，没有.git目录（也就是说只创建一个库，这个库中没有工作代码，只供别的人工作clone用，如果没有--bare那么创建的目录中包含一个.git目录，.git目录的内容是库内容）。
+
+
+
+*创建共享库：
+
+$git init --share
+
+创建的git库可以被人共享。
+
+
+
+**分支操作
+
+*查看本地分支：
+
+$git branch
+
+会输出本地分支，如：
+
+test
+
+*master
+
+这表示有一个master主分支，和test分支。master是默认的分支，当前所处分支用'*'标记，在master上。对于如何存储，可参见：.git/refs/head/<分支名>。
+
+
+
+*查看远端分支：
+
+$git branch -r
+
+会输出远端（可能是多个远端）的分支，如：
+
+cognac/master
+
+origin/albert
+
+这里，'/'前面是远端名，'/'后面是实际的分支。对于如何存储，可参见：.git/refs/remotes/<远端分支名>。
+
+
+
+*查看本地和远端分支：
+
+$git branch -a
+
+同时查看远端和本地分支，远端分支以红色显示。
+
+
+
+*创建分支：
+
+$git branch <branch name>
+
+*开始一个无历史的新分支:
+
+$git checkout --orphan <branchname>
+
+创建一个孤儿分支，该分支上第一个提交历史没有任何父亲节点。这样可以开始一个新分支，但是又不会把很长很长的历史记录带进来，例如，你想在公众区域（开源）放置你的代码，但是又不想别人知道它的历史记录会用到这个。一般在孤儿分支中，如果你想创建一个完全无关的内容，那么第一步往往是把当前所有文件清空，这样这个分支就和其它分支没有任何关联了。
+
+
+
+*创建分支并切换入新创建的分支：
+
+$git checkout -b <branch name>
+
+
+
+*修改分支名称：
+
+$git branch -m <old name> <new name>
+
+注意，不要有已有的分支名冲突。
+
+
+
+*基于远端分支创建相应的本地分支：
+
+$git branch -track origin/albert
+
+新版git不用-track选项，会根据远端分支名知道加上track选项，创建之后，相应的分支在本地创建，会与远端分支关联。这样pull会知道如何合并分支，以及获知各种其他远端跟踪的信息（如本地比远端多提交了几个版本等）。
+
+
+
+**
+
+
+
+***git push [options] [<repository> [<refspec>...]]
+
+**参数含义
+
+*<repository>:
+
+push操作的远端目标库。这个参数可以是一个url，或者远端名称，或被称为remote，参见后面remote相关的配置。
+
+
+
+*<refspec>:
+
+其格式是一个可选的+，跟着一个源引用<src>，接着一个:，然后是目标引用<dst>。表示将要把什么<src>推送到远端的<dst>。
+
+<src>：表示你想要推送的本地引用，一般是分支名称，也可以是任意的"SHA-1 expression"。例如：master~4或者HEAD（man gitrevisions）。
+
+
+
+<dst>：表示要更新的远端引用。这里不能使用任意的表达式，必须是一个实际的引用。如果:<dst>被忽略，那么使用其和<src>同样的名字做为被更新对象。
+
+
+
++：<src>所引用的对象可以用来更新远端的<dst>引用，但是默认这个只有在更新为fast-forward的时候才能使用。通过添加首部的'+'我们可以在不是fast-forward的时候也能让git更新远端<dst>引用。慎用+，因为这样将导致你的工作直接以你pull时的为上游加入远端，而别人的工作成为一个未命名分支中的内容，导致别人的工作被删除（因为其提交无法访问），用git gc将把别人的内容做为垃圾清除掉（见后面例子）。
+
+
+
+对于<respec>的一些取值效果，具体参照后面的例子。一些特殊的<respec>如：
+
+(a)":<dst>"，表示push一个空的<src>，将允许你从远端仓库删除<dst>;
+
+(b)":"（或者"+:"，可以允许non-fast-forward更新），可以让git对"matching"的分支进行push;
+
+(c)"<src>"，这样":<dst>"被忽略，会使用和<src>相"matching"的名字做为被更新对象。
+
+所谓“matching”分支，是指远端存在的分支这个分支在本地也有同名的分支存在。这也是没有指定<refspec>时（命令行和配置等都无指定）默认的操作模式。
+
+**
+
+
+
+**常用配置
+
+*配置url：
+
+我们可以给url起别名，配置我们喜欢的url来替代可以工作的url，也就是说，命令中我们使用我们喜欢的url（别名），实际git工作中会将其转换为真正工作的url。如：
+
+配置片段如下：
+
+[url "git://git.host.xz/"]
+
+     insteadOf = host.xz:/path/to/
+
+     insteadOf = work:
+
+这样之后，实际的url（前缀）为"git://git.host.xz/"，而我们喜欢用的为“host.xz:/path/to/”和“work:”，这样当我们在命令中使用的url参数为 "work:repo.git" 或 "host.xz:/path/to/repo.git"时，git在实际工作中会自动转换为"git://git.host.xz/repo.git"。
+
+如果只想给push命令的url起别名，可以如下：
+
+[url "<actual url base>"]
+
+       pushInsteadOf = <other url base>
+
+之后，push时，参数的所有<other url base>的url参数会在git工作时转换成真正的<actual url base>。
+
+
+
+*配置remote：
+
+可在配置文件中指定push的远端，这样如果命令行中不指定，那么就是用配置文件中的。
+
+配置remote片段类似如下：
+
+[remote "<name>"]
+
+       url = <url>
+
+       pushurl = <pushurl>
+
+       push = <refspec>
+
+       fetch = <refspec>
+
+<pushurl>用来push。它是可选的，若不配置则默认值为<url>。
+
+由此我们可以知道remote不是分支不是库，而是一系列包含远端信息（如url、push、pull相关选项）的配置集合，在.git/config中可以配置相应的remote，也可用git remote来操作和管理remote，每个remote都有自己的名称，可以将某个remote理解为clone过来的一个远端库的别名，它有自己的分支等信息。origin：只是一个remote的别名，git clone后查看.git/config或者git remote -v即可看到。
+
+**
+
+
+
+**使用举例
+
+$git push
+
+类似"git push <remote>"，这里的<remote>是当前分支的远端（如果没有为当前分支配置remote，也可说是origin）。
+
+
+
+$git push origin
+
+没有额外的配置信息的话，这个命令和"git push origin :"一样，是push所有"match"的分支到origin。当没有<refspec>的时候，这个命令默认的行为可以通过对remote在config文件中的push选项进行配置。例如：想要默认仅仅把当前的分支push到origin，那么就使用“git config remote.origin.push HEAD”，任何合法的<refspec>都可以被配置成"git push origin"的默认行为。
+
+
+
+$git push origin master
+
+在源repository中寻找到和master匹配的引用（一般会寻找refs/heads/master），并且更新origin库（这是一个remote库）中同样的引用（如refs/heads/master）。如果远端没有master分支，那么就创建一个。
+
+
+
+$git push origin HEAD
+
+一个简单的方式，把当前分支推送给同名的远端（而非默认的推送所有匹配分支到远端）。
+
+
+
+$git push origin master:satellite/master dev:satellite/dev
+
+用本地的和master匹配的源引用（例如refs/heads/master）来匹配远端origin中的与satellite/master匹配的引用（一般为refs/remotes/satellite/master），然后对dev和satellite/dev做同样类似的操作。
+
+
+
+$git push origin HEAD:master
+
+将当前分支把当前分支push到远程origin端与master匹配的引用。这个命令很方便，可以把当前分支推送到远端，而无需考虑它的本地名字。
+
+
+
+$git push origin master:refs/heads/experimental
+
+在远程origin库中创建experimental分支， 分支内容是从当前master分支拷贝而来。这个命令一般用于当本地名字和远端名字不同时，在远端创建一个新的分支或tag。否则这个引用名本身会工作。
+
+
+
+$git push origin :experimental
+
+找到远端origin库中的experimental分支（refs/heads/experimental），并将它删除。
+
+
+
+$git push origin +dev:master
+
+用本地dev分支更新远端origin库的master分支，并且使用non-fast-forward更新。这回导致远端origin库中自pull以后的提交成为无法引用的提交。如下：
+
+                           o---o---o---A---B  origin/master
+
+                                    \
+
+                                     X---Y---Z  dev
+
+这里，dev分支pull后进行了X---Y---Z的提交，而同时远端的origin/master有---A---B的提交，当使用了这个命令会如下：
+
+                                     A---B  (unnamed branch)
+
+                                    /
+
+                           o---o---o---X---Y---Z  master
+
+可见，A和B提交将属于一个没有名称的分支，也就是它们将变成不可达。这样，这些提交通过git gc会被清除掉。
+
+
+
+*git/config配置文件：
+
+[core]
+
+    repositoryformatversion = 0 
+
+    filemode = true
+
+    bare = false
+
+    logallrefupdates = true
+
+[remote "origin"]
+
+    url = ssh://url/aosp.git
+
+    fetch = +refs/heads/*:refs/remotes/origin/*
+
+
+
+#[branch "master"]
+
+#   remote = origin
+
+#   merge = refs/heads/master
+
+
+
+[branch "test"]
+
+    remote = origin
+
+    merge = refs/heads/test
+
+这里配置的内容包括：
+
+建立一个被命名为origin的remote信息，主要包括url（用于pull和push），和被fetch的引用（用于pull）。
+
+对于名为"test"的branch，采用origin做为其上游所在库；merge选项指定该分支对应的上游库所在分支（用于pul和push）；通过指定这里，可以确保让git pull将代码合并到分支"test"，否则git只会合并默认fetch到的第一个<refspec>内容(refspec是pull和push的参数，用来指定源和目标的字符串，源和目标可以是一个分支的引用，pull和push可以被指定多个refspec)。
+
+**
+
+
+
+**其它
+
+*如果是本地的git clone，push到本地的git库中之前，需要在本地库配置文件中加入以下内容：
+
+[receive]
+denyCurrentBranch = ignore
+
+否则会拒绝push的操作。
+
+
+
+*资料：
+
+man git-push
+
+包含对url配置替代方式相关的内容（如insteadOf）。
+
+包含对remote的配置。
+
+包含对fastforward的解释。
+
+**
+
+***
+
+
+
+
+
+**rebase的作用
+
+1、对于git pull，
+
+合并前：
+
+              4-->6 (master)
+
+         /     
+
+1-->2-->3-->5 (origin/master)
+
+相当于在远程3处调用了git clone，之后得到的本地库便具有两个分支（master表示本地主分支，origin/master表示git clone的来源分支）然后本地修改commit提交形成了本地版本4，同时远端origin/master继续前进至5，本地又也前进至6.
+
+
+
+合并后：
+
+              4-->6 
+
+         /                \ 
+
+1-->2-->3-->5-->7(master,origin/master)
+
+相当于本地运行了一次git pull命令，于是导致远程分支的5和本地的6合并，生成新版本7。pull命令的作用是，获取远端修改，再将此修改合并到本地。
+
+
+
+2、如果我们使用git pull --rebase：
+
+ 1-->2-->3-->5-->4`-->6`(master,origin/master)
+
+相当于
+
+a.缓存master自上次pull后本地所有的更改(即->4-->6的更改)，（实践发现，是第一次pull/clone相应分支的本地提交更改，哪怕之后没有--rebase过很多次的pull）。
+
+b.退回到上次pull的状态(即将master的->4-->6更改取消，退回到3)。
+
+c.调用git pull获取并应用远端的修改（即将master前进到5）。
+
+d.将之前缓存的本地修改应用到新的主分支上(即将之前缓存的->4-->6更改重新作用到5上，得到->4`-->6`，结果和合并一样，但是小了一个具有两个父亲节点的7，以及分支4-6，简化了前进日志过程)。
+
+如果rebase过程中，出现冲突，那么可根据提示，运行"git mergetool"，调用出相应的比较工具(如meld)进行冲突解决，最后git rebase --continue继续进行rebase。
+
+rebase之后，之前缓存的->4-->6的更改，已经无用了，可以用"git gc"将其清除。
+
+具体参考：
+
+http://gitbook.liuhui998.com/4_2.html
+
+http://git-scm.com/book/zh/ch3-2.html
+
+**
+
+
+
+**git tag
+
+标签管理，类似svn中的tags，用于对git中发布的重要发布点贴标签，便于以后跟踪。
+
+*列出所有标签：
+
+$git tag
+
+
+
+*轻量级标签：
+
+$git tag v1.4
+
+这样为当前最新提交创建一个简单地标签。
+
+
+
+*创建带注释的标签：
+
+$git tag -a v1.4 -m "the version 1.4."
+
+
+
+*搜索标签：
+
+$ git tag -l v1.4.2.*
+
+v1.4.2.1
+
+v1.4.2.2
+
+v1.4.2.3
+
+v1.4.2.4
+
+这样可以按照特定表达式搜索已有的标签。
+
+
+
+*为以前的提交创建一个标签：
+
+$git tag v1.1 2f5cff72102b47e7
+
+这样会为2f5cff72102b47e7这个提交创建一个轻量级的标签。
+
+
+
+*查看标签：
+
+$git show v1.1
+
+这样会显示是一个标签，并且显示相应的commit信息。
+
+
+
+*删除标签：
+
+$git tag -d v1.1
+
+这样会将v1.1的tag删除。
+
+
+
+默认情况下，’git push’命令不会将标签上传到远程服务器上。为了共享这些标签，你必须在’git push’命令后明确添加-tags选项；git fetch会将远端tags下载。
+
+**
+
+
+
+未整理：
+
+git clone
+
+git clone --bare
+
+.git目录中包含了所有的内容，其实我们传输文件时只需要目录中有一个.git目录，然后git reset --hard就可恢复出head的内容。或者我们使用git clone --bare只clone其中的.git目录，其余内容可以用git reset --hard在本地还原。
+
+对于本地的git clone，其实默认做的硬链接，速度很快。使用git clone --bare xxx .git会瞬间将xxx直接clone到当前目录的.git形成裸库，通过git reset --hard恢复其内容。
+
+
+
+git difftool查看不同版本的代码如下：
+
+git difftool -t vimdiff ba70acc5 661a4d37 readme.txt
+
+
+
+原理
+
+存储
+
+分布式
+
+操作
+
+git  clean?
+
+清除当前目录包括子目录下所有untracked的文件，也就是未被git版本控制的文件。默认不会对.gitignore中的内容进行清理。
+
+
+
+git reset?
+
+用于取消对工作目录的某些提交，或者未提交的修改。
+
+git reset HEAD <file...>可以，但是不能用get reset --hard HEAD <file...>，--hard不能接路径。
+
+
+
+git revert?
+
+用于对工作目录以前的提交之间的”逆操作“，工作目录应该是干净的，至HEAD的提交之后没有任何修改。
+
+
+
+git checkout回退?
+
+git checkout [--patch] [<tree-ish>] [--] <pathspec>...
+
+当给出--path选项或者<path>之时，checkout将用于取回特定文件或以前的提交。
+
+它将根据<path>或<tree-ish>(一般是一个commit,tag或者tree)更新工作目录中的文件。
+
+在更新工作目录之前，会根据<tree-ish>更新path对应的index。
+
+如果index包含没有被合并的内容，那么checkout默认会失败，不会checkout出任何东西。-f可以忽略未合并的内容，--ours或者--theirs将会合并特定端的内容，-m创建一个包含冲突标记的内容。注意，-f在切换分支将会丢弃本地的修改。
+
+checkout之后，会将当前的HEAD变成detached HEAD，指向相应的commit，在这个detached head上进行的修改和提交不属于任何分支，我们可以用checkout回到原来的分支。之后用git prune or git gc来回收相应的垃圾内容。
+
+*取回某个版本的某个文件：
+
+git checkout 8ec906e7c020cb5b0c55a09c463777390a1de0d2 ./tpapi_shm_test.cpp
+
+这样会取回8ec906e7c020cb5b0c55a09c463777390a1de0d2提交时文件./tpapi_shm_test.cpp中的内容，通过git status可知相对于checkout前导致的改动处于add状态，可以提交，提交结果是导致文件被修改成8ec906e7c020cb5b0c55a09c463777390a1de0d2时的状态，生成的新提交。如果checkout时没有做过任何改动，我们可以通过git reset --hard恢复到checkout前的状态。
+
+
+
+git diff?
+
+默认列出未被添加至index的内容与index中的内容之间的区别（index中的内容可能是被提交的也可能还有未被提交的）。
+
+选项--cached列出添加至index的内容与已经提交到库中的index内容之间的区别。
+
+也可以两个commit为参数，对比两个commit之间的不同。git diff --stat <commit1> <commit2>可以更简洁。
+
+
+
+6.比较两个分支
+git diff dev1 dev2
+
+7.比较两个分支中单个文件的区别
+git diff dev1 dev2 main.c
+
+
+
+
+
+git status?
+
+列出被跟踪但是有未被添加至index（即staged）的内容的文件（ 即not updated），未被跟踪的文件(not stracked)，以及添加至index待提交的内容的状况。
+
+git status <path>
+
+
+
+git stash？
+
+会将你的工作目录变成最后提交的干净目录。而你做的本地修改以及index等脏状态会暂存到一个地方，当然，没有被tracked的文件不会清除掉，可以用git stash list查看。
+
+
+
+冲突的解决：
+
+git merge产生冲突之后：
+
+解决相应文件冲突，删除冲突标记，最后运行git add该文件表明冲突解决。或者使用git mergetool
+
+
+
+git pull产生冲突之后：
+
+如果并入本地修改：
+
+参考：http://www.01happy.com/git-resolve-conflicts/
+
+如果使用远程内容覆盖本地修改：
+
+git reset --hard
+
+git pull
+
+
+
+repo
+
+管理多个git库，git库信息在.repo库中。
+
+
+
+
+
+在linux 下生成的sshkey如果拿到windows下用，那么在windows下将其privatekey转换成putty的(用puttygen)，然后在git的配置文件中，指向这个文件。
+
+
+
+git remote
+
+git tag
+
+git difftool -t vimdiff <commit>{0,2}
+
+
+
+
+
+文件状态：
+
+tracked & changed：文件在index中有所记录，包含一些没有存于index的修改，提交时只会提交index中的内容。
+
+tracked & updated：文件在index中有所记录，其相应修改也缓存在index中，提交时会将其缓存内容提交至库中。
+
+untracked：文件在index中没有记录，其修改肯定没有存于index中。
+
+
+
+git目录的区域：
+
+a、working directory：工作区目录，也就是我们工作的代码目录。
+
+b、staging area：缓存区，即我们的修改，并且这些修改还未提交。
+
+c、repository：存储库区，即提交了修改后的内容。
+
+其中b、c是处于git目录下。也就是我们项目整个git目录中的.git目录下。
+
+还有说法：
+
+snap shot：当前工作目录中内容的快照，包含你的修改。
+
+index：包含添加至staging area中但是还未提交至repository的修改内容，以及已经添加至repository的index。
+
+repository：同上，存放最终提交修改的库，包含各个提交版本的库（commit）。
+
+如下图：
+
+
+
+
+
+
+
+git reset [--<mode>] [<commit>]
+
+将当前分支的HEAD指向参数<commit>对应的提交版本，同时根据mode选项更新index和working tree。提示：对diff和status子命令的理解会有助于此处的理解。
+
+选项--<mode>可能取值及其含义：
+
+           --soft
+
+不更新index中的内容，也不更新working tree中的内容，只更新它们的状态，但是要求它们的状态是有序的”好状态“。执行之后，你的所有改变的文件内容都不会变化，只是index中有些内容的状态变成待提交。例如：假设我们已经提交好了v1,v2,v3之后，又修改了一些东西但是没有添加至index，利用"git reset --soft v2"之后，结果是repository中的head变成了v2，v2到v3的改动仍旧在index中，working tree中的文件内容不变，使用"git status"会发现文件有待提交的内容，以及没有被添加至index中的内容。使用"git diff"会看见没有被添加的内容仍旧是v3之后被修改的内容，使用"git diff -cached"会看见待提交的内容是v2到v3之间的改动。
+
+
+
+           --mixed
+
+将index进行reset（也就是说，被修改的文件仍然保存，但是由于不存放在index中了所以不会被标记为待提交的内容），同时会报告什么不会被updated。例如：假设我们已经提交好了v1,v2,v3之后，利用"git reset v2"之后，结果是repository中的head变成了v2，v2到v3的改动将会被从index中移除但是working tree中的文件内容不变，使用git status会发现文件状态是被修改了，但是由于修改没有在index所以不会被提交，使用git diff会看见没有被添加到index的修改就是v2到v3的修改（以及提交v3之后本地发生但是没有被添加到index中的修改）。
+
+
+
+           --hard
+
+将工作目录和index与将要被reset的<commit id>严格匹配。所有working tree中被tracked的文件，以及index中的内容都被强制变成<commit id>中的内容，<commit id>之后的修改全部被清空。例如：假设我们已经提交好了v1,v2,v3之后，又修改了一些东西并且添加了一些文件但是没有添加至index，利用"git reset --hard v2"之后，repository中的head变成了v2，untracked文件依然存在，被tracked的文件的内容以及index中的内容全部变成<commit id>时的内容，git diff和git diff --cached没有任何输出。
+
+
+
+           --merge
+
+               Resets the index to match the tree recorded by the named commit, and updates the files that are different between the named
+
+               commit and the current commit in the working tree.
+
+
+
+           --keep
+
+               Reset the index to the given commit, keeping local changes in the working tree since the current commit, while updating working
+
+               tree files without local changes to what appears in the given commit. If a file that is different between the current commit and
+
+               the given commit has local changes, reset is aborted.
+
+
+
+       If you want to undo a commit other than the latest on a branch, git-revert(1) is your friend.
+
+
+
+
+
+
+
+man gittutorial
+
+
+
+解决冲突，最好遵循在merge保证库中内容是提交好的状态，没有workarea和index中没有脏数据。减少冲突解决的复杂度。
+
+否则解决冲突注意四个方面：
+
+工作目录的修改
+
+暂存区的修改
+
+merge来的修改
+
+Merge前的修改
+
+遵循原则，则只需注意两个方面：
+
+merge来的修改
+
+Merge前的修改
+
+参考：http://oldratlee.com/post/2013-02-17/git-conflict
+
+使用stash解决冲突：
+
+假设本地修改了一些东西，没有提交，也没有add。
+
+当git pull之后会发生冲突，会自动对git pull中的merge进行abort（但是远端的fetch保留下来了）。之后查看git diff和git diff --cached内容和pull之前一样。
+
+为合并并解决冲突，需要：
+
+(1)git stash
+
+这样会将你的工作内容暂存，尽管没有add，但是也会暂存下来，暂存之后，你的工作目录状态处于最后一次提交之后修改之前。
+
+（2）git pull
+
+stash之后，如果最后一次提交不冲突，那么就不冲突，直接进行下面。
+
+如果冲突，那么会产生冲突标记，解决冲突，去掉冲突标记，并add上解决好的冲突文件之后，进行下一步。
+
+所以直接pull。
+
+（3）git stash list
+
+查看刚才暂存的区域名称，一般如果没有其它的stash，名称为stash@{0}。
+
+（4）git stash pop stash@{0}
+
+这样会自动对你的内容合并（merge）？
+
+如果没有冲突，没有提交过：
+
+没有冲突，提交过：
+
+如果有冲突，则通过git status可以看到相应文件出现：both modified等之类的冲突提示。
+
+如果有时候不允许pop，可以用：git stash show -p | git apply 尝试一下，意思是先用show -p命令将stash中的内容显示为补丁，然后用git apply将补丁应用。
+
+（5）解决冲突
+
+修改冲突的文件，去掉冲突标记，最后add，commit。
+
+
+
+
+
+“Fast forward”：当在master上创建并切换到新的分支修改后，切换回master分支进行merge（此时master没有做过其它改动），那么会合并就是"Fast forward"的。即：由于当前 master 分支所在的提交对象是要并入的 hotfix分支的直接上游，Git 只需把 master 分支指针直接右移。换句话说，如果顺着一个分支走下去可以到达另一个分支的话，那么 Git 在合并两者时，只会简单地把指针右移，因为这种单线的历史分支不存在任何需要解决的分歧，所以这种合并过程可以称为快进（Fast forward）。
+
+
+
+
+9.将dev1的分支merge到dev2分支
+在dev2分支下，git merge --commit dev1
+
+10.找到dev2在master分支上的commitID
+git merge-base dev2 master
+
+会显示dev2和master两个分支的共同的commitID
+
+
+
+
+
+
+Git 自动维护几个symrefs ，在任何时候都可以标识某次提交。
+
+HEAD
+
+标识当前分支的最后一次提交，当你变换分支，HEAD也换成新分支的最后一次提交。
+ORIG_HEAD
+
+某些操作，如执行merge ，reset时，ORIG_HEAD 记住了变更时的版本，你可以用ORIG_HEAD去恢复到上一次版本。
+FETCH_HEAD
+
+
+MERGE_HEAD
+
+
+
+git pull
+
+对merge的配置 
+
+=git fetch <remote> + git merge <remotebranch>
+
+如果有--rebase，那么相当于：
+
+fetch + rebase
+
+
+
+将远端库中的修改合并到当前分支。这个是默认的模式，git pull是git fetch+git merge FETCH_HEAD的简易方式。
+
+
+
+更精确来说，git pull运行带有相应给定参数的git fetch，然后调用git merge将获取的分支头合并到当前分支。使用 --rebase选项，则使用git rebase来替代git merge。
+
+
+
+<repository>应当是远端库的名字，和传递给git-fetch的一样。<refspec>可以被命名为任意的远端引用（例如一个tag），或者是一系列具有相应远端跟踪分支的引用集合（例如refs/heads/:refs/remotes/origin/），但是，一般它经常是一个远端库中的分支名称。
+
+
+
+默认的<repository>和<branch>值来自"remote"和"merge"的对当前分支的配置，这个配置就像用git branch --track设置的一样。
+
+
+
+假设我们的当前分支是"master"并且有如下历史信息：
+
+                          A---B---C master on origin
+
+                        /
+
+               D---E---F---G master
+
+
+
+"git pull"将会fetch并且replay远端分支自当前分支分歧依赖的修改（也就是E)，直到其当前基于master的提交（也就是C），同时记录器结果于一个新的提交，该提交以其两个父亲为名，附带用户指定的log信息：
+
+                         A---B---C remotes/origin/master
+
+                        /               \
+
+               D---E---F---G---H master
+
+
+
+可以参考git-merge(1)了解详细信息，包括冲突和处理。
+
+在git 1.7.0或之后的版本中，取消一个冲突的合并使用git reset --merge。注意：在旧版本的git中运行git pull时，如果有未提交的改变，这样会导致你产生冲突时难以撤销。
+
+如果任何一个远端的修改覆盖了本地的未提交修改，merge过程将会被自动取消，同时工作目录不会被修改。一般来说，我们最好在pull或者stash之前让本地修改在一个合理的状况下。
+
+
+
+
+
+       <repository>
+
+pull或fetch操作的远端目标库。这个参数可以是一个url，或者远端名称，或被称为remote，参见后面remote相关的配置。
+
+
+
+       <refspec>
+
+其格式是一个可选的+，跟着一个源引用<src>，接着一个:，然后是目标引用<dst>。表示将要把远端的<src>拉取到本地的<dst>。
+
+           The remote ref that matches <src> is fetched, and if <dst> is not empty string, the local ref that matches it is fast-forwarded using
+
+           <src>. If the optional plus + is used, the local ref is updated even if it does not result in a fast-forward update.
+
+远端和<src>相匹配的引用将会被fetch，同时如果<dst>是非空的，那么本地与之匹配的引用将会使用<src>进行fast-forward.如果指定了前面的+，那么本地引用即使不是fast-forward状态也进行更新。
+
+
+
+注意：
+
+如果你想要pull的远端分支以非线性的方式被修改，例如频繁的回退或者rebase，那么pull将会使用一个旧的版本进行合并，好像产生了冲突，导致失败。在这些情况下，你可能会想要使用+来标志需要一个non-fast-forward的更新。目前没有一个简单的方法来确定或者指定一个分支在这个时候会被设置成在库内可用。使用pulling的用户必须知道这种使用方法对于一个分支来说是期望的使用。
+
+
+
+               Note
+
+               You never do your own development on branches that appear on the right hand side of a <refspec> colon on Pull: lines; they are to
+
+               be updated by git fetch. If you intend to do development derived from a remote branch B, have a Pull: line to track it (i.e.
+
+               Pull: B:remote-B), and have a separate branch my-B to do your development on top of it. The latter is created by git branch my-B
+
+               remote-B (or its equivalent git checkout -b my-B remote-B). Run git fetch to keep track of the progress of the remote side, and
+
+               when you see something new on the remote branch, merge it into your development branch with git pull . remote-B, while you are on
+
+               my-B branch.
+
+？注意：你一定不要在出现在pull的<refspec>中的":"右侧的分支上进行你自己的开发工作，这些分支是由git fetch来更新的。如果你想要从一个远端的分支B上进行开发工作，可以用一个可跟踪的pull（也就是Pull:B:remote-B），并且有一个额外的分支my-B在它的基础上来做你自己的开发工作。后者使用git branch my-B remote-B（或者git checkout -b my-B remote-B）来创建。运行git fetch来跟踪远端的过程，当你看到远端新的修改之时，在你处于my-B分支中使用git pull . remote-B将其合并到你的开发分支上。
+
+               Note
+
+               There is a difference between listing multiple <refspec> directly on git pull command line and having multiple Pull: <refspec>
+
+               lines for a <repository> and running git pull command without any explicit <refspec> parameters. <refspec> listed explicitly on
+
+               the command line are always merged into the current branch after fetching. In other words, if you list more than one remote refs,
+
+               you would be making an Octopus. While git pull run without any explicit <refspec> parameter takes default <refspec>s from Pull:
+
+               lines, it merges only the first <refspec> found into the current branch, after fetching all the remote refs. This is because
+
+               making an Octopus from remote refs is rarely done, while keeping track of multiple remote heads in one-go by fetching more than
+
+               one is often useful.
+
+注意，对于在一个<repository>中进行git pull，在其pull 的命令行中存在多个列出的<refspec>和使用多个git pull <refspec>，以及和没有显示指明<refspec>参数的git pull，他们之间有些不同的区别。在命令git pull中显式列出<refspec>通常会在fetching之后，将合并到当前的分支中。也就是说，如果你列出了多个<refspec>（存在多个<src>:<dst>的引用），那么会出现分歧。
+
+
+
+           Some short-cut notations are also supported.
+
+
+
+           ·    tag <tag> means the same as refs/tags/<tag>:refs/tags/<tag>; it requests fetching everything up to the given tag.
+
+
+
+           ·   A parameter <ref> without a colon is equivalent to <ref>: when pulling/fetching, so it merges <ref> into the current branch
+
+               without storing the remote branch anywhere locally
+
+ 10 [remote "origin"]
+
+ 11     url = ssh://url/aosp.git
+
+ 12     fetch = +refs/heads/*:refs/remotes/origin/*
+
+ 13 
+
+ 14 [branch "master"]
+
+ 15     remote = origin
+
+ 16     merge = refs/heads/master
+
+ 17 
+
+ 18 #[branch "aosp.tpe"]
+
+ 19 #   remote = origin
+
+ 20 #   merge = refs/heads/aosp.tpe
+
+
+
+
+
+
+
+
+
+当git clone之后，直接git pull它会自动匹配一个正确的remote url
+
+是因为在config文件中配置了以下内容：
+
+1 [branch "master"]2     remote = origin3     merge = refs/heads/master
+表明：
+
+1.git 处于master这个branch下时，默认的remote就是origin；
+
+2.当在master这个brach下使用指定remote和merge的git pull时，使用默认的remote和merge。
+
+ 
+
+但是对于自己建的项目，并用push到远程服务器上，并没有这块内容，需要自己配置。
+
+假如 当前 仓库有 两个 分支，master 和 test1，当我们 执行了 以下 两条命令之后：
+
+
+
+git config branch.test1.remote origin
+
+git config branch.test1.merge refs/heads/test1
+
+
+
+将在 在config文件中配置了以下内容：
+
+1 [branch "test1"]2     remote = origin3     merge = refs/heads/test1
+
+
+
+
+
+
+$ git config --global user.name "Shilin Yi"
+
+$ git config --global user.email "yishilin@gmail.com" 
+   配置git的参数变量，它可以带以下2个参数：
+   --system，针对系统的所有用户的，对应的配置文件在/etc/gitconfig
+   --global，针对系统当前用户的，对应的配置文件在~/.gitconfig
+   不带参数，针对当前git仓库的，对应的配置文件在.git/config
+   如果在个人pc上使用git，加上参数--global即可
+   如果在公共服务器上使用git，则一定不要带那2个参数
+
+
+
+
+
+
+
+
+
+
+git理解：
+
+（1）概念和原理
+
+发展：FS-CVCS-DVCS
+
+状态：工作区、缓存区、仓库、
+
+存储：object,index
+
+remote,distribute,directory,snapshot,repository,fast-forward
+
+
+
+（3）操作
+
+查询性的操作（diff,status,log,show,）
+
+本地操作(add,commit,branch,checkout,merge,stash,mergetool,difftool)
+
+清理和回退(clean,reset,revert,checkout,gc)
+
+合作开发(fetch,pull,push,remote,rebase,apply,format-patch,am)
+
+其它(config,)
+
+
+
+git diff
+
+git apply
+
+git format-patch要注意的是，如果master与Fix分支中间有多次提交，它会针对每次提交生成一个patch。
+
+参考：
+
+来源： http://blog.chinaunix.net/uid-28621021-id-3487102.html
+
+共享地址： http://note.sdo.com/u/quietheart/n/kUDWS~kWJXLFM706Y00029 生成短地址
+
+
+
+git am
+
+
+
+**git clone
+
+其-l选项在clone的repository为/path/to/repo时默认启用，表示若库在本地，则使用硬链接存储其.git/objects的内容以节省空间。--no-hardlinks选项会强制不用硬链接方式。
+
+**
+
+.gitignore
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Miracle Lv 吕凯 3:06 PM
+
+假设review远端是master
+在本地的工作过程：
+1.更新
+$git pull review master:master
+
+2.创建临时工作分支
+git checkout -b br1
+
+3.修改代码
+$vim ...
+$git add ...
+$git commit ...
+
+4.更新远端：
+$git push origin HEAD:/refs/for/master
+
+5.review合并
+如果有问题则
+vim ...
+or git cherry-pick 
+or git commit --ammend
+直至合并成功。
+
+6.删除本地分支
+git checkout master
+git branch -d br1
+
+7.下一次工作
+$git pull review master:master
+git checkout -b br1
+。。。同上。。。
+
+是这样的过程吗
+
+Joe Chan 陈俊 3:06 PM
+
+是
+
+你每次整理得很及时，哈哈
+
+
+
+
+
+
+
+或者：
+
+
+假设review远端是master
+
+在本地的工作过程：
+
+1.更新
+
+$git pull review master:master
+
+
+
+2.创建临时工作分支
+
+git checkout -b br1
+
+
+
+3.修改代码
+
+$vim ...
+
+$git add ...
+
+$git commit ...
+
+
+
+4. merge br 到master
+
+git checkout master
+
+git cherry-pick 
+
+这里，对于cherry-pick，例如git cherry-pick 01f2dbb940c387418a4b85dd95e228857ebd8aea当前是在master上执行这一条 ，就是把br1 上的01f2dbb940c387418a4b85dd95e228857ebd8aea提交合并到master来，其实差不多是打补丁，把完整的提交记录说明合并过来。
+
+
+
+5.更新远端：
+
+$git push origin HEAD:/refs/for/master
+
+当前还是在master上面。
+
+
+
+6.review合并
+
+如果合并有问题则：
+
+git checkout br1
+
+vim ...
+
+or git commit --ammend
+
+然后回到4。
+
+如果合并成功，继续。
+
+
+
+7.删除本地分支
+
+git checkout master
+
+git branch -d br1
+
+
+
+8.下一次工作
+
+$git pull review master:master
+
+git checkout -b br1
+
+你在更新到远端还是要切换到master
