@@ -1,0 +1,908 @@
+使用git/gerrit工作
+
+
+
+假设某服务器使用git管理代码，gerrit对待合并的提交代码进行审核。我们是客户端，若想参与入其中的项目开发。
+
+一、代码获取
+
+首先，我们需要知道gerrit服务器的地址<gerrit ip>。
+
+其次，需要有一个对应的gerrit账户。
+
+再次，需要知道我们所参与的项目的git地址：登录进gerrit中后，里面列出的多个项目中，找到我们所需项目的git仓库路径：<git path>。
+
+最后使用如下过程完成代码的获取：
+
+1、ssh key添加至gerrit
+
+
+
+将本地~/.ssh/目录下的公钥添加至<gerrit ip>中，以便能用ssh方式从<gerrit ip>获取仓库（若不用ssh方式，即使获取下来的仓库，也可能不能用于工作提交）。
+
+
+
+（1）生成sshkey：
+
+
+
+$ssh-keygen
+
+
+
+ 每次更换机器下载代码之前需要重新添加ssh的key，运行上述命令添加sshkey，运行之后全部按回车选择默认配置，最终会在~/.ssh目录下生成ssh的公钥"~/.ssh/id_rsa.pub"和私钥"~/.ssh/id_rsa"。可以之后自行对公钥私钥重新命名，在~/.ssh/config中指定相应配置就行（参见后面）。
+
+
+
+（2）复制ssh public key：
+
+
+
+$cat ~/.ssh/xxx.pub
+
+
+
+使用cat显示出公钥文件的内容，然后复制下来。
+
+
+
+（3）登录gerrit
+
+
+
+User:<yourname>
+
+
+
+Password:<yourpass>
+
+
+
+若无用户名，应该申请一下。
+
+
+
+（4）登录gerrit之后，在<yourname>->Settings->SSH Public keys中，
+
+
+
+将刚刚复制下来的公钥文件内容粘贴进去，并添加。
+
+
+
+ 
+
+
+
+2、ssh配置
+
+
+
+$vim ~/.ssh/config
+
+
+
+修改~/.ssh/config文件，修改为如下内容：
+
+
+
+Host url
+
+
+
+HostName <gerrit ip>
+
+
+
+User <yourname>
+
+
+
+Port 29418
+
+
+
+IdentityFile ~/.ssh/id_rsa
+
+
+
+ 
+
+
+
+Host gerritxmic
+
+
+
+Hostname <gerrit ip2>
+
+
+
+Port 29418
+
+
+
+User <yourname2>
+
+
+
+IdentityFile ~/.ssh/id_rsa
+
+
+
+这里，User和gerrit中的一样，IdentityFile指定本地ssh私钥文件，Host为有两个，对应两个gerrit服务器。
+
+
+
+ 
+
+
+
+3、git配置
+
+
+
+如下类似配置：
+
+
+
+$git config --global user.email yourname@email.com
+
+
+
+$git config --global user.name yourname
+
+
+
+$git config core.repositoryformatversion 0
+
+
+
+$git config core.filemode true
+
+
+
+$git config core.bare false
+
+
+
+$git config core.logallrefupdates true
+
+
+
+$git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+
+
+
+$git config remote.origin.url ssh://<gerrit  ip>/<git path>
+
+
+
+$git config remote.origin.push HEAD:refs/for/master
+
+
+
+$git config branch.master.remote origin
+
+
+
+$git config branch.master.merge refs/heads/master
+
+
+
+注意需要将自己的用户名相应修改，配置之后，我们可以查看配置类似如下：
+
+
+
+quietheart@lv-k$ git config -l
+
+
+
+user.email=yourname@email.com
+
+
+
+user.name=yourname
+
+
+
+core.repositoryformatversion=0
+
+
+
+core.filemode=true
+
+
+
+core.bare=false
+
+
+
+core.logallrefupdates=true
+
+
+
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+
+
+
+remote.origin.url=ssh://<gerrit ip>/<git path>
+
+
+
+remote.origin.push=HEAD:refs/for/master
+
+
+
+branch.master.remote=origin
+
+
+
+branch.master.merge=refs/heads/master
+
+
+
+ 
+
+
+
+这里，使用--global会将配置信息写入到~/.gitconfig，以后获取的git工作目录会默认从这里读取在其.git/config找不到的内容。不用--global的配置会将信息写入到.git/config中。
+
+
+
+ 
+
+
+
+4、获取git仓库
+
+
+
+$git clonessh://<gerrit ip >/<git path>
+
+
+
+至此获取到仓库代码。
+
+
+
+二、代码提交和更新
+
+
+
+更新代码之前需确认本地机器在gerrit上有相应的sshkey，参见前面。
+
+
+
+1、确保以下步骤配置完毕：
+
+
+
+（1）ssh config文件
+
+
+
+quietheart@lv-k:~/<git path>$ cat ~/.ssh/config
+
+
+
+Host url
+
+HostName <gerrit ip>
+
+User <yourname>
+
+Port 29418
+
+IdentityFile ~/.ssh/id_rsa
+
+
+
+Host gerritxmic
+
+Hostname <gerrit ip2>
+
+Port 29418
+
+User <yourname2>
+
+IdentityFile ~/.ssh/id_rsa
+
+
+
+确保ssh配置如前所述。
+
+
+
+ 
+
+
+
+（2）git config文件
+
+
+
+quietheart@lv-k:~/<git path>$ cat ~/.gitconfig
+
+
+
+[user]
+
+
+
+        email = yourname@email.com
+
+
+
+        name = yourname
+
+
+
+ 
+
+
+
+quietheart@lv-k:~/<git path>$ cat .git/config
+
+
+
+[core]
+
+
+
+        repositoryformatversion = 0
+
+
+
+        filemode = true
+
+
+
+        bare = false
+
+
+
+        logallrefupdates = true
+
+
+
+[remote "origin"]
+
+
+
+        fetch = +refs/heads/*:refs/remotes/origin/*
+
+
+
+        url = ssh://<gerrit ip>/<git path>
+
+
+
+        push = HEAD:refs/for/master
+
+
+
+[branch "master"]
+
+
+
+        remote = origin
+
+
+
+        merge = refs/heads/master
+
+
+
+这里url指定该项目更新自那个git/gerrit服务器。
+
+
+
+ 
+
+
+
+（3）hook
+
+
+
+确保在工作目录顶层（即.git/的父目录）
+
+
+
+$scp <gerrit ip>:/hooks/commit-msg .git/hooks
+
+
+
+这里目的是将使用gerrit所必须的钩子脚本防止工作目录所在git库中的hook中，才能正常进行push和pull。
+
+
+
+ 
+
+
+
+2、工作过程
+
+
+
+建议使用如下工作过程：
+
+
+
+(1).更新主分支:
+
+
+
+$git pull
+
+
+
+ 
+
+
+
+(2).创建用于工作的临时分支并切换之
+
+
+
+$git checkout -b br1
+
+
+
+ 
+
+
+
+(3).在临时工作分支中修改提交代码
+
+
+
+$vim ...
+
+
+
+$git add ...
+
+
+
+$git commit
+
+
+
+建议当前环境变量：EDITOR=vim，以便commit时便于编辑日志。
+
+
+
+ 
+
+
+
+(4).更新代码至gerrit等待review
+
+
+
+$git push
+
+
+
+这里，push的参数已经在.git/config中设置，如果需要提交至别的分支，请参见man git push中相应参数。
+
+
+
+ 
+
+
+
+(5).review后合并前的再次修改
+
+
+
+注意当前还是在br1分支中，如果我们review通过，那么gerrit会自动将代码合并至远端master，如果review过程中我们发现还需修改，那么在合并之前如下：
+
+
+
+$vim ...
+
+
+
+$git add ...
+
+
+
+$git commit --ammend
+
+
+
+.....
+
+
+
+通过commit --ammend可以在gerrit的同一个change id上提交多次，review时会一并合入。
+
+
+
+ 
+
+
+
+(6).删除临时工作分支.
+
+
+
+如果review通过并且合并至远端master分支，我们可以删除临时分支。
+
+
+
+$git checkout master
+
+
+
+$git branch -d br1
+
+
+
+ 
+
+
+
+(7).下一步工作
+
+
+
+和第一步一样，重新pull，建立临时分支，最终push。
+
+
+
+$git pull
+
+
+
+$git checkout -b br1
+
+
+
+...
+
+
+
+ 
+
+
+
+注意：根据man git pull介绍，建议不在主分支上直接修改代码，主分支只用于pull更新，在临时分支上修改代码并且push。如果期间(3)之后出现问题，也可以：
+
+
+
+将br1上的最新修改merge到master上，确认好后从master上push。
+
+
+
+$git checkout master
+
+
+
+$git cherry-pick ...
+
+
+
+这里，对于cherry-pick，例如git cherry-pick 01f2dbb940c387418a4b85dd95e228857ebd8aea当前是在master上执行这一条 ，就是把br1 上的01f2dbb940c387418a4b85dd95e228857ebd8aea提交合并到master来，其实差不多是打补丁，把完整的提交记录说明合并过来。
+
+
+
+主要是因为cherry-pick可以直接将分支中某次尚未合并的提交提前合并到master上，以便查看问题，所以会有此步，一般可以省略这步，直接在br1分支修改成功合并之后做push。
+
+
+
+
+
+其它参考 ：
+
+https://gerrit-review.googlesource.com/Documentation/user-changeid.html
+
+整理一下当前使用gerrit的工作流程，之前配置的git/config有些问题，需要修改一下，而且需要创建相应分支并切换才能提交代码。
+
+一、本地端：
+
+1、.git/config配置文件：
+
+[core]
+
+    repositoryformatversion = 0 
+
+    filemode = true
+
+    bare = false
+
+    logallrefupdates = true
+
+
+
+[remote "origin"]
+
+    url = ssh://url/aosp.git
+
+    fetch = +refs/heads/*:refs/remotes/origin/*
+
+
+
+#[branch "master"]
+
+#   remote = origin
+
+#   merge = refs/heads/master
+
+
+
+[branch "aosp.tpe"]
+
+    remote = origin
+
+    merge = refs/heads/aosp.tpe
+
+这里配置的内容包括：
+
+建立一个被命名为origin的remote信息，主要包括url（用于pull和push），和被fetch的引用（用于pull）。
+
+对于名为"aosp.tpe"的branch，采用origin做为其上游所在库；merge选项指定该分支对应的上游库所在分支（用于pul和push）；通过指定这里，可以确保让git pull将代码合并到分支"aosp.tpe"，否则git只会合并默认fetch到的第一个<refspec>内容(refspec是pull和push的参数，用来指定源和目标的字符串，源和目标可以是一个分支的引用，pull和push可以被指定多个refspec)。
+
+
+
+2、创建分支并切换之：
+
+$git checkout -b aosp.tpe
+
+
+
+3、抓取远端代码
+
+$git pull
+
+Pull=fetch + merge
+
+
+
+4、修改本地代码并提交
+
+$git add .
+
+$git commit
+
+未添加新文件可以直接用”$git commit -a”。
+
+
+
+5、在本地上次提交的基础上继续修改并提交
+
+$git commit --amend
+
+注意，这里最后一行的change id需要和上次基础的changeid一致，做为同一个patch集合，一般用于提交之后发现还有些遗漏的内容的补充，没有必要为那些遗漏内容新建立一个change id。
+
+
+
+二、web端
+
+1、提交后，在web页面:http://172.16.112.66/tpv-review/#/中，可以在all->open看到全部被提交的内容（未合并），在My->changes看到自己提交的内容，打开后看到相应的change id。
+
+2、在打开的change id页面中，添加reviewer，让相关人员检查提交的代码，添加后，相关人员会收到邮件。
+
+3、相关人员打开待review的代码，检查无碍后，可以选择review->publish&submit之类，当达到足够的分数，这样代码便会自动合并到库中。
+
+4、其它人员review时，所有的reviewer和自己都会在邮件中收到期间review时的信息，当review达到合并的条件时会自动合并，这是全员也会收到合并的结果。
+
+5、如果合并产生冲突，需要自行解决，需要在change id页面对应的位置fetch到自己修改的内容，在公共库中无法获取相关日志和内容；未冲突则成功，可以在公共库获取到自己刚刚修改的内容。
+
+需要注意的是：change id不是commit id，可以将其理解所在一系列commit id导致的patch集合。
+
+
+
+
+
+
+
+
+
+
+
+尽管我们可以直接在master上进行pull，add，commit，push；但是建议的工作方式，根据man git pull，不要直接在master上进行工作，需要临时分支。
+
+假设review远端是master
+
+
+
+在本地的工作过程：
+
+
+
+1.更新本地master分支
+
+
+
+$git pull review master:master
+
+
+
+ 
+
+
+
+2.创建并切换临时工作分支
+
+
+
+git checkout -b br1
+
+
+
+ 
+
+
+
+3.修改代码
+
+
+
+$vim ...
+
+
+
+$git add ...
+
+
+
+$git commit ...
+
+
+
+ 
+
+
+
+4. merge br1 到master
+
+
+
+git checkout master
+
+
+
+git cherry-pick
+
+
+
+这里，对于cherry-pick，例如git cherry-pick 01f2dbb940c387418a4b85dd95e228857ebd8aea当前是在master上执行这一条 ，就是把br1 上的01f2dbb940c387418a4b85dd95e228857ebd8aea提交合并到master来，其实差不多是打补丁，把完整的提交记录说明合并过来。
+
+
+
+ 
+
+
+
+5.更新远端：
+
+
+
+$git push origin HEAD:/refs/for/master
+
+
+
+当前还是在master上面。
+
+
+
+ 
+
+
+
+6.review合并
+
+
+
+这里，会将push上去的代码进行review，如果合格，则通过gerrit合并到远端master上。
+
+
+
+如果合并有问题则：
+
+
+
+git checkout br1
+
+
+
+vim ...
+
+
+
+or git commit --ammend
+
+
+
+然后回到4。
+
+
+
+如果合并成功，继续。
+
+
+
+ 
+
+
+
+7.删除本地分支
+
+
+
+git checkout master
+
+
+
+git branch -d br1
+
+
+
+ 
+
+
+
+8.下一次工作
+
+
+
+$git pull review master:master
+
+
+
+git checkout -b br1
+
+
+
+你在更新到远端还是要切换到master
+
+
+
+ 
+
+
+
+主要是因为cherry-pick可以直接将分支中某次尚未合并的提交提前合并到master上，以便查看问题，所以会有4、5两步，一般可以省略这两步，如果没有4、5两步，那么push的操作直接在br1分支修改成功合并之后做。
+
+
+
+
+
+gerrit冲突解决的方法
+
+当push上代码并review通过之后，发生了合并冲突的情况，那么使用如下方式来解决：
+
+$git reset --hard <发生冲突之前的commit id>
+
+这里实在不行就重新git clone一下。
+
+$git pull
+
+进入到review，点击patch set中的cherry-pick，将其中的命令复制下来运行，如：
+
+$git fetch ssh://miracle.lv@172.16.112.66:29418/philips_eu_l refs/changes/75/275/1 && git cherry-pick FETCH_HEAD
+
+之后会提醒获取到更新，同时有一些更新冲突需要自己解决。
+
+$git status .
+
+这样可以看到冲突的文件，显示类似"both modified"字样。
+
+$vim ...
+
+这个命令是用来解决冲突的，打开git status提醒的导致冲突的文件，找到冲突标记并处理。
+
+$git add ...
+
+处理好冲突之后，重新按照git status的提示，运行git add或者git rm之类的命令，将冲突文件加入提交的stage区域。
+
+$git commit
+
+注意，这里change id要放在提交消息的最后，否则push时会有提示，按照提示可以用git commit --amend修改注释。
+
+$git push
+
