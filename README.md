@@ -53,3 +53,6 @@ tmpdoc:包含记录的各类文档，此处文档将被整理至合适的位置�
 [branch "master"]
     remote = origin
     merge = refs/heads/master
+
+bla bla bla...
+
