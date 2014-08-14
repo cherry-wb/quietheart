@@ -16,7 +16,7 @@ find the things you want.
 
 ***项目管理***
 
-本项目通过git进行版本控制，目前使用git hub提供的git服务进行管理。
+本项目通过git进行版本控制，目前使用git hub提供的git服务进行管理，oschina做为备份托管防止被墙。
 使用方式：
 1、通过云服务：
 通过git clone在类似百度云、微云中保存该项目库的分布开发版本。
@@ -38,3 +38,18 @@ test:包含各种内容，用于临时和测试。
 codes:包含各类代码，用于学习和参考等，详见codes/readme。
 
 tmpdoc:包含记录的各类文档，此处文档将被整理至合适的位置。
+
+
+当前托管状态git config：
+[core]
+    repositoryformatversion = 0 
+    filemode = true
+    bare = false
+    logallrefupdates = true
+[remote "origin"]
+    fetch = +refs/heads/*:refs/remotes/origin/*
+    url = https://github.com/vaqeteart/quietheart.git #config for github
+    #url = https://git.oschina.net/quietheart/quietheart.git #config for oschina
+[branch "master"]
+    remote = origin
+    merge = refs/heads/master
