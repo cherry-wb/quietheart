@@ -41,16 +41,23 @@ tmpdoc:包含记录的各类文档，此处文档将被整理至合适的位置�
 
 
 当前托管状态git config：
+
+
 [core]
+
     repositoryformatversion = 0 
     filemode = true
     bare = false
     logallrefupdates = true
+    
 [remote "origin"]
+
     fetch = +refs/heads/*:refs/remotes/origin/*
     url = https://github.com/vaqeteart/quietheart.git #config for github
     #url = https://git.oschina.net/quietheart/quietheart.git #config for oschina
+    
 [branch "master"]
+
     remote = origin
     merge = refs/heads/master
 
