@@ -1,0 +1,290 @@
+++++++APUE读书笔记-19伪终端-05pty程序++++++
+
+
+
+5、pty程序
+================================================
+	写pty程序是因为这样就可以用"pty prog arg1 arg2"方式的键入取代"prog arg1 arg2"方式的键入。
+	当我们使用pty来执行另外一个程序的时候，那个程序会在它自己的session中被执行，并且连接到一个伪终端上面。下面，我们来看一下pty程序的源代码。
+	首先是包含main函数的文件，这个文件会调用前面章节中定义的pty_fork函数。
+	
+	pty程序的main函数
+	#include "apue.h"
+	#include <termios.h>
+	#ifndef TIOCGWINSZ
+	#include <sys/ioctl.h>  /* for struct winsize */
+	#endif
+	
+	#ifdef LINUX
+	#define OPTSTR "+d:einv"
+	#else
+	#define OPTSTR "d:einv"
+	#endif
+	
+	static void set_noecho(int);    /* at the end of this file */
+	void        do_driver(char *);  /* in the file driver.c */
+	void        loop(int, int);     /* in the file loop.c */
+	
+	int main(int argc, char *argv[])
+	{
+	    int             fdm, c, ignoreeof, interactive, noecho, verbose;
+	    pid_t           pid;
+	    char            *driver;
+	    char            slave_name[20];
+	    struct termios  orig_termios;
+	    struct winsize  size;
+	
+	    interactive = isatty(STDIN_FILENO);
+	    ignoreeof = 0;
+	    noecho = 0;
+	    verbose = 0;
+	    driver = NULL;
+	
+	    opterr = 0;     /* don't want getopt() writing to stderr */
+	    while ((c = getopt(argc, argv, OPTSTR)) != EOF) {
+	        switch (c) {
+	        case 'd':        /* driver for stdin/stdout */
+	            driver = optarg;
+	            break;
+	        case 'e':        /* noecho for slave pty's line discipline */
+	            noecho = 1;
+	            break;
+	
+	        case 'i':       /* ignore EOF on standard input */
+	            ignoreeof = 1;
+	            break;
+	
+	        case 'n':       /* not interactive */
+	            interactive = 0;
+	            break;
+	
+	        case 'v':       /* verbose */
+	            verbose = 1;
+	            break;
+	
+	        case '?':
+	            err_quit("unrecognized option: -%c", optopt);
+	        }
+	    }
+	    if (optind >= argc)
+	        err_quit("usage: pty [ -d driver -einv ] program [ arg ... ]");
+	
+	    if (interactive) {  /* fetch current termios and window size */
+	        if (tcgetattr(STDIN_FILENO, &orig_termios) < 0)
+	            err_sys("tcgetattr error on stdin");
+	        if (ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size) < 0)
+	            err_sys("TIOCGWINSZ error");
+	        pid = pty_fork(&fdm, slave_name, sizeof(slave_name),
+	          &orig_termios, &size);
+	    } else {
+	        pid = pty_fork(&fdm, slave_name, sizeof(slave_name),
+	          NULL, NULL);
+	    }
+	
+	    if (pid < 0) {
+	        err_sys("fork error");
+	    } else if (pid == 0) {      /* child */
+	        if (noecho)
+	            set_noecho(STDIN_FILENO);   /* stdin is slave pty */
+	
+	        if (execvp(argv[optind], &argv[optind]) < 0)
+	            err_sys("can't execute: %s", argv[optind]);
+	    }
+	
+	    if (verbose) {
+	        fprintf(stderr, "slave name = %s\n", slave_name);
+	        if (driver != NULL)
+	            fprintf(stderr, "driver = %s\n", driver);
+	    }
+	
+	    if (interactive && driver == NULL) {
+	        if (tty_raw(STDIN_FILENO) < 0)  /* user's tty to raw mode */
+	        err_sys("tty_raw error");
+	    if (atexit(tty_atexit) < 0)         /* reset user's tty on exit */
+	        err_sys("atexit error");
+	    }
+	
+	    if (driver)
+	        do_driver(driver);   /* changes our stdin/stdout */
+	
+	    loop(fdm, ignoreeof);    /* copies stdin -> ptym, ptym -> stdout */
+	
+	    exit(0);
+	}
+	
+	static void set_noecho(int fd)     /* turn off echo (for slave pty) */
+	{
+	    struct termios stermios;
+	
+	    if (tcgetattr(fd, &stermios) < 0)
+	        err_sys("tcgetattr error");
+	
+	    stermios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
+	
+	    /*
+	     * Also turn off NL to CR/NL mapping on output.
+	     */
+	    stermios.c_oflag &= ~(ONLCR);
+	
+	    if (tcsetattr(fd, TCSANOW, &stermios) < 0)
+	        err_sys("tcsetattr error");
+	}
+	在下一节，我们将要看到使用pty程序的各种不同的命令行选项。getopt函数帮助我们将命令参数以一个比较一致的方式包装起来，本书21章对getopt函数进行了更详细的解说。
+	在调用pty_fork之前，我们获得当前termios和winsize结构的值，并且将它们作为pty_fork的参数进行传递。采用这个方法，PTY slave假设具有和当前终端同样的初始状态。
+	从pty_fork返回之后，子进程可以关闭slave PTY的显示，然后调用execvp来执行命令行中指定的程序。所有剩下的命令行的参数都会被作为参数传递给这个程序。
+	父进程可以设置用户终端为raw模式。在这个情况下，父进程也设置exit处理函数以便调用exit的时候重置终端状态。我们后面会对do_driver函数进行描述。
+	父进程然后调用loop函数，这个函数会将从标准输入上面接收到的所有数据拷贝到PTY master上面，并且将拷贝PTY master上面的所有内容到标准输出。为了表示多样性，我们这里在两个进程中对它进行拷贝。当然，在一个进程中使用select,pool或者多线程的方式也可以做到这个效果。
+	
+	补充：鉴于以后可能不会再对像20，21章这样只是开发一个程序的过程描述、这样的章节进行详细的翻译，这里给出一个经过实践的使用和解说getopt的例子。
+	实践的系统为ubuntu 8.04，具体如下：
+	对于getopt函数的解说以及例子：
+	/**@mainpage 程序功能：测试getopt选项以及选项的参数的处理函数的使用方法
+	 *
+	 *#include <unistd.h>
+	 *int getopt(int argc, const * const argv[], const
+	 * char *options);
+	 *extern int optind, opterr, optopt;
+	 *extern char *optarg;
+	 *
+	 *参数argc和argv和main函数的一样，它们就是main函数传进来的；
+	 *参数options是一个字符串，这个字符串包含命令支持的所有选项字符;
+	 *
+	 *如果选项是非法的，或者选项缺少参数，那么getopt会返回一个'?'.
+	 *如果一个选项字符后面跟着一个冒号(即':')，那么说明这个选项需要一个参数。例如有一个命令如下：
+	 *	command [-i] [-u username] [-z] filename
+	 *那么这里的options应该赋值为："iu:z".
+	 *另外，getopt会忽略"--"后面的选项，例如:rm -- -bar,将删除-bar文件。
+	 *
+	 *getopt支持的四个外部变量:
+	 *optarg:
+	 *如果一个选项需要参数，那么getopt在处理一个选项的时候把optarg设置成为指向选项参数字符串的指针。
+	 *opterr:
+	 *如果出现选项错误，getopt会打印一个错误消息。如果去掉这个特性，那么在程序中将opterr设置成0.
+	 *optind:
+	 *下一个要处理的参数在argv数组中的索引。它从1开始，在每次用getopt处理参数的时候会增1。
+	 *optopt:
+	 *如果在处理选项的时候遇到了一个错误，getopt将会设置optopt， 让它指向导致错误的选项字符串。
+	 * */
+	#include <unistd.h>
+	//#include <fcntl.h>//只用这个也行
+	//#include <getopt.h>//只用这个也行
+	
+	#include <stdio.h>
+	extern char *optarg;
+	extern int optind;
+	int main(int argc, char *argv[])
+	{
+		if(argc == 1)
+		{//没有参数
+			printf("Introduction:\n");
+			printf("Syntax is:\n%s [-i] [-u username] [-z] filename\n",argv[0]);
+		}
+		else
+		{
+			printf("Begin to process...\n");
+			char c;
+			char *optStr = "iu:z";
+			while((c = getopt(argc, argv, optStr)) != -1)
+			{//不要忘了加"()","="的优先级小于"!=".
+				switch(c)
+				{//处理每一个选项
+					case 'i':
+						printf("The argument \'i\' is used. \n");
+						break;
+					case 'u':
+						printf("The argument \'u\' is used,and ");
+						printf("the parameter of \'u\' is:%s \n", optarg);//选项的参数
+						break;
+					case 'z':
+						printf("The argument \'z\' is used. \n");
+						break;
+					case '?':
+						printf("Invalid option!\n");
+						break;
+	
+				}
+			}
+	
+			//选项处理完毕之后，处理输入的真正参数
+			printf("option ok, and the main parameter is \"%s\"\n", argv[optind]);
+			printf("Processed complete!\n");
+		}
+		return 0;
+	}
+	
+	言归正转（早上上班的时候在公交车上学到的，用英语应该是"Let's get down to business."^_^），这里给出前面用到的loop函数。
+	
+	loop函数
+	#include "apue.h"
+	#define BUFFSIZE    512
+	static void sig_term(int);
+	static volatile sig_atomic_t    sigcaught; /* set by signal handler */
+	
+	void loop(int ptym, int ignoreeof)
+	{
+	    pid_t   child;
+	    int     nread;
+	    char    buf[BUFFSIZE];
+	
+	    if ((child = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (child == 0) {    /* child copies stdin to ptym */
+	        for ( ; ; ) {
+	            if ((nread = read(STDIN_FILENO, buf, BUFFSIZE)) < 0)
+	                err_sys("read error from stdin");
+	            else if (nread == 0)
+	                break;      /* EOF on stdin means we're done */
+	            if (writen(ptym, buf, nread) != nread)
+	                err_sys("writen error to master pty");
+	        }
+	
+	        /*
+	         * We always terminate when we encounter an EOF on stdin,
+	         * but we notify the parent only if ignoreeof is 0.
+	         */
+	        if (ignoreeof == 0)
+	            kill(getppid(), SIGTERM);   /* notify parent */
+	        exit(0);    /* and terminate; child can't return */
+	    }
+	
+	    /*
+	     * Parent copies ptym to stdout.
+	     */
+	    if (signal_intr(SIGTERM, sig_term) == SIG_ERR)
+	        err_sys("signal_intr error for SIGTERM");
+	
+	    for ( ; ; ) {
+	        if ((nread = read(ptym, buf, BUFFSIZE)) <= 0)
+	            break;      /* signal caught, error, or EOF */
+	        if (writen(STDOUT_FILENO, buf, nread) != nread)
+	            err_sys("writen error to stdout");
+	    }
+	
+	    /*
+	     * There are three ways to get here: sig_term() below caught the
+	     * SIGTERM from the child, we read an EOF on the pty master (which
+	     * means we have to signal the child to stop), or an error.
+	     */
+	    if (sigcaught == 0) /* tell child if it didn't send us the signal */
+	        kill(child, SIGTERM);
+	    /*
+	     * Parent returns to caller.
+	     */
+	}
+	
+	/*
+	 * The child sends us SIGTERM when it gets EOF on the pty slave or
+	 * when read() fails.  We probably interrupted the read() of ptym.
+	 */
+	static void sig_term(int signo)
+	{
+	    sigcaught = 1;      /* just set flag and return */
+	}
+	
+	注意，通过两个进程，当一个进程终止的时候，它应该通知另外一个进程。我们使用SIGTERM信号进行通知。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch19lev1sec5.html
+
+
+

@@ -1,0 +1,92 @@
+++++++APUE读书笔记-14高级输入输出-02非阻塞I/O++++++
+
+
+
+2、非阻塞I/O
+================================================
+	在前面我们描述了系统调用可以分为慢系统调用以及其他的系统调用，慢系统调用实际上就是那些可以导致永远阻塞的系统调用。它们包括：
+	a.当特定的文件类型(管道，终端设备，网络设备)中的数据不存在的时候，可以导致调用者永远阻塞的读操作。
+	*特定文件类型（管道，网络流等）无法理解接收向其中写入数据时，可以导致调用者永远阻塞的写操作。
+	b.对一些特定类型文件的打开操作阻塞，直到发生某些特定的条件（例如打开终端设备的操作会等待一直到modem有了响应，以写的方式打开管道而同时没有其他进程在读取其数据）
+	c.对持有强制记录锁的文件进行读写操作
+	d.一些特定的ioctl操作
+	e.一些进程通信函数(后面会说)
+	同时那些对于磁盘的输入输出的系统调用并不是慢系统调用，尽管对磁盘文件的读写操作会临时阻塞那个调用者。
+	非阻塞i/o发起的i/o操作，例如open,read,或者write等不会导致永远阻塞。如果操作不能被完成，那么调用会立即返回，并且给出一个错误以标识操作应该阻塞。
+
+	对于一个给定的描述符，有两种方式用来指定非阻塞的i/o：
+	a.调用open获得文件描述符的时候，我们可以指定O_NONBLOCK标记。
+	b.对于已经打开的文件描述符我们可以调用fcntl来打开文件的O_NONBLOCK状态标记，
+	早期版本的System V使用O_NDELAY标记来指定非阻塞模式。如果read函数没有足够的数据读取，那么这些版本的System V返回一个0。因为返回0和正常unix系统中表示文件结束的返回0相冲突，所以POSIX.1选择了另外一个不同的名字和语义来表示一个非阻塞的标记。在早期的System V中，当我们从read函数中返回一个0的时候，我们无法确定这个调用应该阻塞还是到达了文件的结尾。我们将会看到，POSIX.1要求如果从一个非阻塞的文件描述符号中读取的时候没有数据，那么read将会返回1并且设置errno为EAGAIN。有一些从System V继承下来的平台既支持原来的O_NDELAY也支持POSIX.1的O_NONBLOCK，但是在本文中，我们使用POSIX.1的方式，原来的O_NDELAY只是为了向后兼容，不应该在新的应用程序中使用了。
+	4.3BSD为fcntl函数提供了一个FNDELAY标记，并且它的语义有一点不一样的地方。它不仅仅是影响文件描述符号的文件状态标记，而且终端设备或者socket的标记也会被改变成费阻塞的了，并且会影响到所有使用终端和socket的用户而不仅仅是只影响共享同样的文件描述表（4.3BSD的非阻塞I/O只在terminal和socket上面工作）的用户。同时，如果对于一个非阻塞的文件描述符号的操作如果无法完成，那么4.3BSD返回EWOULDBLOCK。今天，基于BSD的系统提供了POSIX.1的O_NONBLOCK标记，并且将EWOULDBLOCK定义成和EAGAIN一样。这些系统提供的非阻塞的语义一和其他POSIX兼容的系统相一致了：即文件状态标记的改变会影响使用同样的文件描述表的用户，但是和通过其他文件描述表访问同样设备的用户无关。
+
+	举例
+	这里给出了一个非阻塞i/o的例子。例子从标准输入读取500,000个字节，然后尝试把它们写到标准输出。标准输出首先被设置成非阻塞的。输出在一个循环中进行，每次都把将要打印的结果写到标准错误输出。
+	char    buf[500000];
+	int main(void)
+	{
+	int     ntowrite, nwrite;
+	char    *ptr;
+
+	ntowrite = read(STDIN_FILENO, buf, sizeof(buf));
+	fprintf(stderr, "read %d bytes\n", ntowrite);
+
+	set_fl(STDOUT_FILENO, O_NONBLOCK); // 设置成非阻塞
+
+	ptr = buf;
+	while (ntowrite > 0) {//通过循环对非阻塞的设备不断地写，直到写完
+		errno = 0;
+		nwrite = write(STDOUT_FILENO, ptr, ntowrite);
+		//如果本次写无法满足那么立即返回并打印错误，等下次写
+		fprintf(stderr, "nwrite = %d, errno = %d\n", nwrite, errno);
+
+		if (nwrite > 0) {
+			ptr += nwrite;
+			ntowrite -= nwrite;
+		}
+	}
+
+	clr_fl(STDOUT_FILENO, O_NONBLOCK); //清除非阻塞标记
+	exit(0);
+	}
+
+	这里运行程序的时候将标准输入重新定向成一个普通文件了。
+	如果标准输出被重新定向成了一个普通的文件那么只写了一次，过程大致如下：
+	$ ls -l /etc/termcap                           打印将要读取的文件以及大小
+	-rw-r--r-- 1 root      702559 Feb 23  2002 /etc/termcap
+	$ ./a.out < /etc/termcap > temp.file           标准输入重新定向为那个文件，标准输出也重新定向
+	read 500000 bytes
+	nwrite = 500000, errno = 0                     a single write
+	$ ls -l temp.file                              verify size of output file
+	-rw-rw-r-- 1 sar       500000 Jul   8 04:19 temp.file
+	从输出信息中，我们看到并没有打印任何的错误信息。
+
+	但是如果标准输出是一个终端，我们将会看到写多次，每次write会返回一部分数据，有时候还打印错误信息，过程如下：
+	$ ./a.out < /etc/termcap 2>stderr.out           只将标准错误重新定向，标准输出是原来的终端
+		.................							这里会打印许多输出到标准输出
+		$ cat stderr.out 							查看被重定向的标准错误信息
+		read 500000 bytes
+		nwrite = 216041, errno = 0
+		nwrite = -1, errno = 11                            1,497 of these errors
+		...
+		nwrite = 16015, errno = 0
+		nwrite = -1, errno = 11                            1,856 of these errors
+		...
+		nwrite = 32081, errno = 0
+		nwrite = -1, errno = 11                            1,654 of these errors
+		...
+		nwrite = 48002, errno = 0
+		nwrite = -1, errno = 11                            1,460 of these errors
+		...											省略更多信息
+		nwrite = 7949, errno = 0
+	从这里可知有许多尝试写的操作没有成功。
+
+	在这个系统中，错误号码11就是EAGAIN，终端驱动可以接收的数据的数目因系统有所不同。输出的结果也因你登陆系统的方式而不同：通过系统终端，有线终端，还是使用伪终端的网络连接。如果你在终端上运行一个窗口系统，你也可能通过一个伪终端设备。
+	在这个例子中，程序会发起上千的写调用，尽管如此，也只是大概有10到20次需要输出数据，剩余的只是返回错误。这个类型的循环叫做polling，它也是一种对多用户系统上cpu时间的浪费。在后面的章节中，我们将会看到对于非阻塞文件描述符号的多I/O操作的方式其效率会更高一些。
+	有时候，我们可以通过使用多线程技术来避免使用非阻塞i/o，我们可以通过让独立的线程阻塞在I/O调用上面，其他的线程继续它们的处理。有时侯，这样会简化设计，我们在后面会看到。然而有时候，用于同步的开销可能会增加系统的复杂，可能还不如不用线程。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec2.html
+
+
+

@@ -1,0 +1,230 @@
+++++++APUE读书笔记-17高级进程通信-05用于打开的服务进程版本1++++++
+
+
+
+5、用于打开的服务进程版本1
+================================================
+	通过传递文件描述符号，我们开发一个用于打开的服务进程，这个程序被一个进程执行来打开一个或者多个文件。但是服务进程不会将文件内容发送给调用进程，而是将一个被打开的文件描述符号发送给调用进程。这样服务进程可以工作在任何文件类型上面（例如套接字文件，设备文件等）而不仅仅是普通文件类型。这样通过IPC传输的数据也会最少，从客户到服务传递文件名称和文件打开模式，从服务到客户传递返回的文件描述符号；而文件的内容并不通过IPC进行传递。
+	将服务进程设计成为一个独立的可执行程序有许多的好处(像本节这样我们可以通过调用exec来进行执行，或者像下一节我们可以将它当做一个守护服务进程):
+	a)服务进程可以很容易地被客户进程连接上，就像使用库函数那样。我们并不是将服务硬编码到一个应用程序中，而是将它设计成为一个可以被其它者重用的通用工具。
+	b)如果我们想要修改服务进程，那么只会影响到一个程序。相反更新一个库函数可能会导致所有的调用这个库函数的应用程序更新(也就是通过连接编辑器重新连接)，当然动态连接共享库可以简化这个过程。
+	c)服务程序可以做为一个set-user-id程序，这样可以给客户进程提供额外它不具备的权限。而库函数(或共享库函数)无法提供这样的功能。
+
+	客户进程创建一个s-pipe(stream-based pipe或者UNIX域套接字对)然后调用fork和exec执行服务程序，客户通过s-pipe发送请求，服务通过s-pipe响应请求。
+	我们在客户和服务之间定义如下应用程序协议：
+	a)客户通过s-pipe给服务进程发送"open <pathname> <openmode>\0" 形式的请求。<openmode>是一个数值，ASCII十进制的，open函数的第二个参数，请求字符串以null字节结束。
+	b)服务进程通过调用send_fd或者send_err将打开的文件描述符号或者错误返回。
+	下面是一个发送给父进程打开的文件描述符号的例子。后面我们会使用一个单个的守护进程服务的例子来修改这个程序，那里服务进程发送文件描述符号给一个完全没有关系的进程。
+
+	首先我们定义头文件，包含了一些标准头文件和函数的声明：
+	open.h头文件
+	#include "apue.h"
+	#include <errno.h>
+	#define CL_OPEN "open"        /* client's request for server */
+	int     csopen(char *, int);
+
+	main函数就是一个循环，从标准输入读取路径，然后将文件拷贝到标准输出。这个函数调用csopen来连接打开文件的服务进程，并且返回一个打开的文件描述符号。
+	客户进程的main函数（版本1）
+	#include    "open.h"
+	#include    <fcntl.h>
+	#define BUFFSIZE    8192
+	int main(int argc, char *argv[])
+	{
+	    int     n, fd;
+	    char    buf[BUFFSIZE], line[MAXLINE];
+
+	    /* read filename to cat from stdin */
+	    while (fgets(line, MAXLINE, stdin) != NULL) {
+	        if (line[strlen(line) - 1] == '\n')
+	            line[strlen(line) - 1] = 0; /* replace newline with null */
+
+	        /* open the file */
+	        if ((fd = csopen(line, O_RDONLY)) < 0)
+	            continue;   /* csopen() prints error from server */
+
+	        /* and cat to stdout */
+	        while ((n = read(fd, buf, BUFFSIZE)) > 0)
+	            if (write(STDOUT_FILENO, buf, n) != n)
+	                err_sys("write error");
+	        if (n < 0)
+	            err_sys("read error");
+	        close(fd);
+	    }
+
+	    exit(0);
+	}
+
+	创建了s-pipe管道之后，函数csopen调用fork和exec服务进程。
+	csopen函数（版本1）
+	#include    "open.h"
+	#include    <sys/uio.h>     /* struct iovec */
+	/*
+	 * Open the file by sending the "name" and "oflag" to the
+	 * connection server and reading a file descriptor back.
+	 */
+	int csopen(char *name, int oflag)
+	{
+	    pid_t           pid;
+	    int             len;
+	    char            buf[10];
+	    struct iovec    iov[3];
+	    static int      fd[2] = { -1, -1 };
+
+	    if (fd[0] < 0) {    /* fork/exec our open server first time */
+	        if (s_pipe(fd) < 0)
+	            err_sys("s_pipe error");
+	        if ((pid = fork()) < 0) {
+	            err_sys("fork error");
+	        } else if (pid == 0) {      /* child */
+	            close(fd[0]);
+	            if (fd[1] != STDIN_FILENO &&
+	              dup2(fd[1], STDIN_FILENO) != STDIN_FILENO)
+	                err_sys("dup2 error to stdin");
+	            if (fd[1] != STDOUT_FILENO &&
+	              dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO)
+	                err_sys("dup2 error to stdout");
+	            if (execl("./opend", "opend", (char *)0) < 0)
+	                err_sys("execl error");
+	        }
+	        close(fd[1]);               /* parent */
+	    }
+	    sprintf(buf, " %d", oflag);     /* oflag to ascii */
+	    iov[0].iov_base = CL_OPEN " ";      /* string concatenation */
+	    iov[0].iov_len  = strlen(CL_OPEN) + 1;
+	    iov[1].iov_base = name;
+	    iov[1].iov_len  = strlen(name);
+	    iov[2].iov_base = buf;
+	    iov[2].iov_len  = strlen(buf) + 1;  /* +1 for null at end of buf */
+	    len = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
+	    if (writev(fd[0], &iov[0], 3) != len)
+	        err_sys("writev error");
+
+	    /* read descriptor, returned errors handled by write() */
+	    return(recv_fd(fd[0], write));
+	}
+
+	子进程关闭管道的一端，父进程关闭另外一端。exec服务进程之前，子进程首先将管道的没有关闭的那端dup到其标准输入和标准输出中。(另外一个可以选择的就是将文件描述符号fd[1]的ASCII表示作为一个参数传递给服务进程)
+	父进程给服务进程发送包含路径和open模式的请求。最后，父进程调用recv_fd来返回文件描述符号或者错误。如果错误被服务进程返回，那么向标准错误输出写相关的信息。
+
+	现在我们来查看一下打开的服务进程。下面就是客户进程exec的opend程序的代码。首先我们需要有一个opend.h头文件，这个头文件包含一些标准的头文件以及声明一些全局变量和函数。
+	opend.h头文件，版本1
+	#include "apue.h"
+	#include <errno.h>
+	#define CL_OPEN "open"         /* client's request for server */
+
+	extern char  errmsg[];  /* error message string to return to client */
+	extern int   oflag;     /* open() flag: O_xxx ... */
+	extern char *pathname;  /* of file to open() for client */
+
+	int      cli_args(int, char **);
+	void     request(char *, int, int);
+
+	main函数读取s-pipe上面的客户的请求（从它的标准输入），并且调用函数request。
+	服务进程的main函数，版本1
+	#include    "opend.h"
+	char     errmsg[MAXLINE];
+	int      oflag;
+	char    *pathname;
+	int main(void)
+	{
+	    int     nread;
+	    char    buf[MAXLINE];
+
+	    for ( ; ; ) {   /* read arg buffer from client, process request */
+	        if ((nread = read(STDIN_FILENO, buf, MAXLINE)) < 0)
+	            err_sys("read error on stream pipe");
+	        else if (nread == 0)
+	            break;      /* client has closed the stream pipe */
+	        request(buf, nread, STDOUT_FILENO);
+	    }
+	    exit(0);
+	}
+
+	函数request进行所有的处理工作。它调用函数buf_args来将客户的请求变成标准的参数列表形式，然后调用cli_args处理客户进程的参数。如果所有的工作做好了，那么open会被调用来打开文件，然后send_fd通过s-pipe发送文件描述符号给客户进程( 它的标准输出)。如果遇到了一个错误，那么通过使用我们之前描述的客户服务协议，send_err会被调用来将一个错误消息发送回去。
+	request函数，版本1
+	#include    "opend.h"
+	#include    <fcntl.h>
+	void request(char *buf, int nread, int fd)
+	{
+	    int     newfd;
+
+	    if (buf[nread-1] != 0) {
+	        sprintf(errmsg, "request not null terminated: %*.*s\n",
+	          nread, nread, buf);
+	        send_err(fd, -1, errmsg);
+	        return;
+	    }
+	    if (buf_args(buf, cli_args) < 0) {  /* parse args & set options */
+	        send_err(fd, -1, errmsg);
+	        return;
+	    }
+	    if ((newfd = open(pathname, oflag)) < 0) {
+	        sprintf(errmsg, "can't open %s: %s\n", pathname,
+	          strerror(errno));
+	        send_err(fd, -1, errmsg);
+	        return;
+	    }
+	    if (send_fd(fd, newfd) < 0)     /* send the descriptor */
+	        err_sys("send_fd error");
+	    close(newfd);       /* we're done with descriptor */
+	}
+	客户请求是一个以null结束的，空白分割的字符串。下面的函数buf_args会将这个字符串变成标准argv形式的参数列表，然后调用用户函数处理相应的参数。本章后面我们将要使用buf_args函数。我们使用ISO的标准C函数strtok来将字符串分割成各个参数。
+	buf_args函数
+	#include "apue.h"
+	#define MAXARGC     50  /* max number of arguments in buf */
+	#define WHITE   " \t\n" /* white space for tokenizing arguments */
+	/*
+	 * buf[] contains white-space-separated arguments.  We convert it to an
+	 * argv-style array of pointers, and call the user's function (optfunc)
+	 * to process the array.  We return -1 if there's a problem parsing buf,
+	 * else we return whatever optfunc() returns.  Note that user's buf[]
+	 * array is modified (nulls placed after each token).
+	 */
+	int buf_args(char *buf, int (*optfunc)(int, char **))
+	{
+	    char    *ptr, *argv[MAXARGC];
+	    int     argc;
+
+	    if (strtok(buf, WHITE) == NULL)    /* an argv[0] is required */
+	        return(-1);
+	    argv[argc = 0] = buf;
+	    while ((ptr = strtok(NULL, WHITE)) != NULL) {
+	        if (++argc >= MAXARGC-1)    /* -1 for room for NULL at end */
+	            return(-1);
+	        argv[argc] = ptr;
+	    }
+	    argv[++argc] = NULL;
+
+	    /*
+	     * Since argv[] pointers point into the user's buf[],
+	     * user's function can just copy the pointers, even
+	     * though argv[] array will disappear on return.
+	     */
+	    return((*optfunc)(argc, argv));
+	}
+
+	被buf_args调用的服务进程的函数是cli_args。它会检查客户进程发送了正确的促使数目，然后将其中的路径和打开模式存放在全局的变量中去。函数代码如下：
+	cli_args函数
+	#include    "opend.h"
+	/*
+	 * This function is called by buf_args(), which is called by
+	 * request().  buf_args() has broken up the client's buffer
+	 * into an argv[]-style array, which we now process.
+	 */
+	int cli_args(int argc, char **argv)
+	{
+	    if (argc != 3 || strcmp(argv[0], CL_OPEN) != 0) {
+	        strcpy(errmsg, "usage: <pathname> <oflag>\n");
+	        return(-1);
+	    }
+	    pathname = argv[1];     /* save ptr to pathname to open */
+	    oflag = atoi(argv[2]);
+	    return(0);
+	}
+	这样就完成了打开文件服务进程，这个进程使用客户进程的fork和exec运行。fork之前会创建一个单个的s-pipe，然后使用这个s-pipe来在客户进程和服务进程之间进行通信。通过这个架构，对与每个客户，我们都有一个服务。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch17lev1sec5.html
+
+
+

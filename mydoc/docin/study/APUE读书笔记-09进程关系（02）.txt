@@ -1,0 +1,56 @@
+++++++APUE读书笔记-09进程关系（02）++++++
+
+
+
+2、登陆终端
+================================================
+	从前的Unix用户都是通过接线连接的哑终端来进行登陆系统的。这些要么是来自本地要么来自远程，但都来自内核中的终端设备的登陆.同时由于主机中终端设备的数目是固定的，所以可以同时登陆的用户数目也是固定的。后来随着图形终端的流行，窗口系统为用户提供了终端窗口来模拟基于字符的终端。
+	现在，有些平台允许你在登陆之后可以启动窗口系统，或者有些平台自动就为你启动了一个窗口系统但你还是需要登陆的，这取决于你的窗口系统是如何配置的。下面将要描述使用terminal登陆unix的过程,无论是图形终端还是什么，这些过程都是类似的。
+	（1）BSD系统上面的终端登陆：
+	这种登陆已经30多年没有什么变化了.系统管理员首先创建一个文件(一般是/etc/ttys),这个文件的每一行描述每种字符终端设备。每一行给出了设备名称，以及其它一些传入getty程序的参数,例如终端的波特率。当内核启动的时候，创建进程ID为1的init进程，这个进程会把系统引导成多用户系统。对于每一个可以登陆的终端设备，init进程读取/etc/ttys,然后进行fork再exec执行getty程序,参考文献中有相应的图形表示。这里简单用文字来描述一下：
+	a)init调用fork,fork出多个init
+	b)每个init调用exec,exec的是getty程序。
+	上述所有进程的real uid和effective uid都是0，init在exec程序getty的时候的环境变量为空。
+	getty程序对终端设备调用open,open的终端用来reading和writing.如果设备是一个modem,那么open可能会在设备驱动中延迟，直到modem拨号成功调用得到回复。
+	终端被open之后，文件描述符号0,1,2就会被设置成这个终端设备，然后getty会打印出login:并且等待我们输入用户名。如果终端支持多种速率，那么getty可以检测到特殊字符，并且告诉它来修改终端的波特率。
+	我们可以查看getty的man手册来了解更多的信息。当我们输入完用户名之后，getty的任务就完成了，它会调用类似如下的语句来启动login程序:"execle("/bin/login", "login", "-p", username, (char *)0, envp);"
+
+	可以在gettytab中有其他的选项来启动其他的程序，但是默认来说启动得就是login程序。init调用getty的时候环境变量是空的，getty会为login创建环境变量(envp参数).环境变量的名字有终端的名称（例如TERM=foo,这里终端foo的类型从gettytap文件中获取）,以及其它在gettytab中指定的环境变量字符串.login的-p标志告诉它保存传递给它的环境变量并且追加新的环境变量，而不是替代。参考资料中有个图说明了这个过程,大致描述如下：
+	a)init读取/etc/ttys文件，对每一个termimal进行fork，并且设置空的环境变量。
+	b)fork出来的每一个init进行exec，exec的程序是getty.
+	c)getty打开termial设备，读取用户名称，初始化环境变量，然后调用exec,exec的程序是login.
+	以上，因为最开始的init具有superuser权限，所以后面所有的进程都有superuser权限，由于调用了exec，所有exec之后进程的pid不会发生变化，因此除了最开始的init之外，所有进程的父进程都是pid为1的init。
+	login程序做的事情不少。它根据我们给它的用户名称，调用getpwnam从我们的passwd中获取一个entry,然后login调用getpass来显示"Passwork:"提示符号，我们开始输入密码（这是后，输入的显示被屏蔽），然后它调用crypt来对我们输入的密码进行加密，然后将shadow中的entry的pw_passwd域和加密之后的结果相比较,如果login由于密码非法而失败，那么login会调用exit(1)返回，并且将终止通知给父进程（init),然后对这个terminal调用另外一个fork和exec生成getty,和前面说的过程一样。
+	前面叙述的是unix系统上面传统的认证过程，现在的unix系统支持多种认证过程。例如FreeBSD,Linux,Mac OS X,和Solaris都支持PAM(pluggable Authentication Modules)这种更灵活的方案。PAM允许管理员配置认证的方法，这些方法用来访问使用PAM库写的服务。
+	如果我们的应用程序需要确认一个用户是否有合适的权限来执行一个任务，那么我们可以再这个应用程序中进行硬编码实现认证机制，也可以使用PAM库。使用PAM的优点是，管理员可以基于本地站点的策略，针对不同的任务配置不同的途径，给用户授权。
+	如果我们登陆正确了,那么login程序会：
+	a)切换到我们的主目录
+	b)更改终端设备的属主(chown)，这样我们可以拥有这个终端设备
+	c)更改终端设备的访问权限，这样我们可以有相应的读写权限
+	d)通过调用setgid和initgroups来设置我们的组id
+	e)使用login程序已知信息来初始化环境变量(HOME,SHELL,USER,LOGNAME,PATH).
+	f)切换成我们的uid然后采用如下形式调用loginshell："execl("/bin/sh", "-sh", (char *)0);"
+	这里，argv[0]前面的"-"表示这个sh是一个登陆发起的sh，这样shell可以根据这个字符来对启动做相应的调整。
+	login程序还会作许多其它的事情，例如检查email，打印时间等信息等等，我们这里只专注我们指出的那些动作。
+	如前面所述，setuid被superuser调用会改变readl user id,effective uid,saved uid三种uid.login 会更早地调用setgid,并且其效果和setuid类似。
+	这时候，我们的login shell的父进程id是init的进程id，所以当我们的login shell结束的时候，init进程会被通知到（SIGCHLD），然后会对当前的terminal重复前面的过程。参考资料给出了相应的图示。描述大致如下：
+	a)init程序经过前面的过程，将login shell启动起来
+	b)将文件描述符号0,1,2设置到terminal device,并且与terminal device driver交互
+	c)再往后是终端的用户使用终端和terminal device driver交互
+	之后，login shell读取startup文件（bourne shell和korn shell是.profile;GNU bourne again shell是.bash_profile,.bash_login或者.profile;c shell是.cshrc,.login）,它们通常会设置一些额外的环境变量，然后我们就可以在提示符号下面键入命令了。
+
+	（2）Mac OS X上的终端登陆：
+	由于是基于Free BSD的，所以过程一样。然而我们可以图形显示login 启动。
+
+	（3）Linux 上的终端登陆：
+	Linux上面的登陆过程和BSD系统差不多，实际Linux的login命令就是从BSD继承过来的，两者主要不同的地方就是终端配置的指定方式。
+	在Linux上，/etc/inittab包含了用来指定终端驱动的配置信息，init需要为这个终端驱动启动一个getty进程，其中的过程和systemV类似。根据使用的getty版本不同，终端的特性可以由命令行指定（agetty程序），或者由文件/etc/gettydefs指定(mgetty程序)
+
+	（4）Solaris上面的终端登陆：
+	Solaris支持两种类型的登陆：a)getty类型b)ttymon类型.一般用不上，这里就不浪费时间了，具体参照参考资料。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec2.html
+
+
+

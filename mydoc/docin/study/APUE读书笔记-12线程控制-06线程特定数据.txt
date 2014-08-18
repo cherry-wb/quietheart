@@ -1,0 +1,80 @@
+++++++APUE读书笔记-12线程控制-06线程特定数据++++++
+
+
+
+6、线程特定数据
+================================================
+	这里的线程特定数据也就是线程私有数据，是一种只存取指定线程相关的数据的一种机制。使用线程私有数据，每个线程就可以访问它自己的私有数据拷贝，而不用担心和其他线程同步的问题了。
+	本来提出线程可以方便地共享进程的数据和属性，然而引入接口让线程私有数据保持和其它线程的隔离，也有它自己的道理。
+	首先，有时候我们需要基于线程来维护一些数据。线程的ID不一定是整数，所以我们不能构通过使用线程ID做为一个存放线程数据的数组的索引来实现这个机制，即使线程的ID是整数，我们也可能对数据进行一些额外的保护，防止其他的线程访问到本线程的数据。
+	第二个使用线程私有数据的原因就是，希望能够提供一种机制可以在多线程的环境下使用基于进程的接口。一个典型的例子就是，errno.根据前面的内容我们可以知道，这是一个在进程范围内的全局数据，在系统调用或者是一些库函数失败的时候会设置这个变量。为了在进程的环境下也能够使用同样的系统调用和库函数，errno被重新定义为一个线程的私有数据，这样在进程中，一个线程调用函数设置的errno不会影响到其它的线程。
+	需要注意的是，所有的线程都可以访问整个的进程地址空间，除非使用寄存器，一个线程无法阻止其它的线程访问它的数据。对于线程私有数据也是如此，尽管实现上没有提供访问的保护，但是可以通过一些函数，来管理这些线程私有数据，这样来保证线程在这些私有数据上与其他的线程保持独立。
+
+	在分配线程私有数据的时候，我们需要创建一个和这个数据相关的关键字，利用这个关键字来访问线程私有数据。我们使用函数pthread_key_create来创建一个线程关键字。
+	#include <pthread.h>
+	int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *));
+	如果成功返回0，如果失败返回错误号码。
+	由keyp来指向创建的关键字在内存中的位置，在进程中同样的关键字可以被所有的线程使用，但是每个线程会向这个关键字关联一个不同的（它自己的）线程私有数据的地址。创建关键字之后，和这个关键字相关联的每个线程的私有数据地址为空。
+	创建一个关键字(key)的时候，pthread_key_create会将一个可选的析构函数和这个key相关联，当线程退出并且数据的地址被设置为非空的时候，会以数据地址做为析构函数的参数，调用这个析构函数。如果析构函数的指针为空，那么不会有析构函数和这个关键字相互关联。当线程使用pthread_exit或者return来正常退出的时候，会调用到这个析构函数，但是如果线程调用exit,_exit,_Exit或者abort这些函数异常退出的时候，就不会调用到这个析构函数了。
+	线程一般使用malloc来分配它们自己的线程私有数据，析构函数使用free来释放这些数据。如果线程退出的时候没有释放这些数据会导致内存泄露。
+	线程可以为使用线程私有数据，创建多个关键字，每一个关键字有一个析构函数和它相关联。操作系统对一个进程中可以创建的关键字的数目有所限制(PTHREAD_KEYS_MAX)。
+	线程退出的时候，线程私有数据的析构函数的调用次序是和系统实现相关的。有可能一个线程私有数据会调用另外一个函数，而那个函数会再次创建线程私有数据并且将私有数据和一个关键字相互关联，当所有析构函数调用完了之后，系统会检查是否还存在非空的线程似有数据指针和关键字相互关联，如果有则再次调用析构函数，直至所有的私有数据为空或者达到了一个最大的迭代次数PTHREAD_DESTRUCTOR_ITERATIONS。
+
+	我们可以通过调用pthread_key_delete来将所有线程的私有数据和一个关键字的关系断开。
+	#include <pthread.h>
+	int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *));
+	如果成功返回0，如果失败返回错误号码。
+	注意，调用pthread_key_delete并不会调用和key相关联的析构函数，如果想要释放和key相关的线程私有数据占用的内存，我们需要在应用程序中进行额外的步骤。
+
+	由于可能会在初始化的时候存在竞争的关系，我们必须要保证自己分配的key在期间不会被改变，而下面的代码就有可能出现两个线程同时调用pthread_key_create函数：
+	void destructor(void *);
+	pthread_key_t key;
+	int init_done = 0;
+	int threadfunc(void *arg)
+	{
+		if (!init_done) {//这里，可能另外一个线程先进入了这个分支，还没有来得及修改init_done本线程就又进来了。
+			init_done = 1;
+			err = pthread_key_create(&key, destructor);
+		}
+		...
+	}
+
+	可能一个线程看到的key值和另外一个线程的不一样，这取决于系统线程调度的实现。我们可以使用pthread_once来解决这个问题。
+	#include <pthread.h>
+	pthread_once_t initflag = PTHREAD_ONCE_INIT;
+	int pthread_once(pthread_once_t *initflag, void (*initfn)(void));
+	如果成功返回0，如果失败返回错误号码。
+	这里，initflag必须是一个非局部变量(得是全局或者静态的)，并且要被初始化为PTHREAD_ONCE_INIT。
+
+	如果每个线程都调用pthread_once，这样系统能够保证初始化函数initfn只被调用一次，也就是在第一次调用pthread_once的时候，所以，正确的创建一个key而不会有竞争发生的方法如下：
+	void destructor(void *);
+	pthread_key_t key;
+	pthread_once_t init_done = PTHREAD_ONCE_INIT;
+	void thread_init(void)
+	{
+		err = pthread_key_create(&key, destructor);
+	}
+
+	int threadfunc(void *arg)
+	{
+		pthread_once(&init_done, thread_init);
+		...
+	}
+
+	创建了一个key之后，我们可以调用pthread_setspecific将线程私有数据和一个key相关联，可以调用pthread_getspecific来获取和key相关联的本线程私有数据的地址。
+	#include <pthread.h>
+	void *pthread_getspecific(pthread_key_t key);
+	返回线程似有数据值或者如果没有相应的值与key相关联就返回NULL。
+	int pthread_setspecific(pthread_key_t key, const void *value);
+	如果成功返回0，如果失败返回错误号码。
+	因为如果线程没有私有数据和key相关联的时候，我们会得到一个空指针，所以利用这个特性我们可以用来判断是否应该调用pthread_setspecific。
+
+	举例：
+	这里给出了一个使用线程私有数据实现线程安全的getenv的例子，在前面，我们已经通过修改接口，实现了一个线程安全的新的getenv,但是如果我们不能修改应用程序来使用新的接口的时候，我们就需要使用线程私有数据的机制来实现这个线程安全的getenv了，具体请参见参考资料。
+	主要我们需要注意的就是，使用pthread_once来创建key保证key只创建一次，使用pthread_getspecific来获取私有数据的指针，如果获取的指针为空我们需要使用malloc分配内存用来存放私有数据并且将其地址用pthread_setspecific和key相关联，这样我们之后就能够使用pthread_getspecific来获取关联过的数据地址了，我们需要在一个析构函数里面使用free来释放刚才用malloc分配的内存，如果线程私有数据的地址非空那么会做为参数传给这个析构函数。另外需要注意，这样写出来的函数是线程安全的但是不一定是信号可重入的，即使使用了递归互斥量也是如此，因为malloc函数本身就不是信号安全的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch12lev1sec6.html
+
+
+

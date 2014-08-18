@@ -1,0 +1,28 @@
+++++++APUE读书笔记-19伪终端-07高级特性++++++
+
+
+
+7、高级特性
+================================================
+	伪终端还有一些额外的特性，我们这里简单对它们列出。这些特性在Sun Microsystems和BSD的pty的man手册第4节中描述了。
+
+	包模式
+	包模式可以让PTY master获知PTY slave的状态变化。在Solaris上面，这个模式通过向PTY master端推送pckt的STREAMS模块来实现。我们在前面第2节中的"Solaris下面伪终端的结构"图中，对其进行了展示。在FreeBSD, Linux, 和 Mac OS X中，这个模式通过ioctl的TIOCPKT命令来激活。
+	Solaris和其他平台的包模式细节有一些不同。Solaris下面，由于pckt模块将特定的事件转化成非数据的STREAMS消息，所以从PTY master读取的进程需要调用getmsg来获得来自stream头的消息。在其他平台下面，每次从PTY master读取都会返回一个状态字节接着一个可选的数据。
+	除去这些实现上面的细节，包模式的目的就是在PTY slave上面的行规则模块发生如下事件的时候，通知读取PTY master的进程：当读取队列被flushed，当写队列被flushed，当输出停止的时候（例如Control-S导致其停止），当输出重新启动的时候，当XON/XOFF流控制在被禁止之后再次被使能的时候，在XON/XOFF流控制在被使能之后又被禁止的时候。这些事件，在诸如rlogin客户和rlogind服务进程中可能会被用到。
+
+	远程模式
+	通过使用ioctl的TIOCREMOTE命令，PTY master可以设置PTY slave为远程模式。尽管FreeBSD 5.2.1, Mac OS X 10.3, 和 Solaris 9使用同样的命令来使能这个特性，在Solaris中ioctl的第3各参数是一个整数，而FreeBSD 和 Mac OS X的相应参数是一个指向整数的指针(Linux 2.4.22 不支持这个命令)。
+	当设置成这个模式的时候，PTY master告诉PTY slave行规则模块，不要对从PTY master接收到的任何数据进行处理，要忽略slave的termios结构中的canonical/noncanonical标记。Remote模式用于一些类似窗口管理的应用程序，这些应用程序进行它们自己的行编辑。
+
+	窗口大小的改变
+	PTY master上面的进程可以通过ioctl的TIOCSWINSZ命令来设置slave的窗口大小。如果新的大小和当前的大小不一样，那么会给PTY slave的前台进程组发出一个SIGWINCH信号。
+
+	信号产生
+	读写PTY master的进程可以给PTY slave的进程组发送信号。在Solaris 9中，这个通过ioctl的TIOCSIGNAL命令来实现，其第三个参数就是信号的号码。FreeBSD 5.2.1 和 Mac OS X 10.3中，相应的ioctl命令是TIOCSIG，并且第三个参数是一个指向表示信号号码的整数的指针(Linux 2.4.22 也不支持这个ioctl命令)。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch19lev1sec7.html
+
+
+

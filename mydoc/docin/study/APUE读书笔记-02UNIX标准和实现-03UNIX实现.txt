@@ -1,0 +1,54 @@
+﻿++++++APUE读书笔记-02UNIX标准和实现-03UNIX实现++++++
+
+
+
+3、UNIX系统实现
+================================================
+	前面的章节讨论了ISO C, IEEE POSIX以及Single UNIX Specification。这三个标准是由独立的组织创建的。然而，标准也不过就是接口的规范。这些标准是怎样和实际相关联的呢？这些标准实际被供应商采纳，然后将其转化成实际的实现。本书中，我们对这些标准以及它们的实现都会有所涉及。
+	对于UNIX系统的历史，具体可以参见原书中指明的参考资料。任何均从版本6（1976年）以及版本7（1979年）的、运行在PDP-11的UNIX 共享分时系统（一般就称作版本6和版本7）而来。这些是贝尔实验室外发行的最开始的版本。然后产生了三个分支：
+	（a）一个是在AT&T中，导致产生System III 和System V，也就是所谓的商业UNIX系统。
+	（b）一个是伯克利的加利福尼亚大学的版本，导致产生了4.xBSD的实现。
+	（c）在AT&T计算科学研究中心的贝尔实验室研究的UNIX系统版本，导致产生了UNIX共享分时系统的第8，9版本，然后结束于1990年的第10版本。
+
+（1）UNIX System V Release 4
+	UNIX System V Release 4 (SVR4)，（这个翻译成UNIX 系统V版本4有点别扭，直接采用原名了）是AT&T的UNIX系统实验室（USL，原来是AT&T UNIX软件操作）生产的。SVR4并入了AT&T的System V Release 3.2 (SVR3.2)、Sun Microsystems的SunOS操作系统、加利福尼亚大学的4.3BSD、以及微软的Xenix系统的功能，形成了一个一致的操作系统。（Xenix原来开发来自Version 7，后来从System V中采纳了许多功能）。SVR4源代码发布于1989年末，1990年第一次向最终用户提供可用版本。SVR4遵从POSIX 1003.1 标准和 the X/Open Portability Guide, Issue 3 (XPG3).
+	AT&T也发布了System V Interface Definition (SVID) [AT&T 1989].SVID的第3次发行指定如果一个操作系统遵从UNIX System V Release 4实现所必须提供的功能。和POSIX.1一样，SVID指定了一个接口而非实现。在SVID中，系统调用和库函数并没有什么不同之处。请参考manual手册中的信息来了解SVR4的实现的不同[AT&T 1990e]。
+
+（2）4.4BSD
+	BSD是The Berkeley Software Distribution的简称，它的发行版由伯克利的加利福尼亚大学的Computer Systems Research Group (CSRG) 来发行。1983年发布了4.2BSD，1986年发布了4.3BSD。两个发行版本都运行在VAX微机上。后来1988年发布的4.3BSD Tahoe也运行在一个被称为Tahoe的微机上。后来1990年有了4.3BSD Reno发行版，支持许多POSIX.1特性。
+	原来的BSD系统包含AT&T的专有代码，并且需要AT&T的许可证。我们必须拥有AT&T的UNIX代码许可，才能够获得BSD系统的源代码。后来，这个状况改变了，越来越多的AT&T代码被非AT&T代码所替代，并且越来越多的特性被添加到基于非AT&T代码的BSD系统中。
+	1989年，伯克利将4.3BSDTahoe中很多非AT&T源代码提取，并使其成为公众可用的BSD网络软件，1.0版。其后则有BSD网络软件的2.0版，它是从4.3BSD Reno版导出的，其目的是使大部分4.4BSD系统不再受AT&T许可证的限制，其全部源代码都可为公众使用。
+	4.4BSD-Lite其目的是作为最后一版CSRG发行。因为和USL有法律上的纠纷，它的引入被延迟了。当纠纷解决之后，它很快就在1994年发行了，它不需要任何UNIX源代码授权。1995年，CSRG后来又在此之后发布了一个修正了一些bug的版本。这个版本，叫做4.4BSD-Lite, release 2，它就是CSRG的最后一个BSD版本。
+	在伯克利所进行的UNIX开发工作是从PDP-11开始的，然后转移到VAX微机上，再后来又转移到工作站上。90年代早期，伯克利得到支持在广泛应用的80386个人计算机上开发BSD版本，于是产生了386BSD。这一工作是由 Bill Jolitz完成的，其相关文档有发表在 1991年Dr.Dobb´s Journal上的系列文章(每月一篇)。其中很多代码出现在BSD网络软件2.0版中。
+
+（3）FreeBSD
+	FreeBSD基于4.4BSD-Lite操作系统。在伯克利的加利福尼大学的Computing Science Research Group结束对BSD版本操作系统的开发工作之后，以及同时386BSD已经被搁置了很久的情况下，FreeBSD项目项目在BSD之后继续进行开发。
+	所有FreeBSD项目下产生的软件无论是二进制文件还是源代码形式的文件都是免费自由的。The FreeBSD 5.2.1也是本书中所使用的四个用来测试其例子的系统之一。
+	当然也有一些其它的基于BSD的免费操作系统。NetBSD项目(http://www.netbsd.org)类似FreeBSD项目但是强调硬件平台之间的移植特性；OpenBSD项目 (http://www.openbsd.org) 也和FreeBSD很类似但是强调安全性。
+
+（4）Linux
+	Linux是一个提供了丰富的Unix编程环境的操作系统，并且它是自由免费的，在GNU公共许可协议下。Linux的流行在某些程度上也反映了计算机工业的发展。Linux经常是第一个支持新的硬件的操作系统。
+	Linux在1991年由Linus Torvalds编写用来作为MINIX的一个替代品。这个举动很快迅速地发展成为一个伟大的项目，许多来自世界各地的开发者都奉献了他们的宝贵的时间来加强和使用这个系统。
+	Linux发行的Mandrake9.2发行版作为本书测试例子的系统之一，这个发行版本使用的是2.4.22版的Linux操作系统内核。
+
+（5）Mac OS X
+	Mac OS X所基于的技术和原来的版本完全不同。这个操作系统的内核被叫做"Darwin"，基于Mach内核以及FreeBSD系统。Darwin被作为一个开放源代码项目进行管理，和FreeBSD以及Linux很类似。
+	Mac OS X 的版本10.3 (Darwin 7.4.0)被作为本书的测试例子所运行的操作系统之一。
+
+（6）Solaris
+	Solaris是由Sun Microsystems开发的UNIX系统。基于 System V Release 4，被Sun Microsystems的设计师们完善了近10年。它是仅有的成功的商业SVR4的衍生品，并且原来就是被Unix系统认证了的。（关于UNIX认证更多的信息，参考：http://www.opengroup.org/certification/idx/unix.html）
+	Solaris 9 UNIX系统被作为本书的测试例子所运行的操作系统之一。
+
+（7）其他UNIX系统
+	以前其他被认证的UNIX系统包括：
+	（a）AIX, IBM's 版本的UNIX系统
+	（b）HP-UX, Hewlett-Packard's版本的UNIX系统
+	（c）IRIX,来自 Silicon Graphics的UNIX系统。
+	（d）UnixWare, 继承自SVR4的UNIX系统，并且被SCO出售。
+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch02lev1sec3.html
+
+
+

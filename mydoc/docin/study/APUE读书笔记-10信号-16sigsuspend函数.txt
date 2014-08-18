@@ -1,0 +1,107 @@
+++++++APUE读书笔记-10信号-16sigsuspend函数++++++
+
+
+
+16、sigsuspend函数
+================================================
+	我们已经知道如何改变一个进程的signal mask来阻塞或者取消阻塞被选择的信号。我们可以使用这个技术来保护代码的关键区域，防止它被信号打断。如果我们想要取消阻塞一个信号然后pause，并等待之前被阻塞的信号发生，这会怎样？假设信号是SIGINT，正确的做法是：
+
+	sigset_t     newmask, oldmask;
+	sigemptyset(&newmask);
+	sigaddset(&newmask, SIGINT);
+	/*阻塞SIGINT信号，然后保存当前的signal mask*/
+	if (sigprocmask(SIG_BLOCK, &newmask, &oldmask) < 0)
+		err_sys("SIG_BLOCK error");
+	/*代码的关键区域*/
+	/*重新设置signal mask，这样会取消对SIGINT的阻塞*/
+	if (sigprocmask(SIG_SETMASK, &oldmask, NULL) < 0)
+		err_sys("SIG_SETMASK error");
+	/* 容易发生问题的时间窗口在这里出现了!!!(也就是重新设置signal mask和suspend这两步之间易发生问题) */
+	pause();  /* wait for signal to occur */
+	/*后续的处理*/
+
+	当信号在被阻塞的时候被发送给进程，这个信号的发送将会被延迟，直到信号被取消阻塞。对于应用程序来说，这个看起来就好象信号是在取消阻塞和调用pause之间发生的(取决于内核如何执行信号相关的处理).如果信号真的是在取消对它的阻塞和pause调用之间发生了，那么我们就会有一个问题。然后出现在上述容易发生问题的时间窗口中的这个信号，都会丢失，我们无法再看到这个信号了，这样pause就会被永远地阻塞在了那里。这个问题，也是早期非可靠信号机制中的另一种问题。
+	为了修正这个问题，我们需要一个方法，可以把重新设置信号，以及将进程设置到sleep状态这两步操作变成一个单一的原子性质的操作。通过sigsuspend函数就可以实现这个目的。
+	#include <signal.h>
+	int sigsuspend(const sigset_t *sigmask);
+	返回：返回1（其值实际为-1），并且将errno设置成EINTR.
+
+	进程的signal mask被设置成参数sigmask指向的值，然后进程被suspend，直到信号被捕获，或者直到一个信号发生导致进程被终止。如果一个信号被捕获，并且如果信号处理函数返回了，那么sigsuspend会返回，然后进程的signal mask被设置成调用sigsuspend之前的值。
+	注意，这个sigsuspend没有成功的返回值，如果它从调用中返回了，那么它一定会返回一个1，并且同时将errno设置成EINTR(表征一个被打断的系统调用)。
+
+	举例:
+	static void sig_int(int signo)
+	{
+	    pr_mask("\nin sig_int: ");
+	}
+
+	int main(void)
+	{
+	    sigset_t    newmask, oldmask, waitmask;
+	    pr_mask("program start: ");/*打印字符串以及signal mask.*/
+
+	    if (signal(SIGINT, sig_int) == SIG_ERR)
+	        err_sys("signal(SIGINT) error");
+	    sigemptyset(&waitmask);
+	    sigaddset(&waitmask, SIGUSR1);
+	    sigemptyset(&newmask);
+	    sigaddset(&newmask, SIGINT);
+
+	    /*
+	     * 阻塞SIGINT 信号并且保存当前的signal mask.
+	     */
+	    if (sigprocmask(SIG_BLOCK, &newmask, &oldmask) < 0)
+	        err_sys("SIG_BLOCK error");
+
+	    /*
+	     * 关键代码区域.
+	     */
+	    pr_mask("in critical region: ");/*打印字符串以及signal mask.*/
+
+	    /*
+	     * 暂停并允许除了SIGUSR1之外所有的信号.
+	     * 这里就将重新设置signal mask和suspend合并为一个原子操作了，没有时间窗口问题了。
+	     */
+	    if (sigsuspend(&waitmask) != -1)
+	        err_sys("sigsuspend error");
+
+	    pr_mask("after return from sigsuspend: ");
+
+	    /*
+	     * 恢复SIGINT信号的阻塞.
+	     */
+	    if (sigprocmask(SIG_SETMASK, &oldmask, NULL) < 0)
+	        err_sys("SIG_SETMASK error");
+
+	    /*
+	     * 继续处理...
+	     */
+	    pr_mask("program exit: ");
+
+	    exit(0);
+	}
+
+	上面的例子，给出了保护关键代码区域不被指定的信号所打扰的正确的方法。
+	需要注意的是，当sigsuspend返回的时候，它会把signal mask设置成这个调用之前的signal mask.在这个例子中，SIGINT信号将会被阻塞。所以我们后来将signal mask重新设置为之前我们保存的值（oldmask）.
+
+	运行上述代码程序，输出大致如下：
+	$ ./a.out
+	program start:
+	in critical region: SIGINT
+
+	^?                               键入中断信号字符.
+	in sig_int: SIGINT SIGUSR1
+	after return from sigsuspend: SIGINT
+	program exit:
+
+	在调用sigsuspend的时候，我们把SIGUSR1添加到现有的signal mask中了，所以当信号函数运行的时候，我们可以看到signal mask实际上被改变了。在sigsuspend返回的时候，我们可以看到signal mask 被恢复到调用之前的值了。
+
+	第二个例子省略了，主要思想就是，虽然前面posix列出了许多可重入的函数，但是为了让非posix的系统尽可能的好用，我们在信号处理函数中只设置标记，而不是调用什么系统调用。
+
+	第三个例子涉及到父子进程同步，有待仔细考虑其中的问题...
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec16.html
+
+
+

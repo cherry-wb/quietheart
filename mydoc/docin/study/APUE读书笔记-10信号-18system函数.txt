@@ -1,0 +1,198 @@
+++++++APUE读书笔记-10信号-18system函数++++++
+
+
+
+18、system函数
+================================================
+	前面我们讲述过system函数的实现。但是前面讲过的没有对信号处理的部分。POSIX.1要求system忽略SIGINT和SIGQUIT，阻塞SIGCHLD。再给出可以正确处理这些信号的system之前，我们来看看为什么需要考虑信号处理的部分。
+	例子：
+	static void sig_int(int signo)
+	{
+		printf("caught SIGINT\n");
+	}
+
+	static void sig_chld(int signo)
+	{
+		printf("caught SIGCHLD\n");
+	}
+
+	int main(void)
+	{
+		if (signal(SIGINT, sig_int) == SIG_ERR)
+			err_sys("signal(SIGINT) error");
+		if (signal(SIGCHLD, sig_chld) == SIG_ERR)
+			err_sys("signal(SIGCHLD) error");
+		if (system("/bin/ed") < 0)
+			err_sys("system() error");
+		exit(0);
+	}
+
+	程序运行大致如下：
+	loginshell--fork,exec-->a.out--fork,exec-->/bin/sh--fork,exec-->/bin/ed
+	例子中使用system来启动ed程序。ed是一个编辑器，使用它是因为：它是一个可以交互的程序，并且捕捉interrupt和quit信号。如果我们从shell启动ed，然后输入interrupt字符，那么它会捕获到interrupt信号，并且打印一个问号。ed程序也设置了忽略quit信号。在例子中，捕获SIGINT和SIGCHLD信号，如果我们启动了例子中的程序，那么如下：
+	$ ./a.out
+	a                         向编辑器缓存中追加文本。
+	Here is one line of text
+	.                         结束追加。
+	1,$p                      打印buffer中的第1到最后一行。
+	Here is one line of text
+	w temp.foo                将buffer中的内容写入文件。
+	25                        编辑器提示写入的行数
+	q                         退出编辑器。
+	caught SIGCHLD			  我们的程序输出，提示捕捉到了SIGCHLD信号。
+
+	当编辑器终止的时候，系统发送SIGCHLD信号给父进程，我们会捕获到它并且从signal处理函数中返回。捕获到SIGCHLD之后应该由父进程这样做，这样它自己创建的子进程结束的时候它才能够知道。当执行system函数的时候，发送给parent的这个SIGCHLD应该被阻塞。POSIX.1也是这样指定的。否则，当由system创建的子进程终止的时候，它会导致调用system的进程误以为它自己的一个子进程终止了。调用者将调用wait函数来获得子进程的状态，这样就导致阻止system函数可以从子进程的返回中获得子进程的结束状态。
+	如果我们运行例子程序，同时给编辑器发送一个interrupt信号，输入输出如下：
+	$ ./a.out
+	a
+	hello, world
+	.
+	1,$p
+	hello, world
+	w temp.foo
+	13
+	^?             键入interrupt字符
+	?              编辑器捕获到信号，打印"?".
+	caught SIGINT  父进程也捕捉到信号。
+	q
+	caught SIGCHLD
+
+	前面说过，如果键入interrupt字符，会导致interrupt信号发送给所有前台进程组中的进程(这里，前台进程组中的进程有a.out,/bin/sh,/bin/ed)。在这个例子中，SIGINT会发送给三个进程(shell忽略它)，我们已经从前面的过程中的输出看到了这一点,ed编辑器和a.out都收到了这个信号。但是，当我们使用system函数运行另外一个程序的时候，我们不应该让父子进程都接收到两个中断发起的信号:interrupt和quit。这两个信号应该被发送到运行的程序：子进程。因为通过system运行的命令可以是交互的命令（例如这里的ed），也因为调用system的调用者在执行时放弃了控制并等待执行的结束，所以调用system的调用这应该不再接收这两个终端发起的信号了。这也是为什么POSIX.1指定system函数应该在等待一个命令结束的时候忽略这两个信号。
+
+	举例
+	正确的POSIX.1的system
+	#include      <sys/wait.h>
+	#include      <errno.h>
+	#include      <signal.h>
+	#include      <unistd.h>
+	int system(const char *cmdstring)   /*考虑信号处理的system */
+	{
+	    pid_t               pid;
+	    int                 status;
+	    struct sigaction    ignore, saveintr, savequit;
+	    sigset_t            chldmask, savemask;
+
+	    if (cmdstring == NULL)
+	        return(1);
+
+	    ignore.sa_handler = SIG_IGN;    /* 忽略SIGINT 和 SIGQUIT */
+	    sigemptyset(&ignore.sa_mask);
+	    ignore.sa_flags = 0;
+	    if (sigaction(SIGINT, &ignore, &saveintr) < 0)
+	        return(-1);
+	    if (sigaction(SIGQUIT, &ignore, &savequit) < 0)
+	        return(-1);
+	    sigemptyset(&chldmask);         /* 阻塞信号SIGCHLD */
+	    sigaddset(&chldmask, SIGCHLD);
+	    if (sigprocmask(SIG_BLOCK, &chldmask, &savemask) < 0)
+	        return(-1);
+
+	    if ((pid = fork()) < 0) {
+	        status = -1;
+	    } else if (pid == 0) {          /* 子进程 */
+	        /* 恢复之前的信号处理动作和signal mask */
+	        sigaction(SIGINT, &saveintr, NULL);
+	        sigaction(SIGQUIT, &savequit, NULL);
+	        sigprocmask(SIG_SETMASK, &savemask, NULL);
+
+	        execl("/bin/sh", "sh", "-c", cmdstring, (char *)0);
+	        _exit(127);     /* exec error */
+	    } else {                        /* parent */
+	       while (waitpid(pid, &status, 0) < 0)
+	           if (errno != EINTR) {
+	               status = -1; /* error other than EINTR from waitpid() */
+	               break;
+	           }
+	    }
+
+	    /* restore previous signal actions & reset signal mask */
+	    if (sigaction(SIGINT, &saveintr, NULL) < 0)
+	        return(-1);
+	    if (sigaction(SIGQUIT, &savequit, NULL) < 0)
+	        return(-1);
+	    if (sigprocmask(SIG_SETMASK, &savemask, NULL) < 0)
+	        return(-1);
+
+	    return(status);
+	}
+
+	例子中给出了考虑信号处理的system函数的实现。
+	如果我们把之前的程序用这个system函数链接，那么结果的二进制文件会有如下不同的地方：
+	1.当我们键入interrupt或者quit字符的时候，不会有信号被发送到调用进程。
+	2.当ed命令退出的时候，SIGCHLD不会发送给调用进程。然而，这个信号会一直被阻塞，直到我们在system函数通过waitpid获取到子进程的结束状态之后，最后调用了sigprocmask函数。
+	POSIX.1指出，如果wait或者waitpid在SIGCHLD提交的时候返回子进程的状态，那么SIGCHLD就不应该被发送给进程了，除非又有另外一个子进程的状态可用（意思似乎是不wait就会发送这个信号，wait就没有必要发送了）。本书的四个系统都没有实现这个描述的含义，所以，SIGCHLD在system函数调用了waitpid之后，还是保持着提交的状态；当信号被取消阻塞之后，就会被发送给调用者。如果我们在之前的程序中的sig_chld函数中调用wait函数，那么这个wait函数会返回1同时设置errno为ECHILD，因为system函数里面已经用wait获取过子进程的终止状态了。
+
+	许多早期的实现忽略interrupt和quit信号的方法如下：
+	if((pid = fork()) < 0)
+	{
+		err_sys("fork error");
+	}
+	else if (pid == 0)
+	{
+		/*子进程*/
+		execl(...);/*注意，前面说过execl出来的子进程，会继承父进程的signal mask以及正在提交的信号*/
+		_exit(127);
+	}
+
+	/*父进程*/
+	old_intr = signal(SIGINT, SIG_IGN);
+	old_quit = signal(SIGQUIT, SIG_IGN);
+	waitpid(pid, &status, 0);
+	signal(SIGINT, old_intr);
+	signal(SIGQUIT, old_quit);
+
+	这段代码的问题在于，我们无法保证fork之后是父进程先运行，还是子进程先运行。如果子进程首先运行而父进程在一段时间内还没有来得及运行，那么很可能在父进程改变它的信号处理方式为忽略之前，就产生一个interrupt信号。也由于这个原因，在例子中我们是调用fork之前才修改信号处理的方式的。
+	需要注意的是，我们必须在子进程中execl调用之前将这两个信号属性重新设置回去。这个允许execl基于调用者的信号属性，改变它们的属性为默认的（意思到底是默认属性就是默认属性，还是默认属性变成了父进程的信号属性???）。
+
+	从system的返回值
+	注意system的返回值。这个返回值是shell的结束状态，一般它不总是命令行对应的程序命令的结束状态。在第8章中的一个例子中(参见：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec13.html#ch08fig23)，我们可以看到，如果我们执行一个简单的命令例如date，那么结束状态是0。执行shell命令以44进行exit也会给我们一个44的结束状态，那么如果有了信号机制会怎么样呢？
+
+	对于第8章的例子(参见:http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec13.html#ch08fig24)，我们运行它，并且给执行的命令发送一些信号：
+
+	$ tsys "sleep 30"
+
+	^?normal termination, exit status = 130    键入interrupt按键
+	$ tsys "sleep 30"
+
+	^\sh: 946 Quit                             键入quit按键
+	normal termination, exit status = 131
+	当我们使用interrupt按键终止sleep的时候，pr_exit函数认为终止状态是正常的。当我们使用quit按键的时候也是。这里，Bourne shell对进程结束状态为128加上信号号这个特性的解释很是模糊，但是当命令通过信号被终止的时候，我们可以从shell的交互中看到这样的信息。
+
+	   $ sh                             make sure we're running the Bourne shell
+	   $ sh -c "sleep 30"
+
+	   ^?                               type the interrupt key
+	   $ echo $?                        print termination status of last command
+	   130
+	   $ sh -c "sleep 30"
+
+	   ^\sh: 962 Quit - core dumped     type the quit key
+	   $ echo $?                        print termination status of last command
+	   131
+	   $ exit                           leave Bourne shell
+	这里的系统中，SIGINT的值是2，SIGQUIT的值是3，这样我们得到结束状态分别是128+2=130，以及128+3=132。
+
+	我们来看一个类似的例子，这次我们直接发送信号给shell来看看system会得到什么返回值：
+
+	    $ tsys "sleep 30" &                 start it in background this time
+	    9257
+	    $ ps -f                             look at the process IDs
+	         UID   PID   PPID   TTY    TIME CMD
+	         sar  9260    949   pts/5  0:00 ps -f
+	         sar  9258   9257   pts/5  0:00 sh -c sleep 60
+	         sar   949    947   pts/5  0:01 /bin/sh
+	         sar  9257    949   pts/5  0:00 tsys sleep 60
+	         sar  9259   9258   pts/5  0:00 sleep 60
+	    $ kill -KILL 9258                   kill the shell itself
+	    abnormal termination, signal number = 9
+
+
+	这里，我们可以看到，system的返回值在只有shell本身结束的时候，报告了一个非正常的终止。
+
+	当使用system函数写程序的时候，应该确保正确地解释了返回值。如果你自己亲自调用fork，exec，和wait，那么返回的终止状态就和你调用system的返回不一样了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec18.html
+
+
+

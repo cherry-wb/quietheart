@@ -1,0 +1,130 @@
+++++++APUE读书笔记-04文件和目录（8）++++++
+
+
+
+22、chdir,fchdir,和getcwd函数
+================================================
+	每个进程都有一个当前工作目录，此目录是所有相对路径名(不以斜线开始的路径名)的搜索起点。当用户登录到UNIX系统时，其当前工作目录通常是密码文件(/etc/passwd )中该用户登录项的第6个字段所指定的目录（用户的起始目录）。当前工作目录是进程的属性，而起始目录则是登录名的一个属性。进程调用chdir或fchdir函数可以更改当前工作目录。它们的声明如下：
+	#include <unistd.h>
+	int chdir(const char *pathname);
+	int fchdir(int filedes);
+	两者返回：如果成功返回0，如果错误返回1（其值一般为-1）。 
+	这两个函数参数的含义类似前面，chdir通过文件路径名指定，而fchdir通过文件描述符号来指定。其中fchdir不是POSIX.1中的一个部分，它是SUS的XSI扩展。
+	举例：
+		使用chdir函数的例子
+	#include "apue.h"
+	int main(void)
+	{
+		if (chdir("/tmp") < 0)
+			err_sys("chdir failed");
+		printf("chdir to /tmp succeeded\n");
+		exit(0);
+	}
+	如果我们编译以上代码，生成mycd可执行程序，并且运行，那么结果如下：
+	$ pwd
+	/usr/lib
+	$ mycd
+	chdir to /tmp succeeded
+	$ pwd
+	/usr/lib
+	因为当前工作目录是进程的属性，所以子进程（例如下面的mycd）调用chdir不会影响父进程（运行mycd程序的shell）的当前工作路径，这也是为什么cd命令（切换路径命令）是shell的内建命令而不是一个独立的程序的原因。
+	因为内核保持有当前工作目录的信息，所以我们应能取其当前值。可是，内核为每个进程只保存其当前工作目录的i节点编号以及设备标识，并不保存该目录的完整路径名。
+	如果想要获取当前路径，那么我们需要从当前工作目录开始，找到其上一级的目录，然后读其目录项，直到该目录项中的i节点编号数与工作目录i节点编号数相同，这样地就找到了其对应的文件，然后按照这种方法，逐层上移，直到遇到根，这样就得到了当前工作目录的绝对路径名。其实，函数getcwd就提供了这种功能，其声明如下：
+	#include <unistd.h>
+	char *getcwd(char *buf, size_t size);
+	返回：如果成功返回buf，如果错误返回NULL。 
+	例子：
+	使用getcwd函数的例子
+	#include "apue.h"
+	int  main(void)
+	{
+		char    *ptr;
+		int     size;
+		if (chdir("/usr/spool/uucppublic") < 0)
+			err_sys("chdir failed");
+		ptr = path_alloc(&size); /* our own function */
+		if (getcwd(ptr, size) == NULL)
+			err_sys("getcwd failed");
+		printf("cwd = %s\n", ptr);
+		exit(0);
+	}
+	运行上述代码,得到如下结果: 
+	$ ./a.out
+	cwd = /var/spool/uucppublic
+	$ ls -l /usr/spool
+	lrwxrwxrwx 1 root 12 Jan 31 07:57 /usr/spool -> ../var/spool
+	注意，chdir会处理符号连接（即使是getcwd调用了它），但是当getcwd沿目录树上溯遇到/var/spoo目录时，它并不了解该目录由符号连接/usr/spool所指向（所以它就把这个符号链接作为目录看待了）。这是符号连接的一种特性。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec22.html
+
+
+23、关于设备文件
+================================================
+	和设备文件相关的stat成员是dev_t st_dev;和dev_t st_rdev。
+	*每个文件系统通过主从设备号被获知，这两者属于基本系统类型dev_t(一般是一个整数类型的typedef)。major号标志驱动或者有时候标志和哪个外设板子相通信；minor用来标志特定的从设备。例如一个磁盘通常有多个文件系统，那么在这个磁盘上面的文件系统具有共同的major号，但是具有不同的minor号。
+	*为了访问major号和minor号，一般都有两个宏来达到这个目的：major和minor.我们不用考虑major号和minor号是怎么存放在dev_t中的。在不同系统中dev_t的位是不同的，那位存放什么也不同，具体参见文档。
+	*在系统中一个文件的st_dev值是包含这个文件的文件系统的device number.
+	*只有字符设备文件和块设备文件具有s_rdev值，这个值包含device number和实际的设备。
+	举例：
+	*对于一个文件，其st_dev的major和minor是这个文件所在的文件系统的major和minor.
+	*对于一个字符文件，会有st_dev和st_rdev.其中st_dev是这个字符设备特殊文件的文件节点所在的文件系统的major和minor(虚拟文件系统)，而		st_rdev是这个字符设备文件的实际设备的major和minor号码。
+
+参考:
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec23.html
+
+
+24、文件访问权限位总结
+================================================
+	我们已经讨论过所有文件访问的权限位，有些用于多个用途，下图列出了所有这些权限位，以及当它们应用在普通文件和目录文件时后的含义。
+
+				文件访问权限位大致的情况
++--------------------------------------------------------------------------------------------------------------------------+
+|Constant| Description |                 Effect on regular file        |                 Effect on directory               |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_ISUID |set-user-ID  |set effective user ID on execution             |(not used)                                         |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|        |             |if group-execute set then set effective        |set group ID of new files                          |
+|S_ISGI  |set-group-ID |effective group ID on execution;otherwise      |created in directory to                            |
+|        |             | enable mandatory record locking (if supported)|group ID of directory                              |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_ISVTX |sticky bit   |control caching of file contents (if supported)|restrict removal and renaming of files in directory|
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IRUSR |user-read    |user permission to read file                   |user permission to read directory entries          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IWUSR |user-write   |user permission to write file                  |user permission to remove and create files in      |
+|        |             |                                               |directory                                          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IXUSR |user-execute |user permission to execute file                |user permission to search for given pathname in    |
+|        |             |                                               |directory                                          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IRGRP |group-read   |group permission to read file                  |group permission to read directory entries         |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IWGRP |group-write  |group permission to write file                 |group permission to remove and create files in     |
+|        |             |                                               |directory                                          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IXGRP |group-execute|group permission to execute file               |group permission to search for given pathname in   |
+|        |             |                                               |directory                                          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IROTH |other-read   |other permission to read file                  |other permission to read directory entries         |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IWOTH |other-write  |other permission to write file                 |other permission to remove and create files in     |
+|        |             |                                               |directory                                          |
+|--------+-------------+-----------------------------------------------+---------------------------------------------------|
+|S_IXOTH |other-execute|other permission to execute file               |other permission to search for given pathname in   |
+|        |             |                                               |directory                                          |
++--------------------------------------------------------------------------------------------------------------------------+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec24.html
+
+
+25、总结
+================================================
+	本章以stat函数为中心，详细讨论了stat结构中的每个成员。这使得我们也看到了UNIX文件的所有属性。对一个文件的所有属性以及UNIX编程操作文件所需要的基本函数有了大体的了解。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec25.html
+
+
+

@@ -1,0 +1,30 @@
+++++++APUE读书笔记-14高级输入输出-06异步I/O++++++
+
+
+
+6、异步I/O
+================================================
+	前面使用的select或者poll是一种同步通知的方式。如果我们不发出询问(调用select或者poll函数)，那么系统不会给我们任何通知。我们前面已经知道，信号就是一种异步通知的形式。所有从BSD和System V系统继承过来的系统，都提供了一定形式的异步I/O调用，可以使用信号（System V中是SIGPOLL；BSD中是SIGIO）来通知进程，在一个文件描述符号上面发生了某些值得注意的事情。
+	我们看见，select和poll可以在任何文件描述符号上面工作。但是在System V上面继承过来的系统上面的异步I/O有一些限制，这里的异步只能工作在STREAMS设备或者STREAMS管道上面。在BSD继承过来的系统上面，异步I/O只能工作在终端或者网络上。
+	异步I/O还有一个限制就是，每个进程只能有一个信号。如果我们在多个文件描述符号中使用了异步I/O机制，那么我们无法判别出在信号发送的时候，是哪个文件描述符号产生的信号。
+	Single UNIX Specification包含了一个可选的通用异步I/O机制，这个机制是根据实时草案标准的，它和我们这里描述的机制没有多大关系。这个机制解决了许多旧有的异步I/O机制中的限制，但是我们这里不会讨论这个机制。
+
+	System V的异步I/O机制
+	在System V中异步I/O属于STREAMS系统的一个部分，只工作在STREAMS设备和STREAM管道上面。System V的异步I/O信号是SIGPOLL。
+	为了使用STREAMS设备的异步I/O机制，我们调用ioctl并且让第2个参数为I_SETSIG。第3个参数是一个整数值，这个值是"stropts.h"中定义的常量，在本文中的参考资料中也用表格的形式列出了它们以及其含义，这里就不重复给出了。只列出常量，它们分别是：S_INPUT,S_RDNORM,S_RDBAND,S_BANDURG,S_HIPRI,S_OUTPUT,S_WRNORM,S_WRBAND,S_MSG,S_ERROR,S_HANGUP.
+	除了使用ioctl指定产生SIGPOLL信号的条件，我们也需要为这个信号建立一个信号处理函数。因为从前面讲解信号的时候，我们就可以知道，SIGPOLL会导致进程终止。所以，我们需要在调用ioctl之前先建立信号处理函数。
+
+	BSD的异步I/O机制
+	基于BSD系统的异步I/O调用机制，使用了两个信号，SIGIO和SIGURG。SIGIO信号用来通知进程产生了异步I/O信号，后者用于通知进程在网络连接上面接收到了一个带外的数据。
+	为了接收SIGIO信号，我们需要执行如下三个步骤：
+	a)使用signal或者sigaction建立SIGIO的信号处理函数，
+	b)通过调用使用F_SETOWN的fcntl函数，我们设置进程ID或者进程组ID，用来接收发生在相应文件描述符号上面的数据。
+	c)通过调用使用F_SETFL命令的fcntl函数，设置文件的O_ASYNC状态标记，这样就能够使用文件描述符号的异步I/O机制了。
+	第3步只用于引用终端和网络的文件描述符号，这是BSD系统的异步通知机制的基本限制。
+	对于SIGURG信号，我们只需要执行前面的两个步骤就行了，因为SIGURG只用于那些可以支持带外信息的网络连接的文件描述符号。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec6.html
+
+
+

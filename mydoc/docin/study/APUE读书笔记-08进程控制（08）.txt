@@ -1,0 +1,97 @@
+++++++APUE读书笔记-08进程控制（08）++++++
+
+
+
+11、修改用户id(UID)和组id(GID)
+================================================
+	在unix中，特权以及访问控制是基于UID和GID的。我们设计程序一般要使用最少的特权来完成我们的工作。
+	我们可以使用如下函数设置用户的real user ID和effective user ID:
+	#include <unistd.h>
+	int setuid(uid_t uid);
+	int setgid(gid_t gid);
+
+	修改这些ID有一套规则，我们以 UID为例(GID是一样的):
+	a)如果进程有superuser特权，那么setuid函数会设置real user ID,effective user ID和saved set-user-ID为uid.
+	b)如果进程没有superuser特权，但是设置的uid和real user ID或者saved set-user-ID相等，那么setuid仅仅将effective user ID设置为uid,real user ID和saved set-user-ID不变.
+	c)如果以上两个条件都不满足，那么会返回1，并设置errno为EPERM.
+	(这里设置的是进程的相应uid不是文件的，进程的三种uid:real uid, effective uid,saved set-user-id.核心是进程的effective uid)
+	这里，我们假设_POSIX_SAVED_IDS是true.如果这个特性没有被提供，那么就删除前面所有和saved set-user-ID相关的内容。
+	saved IDs是2001版本POSIX.1的必有特性。以前版本的POSIX它们是可选的。如果想要查看当前系统实现是否支持这个特性，我们可以在编译的时候测试_POSIX_SAVED_IDS宏开关，或者在运行的时候调用传递了_SC_SAVED_IDS的sysconf函数。
+
+	我们简单描述一下内核是如何来维护这三种UID的：
+	a)只有superuser进程可以改变real user ID.一般来说，real user ID是由login程序在我们登陆之时来设置，之后就不会改变了。因为login是一个superuser process,当它调用setuid的时候，它会设置所有三种user ID.
+	b)effective user ID是exec函数在程序文件的set-user-ID位被置位的时候设置的(设置成程序文件的UID)。如果set-user-ID位没有被设置，那么exec函数保持当前的effective user ID值不变。我们可以在任何时候调用setuid设置effective user ID为real user ID或者saved set-user-ID.一般来说，我们不能把effective user ID设置成任何值。
+	c)saved set-user-ID是exec从effective user ID拷贝来的。如果文件的set-user-ID位被设置，那么这个拷贝(saved set-user-ID)会在exec从文件的user ID存储到effective user ID之后被保存。
+	这个参考资料中有个表格简单列出了这三种进程ID改变的情况如下：
++-----------------------------------------------------------------------------+
+|    ID     |                 exec                 |       setuid(uid)        |
+|           |--------------------------------------+--------------------------|
+|           | set-user-ID bit  |  set-user-ID bit  | superuser | unprivileged |
+|           |       off        |        on         |           |     user     |
+|-----------+------------------+-------------------+-----------+--------------|
+| real user | unchanged        | unchanged         | set to    | unchanged    |
+| ID        |                  |                   | uid       |              |
+|-----------+------------------+-------------------+-----------+--------------|
+| effective | unchanged        | set from user ID  | set to    | set to uid   |
+| user ID   |                  | of program file   | uid       |              |
+|-----------+------------------+-------------------+-----------+--------------|
+| saved     | copied from      | copied from       | set to    | unchanged    |
+| set-user  | effective user   | effective user ID | uid       |              |
+| ID        | ID               |                   |           |              |
++-----------------------------------------------------------------------------+
+
+	注意，我们通过getuid和geteuid只能获得当前的real user ID和effective user ID.我们无法获得当前saved set-user-ID的值。
+
+	例子：
+	我们用一个例子来说明这个saved set-user-ID特性的使用。这个例子就是man程序。man程序可以用来显示在线帮助手册，man程序可以被安装指定set-user-ID或者set-group-ID为一个指定的用户或者组。man程序可以读取或者覆盖某些位置的文件，这一般由一个配置文件(通常是/etc/man.config或者/etc/manpath.config)或者命令行选项来进行配置。
+	man程序可能会执行一些其它的命令来处理包含显示的man手册页的文件。为防止处理出错，man会从两个特权之间进行切换：运行man命令的用户特权，以及man程序的拥有者的特权。大致过程如下：
+	a,假设man程序文件被用户man所拥有，并且已经被设置了它的set-user-ID位，当我们exec 它的时候，我们有如下情况：
+	real user ID = 我们的用户UID
+	effective user ID = man用户UID
+	saved set-user-ID = man用户UID
+	b.man 程序会访问需要的配置文件和man手册页。这些文件由man用户所拥有，但是由于effective user ID是man,文件的访问就被允许了。
+	c,在man为我们运行任何命令的时候，它会调用setuid(getuid())).因为我们不是superuser进程，这个变化只能改变effective user ID. 我们会有如下情况：
+	real user ID = 我们的用户UID(不会被改变)
+	effective user ID = 我们的用户UID
+	saved set-user-ID = man 的用户UID(不会被改变)
+	现在man进程运行的时候把我们得UID作为它的effective user ID.这也就是说，我们只能访问我们拥有自己权限的文件。也就是说，它能够代表我们安全地执行任何filter.
+	d.当filter做完了的时候，man会调用setuid(euid).这里，euid是man用户的UID.(这个ID是通过man调用geteuid来保存的)这个调用是可以的，因为setuid的参数和saved set-user-ID是相等的。(这也就是为什么我们需要saved set-user-ID).这时候我们会有如下情况：
+	real user ID = 我们的用户UID(不会被改变)
+	effective user ID = man的UID
+	saved set-user-ID = man 的用户UID(不会被改变)
+	e.由于effective user ID是man,现在man程序可以操作它自己的文件了。
+
+	通过这样使用saved set-user-ID,我们可以在进程开始和结束的时候通过程序文件的set-user-ID来使用额外的权限。然而，期间我们却是以我们自己的权限运行的。如果我们无法在最后切换回saved set-user-ID,我们就可能会在我们运行的时候保留额外的权限。
+	我们来看看如果man启动一个shell的时候会发生什么.(shell是使用fork和exec来启动的)因为real user ID和effective user ID都是我们的普通用户UID(参见step3).shell 没有其它额外的权限.shell无法访问saved set-user-ID(man),因为shell的saved set-user-ID是由exec从effective user ID拷贝过来的。所以，在执行exec的子进程中，所有的user ID都是我们的普通用户ID.
+	实际上，我们描述man使用setuid函数的方法不是特别正确，因为程序可能会set-user-ID为root.这时候，setuid会把所有三种uid都变成你设置的id，但是我们只需要设置effective user ID.
+
+	*关于setreuid和setregid函数
+	以前,BSD支持用seteuid进行real user ID和effective user ID的切换。
+	#include <unistd.h>
+	int setreuid(uid_t ruid, uid_t euid);
+	int setregid(gid_t rgid, gid_t egid);
+	两个函数如果成功则返回0,如果错误则返回1（实际值一般为-1）。
+	如果任何一个参数设置为1，那么表示相应得ID保持不变。
+	这个函数执行的规则很简单：未授权的用户可以切换real user ID和effective user ID.这允许一个set-user-ID程序切换到普通用户权限，然后又切换回set-user-ID权限。当saved set-user-ID特性从POSIX.1中引入的时候，这条规则变成了也允许一个非授权用户把它的effective user ID设置成saved set-user-ID.
+	/*seteuid和setregid都是Single UNIX Specification中的XSI扩展。这样，所有UNIX系统都应该支持它们。*/
+	4.3BSD没有saved set-user-ID特性，它使用setreuid和setregid来替代。这允许一个非授权用户在两个值之间来回切换。然而，当程序启动一个shell的时候，它需要在exec之前把real user ID设置成为normal user ID.如果不这样作，那么real user ID将会被授权了（从setreuid）,然后shell进程可以调用seteuid来切换到更高用户权限。为了防止这种情况发生，需要在子进程中调用exec之前把real user ID和effective user ID设置成normal user ID。
+
+	一个非授权用户可以设置它的effective user ID为real user ID或者它的saved set-user-ID.对于授权用户，只有effective user ID被设置成为了uid(这一点和setuid函数不同,setuid会把所有三个user ID改变)。
+	参考资料最后有个图，给出了这些修改user ID函数的动作情况。这里省略了，图形描述的内容大致是，
+	对于superuser,
+	setreuid会修改real user ID和effective user ID为其参数所指定的。
+	setuid会修改real user ID和effective user ID以及saved set-user-ID三者为其指定的参数。
+	seteuid仅修改effective user ID为其参数所指定的。
+	对于非特权用户，
+	setreuid
+	setuid会修改effective user ID的值，这个值可以为real userID或者saved set-user-ID.
+	seteuid会修改effective user ID的值，这个值可以为real userID或者saved set-user-ID.
+	另外，如果文件具有set-uid设置(也就是ls文件时候的rwx权限中的x变成s)，那么exec的时候会把effectived user ID变成设置为文件属主,否则effectived user ID保持不变;saved set-user-ID是被exec从effectived user ID拷贝过来的，如果文件的set-user-ID被设置，那么在exec把effectived user ID设置成文件属主之后，再将effectived user ID拷贝一份存到saved set-user-ID中去。
+
+	对于组gid来说，遵循的规则和上面用户uid的规则一样，但是"额外组"不受这些组id函数设置的影响。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec11.html
+
+
+

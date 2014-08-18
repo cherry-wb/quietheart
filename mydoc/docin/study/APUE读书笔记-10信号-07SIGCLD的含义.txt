@@ -1,0 +1,58 @@
+++++++APUE读书笔记-10信号-07SIGCLD的含义++++++
+
+
+
+7、SIGCLD的含义
+================================================
+	有两个很容易导致混淆的信号是SIGCLD和SIGCHLD。首先，SIGCLD是System V下的名字，这个信号和BSD下面的SIGCHLD(多一个H)含义是不同的。POSIX.1中的相应信号也命名为SIGCHLD。
+	BSD中的SIGCHLD信号含义比较普通。它的含义和其他的信号的含义类似。当信号发生的时候，子进程的状态已经变化了,我们需要调用wait函数来确定究竟发生了什么事情。
+	然而SystemV处理SIGCLD的传统方式一般和其他的信号有点不同。如果我们使用signal或者sigset(早期SVR3兼容的设置信号特性的函数)设置信号的处理特性,基于SVR4的系统继续这个有争议的传统（在兼容性上面有所争议）。旧的SIGCLD处理如下：
+	a)如果进程设置它(指的是信号SIGCLD)的特性为SIG_IGN，那么那么调用进程的子进程将不会产生僵尸进程（僵尸进程指,该进程terminate了，但是它的父进程没有wait它）。注意，这一点和默认动作(SIG_DFL)不同,在最前面说过它的默认动作虽然描述为“被忽略”，但是在终止的时候，这些子进程的状态已经被丢弃了。如果接下来调用wait函数的话，调用进程将会阻塞直到所有子进程终止，然后wait返回1并且设置errno为ECHILD（默认的信号处理特性是忽略，但是这个默认的忽略并没有像前面的SIG_IGN那个忽略的含义，所以，我们需要特别地把信号的处理特性设置为SIG_IGN）。
+	*POSIX.1没有特别指定如果SIGCHLD被忽略的时候会发生什么，所以这个行为是被允许的。Single UNIX Specification包含了XSI扩展，来指定为SIGCHLD支持这个行为。
+	*4.4BSD在SIGCHLD被忽略的时候，一直会产生僵尸进程。如果我们想要避免僵尸进程，我们需要等待子进程。FreeBSD 5.2.1工作方式类似4.4BSD. Mac OS X 10.3在SIGCHLD被忽略的时候就不会创建僵尸进程。
+	*对于SVR4,如果signal或者sigset被调用来设置SIGCHLD的处理特性为忽略，那么就不会产生僵尸进程。Solaris 9和Linux 2.4.22在行为上和SVR4类似.使用sigaction,我们可以设置SA_NOCLDWAIT标记来避免僵尸进程。这个行为在本文中所有的四个平台：FreeBSD 5.2.1, Linux 2.4.22, Mac OS X 10.3, 和Solaris 9上面都支持。
+	b)如果我们设置SIGCLD进程的特性为捕获它,内核会立即检查是否有子进程需要被等待,如果有，那么就调用捕获SIGCLD对应的处理函数。
+	上面的b)条目使得我们为这个信号编写信号处理函数的时候，方式有些不同了，如下面的例子中会进行说明。
+
+	举例
+	从前面第4节的例子中我们看到，我们进入到信号处理函数中需要做的第一件事情，就是调用signal来重新建立信号处理函数得连接。（这个动作会减少信号被重置然后又重新连接这个期间的时间窗，减小了信号丢失的机率）我们在后面的例子中将会看到，这个程序在一些个平台上面将不能工作。如果我们编译这个程序，然后在传统的System V上面运行（例如OpenServer 5或者UnixWare 7),那么输出结果将会是许多收到SIGCLD信号的提示。最终程序会由于栈空间不足而异常终止。
+	*FreeBSD 5.2.1和Mac OS X不会展示这样的问题，因为基于BSD的系统，不支持以前的System V的SIGCLD信号的语义。Linux 2.4.22也不会出现这样的问题，因为它在进程准备捕捉SIGCHLD以及子进程准备被等待的时候不会调用SIGCHLD的信号处理函数(尽管SIGCLD和SIGCHLD的值被定义成一样的)。Solaris 9却会调用信号处理函数，但是它在内核中包含一些额外的代码，避免了这个问题。尽管本文中的四个平台都解决了这个问题，但是应该注意，并不是所有已有的平台都解决了这个问题。
+	这个程序中的问题是，在信号处理函数最开始的signal调用，会导致前面的b)现象,内核检查子进程是否需要被等待（这里当然是需要了，因为我们正在处理SIGCLD信号），所以它会又产生一个信号处理函数的调用。这个信号处理函数调用signal，然后整个进程又开始了。
+	为了修正这个问题，我们需要把signal调用放在wait调用的后面。这样，我们再获得子进程的结束状态之后才调用signal重新建立信号的连接；这样只有其他子进程结束的时候信号才会再次发生(而当前处理的子进程产生的信号处理函数中已经在设置再次捕获信号之前，先把当前子进程的状态获得了)。
+	POSIX.1指出，当我们为SIGCHLD建立一个信号处理函数的时候，如果有一个我们没有wait的已经终止的子进程，这时候并没有规定是否会产生信号。这就允许前面说到的行为了（什么行为？）。但是，POSIX.1没有在信号发生的时候将信号的特性重新设置为它的默认值（假定我们使用POSIX.1的sigaction来设置信号的特性），我们无须在信号处理函数中重新为SIGCHLD建立信号处理函数的连接。
+	实例代码片断如下：
+	static void sig_cld(int signo)   /*会唤醒pause()*/
+	{
+	    pid_t   pid;
+	    int     status;
+	    printf("SIGCLD received\n");
+	    if (signal(SIGCLD, sig_cld) == SIG_ERR) /*重新建立信号的连接*/
+	        perror("signal error");
+	    if ((pid = wait(&status)) < 0)      /*获取子进程状态*/
+	        perror("wait error");
+	    printf("pid = %d\n", pid);
+	}
+
+	int main()
+	{
+	    pid_t   pid;
+	    if (signal(SIGCLD, sig_cld) == SIG_ERR)
+	        perror("signal error");
+	    if ((pid = fork()) < 0) {
+	        perror("fork error");
+	    } else if (pid == 0) {      /*子进程*/
+	        sleep(2);
+	        _exit(0);
+	    }
+	    pause();    /*父进程*/
+	    exit(0);
+	}
+
+	一定要认识到你的机器上面的SIGCHLD的含义。尤其要注意在有些系统上面会定义"#define SIGCHLD SIGCLD"或者相反。这样把名字改变之后，你可以编译其他系统的程序，但是如果那个程序依赖别的含义，那么有可能就无法工作了。
+	在本文中的四个平台上面，SIGCLD的含义和SIGCHLD是一样的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec7.html
+
+
+

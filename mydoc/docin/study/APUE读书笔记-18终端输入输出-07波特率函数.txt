@@ -1,0 +1,27 @@
+++++++APUE读书笔记-18终端输入输出-07波特率函数++++++
+
+
+
+7、波特率函数
+================================================
+	波特率是一个历史名字，实际它就是“每秒的比特数目”。尽管多数终端设备使用同样的波特率用于输入和输出，但是如果硬件允许的化，也可以设置它们两个为不同的值。
+	#include <termios.h>
+	speed_t cfgetispeed(const struct termios *termptr);
+	speed_t cfgetospeed(const struct termios *termptr);
+	两者返回：波特率值
+	
+	int cfsetispeed(struct termios *termptr, speed_t speed);
+	int cfsetospeed(struct termios *termptr, speed_t speed);
+	两者返回：如果成功返回0，如果错误返回1。
+	
+	两个cfget函数的返回值，以及 两个cfset函数的speed参数可以是如下的常数：B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800, B2400, B4800, B9600, B19200, or B38400。常数"B0"表示"hang up."当调用tcsetattr的时候B0被指定为输出的波特率的时候，modem control lines不会被生效了(???)。
+	多数系统定义了额外的波特率值，例如B57600，和B115200。
+	为了使用这些函数，我们必须知道，输入和输出的波特率都存放在终端设备的termios结构中，如前面的"终端设备相关函数之间的关系图"图所示。调用任何的cfget函数之前，我们首先需要使用tcgetattr函数获取设备的termios结构。类似地，调用完了任意两个cfset函数之一之后，我们所做的就只是修改了termios结构中的波特率，如果想要这个改变影响到设备，我们需要调用tcsetattr。如果之前我们设置的波特率有错误的时候，直到我们调用tcsetattr之前，我们都可能不会发现我们设置的错误。
+	
+	这四个波特率函数屏蔽了应用程序在termios结构中存放波特率的表示方式导致的不同。基于BSD的系统平台倾向将它存为和波特率一样的数值（也就是说，9,600的波特率会被存放成值9,600），然而Linux以及基于System V的平台倾向于将波特率编码成一个bitmask。我们从cfget函数获取的速度值以及传递给cfset函数的速度值都是没有转换成它们存放在termios结构中的形式的。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec7.html
+
+
+

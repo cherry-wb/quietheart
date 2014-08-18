@@ -1,0 +1,69 @@
+++++++APUE读书笔记-04文件和目录（7）++++++
+
+
+
+19、utime函数
+================================================
+	我们可以使用utime函数来修改文件的访问时间和内容修改时间。其声明如下：
+	#include <utime.h>
+	int utime(const char *pathname, const struct utimbuf *times);
+	返回：如果成功返回0，如果错误返回1（其值一般为-1）。 
+	这里，utimbuf结构定义如下：
+	struct utimbuf {
+	time_t actime;   /*access time*/
+	time_t modtime;  /*modification time*/
+	};
+	此结构中的两个时间值是日历时间（即1970年1月1日，00:00:00至今的秒数）。此函数的操作以及执行它所要求的优先权取决于参数times是否为NULL。
+	(a) 如果times是空指针，则存取时间和修改时间两者都设置为当前时间。此操作必须满足下列两条件之一：进程的有效用户ID必须等于该文件的所有者ID；进程对该文件必须具有写许可权。
+	(b) 如果times非空，则存取时间和修改时间被设置为times所指向的结构中的值。此时，进程的有效用户ID必须等于该文件的所有者ID，或者进程必须是一个超级用户进程。对文件只具有写许可权是不够的。
+	注意，我们不能对更改状态时间st_ctime指定一个值，当调用utime函数时，此字段被自动更新。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec19.html
+
+
+20、mkdir和rmdir函数
+================================================
+	mkdir函数可以创建一个目录，其声明如下：
+	#include <sys/stat.h>
+	int mkdir(const char *pathname, mode_t mode);
+	返回：如果成功返回0，如果错误返回1（其值一般为-1）。
+	空目录通过函数rmdir被删除。这里空目录表示目录里面只有"."和".."目录项。这个函数声明如下：
+	#include <unistd.h>
+	int rmdir(const char *pathname);
+	返回：如果成功返回0，如果错误返回1（其值一般为-1）。
+	如果此调用使目录的连接计数变成0，并且也没有其他进程打开此目录，则释放此目录所占空间。如果在连接计数达到0时，有一个或几个进程打开了此目录，则在此函数返回前删除最后一个连接及. 和.. 项，另外，在此目录中不能再创建新文件。在最后一个进程关闭它之前并不释放此目录（即使某些进程打开该目录，这些进程在此目录下也不能执行其他操作，因为为使rmdir函数成功执行，该目录必须为空）。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec20.html
+
+
+21、目录读取
+================================================
+	对某个目录具有存取权限的任一用户都可读该目录，但是只有内核才能写目录（保持文件系统一致性）在前面说过，一个目录的写权限位和执行权限位决定了在该目录中能否创建新文件以及删除文件，但是它们并不表示能否写目录本身。
+	目录的实际格式依赖于UNIX的具体实现。UNIX现在包含了一套与读目录有关的例程，它们是POSIX.1的一部分。许多实现不允许应用程序使用read函数访问目录内容，这样就将目录的具体实现格式细节和应用程序隔离了起来。
+	#include <dirent.h>
+	DIR *opendir(const char *pathname);
+	返回：如果成功返回目录指针，如果错误返回空。 
+	struct dirent *readdir(DIR *dp);
+	返回：如果成功返回目录指针，如果到达目录结尾或者错误返回空。
+	void rewinddir(DIR *dp);
+	int closedir(DIR *dp);
+	返回：如果成功返回0，如果错误返回1（其值一般为-1）。 
+	long telldir(DIR *dp);
+	返回：和dp关联的目录的当前位置。
+	void seekdir(DIR *dp, long loc);
+	telldir和seekdir函数不是基本的POSIX.1标准的一部分。它们是SUS的XSI扩展，所以所有遵循UNIX系统的实现都应该提供它们。dirent结构在文件<dirent.h>中定义，是依赖于具体实现（也就是系统实现）的。系统实现中，定义的dirent结构至少包含以下成员：
+	struct dirent {
+	ino_t d_ino;                  /* i-node number */
+	char  d_name[NAME_MAX + 1];   /* null-terminated filename */
+	}
+	d_ino并不是POSIX.1定义的，因为它是一个与实现相关的特性。但是，它在POSIX.1的XSI中定义了。POSIX.1只定义了这个结构的d_name成员。
+	DIR结构是一个内部结构，它由这6个函数用来维护正被读取的目录的有关信息。其作用类似于由标准I/O库维护的FILE结构。
+	由opendir返回的指向DIR结构的指针由另外三个函数使用。opendir执行初始化操作，这样第一个readdir读取目录中的第一个目录项。目录中各目录项的顺序与实现有关。它们通常并不按字母顺序排列。本文参考资料中给出了使用这几个函数递归遍历一个目录的具体例子，这里不列举了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec21.html
+
+
+

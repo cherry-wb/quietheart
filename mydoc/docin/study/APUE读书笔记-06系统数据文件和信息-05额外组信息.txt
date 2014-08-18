@@ -1,0 +1,26 @@
+++++++APUE读书笔记-06系统数据文件和信息-05额外组信息++++++
+
+
+
+5、额外组信息
+================================================
+	从前都是登录之后用户被指定了一个组，然后运行需要别的组的时候可以通过newgrp命令来修改和恢复用户所属的组。现在一个用户可以属于多个组了，所以不用newgrp来显式修改用户所属的组了。
+	用来设置额外组的函数是：
+	#include <unistd.h>
+	int getgroups(int gidsetsize, gid_t grouplist[]);
+	getgroups函数用来获取用户所属的组id，并将其存放在一个数组里面。gidsetsize指明存放在数组里面的元素数目，grouplist是存放组id的数组，函数返回获取到grouplist中的元素数目。如果gidsetsize是0那么函数返回属于的所有组的组的数目。grouplist不会被修改，这里允许用户自行分配grouplist的空间。
+
+	#include <grp.h>     /* on Linux */
+	#include <unistd.h>  /* on FreeBSD, Mac OS X, and Solaris */
+	int setgroups(int ngroups, const gid_t grouplist[]);
+	setgroups函数用来设置调用进程的额外组id。grouplist就是要设置的id数组，ngroups指明要存放在数组的元素的数目。一般只有initgroups才会调用setgroups.
+
+	#include <grp.h>     /* on Linux and Solaris */
+	#include <unistd.h>  /* on FreeBSD and Mac OS X */
+	int initgroups(const char *username, gid_t basegid);
+	initgroups使用getgrent,setgrent,endgrent来读取整个group文件以便决定username所属的组。然后这个函数调用setgroups来为用户初始化所属的组成员。除了groups文件中的组，initgroups也会把basegid中的组包含到额外组中，basegid为了passwd中的user的group id来设置的。一般来说initgroups由login来调用。
+
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec5.html
+
+
+

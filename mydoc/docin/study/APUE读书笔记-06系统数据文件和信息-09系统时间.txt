@@ -1,0 +1,260 @@
+++++++APUE读书笔记-06系统数据文件和信息-09系统时间++++++
+
+
+
+9、系统时间
+================================================
+	内核提供的时间相关的服务记录了从Epoch即1970年1月1日也就是UTC,开始的秒数。秒数用time_t来表示，我们也把他们叫做calendar time。Unix表示时间和其他操作系统不同的地方是:a)使用UTC而不是本地时间。b)自动转换，例如夏令时间。c)只使用一个数字来表示时间和日期。
+	获得当前时间的函数：
+	#include <time.h>
+	time_t time(time_t *calptr);
+	与此相比更精确的函数(达到micro second)有：
+	#include <sys/time.h>
+	int gettimeofday(struct timeval *restrict tp, void *restrict tzp);
+	这个函数被作为single unix的XSI扩展，tzp的值一直是NULL的，如果非NULL那么行为是没有指定的。有些实现会把时区相关的信息存放在tzp中，但是这个和实现紧密相关。这个函数会把从Epoch开始的时间当前的时间存放在tp中，这个tp所对应的结构含有微秒的信息，其定义是：
+   struct timeval {
+           time_t tv_sec;    /* seconds */
+           long   tv_usec;   /* microseconds */
+   };
+	当我们获得了从Epoch开始的秒数表示的时间(叫做calendar time)的时候，我们就可以调用其他的函数把这个时间转换成便于阅读的时间格式了。
+	另外，结构struct tm包含了用年月日表示的时间格式（叫做broken-time）。
+
+	当我们获得了自Epoch的秒数整数值表示的时间之后，我们就可以通过后面给出的其它时间函数将其转化成更容易阅读的时间和日期。函数在后面列出，先用图示的方式，给出这些函数之间的关系：
+
+	各种时间函数的关系图
+
+  +--------+               +------------------+
+  | string |               | formatted string |
+  +---^-^--+               +-----^------------+
+      |  \ asctime     strftime /
+          \----           - - -/
+      |        \         /
+              +-\-------/-+
+      |       | struct tm | (broken-down time)
+   ctime      +-^--^-----++
+      |         |  |     |
+                |
+       \        |  |     |
+                |localtime
+         \      |  |     |
+            gmtime    mktime
+           \    |  |     |
+              +-|--|-----v+
+             \|   time_t  | (calendar time)
+              +-----^-----+
+                    |
+                    |time
+                    |
+                    |
+                  kernel
+	图中4个用虚线标记的函数localtime, mktime, ctime, 和 strftimeare 受环境变两TZ影响，我们会在本节后面进行讲述。
+	相关函数如下：
+	#include <time.h>
+	struct tm *gmtime(const time_t *calptr);
+	struct tm *localtime(const time_t *calptr);
+	localtime和gmtime的不同之处是，
+	localtime把calendar time（就是从Epoch开始到现在的秒数）转换成local time,同时考虑本地时间的区域，和日光节约时间（夏令时）,所以它的执行结果也和本地的一些环境变量TZ有关系;
+	gmttime是把calendar time转换成用UTC表示的broken-down time(就是struct tm结构).
+
+	#include <time.h>
+	time_t mktime(struct tm *tmptr);
+	这个函数把用localtime（本地时间）表达的broken-down time(就是struct tm结构)转换成time_t表示的值(calendar time),所以它的执行结果也和环境变量TZ有关系。
+
+	#include <time.h>
+	char *asctime(const struct tm *tmptr);
+	char *ctime(const time_t *calptr);
+	这两个函数把时间转换成字符串输出，输出的格式类似于date命令的默认格式。两者不同的是：
+	asctime是把broken-down 的time转换。
+	ctime是把calendar的time转换(它的执行还和环境变量有关系)。
+
+
+	#include <time.h>
+	size_t strftime(char *restrict buf, size_t maxsize,
+	                const char *restrict format,
+	                const struct tm *restrict tmptr);
+	这个函数很复杂类似printf，是把时间用自己指定的格式给格式化并且存放在tmptr中,格式由format指定，被格式化的时间变量是tmptr.
+	有一个类似的输入函数使用方法是：
+	strptime(argv[1],"%Y-%m-%d-%H:%M",new);//for example,argv[1] is:"2002-09-08-22:02"
+	具体参考资料吧。
+
+	以上的时间函数，只有gettimeofday不是ISO C定义的。
+	这个部分的内容比较多，更多的信息请参见下面的参考资料。
+	
+	下面给出两个使用这些函数中的一个例子（在ubuntu8.04上面测试通过）：
+	例1：
+	/*程序功能：获得当前的系统时间并且设置为新的时间
+	*代码：http://quietheart.svn.sourceforge.net/viewvc/quietheart/trunk/codes/c_cppDemo/00_miscellaneous/clib_functions/03_mySetTime/
+	*这个程序需要在你的超级用户下面运行，不要轻易尝试
+	*struct tm
+	*{
+	*	int tm_sec;
+	*	int tm_min;
+	*	int tm_hour;
+	*	int tm_mday;
+	*	int tm_mon;
+	*	int tm_year;
+	*	int tm_wday;
+	*	int tm_yday;
+	*	int tm_isdst;
+	*};
+	*tm_sec表「秒」数，在[0,61]之间，多出来的两秒是用来处理跳秒问题用的。
+	*tm_min表「分」数，在[0,59]之间。
+	*tm_hour表「时」数，在[0,23]之间。
+	*tm_mday表「本月第几日」，在[1,31]之间。
+	*tm_mon表「本年第几月」，在[0,11]之间。
+	*tm_year要加1900表示那一年。
+	*tm_wday表「本周第几日」，在[0,6]之间。
+	*tm_yday表「本年第几日」，在[0,365]之间，闰年有366日。
+	*tm_isdst表是否为「日光节约时间」。 
+	*	
+	**获得当前时间，传回从epoch开始计算起的秒数，如果t是non-null，它将会把时间值填入t中。 
+	*gettimeofday更精确
+	*time_t time(time_t *t); 
+	*	
+	*1,转成struct tm格式时间函数
+	*1)转换成格林威治时间,有时称为GMT或UTC
+	*struct tm * gmtime(const time_t * t);
+	*	
+	*2)转换成本地时间
+	*struct tm * localtime(const time_t *t); 
+	*
+	*2,转换tm成为time_t格式
+	*1)使用本地时间。
+	*time_t mktime(struct tm *tp);
+	*
+	*2)使用UTC时间。 
+	*tme_t timegm(strut tm *tp);
+	*
+	*3,其他常用函数：
+	*计算秒差:
+	*double difftime(time_t t2,time_t t1);
+	*
+	*以字符串打印时间：
+	*char * asctime(struct tm *tp);
+	*
+	*类似sprintf，其格式由fmt来指定:
+	*size_t strftime(char *str,size_t max,char *fmt,struct tm *tp); 
+	*
+	*类似scanf一样，解译字串成为tm格式
+	*char * strptime(char *s,char *fmt,struct tm *tp); 
+	*
+	*设置时间
+	*int stime(time_t *t);
+	*/
+	
+	#include <stdio.h>
+	
+	//exit
+	#include <stdlib.h>
+	//gettimeofday,
+	//#include <sys/time.h>
+	
+	//time_t,struct tm, asctime
+	#include <time.h>
+	
+	int main(int argc, char *argv[])
+	{
+		if(argc != 2)
+		{
+			printf("usage:%s yy-mm-dd-hh:MM\n", argv[0]);
+			printf("for example: %s 2002-09-08-22:02\n", argv[0]);
+			printf("the param num is:%d\n", argc);
+			printf("the expected num is:%d\n", 2);
+			exit(1);
+		}
+		time_t now;
+		struct tm *new;
+		int accept = 0;//是否接受新的修改
+	
+		//time函数读取现在的时间(国际标准时间非北京时间)，然后传值给now
+		time(&now);
+	
+		//localtime函数把从time取得的时间now换算成你电脑中的时间(就是你设置的地区)
+		new = localtime(&now);
+	
+		printf("old time is %s\n",asctime(new));//提示旧时间，防止轻易系统修改时间
+	
+		//输入时间
+		strptime(argv[1],"%Y-%m-%d-%H:%M",new);//for example,argv[1] is:"2002-09-08-22:02"
+	
+		
+		//打印新的设置
+		//这里年是距1900的年数，所以如果真正打印需要加1900.
+		//月份从0开始算，所以打印的时候加1
+		printf("new time year: %d\n month :%d\n, date:%d\n, hour:%d\n, minute:%d\n",
+				new->tm_year+1900, new->tm_mon+1, new->tm_mday, new->tm_hour, new->tm_min);
+		printf("new time to be set is %s\n",asctime(new));
+		printf("NOTE:Press \'1\' to accept, \'0\' or else to abort change\n");
+		scanf("%d",&accept);
+	
+		if(accept == 1)
+		{
+			//设置时间
+			time_t tmp = mktime(new);
+			stime(&tmp);
+			printf("accepted.\n");
+		}
+		else
+		{
+			printf("abort.\n");
+			exit(0);
+		}
+		return 0;
+	}
+	
+	
+	例2：
+	/*程序功能：获得当前的系统时间并打印出来
+	*代码：http://quietheart.svn.sourceforge.net/viewvc/quietheart/trunk/codes/c_cppDemo/00_miscellaneous/clib_functions/03_myGetTime/
+	*注释：time_t是一个在time.h中定义好的结构体。而tm结构体的原形如下：
+	*struct tm
+	*{
+	*	int tm_sec;//seconds 0-61
+	*	int tm_min;//minutes 1-59
+	*	int tm_hour;//hours 0-23
+	*	int tm_mday;//day of the month 1-31
+	*	int tm_mon;//months since jan 0-11
+	*	int tm_year;//years from 1900
+	*	int tm_wday;//days since Sunday, 0-6
+	*	int tm_yday;//days since Jan 1, 0-365
+	*	int tm_isdst;//Daylight Saving time indicator
+	*};
+	*这里包含了两种方法把时间转换为字符串的格式：
+	*ctime用于time_t*
+	*asctime用于struct tm*
+	*/
+	#include <stdio.h>
+	
+	//time_t,struct tm, asctime
+	#include <time.h>
+	
+	int main(int argc, char *argv[])
+	{
+		time_t now;
+		struct tm *today;
+	
+		//time函数读取现在的时间(国际标准时间非北京时间)，然后传值给now
+		//time的返回值也是这个值，不过是time_t
+		time(&now);
+		//这种方法也行
+		//now = time(NULL);
+	
+		//把time_t时间转换成字符，通过printf()函数输出
+		printf("Local time is %s\n",ctime(&now));
+		
+		//localtime函数把从time取得的时间now换算成你电脑中的时间(就是你设置的地区)
+		today = localtime(&now);
+	
+		//上句中asctime函数把tm时间转换成字符，通过printf()函数输出
+		printf("Local time is %s\n",asctime(today));
+		return 0;
+	}
+	
+	
+	
+
+参考:
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec10.html
+
+
+

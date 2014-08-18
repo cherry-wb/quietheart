@@ -1,0 +1,131 @@
+++++++APUE读书笔记-08进程控制（02）++++++
+
+
+3、fork
+================================================
+	（1）创建进程使用fork来实现，fork函数如下：
+	#include <unistd.h>
+	pid_t fork(void);
+	返回：在子进程中返回为0；父进程中返回为子进程PID,如果出错返回1（实际值一般为-1）。
+	通过fork创建的新进程叫做子进程。这个fork函数调用了一次（在父进程中），但是返回了两次（在父进程中，以及新出现的子进程中）。通过返回值可知是父还是子进程。因为没有获得一个进程子进程PID的函数，所以在父进程的fork返回中会返回子进程PID，以做记录和判断等用。因为所有子进程只可能有一个父进程，所以在子进程中fork返回0，子进程可以通过getppid来获得父进程的进程ID(进程PID为0的进程是内核中的swapper所以它不可能是某个进程的子进程)。
+	在调用fork之后，产生的子进程和父进程会继续在代码中fork调用的后面继续执行。子进程是父进程的一个拷贝，它拷贝了父进程的数据空间，堆和栈空间，一定要注意这是一份拷贝，父子进程不会共享这部分内存的内容。父子进程共享的部分是代码段部分。
+	由于fork一般会接着一个exec函数，当前的系统实现一般不会立即执行父进程数据，堆，栈的拷贝。一般会使用一种copy-on-write(COW)的技术，也就是说，这些区域起初是父子进程共享的，一旦有进程进行了修改这些区域的操作，内核才会创建相应区域内存的一份拷贝（一般是虚拟内存的页）。
+实际上有不同种类的fork函数。本文中的四种系统都支持vfork(2)函数，这个函数在后面会提到。
+	Linux 2.4.22 提供使用clone系统调用来创建新进程。这个系统调用是一个fork的通用形式，允许调用者控制在父子进程中共享哪部分数据。
+	FreeBSD 5.2.1 提供rfork系统调用，和Linux中的clone系统调用类似，rfork是从Plan 9操作系统中继承过来的。
+	Solaris 9 提供两个线程库,一个是POSIX的,一个是Solaris threads.两种fork的动作有所不同。对于POSIX，fork创建一个只包含调用线程的进程，但是Solaris的fork创建的进程包含调用线程的进程中的所有线程的拷贝。为了提供和posix类似的fork，solaris提供了一个fork1函数，它可以创建一个只拷贝调用线程的进程。
+
+	（2）fork的使用
+	下面给出一个使用fork函数的例子：
+	int     glob = 6;       /* external variable in initialized data */
+	char    buf[] = "a write to stdout\n";
+	
+	int
+	main(void)
+	{
+	    int       var;      /* automatic variable on the stack */
+	    pid_t     pid;
+	
+	    var = 88;
+	    if (write(STDOUT_FILENO, buf, sizeof(buf)-1) != sizeof(buf)-1)
+	        err_sys("write error");
+	    printf("before fork\n");    /* we don't flush stdout */
+	
+	    if ((pid = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (pid == 0) {      /* child */
+	        glob++;                 /* modify variables */
+	        var++;
+	    } else {
+	        sleep(2);               /* parent */
+	    }
+	
+	    printf("pid = %d, glob = %d, var = %d\n", getpid(), glob, var);
+	    exit(0);
+	}
+
+	运行这个例子，得到如下结果：
+	$ ./a.out
+	a write to stdout
+	before fork
+	pid = 430, glob = 7, var = 89      child's variables were changed
+	pid = 429, glob = 6, var = 88      parent's copy was not changed
+	$ ./a.out > temp.out
+	$ cat temp.out
+	a write to stdout
+	before fork
+	pid = 432, glob = 7, var = 89
+	before fork
+	pid = 431, glob = 6, var = 88
+	
+	在上面的这个例子中，给出了一个使用fork的例子，并且通过这个例子我们应该知道：
+	a)如果fork之后，是parent先运行还是children这是不确定的，取决于内核的调度算法。
+	b)子进程是父进程的拷贝，包括文件缓存等都是一个副本,所以子进程修改不会影响父进程。
+	c)由于子进程拷贝了父进程的数据空间，如果使用库函数打印，重定向时可能同一个打印语句在文件中出现两次，因为缓存也拷贝了。
+
+	（3）文件共享
+	父子进程之间共享文件偏移量，这样在父子进程同时写一个文件的时候容易控制它们之间的配合；如果不共享的话，有些定位之类的操作很难配合进行或者很麻烦。当然如果父子不同步的话，两者对文件的输出可能会相互干扰。
+	一般fork之后，有两种操作文件描述符号的情况：
+	a)父进程等待子进程结束。这时候父进程不需要对文件描述符号做任何事情，在子进程结束之后子进程读写的文件描述符号的偏移会自动更新。
+	b)父子进程进行它们各自的操作。这时候，父子进程需要关闭它们不需要的文件描述符号,防止两者之间互相干扰。这在网络服务的环境下面经常会用到。
+	下面的图给出了调用fork之后父子进程打开共享文件的图示情况：
+
+          parent process table entry                  file table                v-node table
+          +------------------------+ ----------->+-------------------+     ---->+-----------+
+          |      fd       file     |/       +--->| file status flags |    /     |   v-node  |
+          |     flags    pointer   /        |    +-------------------+   /      |information|
+          |     +-----+---------+ /|        |    |current file offset|  /       +-----------+
+          | fd0:|     |         |/ |        |    +-------------------+ /        |   i-node  |
+          |     +-----+---------+  |        |    |   v-node pointer  |/         |information|
+          | fd1:|     |         |\ |        |    +-------------------+          |...........|
+          |     +-----+---------+ \|        |                                   |  current  |
+          | fd2:|     |         |\ \        |                                   | file size |
+          |     +-----+---------+ \|\       |                                   +-----------+
+          |     |               |  \ -------+--->+-------------------+
+          |     |   ......      |  |\       |  ->| file status flags |    ----->+-----------+
+          |     |               |  | \      | /  +-------------------+   /      |   v-node  |
+          |     +---------------+  |  \    / /   |current file offset|  /       |information|
+          +------------------------+   \  / /    +-------------------+ /        +-----------+
+                                        \/ /     |   v-node pointer  |/         |   i-node  |
+                                        /\/      +-------------------+          |information|
+                                       / /\                                     |...........|
+          parent process table entry  / /  \                                    |  current  |
+          +------------------------+ / /    ---->+-------------------+          | file size |
+          |      fd       file     |/ / -------->| file status flags |          +-----------+
+          |     flags    pointer   / / /         +-------------------+
+          |     +-----+---------+ /|/ /          |current file offset|  ------->+-----------+
+          | fd0:|     |         |/ / /           +-------------------+ /        |   v-node  |
+          |     +-----+---------+ /|/            |   v-node pointer  |/         |information|
+          | fd1:|     |         |/ /             +-------------------+          +-----------+
+          |     +-----+---------+ /|                                            |   i-node  |
+          | fd2:|     |         |/ |                                            |information|
+          |     +-----+---------+  |                                            |...........|
+          |     |               |  |                                            |  current  |
+          |     |   ......      |  |                                            | file size |
+          |     |               |  |                                            +-----------+
+          |     +---------------+  |
+          +------------------------+
+
+	除了打开的文件之外，还有许多父子进程共享的内容，具体参见参考资料给出列表。
+	父子进程不同的地方是：
+	a)fork返回值不同。
+	b)进程PID不同。
+	c)进程的父进程PID不同，子进程的父进程PID设置为父进程，父进程的父进程PID不变。
+	d)子进程的tms_utime, tms_stime, tms_cutime, 和 tms_cstime取值设置为0.
+	e)父进程设置的文件锁不会被子进程继承。
+	f)在子进程中会把申请的警钟清空。
+	g)子进程会把申请的信号集合清空。
+	fork失败的原因有两个：
+	a)系统中进程数目太多（一般这是因为出现了什么问题而导致的）
+	b)当前用户 UID的进程数目超过了系统的限制。可以通过CHILD_MAX指定每个用户UID同时可以运行的进程的数目。
+	fork 一般有两种使用的方法：
+	a)进程想要复制自己，并且在同时执行另外的代码。这在网络中很常见：服务器端监听，接收到一个客户请求，之后它fork一个子进程来处理客户请求，然后父进程继续监听其他的请求。
+	b)进程想要执行一个不同的程序：一般都是fork之后调用exec来做的。
+	有些系统把b)的fork紧接这exec合并成了一个操作spawn.unix 把操作分成了两个部分，因为许多时候fork不需紧接着exec或者fork和exec之间需要做一些修改进程属性的操作等等。
+	Single UNIX Specification 在高级的real-time选项组包含了spawn接口。这些接口不是fork和exec的替代。他们用来支持很难高效地执行fork的系统，尤其是那些没有内存管理硬件支持的系统。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec3.html
+
+
+

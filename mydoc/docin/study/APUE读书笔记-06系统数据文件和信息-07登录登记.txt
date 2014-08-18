@@ -1,0 +1,17 @@
+++++++APUE读书笔记-06系统数据文件和信息-07登录登记++++++
+
+
+
+7、登录登记
+================================================
+	大多数unix系统都提供了两个文件：utmp和wtmp。utmp只记录当前登录的所有用户，wtmp记录所有的登录和登出记录。两者中的数据是用"struct utmp"类型的结构变量保存的。
+	在登录的时候，login程序会向utmp写入一个用struct utmp结构表示的数据项。
+	在登出的时候，utmp相应数据项会被init清空为null比特；然后一个新的条目会被追加到wtmp文件中,wtmp中logout相关条目中的ut_name会自动变成零。
+	特定的条目会被追加到wtmp文件中用来标记系统什么时候重启，以及系统时间变化的前后(???什么意思???)。who命令会读取utmp文件，并且打印这个文件的内容。稍后版本的UNIX系统提供了last命令，这个命令会读取wtmp文件，并且打印选定的条目的相关信息。
+	solaris的utmpx(4) man手册给出了记录格式的描述信息，FreeBSD 5.2.1, Linux 2.4.22, 和 Mac OS X 10.3的记录格式描述信息在man手册utmp(5)中。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec8.html
+
+
+

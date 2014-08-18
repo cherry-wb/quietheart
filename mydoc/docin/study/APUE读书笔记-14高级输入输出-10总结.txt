@@ -1,0 +1,29 @@
+++++++APUE读书笔记-14高级输入输出-10总结++++++
+
+
+
+10、总结
+================================================
+	本章介绍了大量的高级I/O操作，后面的例子中许多地方都用到了它们。主要内容有：
+	a.非阻塞I/O是一种I/O操作，操作的时候没有阻塞的情况发生。
+	b.记录锁(本书最后面一个数据库操作函数的例子中对其进行了详细的说明可以做为参考)
+	c.System V的STREAMS(在后面我们讲述基于流的管道，传递文件描述符号，以及System V的客户服务端链接时会用到)
+	d.使用select 和poll函数的多I/O(后面的许多例子中会用到)
+	e.readv和writev函数(后面也有许多地方用到它们)
+	f.内存映射I/O
+
+	另外，在本章的课后练习中，
+	14.2中说了一个技巧，就是两个数组之间不能直接通过赋值语句赋值（得循环），但是可以将它们嵌入到一个结构中，通过结构变量之间的赋值达到数组的赋值，这样就不用循环了。
+参考网址在：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/app03lev1sec14.html#ch14qa1q2a1
+
+	14.8中说明了一个问题，就是管道的容量和PIPE_BUF不是一回事情，前者是管道可以容纳的数据，后者是每次"原子性"写入管道的最大字节数目。
+参考网址在：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/app03lev1sec14.html#ch14qa1q8a1
+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec10.html
+
+
+

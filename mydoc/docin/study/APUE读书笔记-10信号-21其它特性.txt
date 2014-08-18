@@ -1,0 +1,40 @@
+++++++APUE读书笔记-10信号-21其它特性++++++
+
+
+
+21、其它特性
+================================================
+	在这里，我们描述一些和实现相关的额外的信号特性。
+	（1）信号名称
+	有一些系统使用一个数组：
+	extern char *sys_siglist[];
+	这个数组的索引就是信号的号码，相应的数组元素指向一个表示信号名称的字符串。
+	FreeBSD 5.2.1,Linux 2.4.22,和Mac OS X 10.3提供了这样的信号名称数组。Solaris9也这样做了，但是它使用名字_sys_siglist。这些系统都提供如下的psignal函数：
+	#include <signal.h>
+	void psignal(int signo, const char *msg);
+	字符串msg(一般是程序的名称)会被输出到标准错误输出，然后跟着一个冒号和空格，再跟着信号的描述，和一个换行符号。这个函数和perror非常类似。
+	另外一个比较普遍的函数就是strsignal.这个函数和strerror很类似:
+	#include <string.h>
+	char *strsignal(int signo);
+	返回：一个指向描述信号的字符串指针。
+	给定一个信号号码，strsignal将会返回一个描述这个信号的字符串，这个字符串可以被应用程序使用，来打印关于接到的信号的错误消息。
+	这本书中描述的所有平台，都提供了psignal和strsignal函数，但是有所不同。Solaris 9中，如果信号号码是非法的话，strsignal将会返回一个空指针；FreeBSD 5.2.1，Linux 2.4.22,和Mac OS X 10.3在信号号码未知的时候会返回一个表示信号号码未知的字符串。为了有一个psignal函数的声明，你需要包含<siginfo.h>文件。
+
+
+	（2）信号映射
+	Solaris提供了一对用来在信号号码和信号名称之间映射的函数。
+	#include <signal.h>
+	int sig2str(int signo, char *str);
+	int str2sig(const char *str, int *signop);
+	两者返回：如果成功返回0，如果错误返回1。
+
+	这些函数在写打印和接收信号名称和信号号码的交互程序的时候，很有用。
+	sig2str函数把指定的信号号码变成一个字符串，并且把结果存放在str指向的内存中。调用这必须保证内存足够大（包含null）.Solaris在<signal.h>里面提供了常量SIG2STR_MAX，用来定义最大字符串长度。字符串将会包含信号的名称（没有SIG前缀）。例如SIGKILL会被映射成"KILL".
+	str2sig函数会把指定的名字转换成信号号码。信号号码被存放在一个signop指向的整数指针中。名字可以是没有SIG前缀的字符串，也可以是代表十进制信号值的字符串(例如"9")。
+	注意sig2str和str2sig和一般的函数不一样，它门不会设置errno.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec21.html
+
+
+

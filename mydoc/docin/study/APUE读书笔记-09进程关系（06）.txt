@@ -1,0 +1,78 @@
+++++++APUE读书笔记-09进程关系（06）++++++
+
+
+
+8、作业控制
+================================================
+	作业控制是大概1980年的时候引入BSD的一个特性，这个特性允许我们从一个单个的终端启动多个作业(许多进程组),并且可以控制哪些作业可以访问终端以及哪些作业在后台运行。
+	作业控制需要三种形式的支持：
+	a)需要shell来支持作业控制.
+	b)内核中的终端驱动需要支持作业控制.
+	c)内核必须支持特定的作业控制信号.
+	SVR3提供了一种不同形式的作业控制，叫做shell层.然而这里讨论的是被POSIX.1选中的BSD形式的作业控制。以前的标准作业控制的支持是可选的，但是POSIX.1现在要求平台来支持这个特性。
+	在我们看来，从shell中使用作业控制，我们可以在前台或者后台启动一个作业，一个作业就是一些进程的集合,一般来说是用管道连接起来的进程。例如：
+	vi main.c
+	这会在前台启动一个只有一个进程的作业。命令：
+	pr *.c | lpr &
+	make all &
+	会在后台启动两个作业,这两个后台作业中的进程也是在后台运行的。
+	正如前面所说，为了使用作业控制的特性，我们需要使用一个支持作业控制的shell。在以前的系统中，很容易辨别出哪些shell支持作业控制哪些不支持。C Shell支持，Bourne Shell不支持,Korn Shell可选,这取决于主机是否支持作业控制。但是C Shell已经移植到了不支持作业控制的主机上面，还有SVR4 Bourne Shell如果是用jsh而不是用sh来启动的话也支持作业控制,Korn Shell在主机支持的情况下仍旧支持作业控制,Bourne-again Shell也支持作业控制,我们后面只讨论具有作业控制的shell，而且不关心这些shell之间的不同。当我们启动一个后台作业的时候，shell会给这个后台作业赋予一个作业号,并且打印出一个或者多个进程ID.下面的例子给处了Korn Shell如何处理这些：
+	$ make all > Make.out &
+	[1]     1475
+	$ pr *.c | lpr &
+	[2]     1490
+	$                          just press RETURN
+	[2] +  Done                 pr *.c | lpr &
+	[1] +  Done                 make all > Make.out &
+	这里，make对应作业号是1，启动的进程是1475;下一个管道的作业的作业号是2，打印的pid是第一个进程的1490.当作业完成，并且我们输入了RETURN的时候，shell会告诉我们作业已经完成。我们需要键入回车才能得到shell打印的提示的原因是shell不会在任意的时间来打印其中的后台作业的状态变化，shell只有在要打印它的提示符号前的时候才会打印这些，这样我们可以键入新的命令。如果shell不这样做，那么会在我们正在输入某一行的过程中打印提示，这样很容易出现显示错乱。
+	可以通过一些特殊字符来和terminal driver进行交互，影响前台运行的作业。例如[Ctrl]z按键，会导致terminal driver给前台进程组的所有进程发送SIGTSTP信号，而后台进程组的进程不会受到影响。terminal driver会监视如下三个字符，用来给前台的进程组发送信号：
+	a.中断字符(DELETE或者Control-C),发送信号SIGINT.
+	b.退出字符(Control-backslash)，产生信号SIGQUIT.
+	c.挂起字符(Control-Z)产生信号SIGTSTP.
+	后面我们会讲到如何把这些字符更改成其他字符以及如何让terminal driver忽略处理这些字符。
+	terminal driver还有必须处理的另外一种作业控制的情况。由于我们可以有一个前台作业以及多个或者一个后台作业，那么哪些作业接受我们在终端键入的字符呢？答案是只有前台作业接受终端输入。但是，后台作业尝试读取终端的输入也是没有错误的，这时候，terminal driver 检测到这个情况发生，然后会给后台作业发送一个SIGTTIN信号，通过shell，这个信号一般都会停止后台的作业，我们会被通知到有这个情况发生，然后把作业凋到前台，这样就可以从终端读取输入了。
+	例如如下:
+	$ cat > temp.foo &          start in background, but it'll read from standard input
+	   [1]     1681
+	$                           we press RETURN
+	   [1] + Stopped (SIGTTIN)     cat > temp.foo &
+	$ fg %1                     bring job number 1 into the foreground
+	   cat > temp.foo              the shell tells us which job is now in the foreground
+
+	   hello, world                enter one line
+
+	   ^D                          type the end-of-file character
+	$ cat temp.foo              check that the one line was put into the file
+	   hello, world
+	在这个例子中，shell从后台启动一个cat进程，这个cat程序尝试从标准输入(controlling terminal)读取输入，terminal driver检测到这个情况之后，发现cat是一个后台作业，所以发送SIGTTIN信号给后台作业。shell检测到这个子进程的状态变化（通过wait和waitpid），然后就告诉我们那个作业stopped了。之后我们可以通过fg命令把这个作业调到前台来。这会导致shell把作业放到前台进程组中（通过tcsetpgrp）,然后发送SIGCONT信号给进程组。因为进程已经跑到前台了，所以可以从controlling terminal来读取输入信息。
+	如果后台作业输出到控制终端会如何？这个问题我们可以自行选择允许或者不允许。一般来说，我们通过stty命令来进行选择。后面我们可以看到我们如何可以从程序设置这个选项。下面展示了这是如何工作的:
+	$ cat temp.foo &             后台执行命令
+	   [1]     1719
+	   $ hello, world            提示符号后面出现后台作业的输出
+	$                             输入回车
+	   [1] + Done              cat temp.foo &
+	$ stty tostop             禁止后台作业进行输出
+	$ cat temp.foo &           再次运行
+	   [1]     1721
+	$                             输入回车
+	   [1] + Stopped(SIGTTOU)               cat temp.foo &
+	$ fg %1                      把作业重新调到前台
+	   cat temp.foo
+	   hello, world             开始打印输出
+	在这个例子中，当我们禁止后台作业向控制终端输出的时候，cat将在尝试输出到标准输出的时候阻塞，因为终端驱动可以辨别来自后台进程的输出，然后给后台作业发送一个SIGTTOU信号，然后我们使用fg将作业调到前台的时候，作业就会自然完成了。
+	参考资料中有一个图说明了login shell,前台和后台进程，以及terminal driver之间的关系,这里不给出了，其大致描述如下：
+	a)getty 或telnetd调用exec,setsid然后创建controlling terminal进入b)
+	b)启动login，再执行exec进入c）
+	c)使用exec启动login shell,调用tcsetpgrp为controlling terminal设置进程组.
+	前台进程:login shell可以给它调用setpgid,它可以通知login shell的子进程状态;它可以和terminal driver相互读取数据以及写入数据，terminal driver可以给它相应发送信号。
+	后台进程:login shell可以给它调用setpgid,它可以通知login shell的子进程状态;它可以从terminal driver读取数据以及写入数据，在读写数据的时候terminal driver可以给它相应发送信号。
+	d)terminal driver
+	e)在终端前面的用户
+
+	作业控制是POSIX.1的一个特性。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec8.html
+
+
+

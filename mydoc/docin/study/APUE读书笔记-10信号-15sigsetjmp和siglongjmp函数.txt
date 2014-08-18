@@ -1,0 +1,118 @@
+++++++APUE读书笔记-10信号-15sigsetjmp和siglongjmp函数++++++
+
+
+
+15、sigsetjmp和siglongjmp函数
+================================================
+	前面，我们描述了setjmp和logjmp函数，这个函数可以用于跳转。在前面我们也看到了，longjmp函数经常会在信号处理函数中被调用，通过跳转的方式返回到主程序循环中，而不是return的方式。
+	然而，调用longjmp的时候，有一个问题：当一个信号被捕获的时候，会进入到捕获的信号处理函数，同时当前的信号会被自动添加到进程的signal mask中，这会阻止随后发生的那个信号打断信号处理函数。如果我们使用longjmp从信号处理函数中跳转出去，那么进程的signal mask会怎么样?
+	在FreeBSD5.2.1和Mac OS X 10.3，setjmp和longjmp会保存和恢复signal mask. Linux 2.4.22和Solaris 9却不这样。FreeBSD和Mac OS X提供了_setjmp和_longjmp函数，这个函数不会保存和恢复signal mask。
+	为了能够支持两种行为，POSIX.1没有指定setjmp和longjmp对signal masks的影响。相应地，两个新的函数：sigsetjmp和siglongjmp被POSIX.1定义了，如果是从一个信号处理函数中跳转，那么应该使用这两个函数。
+
+	#include <setjmp.h>
+	int sigsetjmp(sigjmp_buf env, int savemask);
+	返回：调用的时候会返回0，如果是由于siglongjmp导致的返回，那么返回非0。
+	void siglongjmp(sigjmp_buf env, int val);
+
+	这些函数和setjmp与longjmp函数的区别就是，sigsetjmp有一个额外的参数。如果savemask参数非0，那么sigsetjmp也会把当前进程的signal mask保存到env参数中。当siglongjmp被调用的时候，如果evn参数存放了sigsetjmp指定的非0的savemask，那么，siglongjmp会将保存的signal mask恢复。
+
+	举例：
+	static void                         sig_usr1(int), sig_alrm(int);
+	static sigjmp_buf                   jmpbuf;
+	static volatile sig_atomic_t        canjump;
+	int main(void)
+	{
+	    if (signal(SIGUSR1, sig_usr1) == SIG_ERR){...}
+	    if (signal(SIGALRM, sig_alrm) == SIG_ERR){...}
+		/*main开始,并且打印当前signal mask*/
+
+	    if (sigsetjmp(jmpbuf, 1)) {/*main结束*/exit(0);}
+	    canjump = 1;         /* sigsetjmp()完毕 */
+
+	    for ( ; ; )
+	        pause();
+	}
+	static void sig_usr1(int signo)
+	{
+	    time_t  starttime;
+	    if (canjump == 0) return;     /*canjump为0则无法预测的结果，所以忽略 */
+
+		/*开始sig_usr1,并且打印当前signal mask*/
+	    alarm(3);               /* 3时钟 */
+	    starttime = time(NULL);
+	    for ( ; ; )             /* 忙等待5秒 */
+	        if (time(NULL) > starttime + 5)
+	            break;
+		/*结束sig_usr1,并且打印当前signal mask*/
+
+	    canjump = 0;
+	    siglongjmp(jmpbuf, 1);  /* 跳到main函数 */
+	}
+
+	static void sig_alrm(int signo)
+	{
+		/*sig_alrm中的处理,并且打印当前signal mask*/
+	}
+
+	上面的程序，列举出当一个信号处理函数被自动调用的时候，signal mask（包括被捕捉的信号）是如何被系统安装上去的。这个程序也列举了使用sigsetjmp函数和siglongjmp函数的方法。
+	这个程序也列举了当我们在信号处理函数中调用siglongjmp时经常使用的另外一个技术：在调用sigsetjmp之后我们设置一个canjump变量为非0;这个变量会在信号处理函数中被检测，如果这个变量被检测的时候的值非0，那么调用siglongjmp(当然，调用之前也可把这个变量设置为0)。这个技术提供了一个保护机制，保护信号处理函数被过早的调用或者调用的太晚了，那个时候jump buffer还没有被sigsetjmp初始化好。（在我们的这个简单的程序中，我们在siglongjmp中很快就将程序结束了，但是在大一点的程序中，信号处理函数可能会在siglongjmp之后保持安装很长一段时间,这期间再发生信号而没有上述保护机制，就可能出现问题）提供这样的保护机制，在普通C代码中的longjmp时候是不需要的（这一点和在信号处理函数中相对），因为一个信号可能会在任何可能的时间发生，所以我们得在信号处理函数中加上额外的保护机制。
+	这里，我们使用sig_atomic_t类型，这个类型由ISO标准C定义，它可以在被写的时候不被打断。通过这个，我们要说明，一个这样类型的变量不应该跨越一个虚拟内存系统的页边界，并且这样的变量可以被一个单个的机器指令所访问。我们也常常为这样的数据类型包含ISO的volatile修饰符，因为这个变量被两个不同的线程控制流程所访问：main函数，还有异步执行的信号处理函数。下面给出了这个代码的时间图。
+
+			处理两个信号的例子函数的时间线
+            +---------+
+            |  main   |
+            +---------+
+              signal()
+              signal()
+           sigsetjmp()
+               pause()            +----------+
+                ----------------->| sig_usr1 |
+                                  +----------+
+                                    pr_mask()
+                                     alarm()
+                                     time()
+                                     time()
+                                     time()
+                                       .
+                                       .
+                                       .
+                                       v SIGALARM delivered   +-------------+
+                                       ---------------------->|  sig_alarm  |
+                                                              +-------------+
+                                                                 pr_mask()
+                                       <------------------------ return()
+                                       .
+                                       .
+                                       .
+                                       v
+                                     pr_mask()
+      sigsetjmp()<------------------siglongjmp()
+       pr_mask()
+        exit()
+
+
+	我们运行前面的程序，会输出如下的类似信息：
+	$ ./a.out &                      从后台启动进程
+	starting main:
+	[1]   531                        作业控制shell打印它的进程id
+	$ kill -USR1 531                 给进程发送USR1信号
+	starting sig_usr1: SIGUSR1
+	$ in sig_alrm: SIGUSR1 SIGALRM
+	finishing sig_usr1: SIGUSR1
+	ending main:
+	                                    键入回车
+	[1] + Done          ./a.out &
+
+
+	输出的信息和我们期望的一样：当信号处理函数被调用的时候，信号会被添加到当前进程的signal mask。原始的mask会被在信号处理函数返回的时候被恢复。同时，siglongjmp会恢复sigsetjmp保存的signal mask.
+
+	如果我们将上面程序中的sigsetjmp和siglongjmp改成Linux中的setjmp和longjmp(或者FreeBSD中的_setjmp和_longjmp),那么最后一行将会变成:
+	    ending main: SIGUSR1
+
+	也就是说，在调用setjmp之后，main函数执行的时候，SIGUSR1信号被阻塞了.这个也许不是我们想要期望的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec15.html
+
+
+

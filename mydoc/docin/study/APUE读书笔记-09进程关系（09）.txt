@@ -1,0 +1,86 @@
+++++++APUE读书笔记-09进程关系（09）++++++
+
+
+
+11、FreeBSD的实现
+================================================
+	经过学习我们对进程，进程组，会话，控制终端的属性有了一个定的了解，如果能够了解一下它们是怎么实现的也是很不错的。我们简单地看一下在Free BSD上面的实现。下面给出了一个图形展示FreeBSD使用的各种数据结构以及相应的关系。
+
+			FreeBSD中的会话和进程组的实现
+
+                                      session structure
+                   ---------------------->+--------+
+  tty structure   /                   +-->|s_count |
+   +---------+<---------------------- |   +--------+
+   |         |  /                    \|   |s_leader|---+
+   +---------+ /                      \   +--------+   |
+   |t_session|/                       |\  |s_ttyvp |\  |
+   +---------+                        | \ +--------+ \ | v-node structure
+   |t_pgrp   |\ foreground            |  \|s_ttyp  |  -+-->+----------+
+   +---------+ \process group         |   +--------+   |   |          |
+   |t_termios|  \      pgrp structure |   |s_sid   |   |   +----------+
+   +---------+   ------>+----------+  |   +--------+   |   |  actual  |
+   |t_winsize|    +---->|          |  |                |   |  i-node  |
+   +---------+    | +-->|          |  |                |   |for device|
+   |         |    | | +>+----------+  |                |   +----------+
+   +---------+    | | | |pg_id     |  |                |
+                  | | | +----------+ /                 |
+                  | | | |pg_session|/                  |
+   linked list of | | | +----------+                   |
+ +----------------+-+-+>|pg_members|        +----------+
+ | process group  | | | +----------+        |
+ |    members     | | |                     |
+ |                | | |                     |
+ |  proc structure| | |    proc structure   \    proc structure
+ |    +--------+  | | |      +--------+      ----->+--------+
+ +--->|p_pglist|<-+-+-+----->|p_pglist|<---------->|p_pglist|
+      +--------+  | | |      +--------+            +--------+
+      |p_pid   |  | | |      |p_pid   |            |p_pid   |
+      +--------+  | | |      +--------+            +--------+
+      |p_pptr  |  | | |      |p_pptr  |            |p_pptr  |
+      +--------+  | | |      +--------+            +--------+
+      |        |  | | |      |        |            |        |
+      +--------+  | | |      +--------+            +--------+
+      |p_pgrp  |--+ | +------|p_pgrp  |           /|p_pgrp  |
+      +--------+    |        +--------+          / +--------+
+      |        |    |        |        |         /  |        |
+      +--------+    |        +--------+        /   +--------+
+                    |                         /
+                    +-------------------------
+
+	总共就5个结构：session结构，tty结构，pgrp结构，proc结构，vnode结构。
+
+	（1）session结构包含如下成员：
+	a.s_count表示这个会话中进程组的数目。如果值为0那么会将此session结构释放。
+	b.s_leader指针指向session leader进程的proc结构。
+	c.s_ttyvp指针指向控制终端的vnode节点结构。
+	d.s_ttyp指针指向控制终端的tty结构。
+	e.s_sid是session ID,注意这个session ID并不是UNIX Specification中的概念。
+	当setsid被调用的时候，在内核中会创建一个新的session结构，这时候，s_count被设置为1，s_leader就指向调用setsid的进程的proc结构，s_sid设置为相应的进程id,s_ttyvp和s_ttyp设置成空指针，所以这个新的session没有控制终端。
+
+	（2）对于tty结构，内核包含这个结构，用于终端设备和伪终端设备。
+	tty结构包含的成员如下：
+	a.t_session指向以本terminal为控制终端的session结构（注意session结构中也有指向本tty结构的指针）。当终端失去carrier(什么是carrier???)的时候，terminal通过这个指针给session leader发送hang-up信号。
+	b.t_pgrp指针指向前台进程组的pgrp结构。通过这个成员，terminal driver给前台进程组发送信号。通过特殊按键产生的三个信号(interrupt,quit,suspend)就发送给了前台进程。
+	c.t_termios是包含了这个终端的所有特殊字符以及相关信息的结构，信息例如波特率，是否echo on或者off等。
+	d.t_winsize是一个winsize结构，包含了当前terminal窗口的大小，当terminal窗口大小发生变化的时候，会给前台进程发送一个SIGWINCH信号。以后会讲述如何设置和获取当前terminal的大小。
+	需要注意的是，为了找到一个会话的前台进程组，内核需要从session结构开始，通过s_ttyp找到控制终端的tty结构，然后通过t_pgrp获取前台进程组的pgrp结构。
+
+	（3）pgrp结构包含了一个特定的进程组的一些信息,其成员有：
+	a.pg_id是进程组ID.
+	b.pg_session指针指向进程组所在session的session结构。
+	c.pg_members是一个指向prog结构的链表，其中的元素本进程组中的进程成员。相应地在proc结构中，有一个p_pglist结构，它是一个双向链表。指向组中下一个和上一个进程。
+
+	（4）proc结构包含一个单个进程所有的信息，其成员有：
+	a.p_pid包含进程id。
+	b.p_pptr是指向父进程proc结构的指针。
+	c.p_pgrp指针指向该进程所属的进程组的pgrp结构。
+	d.p_pglist是包含proc结构的双向链表，这个链表元素是和本进程同组的进程。
+
+	（5）最后，我们看看vnode结构。这个结构在控制终端被打开的时候分配，进程中所有/dev/tty的引用都会通过这个vnode结构。实际的i-node是v-node的一部分。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec11.html
+
+
+

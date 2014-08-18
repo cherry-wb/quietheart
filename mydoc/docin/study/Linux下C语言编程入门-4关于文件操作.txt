@@ -1,0 +1,105 @@
+Linux下C语言编程入门-4关于文件操作
+四、关于文件操作
+=======================
+1,相关函数
+
+文件的创建,打开和关闭
+-------
+#include <fcntl.h>;
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/stat.h>;
+int open(const char *pathname,int flags);
+int open(const char *pathname,int flags,mode_t mode);
+int close(int fd);
+这三个函数打开关闭文件，其中：
+1）pathname是文件名（包含路径名，缺省是在当前目录下面）
+2）flags 可以是下面的一个值或者是几个值的组合.
+O_RDONLY:以只读的方式打开文件.
+O_WRONLY:以只写的方式打开文件.
+O_RDWR:以读写的方式打开文件.
+O_APPEND:以追加的方式打开文件.
+O_CREAT:创建一个文件.
+O_EXEC:如果使用了 O_CREAT 而且文件已经存在,就会发生一个错误.
+O_NOBLOCK:以非阻塞的方式打开一个文件.
+O_TRUNC:如果文件已经存在,则删除文件的内容.
+前面三个标志只能使用任意的一个.如果使用了 O_CREATE 标志,那么我们要使用 open 的第二种形式.还要指定 mode 标志,用来表示文件的访问权限.
+3）mode 可以是以下情况的组合：
+S_IRUSR 用户可以读 
+S_IWUSR 用户可以写
+S_IXUSR 用户可以执行 
+S_IRWXU 用户可以读写执行
+
+S_IRGRP 组可以读
+ S_IWGRP 组可以写
+S_IXGRP 组可以执行
+ S_IRWXG 组可以读写执行
+
+S_IROTH 其他人可以读 
+S_IWOTH 其他人可以写
+S_IXOTH 其他人可以执行 
+S_IRWXO 其他人可以读写执行
+
+S_ISUID 设置用户执行ID 
+S_ISGID 设置组的执行 ID
+也可用数字来代表各个位的标志.Linux 总共用 5 个数字来表示文件的各种权限(00000).
+第一位表示设置用户 ID.第二位表示设置组 ID,第三位表示用户自己的权限位,第四位表示组的权限,最后一位表示其他人的权限.每个数字可以取 1(执行权限),2(写权限),4(读权限),0(什么也没有)或者是这几个值的和.
+比如我们要创建一个用户读写执行,组没有权限,其他人读执行的文件.设置用户 ID 位
+那么我们可以使用的模式是:1(设置用户 ID),0(组没有设置),7(用户权限为1+2+4),0(组没有权限,使用缺省),5(其他者权限1+4).即 10705:
+open("temp",O_CREAT,10705);
+如果我们打开文件成功,open 会返回一个文件描述符.我们以后对文件的所有操作就可以对这个文件描述符进行操作了.当我们操作完成以后,我们要关闭文件了,只要调用 close 就可以了,其中 fd 是我们要关闭的文件描述符.
+
+文件的读写
+-------
+#include <unistd.h>;
+ssize_t read(int fd, void *buffer,size_t count);
+ssize_t write(int fd, const void *buffer,size_t count);
+这里，fd 是我们要进行读写操作的文件描述符,buffer 是我们要写入文件内容或读出文件内容的内存地址.count 是我们要读写的字节数.
+对于普通的文件 read 从指定的文件(fd)中读取 count 字节到 buffer 缓冲区中(记住我们必须提供一个足够大的缓冲区),同时返回 count.如果读到了文件的结尾或者被一个信号所中断,返回值会小于 count.如果是由信号中断引起返回,而且没有返回数据,read 会返回-1,且设置 errno 为 EINTR.当程序读到了文件结尾的时候,read 会返回 0.
+write 从 buffer 中写 count 字节到文件 fd 中,成功时返回实际所写的字节数.
+
+以上需要注意的是打开文件，操作之后要关闭文件,这里不举例子了,以后有时间再补*********
+
+文件的属性
+-------
+#include <unistd.h>;
+int access(const char *pathname,int mode);
+这里，pathname:是文件名称,mode 是我们要判断的属性.可以取以下值或者是他们的组合.R_OK 文件可以读,W_OK 文件可以写,X_OK 文件可以执行,F_OK 文件存在.当我们测试成功时,函数返回 0,否则如果有一个条件不符时,返回-1.
+如果我们要获得文件的更多其他属性,我们可以使用函数 stat 或者 fstat.
+
+#include <sys/stat.h>;
+##include <unistd.h>;
+int stat(const char *file_name,struct stat *buf);
+int fstat(int filedes,struct stat *buf);
+这里，stat 用来判断没有打开的文件,而 fstat 用来判断打开的文件.
+
+关于stat的结构，如下：
+struct stat {
+	dev_t st_dev; /* 设备 */
+	ino_t st_ino; /* 节点 */
+	mode_t st_mode; /* 模式 */
+	nlink_t st_nlink; /* 硬连接 */
+	uid_t st_uid; /* 用户 ID */
+	gid_t st_gid; /* 组 ID */
+	dev_t st_rdev; /* 设备类型 */
+	off_t st_off; /* 文件字节数 */
+	unsigned long st_blksize; /* 块大小 */
+	unsigned long st_blocks; /* 块数 */
+	time_t st_atime; /* 最后一次访问时间 */
+	time_t st_mtime; /* 最后一次修改时间 */
+	time_t st_ctime; /* 最后一次改变时间(指属性) */
+};
+stat 用来判断没有打开的文件,而 fstat 用来判断打开的文件.我们使用最多的属性是 st_
+mode.通过着属性我们可以判断给定的文件是一个普通文件还是一个目录,连接等等.可以
+使用下面几个宏来判断.
+S_ISLNK(st_mode):是否是一个连接.
+S_ISREG 是否是一个常规文件.
+S_ISDIR 是否是一个目录
+S_ISCHR 是否是一个字符设备.
+S_ISBLK 是否是一个块设备
+S_ISFIFO 是否 是一个 FIFO文件.
+S_ISSOCK 是否是一个 SOCKET 文件.
+
+目录操作
+-------
+函数简单，以后有时间整理，先把后面的整理再回到这里整理*********

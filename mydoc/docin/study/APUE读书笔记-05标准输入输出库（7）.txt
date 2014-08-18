@@ -1,0 +1,76 @@
+++++++APUE读书笔记-05标准输入输出库（7）++++++
+
+
+
+12、实现细节
+================================================
+	每一个标准I/O流都和一个文件描述符号相关联，通过如下函数获得一个标准I/O流的文件描述符号：
+	#include <stdio.h>
+	int fileno(FILE *fp);
+	返回：和fp流相关的文件描述符号。 
+	注意这个函数不是ISO C指定的，而是被做为POSIX.1的扩展指定。
+
+	下面例子打印三种标准流以及一个普通文件的缓存：
+	void    pr_stdio(const char *, FILE *);
+	int main(void)
+	{
+		FILE    *fp;
+		fputs("enter any character\n", stdout);
+		if (getchar() == EOF)
+		err_sys("getchar error");/*错误情况，这里可以忽略它。该函数是原书中为了叙述方便实现的，可参考原书附录*/
+		fputs("one line to standard error\n", stderr);
+		pr_stdio("stdin",  stdin);
+		pr_stdio("stdout", stdout);
+		pr_stdio("stderr", stderr);
+		if ((fp = fopen("/etc/motd", "r")) == NULL)
+			err_sys("fopen error");
+		if (getc(fp) == EOF)
+			err_sys("getc error");
+		pr_stdio("/etc/motd", fp);
+		exit(0);
+	}
+
+	void pr_stdio(const char *name, FILE *fp)
+	{
+		printf("stream = %s, ", name);
+
+		/*
+		* The following is nonportable.
+		*/
+		if (fp->_IO_file_flags & _IO_UNBUFFERED)
+			printf("unbuffered");
+		else if (fp->_IO_file_flags & _IO_LINE_BUF)
+			printf("line buffered");
+		else /* if neither of above */
+			printf("fully buffered");
+		printf(", buffer size = %d\n", fp->_IO_buf_end - fp->_IO_buf_base);
+	}
+
+	需要注意的是，我们在打印缓存状态之前对每个流进行了I/O操作，因为第一次的I/O操作会为流分配一个缓存。结构成员_IO_file_flags,IO_buf_base,  以及_IO_buf_end 和常量 _IO_UNBUFFERED 与_IO_LINE_BUFFERED由Linux上面的GNU标准I/O库定义。需要注意其他的UNIX系统可能有不同的标准I/O库实现。
+	下面是运行以上程序两次的结果，一次将三个标准流连接到终端，一次将它们重定向到文件：
+	$ ./a.out                       stdin, stdout, and stderr connected to terminal
+	enter any character
+                                    we type a newline
+	one line to standard error
+	stream = stdin, line buffered, buffer size = 1024
+	stream = stdout, line buffered, buffer size = 1024
+	stream = stderr, unbuffered, buffer size = 1
+	stream = /etc/motd, fully buffered, buffer size = 4096
+	$ ./a.out < /etc/termcap > std.out 2> std.err
+                                    run it again with all three streams redirected
+
+	$ cat std.err
+	one line to standard error
+	$ cat std.out
+	enter any character
+	stream = stdin, fully buffered, buffer size = 4096
+	stream = stdout, fully buffered, buffer size = 4096
+	stream = stderr, unbuffered, buffer size = 1
+	stream = /etc/motd, fully buffered, buffer size = 4096
+	由上可知，默认系统当标准输入输出连接到终端上面的时候，其缓存是行缓存。行缓存长度是1024字节。这并不表示我们只能进行1024字节的行输入和输出，那只是一个缓存的大小。所以如果进行了2048字节的行输出将会导致调用两次write系统调用。当我们将这两个流重定向到普通文件的时候，它们是满缓存的，缓存的大小和文件系统I/O时候导致更优时间、stat结构的、st_blksize大小相等。我们也看到，标准错误总是非缓存的（重定向之后也如此），普通文件是满缓存的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec12.html
+
+
+

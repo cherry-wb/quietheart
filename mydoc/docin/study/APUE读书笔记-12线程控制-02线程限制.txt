@@ -1,0 +1,21 @@
+++++++APUE读书笔记-12线程控制-02线程限制++++++
+
+
+
+2、线程限制
+================================================
+	前面我们讲述过sysconf函数，一些和线程相关的资源限制，可以通过这个函数来获取，本文列出了一些线程的资源限制。具体参见参考资料。大致描述如下：
+	PTHREAD_DESTRUCTOR_ITERATIONS:通过给sysconf传递参数_SC_THREAD_DESTRUCTOR_ITERATIONS来获得，描述了线程退出的时候，需要尝试析构线程相关数据的最大尝试次数。
+	PTHREAD_KEYS_MAX:通过给sysconf传递参数_SC_THREAD_KEYS_MAX获取，描述了一个进程可以创建的key的最大数目。
+	PTHREAD_STACK_MIN:通过给sysconf传递参数_SC_THREAD_KEYS_MAX获取，描述了线程栈可以使用的最小字节数目。
+	PTHREAD_THREADS_MAX:通过给sysconf传递参数_SC_THREAD_THREADS_MAX获取，描述了进程中可以创建的最大的线程数目。
+
+	通过使用sysconf获取的限制，可以让程序在不同的操作系统上面的可移植性增强。例如，如果每管理一个文件就需要4个线程而系统不能提供足够的线程，你就需要限制文件的数目了。
+
+	书中也给出了这些限制在本书中的四个系统上面的具体数值，这里就不列举了。我们需要知道的一个就是，尽管系统没有提供访问这些限制的方法，但是这并不意味这系统没有这些限制，只是表示系统没有给我们提供访问这些限制的方法。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch12lev1sec2.html
+
+
+

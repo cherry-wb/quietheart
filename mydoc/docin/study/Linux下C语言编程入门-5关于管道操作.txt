@@ -1,0 +1,60 @@
+Linux下C语言编程入门-5关于管道操作
+五、关于管道操作
+=======================
+1,相关函数
+-------
+#include<unistd.h>;
+int pipe(int fildes[2]);
+系统调用 pipe 可以创建一个管道.pipe 调用可以创建一个管道(通信缓冲区).当调用成功时,我们可以访问文件描述符 fildes[0],fildes[1].其中 fildes[0]是用来读的文件描述符,而 fildes[1]是用来写的文件描述符.在实际使用中我们是通过创建一个子进程,然后一个进程写,一个进程读来使用的.
+
+2,举例
+-------
+这个是管道通信的例子.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#define BUFFER 255
+int main(int argc,char **argv)
+{
+	char buffer[BUFFER+1];
+
+	/*管道文件描述符号，fd[0]用于读，fd[1]用于写*/
+	int fd[2];
+
+	if(argc!=2)
+	{
+		fprintf(stderr,"Usage:%s string\n\a",argv[0]);
+		exit(1);
+	}
+
+	if(pipe(fd)!=0)
+	{/*$$$$$$$$$$$$$$$$$$$关键,创建管道的操作，返回读写文件描述符号到fd[0],fd[1]$$$$$$$$$$$$$$$$$$$*/
+		fprintf(stderr,"Pipe Error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	if(fork()==0)
+	{/*子进程对管道进行写操作*/
+		close(fd[0]);/*首先关闭无用的读文件描述符号。*/
+		printf("Child[%d] Write to pipe\n\a",getpid());
+		snprintf(buffer,BUFFER,"%s",argv[1]);
+		write(fd[1],buffer,strlen(buffer));/*$$$$$$$$$关键，向管道写信息$$$$$$$$$$*/
+		close(fd[1]);/*关闭写符号，原来没说，但我看man里面就是这样做的，所以我根据man改正*/
+		printf("Child[%d] Quit\n\a",getpid());
+		exit(0);
+	}
+	else
+	{/*父进程负责读管道*/
+		close(fd[1]);/*首先关闭写文件描述符号。为什么？？？？？*/
+		printf("Parent[%d] Read from pipe\n\a",getpid());
+		memset(buffer,'\0',BUFFER+1);
+		read(fd[0],buffer,BUFFER);/*$$$$$$$$$关键，从管道读信息$$$$$$$$$$*/
+		close(fd[0]);/*关闭读符号，原来没说，但我看man里面就是这样做的，所以我根据man改正*/
+		printf("Parent[%d] Read:%s\n",getpid(),buffer);
+		exit(1);
+	}
+}

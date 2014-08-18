@@ -1,0 +1,103 @@
+++++++APUE读书笔记-16网络通信-04建立连接++++++
+
+
+
+4、建立连接
+================================================
+	如果我们处理一个面向连接的网络服务（SOCK_STREAM或者SOCK_SEQPACKET），那么在我们可以交换数据之前，我们需要创建一个连接，这个连接在请求服务的进程的套接字（客户端）以及提供服务的进程（服务端）之间建立。我们使用connect函数创建一个连接。
+	#include <sys/socket.h>
+	int connect(int sockfd, const struct sockaddr *addr, socklen_t len);
+	返回：如果成功返回0，如果错误返回1。
+	我们使用connect函数指定的地址，是我们想要通信的服务器的地址。如果sockfd没有绑定到一个地址上面，那么connect将会为调用者绑定到一个默认的地址上面。
+	当我们尝试连接到一个服务器的时候，连接的请求可能会因为一些原因而失败。我们尝试连接的机器必须是启动并且是运行的。服务必须被绑定到我们尝试连接的地址上面，并且服务器的提交连接队列中也必须要有空间（我们会在后面简单对此进行介绍）。因此，应用程序必须能够处理由于临时的条件引起的连接错误的返回。
+
+	例子
+	下面的例子给处了一个处理临时连接错误的一个方法。这个在一个负载很高的服务器上面很容易发生。
+	#include "apue.h"//一些必要的自定义函数和文件的包含
+	#include <sys/socket.h>
+	#define MAXSLEEP 128
+	int connect_retry(int sockfd, const struct sockaddr *addr, socklen_t alen)
+	{
+	    int nsec;
+
+	    /*
+	     * 尝试使用指数回退方法进行连接。
+	     */
+	    for (nsec = 1; nsec <= MAXSLEEP; nsec <<= 1) {
+	        if (connect(sockfd, addr, alen) == 0) {
+	            /*
+	             * 接受连接。
+	             */
+	            return(0);
+	        }
+
+	        /*
+	         * 再次尝试连接之前的延迟。
+	         */
+	        if (nsec <= MAXSLEEP/2)
+	            sleep(nsec);
+	    }
+	    return(-1);
+	}
+	这个函数展示了一种叫做指数回退的算法。如果调用connect失败了，那么进程会进入睡眠一小段时间，然后继续尝试，同时会在每次循环的时候增加延迟时间，一直增加到2分钟。
+
+	如果套接字是非阻塞模式，那么在无法建立连接的时候connect将会返回，并且设置errno为EINPROGRESS。应用程序可以使用pool或者select来确定哪个文件描述符可写。这个时候，连接完成。
+	connect函数也可以用做无连接的网络服务（ SOCK_DGRAM）。这看起来似乎有点冲突，但是实际上是一种优化。如果我们使用SOCK_DGRAM套接字调用connect，那么我们发送的所有消息的目标地址被设置成我们在connect调用中的地址，这样我们就不用在每次发送消息的时候都提供一个地址了。另外，我们将会只从我们指定的地址处接收数据报。
+
+	服务器通过调用listen函数来准备接收connect请求。
+	#include <sys/socket.h>
+	int listen(int sockfd, int backlog);
+	返回：如果成功返回0，如果错误返回1。
+
+	参数backlog给系统提供了一个提示，提示代表进程要排队的没有完成的连接请求的数目。实际的值取决与系统，但是上限通过<sys/socket.h>中的SOMAXCONN来进行指定。
+	在Solaris中<sys/socket.h>中的SOMAXCONN值被忽略。特定的最大值取决于系统的实现。对于TCP来说，默认的值为128。
+	当队列满的时候，系统将会拒绝额外的connect请求。所以，backlog值必须基于期望的服务器负载以及接受连接请求并启动服务的进程的数目。
+
+	当服务进程调用listen的时候，使用的套接字可以接受连接请求。我们使用accept函数来接收连接请求，然后将它转化成一个连接。
+	#include <sys/socket.h>
+	int accept(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict len);
+	返回：如果成功返回套接字文件描述符号，如果失败返回错误。
+	accept函数返回一个套接字文件描述符号，这个文件描述符号连接到客户服务进程，被称作一个连接。新的套接字描述符号具有和原始套接字(sockfd)同样的套接字类型以及地址族。传递给accept函数的原始套接字并不和连接有关联，但是仍然可以接收额外的连接请求。
+	如果我们不关心客户端是什么，那么我们可以设置addr和len参数为NULL。否则，在调用accept之前，我们需要设置addr参数为一个足够大的可以容纳地址的缓存，同时设置参数len（一个整数指针）为一个整数的地址。返回的时候，accept将会填充客户的地址到缓存，同时更新整数指针所指向的整数以反应地址的大小。
+	如果没有提交连接请求，那么accept将会阻塞直到来到一个连接请求。如果sockfd是非阻塞的模式，那么accept将会返回1并且设置errno为EAGAIN或者EWOULDBLOCk。
+	本文中讨论的所有的四个平台将EAGAIN定义为和EWOULDBLOCK一样。
+	如果一个服务进程调用accept并且目前没有连接请求，这个时候服务进程将会阻塞直到一个请求来到。另外，服务进程也可以使用poll或者select来等待连接请求的到来，这个时候一个具有提交连接请求的套接字将会可读。
+
+	例子
+	下面的代码展示了一个我们可以使用的函数分配和初始化一个服务进程使用的套接字。
+	我们将会看到TCP对于地址重新利用有一些奇怪的规则，使得这个例子不够完整。后面会给出通过了这些规则的解决本版本的主要问题的这个函数。
+
+	初始化服务进程使用的套接字端
+	#include "apue.h"
+	#include <errno.h>
+	#include <sys/socket.h>
+	int initserver(int type, const struct sockaddr *addr, socklen_t alen, int qlen)
+	{
+	    int fd;
+	    int err = 0;
+
+	    if ((fd = socket(addr->sa_family, type, 0)) < 0)
+	        return(-1);
+	    if (bind(fd, addr, alen) < 0) {
+	        err = errno;
+	        goto errout;
+	    }
+	    if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
+	        if (listen(fd, qlen) < 0) {
+	            err = errno;
+	            goto errout;
+	        }
+	    }
+	    return(fd);
+
+	errout:
+	    close(fd);
+	    errno = err;
+	    return(-1);
+	}
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch16lev1sec4.html
+
+
+

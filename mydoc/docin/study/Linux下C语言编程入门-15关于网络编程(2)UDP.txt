@@ -1,0 +1,124 @@
+Linux下C语言编程入门-15关于网络编程(2)UDP
+十五、关于网络编程(2)UDP
+=======================
+这里讲述基于UDP的通信。
+1,相关函数
+-------
+int recvfrom(int sockfd,void *buf,int len,unsigned int flags,struct sockaddr * from int *fromlen)
+int sendto(int sockfd,const void *msg,int len,unsigned int flags,struct sockaddr *to int tolen)
+
+recvfrom函数负责从 sockfd 接收数据,如果 from 不是 NULL,那么在 from 里面存储了信息来源(发送者)的情况,如果对信息的来源不感兴趣,可以将 from 和 fromlen 设置为 NULL，buf里面存储的是接收到的信息,flags标志可以置0，也可以表示是否等待，是否是否确认等，可以查看man。
+
+sendto函数负责向 to 发送信息.此时在 to 里面存储了收信息方的详细资料.msg是要发送的信息,flags标志可以置0，也可以表示是否等待，是否是否确认等，可以查看man。
+
+2,举例
+-------
+UDP通信代码片段举例：
+/************* 服务端程序(先接收信息然后反馈给客户方) server.c ******************/
+/*包含头文件*/
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+
+/*相关定义*/
+int sockfd;
+struct sockaddr_in addr;/*用来描述服务器信息*/
+struct sockaddr_in addr1;/*发送消息方的信息(客户)*/
+int addrlen,n;/*发送方信息结构的长度,和消息的长度*/
+char msg[MAX_MSG_SIZE];/*发送方发送过来的消息*/
+
+/*创建并绑定套接字*/
+sockfd=socket(AF_INET,SOCK_DGRAM,0);/*SOCK_DGRAM是指固定大小的无连接非可靠数据报，其他参数同前*/
+if(sockfd<0)
+{
+	fprintf(stderr,"Socket Error:%s\n",strerror(errno));
+	exit(1);
+}
+bzero(&addr,sizeof(struct sockaddr_in));/*将addr的前sizeof(struct sockaddr_in)置零*/
+
+addr.sin_family=AF_INET;
+addr.sin_addr.s_addr=htonl(INADDR_ANY);
+addr.sin_port=htons(SERVER_PORT);
+if(bind(sockfd,(struct sockaddr *)&ddr,sizeof(struct sockaddr_in))<0
+  )
+{
+	fprintf(stderr,"Bind Error:%s\n",strerror(errno));
+	exit(1);
+}
+
+/*接收消息并回馈消息*/
+while(1)
+{ /* 从网络上度,写到网络上面去 */
+	/*从发送者接收消息
+	  第一个参数:套接字文件描述符.
+	  第二个参数:存放接收的消息
+	  第三个参数:存放发送消息者的信息
+	  第四个参数:存放相应的长度(注意这里不是自己指定的长度)
+	 */
+	n=recvfrom(sockfd,msg,MAX_MSG_SIZE,0,(struct sockaddr*)&addr1,&addrlen);
+	msg[n]=0;
+	/* 显示服务端已经收到了信息 */
+	fprintf(stdout,"I have received %s",msg);
+	/*相接收者发送回馈信息
+	  第一个参数:套接字文件描述符.
+	  第二个参数:存放回馈的消息
+	  第三个参数:存放消息的长度
+	  第四个参数:flag可以置零也可以是表示是否确认信息等的值，需要查看man手册
+	  第五个参数:存放发送消息者的信息
+	  第六个参数:存放相应的长度(注意这里不是自己指定的长度)
+	 */
+	sendto(sockfd,msg,n,0,(struct sockaddr*)&addr1,addrlen);
+}
+
+/*关闭套接字*/
+close(sockfd);
+
+/********************客户端程序(先发送信息到服务器端然后接收反馈信息)client.c****************/
+/*头文件定义*/
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>;
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+/*相关变量定义*/
+int sockfd,port;/*套接字和服务器端的端口*/
+struct sockaddr_in addr;/*描述服务器端(接收方)信息的结构*/
+char buffer[MAX_BUF_SIZE];/*存放待发送的字符*/
+int n;/*存放服务器端反馈信息的长度*/
+/*创建套接字SOCK_DGRAM是指固定大小的无连接非可靠数据报，其他参数同前*/
+sockfd=socket(AF_INET,SOCK_DGRAM,0);
+if(sockfd<0)
+{
+	fprintf(stderr,"Socket Error:%s\n",strerror(errno));
+	exit(1);
+}
+/* 填充服务端(接收方)的资料 */
+bzero(&addr,sizeof(struct sockaddr_in));
+addr.sin_family=AF_INET;
+addr.sin_port=htons(port);
+
+if(inet_aton(argv[1],&addr.sin_addr)<0)
+{/*这里argv[1]是服务器端的ip地址*/
+	fprintf(stderr,"Ip error:%s\n",strerror(errno));
+	exit(1);
+}
+
+/*发送信息到服务器端并且接收服务器端的反馈信息*/
+while(1)
+{ /* 从键盘读入,写到服务端 */
+	fgets(buffer,MAX_BUF_SIZE,stdin);
+	/*利用套接字描述符sockfd，发送buffer的内容到服务器方（接收方）,可以置零也可以是表示是否确认信息等的值，需要查看man手册.*/
+	sendto(sockfd,buffer,strlen(buffer),0,&addr,sizeof(struct sockaddr_in));
+	bzero(buffer,MAX_BUF_SIZE);/*准备接收信息之前先把缓存清零*/
+
+	/* 从网络上读取服务器发送回来的反馈信息,写到屏幕上 */
+	n=recvfrom(sockfd,buffer,MAX_BUF_SIZE,0,NULL,NULL);
+	buffer[n]=0;
+	fputs(buffer,stdout);
+}
+
+/*使用完毕释放套接字文件描述符*/
+close(sockfd);

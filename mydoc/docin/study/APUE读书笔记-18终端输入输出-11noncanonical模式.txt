@@ -1,0 +1,288 @@
+++++++APUE读书笔记-18终端输入输出-11noncanonical模式++++++
+
+
+
+11、noncanonical模式
+================================================
+	Noncanonical模式通过关闭termios结构中的c_lflag域中的ICANON标记来指定。在noncanonical模式，输入的数据不会被收集成行，并且这些字符不会被处理：ERASE, KILL, EOF, NL, EOL, EOL2, CR, REPRINT, STATUS,  WERASE。
+	如我们所说，canonical模式比较简单，系统每次返回一行。但是noncanonical模式中，系统如何知道什么时候给我们返回数据？如果每次返回一个字节，那么开销就会很大。（前面给出过我们一次read一个字节的开销，每次我们将返回的数据量增倍，相应的系统调用的开销就会减半）。系统不能总是每次返回多个字节，因为有时候我们直到我们开始读取之前，我们都无法知道需要读取多少数据。
+	有一个解决的方法就是，当已经读取了指定数目的数据或者过了一个指定的时间之后，告诉系统返回。这个技术使用两个变量，它们存放在termios结构中的c_cc数组中：MIN和TIME。这两个数组的元素通过名称VMIN和VTIME被索引到。
+	
+	MIN指定了一个read返回之前的最小字节数目。TIME指定了等待数据到达的每个10分之一秒的数目。主要有4种情况：
+	Case A: MIN > 0, TIME > 0
+	TIME指定了一个交互字节计时器，这个计时器只有在第一个字节被接收到的时候会被启动。如果在计时器超时之前，MIN字节的数据被读取到了，那么read会返回MIN字节。如果计时器在接收到MIN个字节之前超时了，那么read会返回当前已经读取的字节数目。（如果超时了，那至少会返回1个字节，因为计时器在接收到一个字节的时候才会被启动）这个情况下，调用者会阻塞，直到收到第一个字节，如果调用read的时候数据已经可用，那么就好象read之后数据立即被接收到了。
+	Case B: MIN > 0, TIME == 0
+	read不会返回，直到MIN字节被接收到。这会导致read处于一种永远阻塞的状态。
+	Case C: MIN == 0, TIME > 0
+	TIME指定了一个读取计时器，这个计时器会在read被调用的时候启动。(和case A进行比较会发现，case A中的非零TIME表示一个交互字节计时器，这个计时器只有接收到第一个字节的时候才会被启动)，read会在接收到一个单个字节的时候返回，或者计时器超时的时候返回。如果计时器超时了，那么read返回0。
+	Case D: MIN == 0, TIME == 0
+	如果一些数据是可用的，那么read返回请求的字节的数目。如果没有数据可用，那么read会立即返回0。
+	
+	需要注意的是，对于以上这些情况，MIN只是一个最小值。如果应用程序请求的数据大于MIN字节，那么会可能接收到所有可能请求的数据。这也是C和D中的情况，即C和D中的MIN都是0。
+	
+	下面的图表列出了noncanonical输入下的四种情况。这个图中，nbytes就是read的第3个参数（也就是返回的最大字节数目）。
+	noncanonical输入模式中的四种情况
+	                     MIN > 0                           MIN == 0
+	           +------------------------------------+------------------------------+
+	           | A:read returns [MIN,nbytes]        | C:read returns [1,nbytes]    |
+	           |    before timer expires;           |       before timer expires;  |
+	 TIME > 0  |   read returns [1,MIN)             |   read returns 0             |
+	           |    if timer expires.               |       if timer expires.      |
+	           | (TIME= interbyte timer             | (TIME= read timer.)          |
+	           |  Caller can block indefinitely.)   |                              |
+	           +------------------------------------+------------------------------+
+	           | B:read returns [MIN,nbytes]        | D:read returns [0,nbytes]    |
+	 TIME == 0 |      when available.               |       immediately.           |
+	           | (Caller can block indefinitely.)   |                              |
+	           +------------------------------------+------------------------------+
+	我们需要注意的是POSIX.1允许下标VMIN和VTIME分别和VEOF与VEOL的值一样。其实，Solaris为了兼容以前的老版本的System V，就是这样做的。这导致了一个移植的问题。当从noncanonical转换到canonical模式的时候，我们现在必须也恢复VEOF和VEOL，如果VMIN和VEOF一样，并且我们没有恢复它们的值，那么当我们设置VMIN为经常使用的1的时候，end-of-file字符就变成了Control-A。回避这个问题的最简单的方法就是当进入到noncanonical模式的时候保存整个termios结构，回到canonical模式的时候恢复它。
+	例子
+	下面的程序定义了tty_cbreak和tty_raw函数，这函数设置终端为cbreak模式和raw模式（cbreak和raw来自终端驱动的版本7)。我们可以调用函数tty_reset来重新设置终端为它的原始模式（也就是调用这些函数之前的状态）。
+	
+	设置终端模式为cbreak或者raw
+	#include "apue.h"
+	#include <termios.h>
+	#include <errno.h>
+	
+	static struct termios       save_termios;
+	static int                  ttysavefd = -1;
+	static enum { RESET, RAW, CBREAK } ttystate = RESET;
+	
+	int tty_cbreak(int fd) /* put terminal into a cbreak mode */
+	{
+	    int              err;
+	    struct termios   buf;
+	
+	    if (ttystate != RESET) {
+	        errno = EINVAL;
+	        return(-1);
+	    }
+	    if (tcgetattr(fd, &buf) < 0)
+	        return(-1);
+	    save_termios = buf; /* structure copy */
+	
+	    /*
+	     * Echo off, canonical mode off.
+	     */
+	    buf.c_lflag &= ~(ECHO | ICANON);
+	
+	    /*
+	     * Case B: 1 byte at a time, no timer.
+	     */
+	    buf.c_cc[VMIN] = 1;
+	    buf.c_cc[VTIME] = 0;
+	    if (tcsetattr(fd, TCSAFLUSH, &buf) < 0)
+	        return(-1);
+	
+	    /*
+	     * Verify that the changes stuck. tcsetattr can return 0 on
+	     * partial success.
+	     */
+	    if (tcgetattr(fd, &buf) < 0) {
+	        err = errno;
+	        tcsetattr(fd, TCSAFLUSH, &save_termios);
+	        errno = err;
+	        return(-1);
+	    }
+	    if ((buf.c_lflag & (ECHO | ICANON)) || buf.c_cc[VMIN] != 1 ||
+	      buf.c_cc[VTIME] != 0) {
+	        /*
+	         * Only some of the changes were made. Restore the
+	         * original settings.
+	         */
+	        tcsetattr(fd, TCSAFLUSH, &save_termios);
+	        errno = EINVAL;
+	        return(-1);
+	    }
+	
+	    ttystate = CBREAK;
+	    ttysavefd = fd;
+	    return(0);
+	}
+	
+	int tty_raw(int fd)     /* put terminal into a raw mode */
+	{
+	    int             err;
+	    struct termios  buf;
+	
+	    if (ttystate != RESET) {
+	        errno = EINVAL;
+	        return(-1);
+	    }
+	    if (tcgetattr(fd, &buf) < 0)
+	        return(-1);
+	    save_termios = buf; /* structure copy */
+	
+	    /*
+	     * Echo off, canonical mode off, extended input
+	     * processing off, signal chars off.
+	     */
+	    buf.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+	
+	    /*
+	     * No SIGINT on BREAK, CR-to-NL off, input parity
+	     * check off, don't strip 8th bit on input, output
+	     * flow control off.
+	     */
+	    buf.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	
+	    /*
+	     * Clear size bits, parity checking off.
+	     */
+	    buf.c_cflag &= ~(CSIZE | PARENB);
+	
+	    /*
+	     * Set 8 bits/char.
+	     */
+	    buf.c_cflag |= CS8;
+	
+	    /*
+	     * Output processing off.
+	     */
+	    buf.c_oflag &= ~(OPOST);
+	
+	    /*
+	     * Case B: 1 byte at a time, no timer.
+	     */
+	    buf.c_cc[VMIN] = 1;
+	    buf.c_cc[VTIME] = 0;
+	    if (tcsetattr(fd, TCSAFLUSH, &buf) < 0)
+	        return(-1);
+	
+	    /*
+	     * Verify that the changes stuck. tcsetattr can return 0 on
+	     * partial success.
+	     */
+	    if (tcgetattr(fd, &buf) < 0) {
+	        err = errno;
+	        tcsetattr(fd, TCSAFLUSH, &save_termios);
+	        errno = err;
+	        return(-1);
+	    }
+	    if ((buf.c_lflag & (ECHO | ICANON | IEXTEN | ISIG)) ||
+	      (buf.c_iflag & (BRKINT | ICRNL | INPCK | ISTRIP | IXON)) ||
+	      (buf.c_cflag & (CSIZE | PARENB | CS8)) != CS8 ||
+	      (buf.c_oflag & OPOST) || buf.c_cc[VMIN] != 1 ||
+	      buf.c_cc[VTIME] != 0) {
+	        /*
+	         * Only some of the changes were made. Restore the
+	         * original settings.
+	         */
+	        tcsetattr(fd, TCSAFLUSH, &save_termios);
+	        errno = EINVAL;
+	        return(-1);
+	    }
+	
+	    ttystate = RAW;
+	    ttysavefd = fd;
+	    return(0);
+	}
+	
+	int tty_reset(int fd)      /* restore terminal's mode */
+	{
+	    if (ttystate == RESET)
+	        return(0);
+	    if (tcsetattr(fd, TCSAFLUSH, &save_termios) < 0)
+	        return(-1);
+	    ttystate = RESET;
+	    return(0);
+	}
+	void tty_atexit(void)        /* can be set up by atexit(tty_atexit) */
+	{
+	    if (ttysavefd >= 0)
+	        tty_reset(ttysavefd);
+	}
+	
+	struct termios * tty_termios(void)       /* let caller see original tty state */
+	{
+	    return(&save_termios);
+	}
+	
+	如果我们已经调用了tty_cbreak，我们需要在调用tty_raw之前调用tty_reset。调用tty_cbreak之后、再调用tty_raw的时候也是如此（即先调用tty_reset再tty_raw）。这样可以确保在出现错误的时候，终端不会处于不稳定的状态。
+	
+	还有两个函数：tty_atexit可以被建立成一个exit处理函数，保证在exit的时候终端的模式被重置，tty_termios返回一个指向原始的canonical模式的termios结构。
+	我们对cbreak模式的定义如下：
+	a Noncanonical模式。正如我们这一节开始所述，这个模式会关闭一些输入字符的处理。它不会关闭信号处理，所以用户始终可以键入任何一个终端信号产生函数。需要注意的是，调用者应该获取这些信号，否则信号可能会终止终端程序导致终端可能处于一种cbreak模式。
+	做为一个通用的规则，当我们写一个改变终端模式的程序的时候，我们应该捕获尽可能多的信号，这样我们可以在程序终止的时候重新设置终端。
+	b 关闭回显。
+	c 一次输入一个字节。为了实现这个，我们设置MIN为1，TIME为0。这样和前面表中列出的case B一样了。read不会返回，直到至少有一个字节可用。
+	
+	我们对raw模式的定义如下：
+	a Noncanonical模式。我们也会关闭对信号生成字符（ISIG）以及扩展输入字符(IEXTEN)的处理。另外，我们通过关闭BRKINT来不让BREAK字符产生信号。
+	b 关闭回显。
+	c 我们禁止输入上面CR和NL之间的映射(ICRNL)、等值输入检查(INPCK)、以及输入的第8位的strip(ISTRIP)，以及输出流控制（IXON）。
+	d 8位字符(CS8)，和等值检查(PARENB)被禁止。
+	e 所有输出的处理(OPOST)被禁止。
+	f 每次输入一个字节(MIN=1,TIME=0)。
+	
+	下面的程序测试了raw和cbreak模式。
+	
+	运行下面的程序，我们可以看到终端的模式发生了什么现象。
+	测试raw和cbreak终端模式
+	#include "apue.h"
+	static void sig_catch(int signo)
+	{
+	    printf("signal caught\n");
+	    tty_reset(STDIN_FILENO);
+	    exit(0);
+	}
+	
+	int main(void)
+	{
+	    int    i;
+	    char   c;
+	
+	    if (signal(SIGINT, sig_catch) == SIG_ERR)   /* catch signals */
+	        err_sys("signal(SIGINT) error");
+	    if (signal(SIGQUIT, sig_catch) == SIG_ERR)
+	        err_sys("signal(SIGQUIT) error");
+	    if (signal(SIGTERM, sig_catch) == SIG_ERR)
+	        err_sys("signal(SIGTERM) error");
+	
+	    if (tty_raw(STDIN_FILENO) < 0)
+	        err_sys("tty_raw error");
+	    printf("Enter raw mode characters, terminate with DELETE\n");
+	    while ((i = read(STDIN_FILENO, &c, 1)) == 1) {
+	        if ((c &= 255) == 0177)     /* 0177 = ASCII DELETE */
+	            break;
+	        printf("%o\n", c);
+	    }
+	    if (tty_reset(STDIN_FILENO) < 0)
+	        err_sys("tty_reset error");
+	    if (i <= 0)
+	        err_sys("read error");
+	    if (tty_cbreak(STDIN_FILENO) < 0)
+	        err_sys("tty_cbreak error");
+	    printf("\nEnter cbreak mode characters, terminate with SIGINT\n");
+	    while ((i = read(STDIN_FILENO, &c, 1)) == 1) {
+	        c &= 255;
+	        printf("%o\n", c);
+	    }
+	    if (tty_reset(STDIN_FILENO) < 0)
+	        err_sys("tty_reset error");
+	    if (i <= 0)
+	        err_sys("read error");
+	    exit(0);
+	}
+	运行与输出如下：
+	$ ./a.out
+	Enter raw mode characters, terminate with DELETE
+	                                                 4
+	                                                   33
+	                                                     133
+	                                                        61
+	                                                          70
+	                                                            176
+	                          type DELETE
+	Enter cbreak mode characters, terminate with SIGINT
+	1                         type Control-A
+	10                        type backspace
+	signal caught             type interrupt key
+	
+	在raw模式中，输入的字符是Control-D(04)和特殊功能键F7。在使用的终端上面，这个功能键会产生如下5个字符：ESC(033), [ (0133), 1 (061), 8 (070), 和 ~ (0176)。需要注意的是，raw模式中的输出处理被关闭的情况下(~OPOST)，我们在每个字符后面无法获得返回的回车。我们也需要注意，特殊字符的处理在cbreak模式中是被禁止的（所以，像Control-D, end-of-file字符, 以及 backspace没有被特别地处理），然而终端产生的信号还是始终被处理的。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec11.html
+
+
+

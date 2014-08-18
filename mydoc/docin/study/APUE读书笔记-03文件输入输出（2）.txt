@@ -1,0 +1,71 @@
+++++++APUE读书笔记-03文件输入输出（2）++++++
+
+
+
+4、close函数
+================================================
+	close函数关闭一个打开文件。声明如下：
+	#include <unistd.h>
+	int close(int filedes);
+	返回：如果成功返回0，如果错误返回1。 
+	进程结束的时候内核会自动关闭它打开的所有文件；关闭文件的时候，会自动释放当前进程持有的所有在那个被关闭文件上面的锁。很多程序都使用这一功能而不显式地用close关闭打开的文件。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec5.html
+
+
+5、lseek函数
+================================================
+	每个被打开的文件都有一个与其相关联的“当前文件偏移量” 。其值为从文件开始到当前位置的字节数。通常，读、写操作都从当前文件偏移量开始，并每次读写之后，会相应地对移量进行增加。系统默认，打开一个文件时，偏移量为0（除非指定O_APPEND选项）。
+	我们可以通过函数lseek来设置文件偏移量，这个函数声明如下：
+	#include <unistd.h>
+	off_t lseek(int filedes, off_t offset, int whence);
+	返回：如果成功返回新的文件偏移，如果错误返回1。 
+	对参数offset的含义根据参数whence的值有不同的解释：
+	a)若whence是SEEK_SET，则offset是相对文件开始计算的偏移字节数。
+	b)若whence是SEEK_CUR，则offset是相对文件当前偏移值计算的偏移字节数（可正可负）。
+	c)若whence是SEEK_END，则offset是相对文件末尾开始计算的偏移字节数（可正可负）。
+	若lseek成功执行，则返回新的文件偏移量。如下方法可以确定一个打开文件的当前偏移量：
+	off_t    currpos;
+	currpos = lseek(fd, 0, SEEK_CUR);
+	这种方法也可用来确定所涉及的文件是否可以设置位移量。如果文件描述符引用的是一个管道或FIFO，则lseek返回－1，并将errno设置为EPIPE。 
+	pipe, FIFO, socket等这样不能lseek的文件当被lseek的时候，会返回1并且置errno为ESPIPE.lseek返回值对于设备文件等特殊的文件可能为负数，对于正规文件非负，所以检测时候要小心。检测方法大致如下：
+	if (lseek(STDIN_FILENO, 0, SEEK_CUR) == -1)
+		printf("cannot seek\n");
+	else
+		printf("seek OK\n");
+	另外，原文在第4章12节中提到，当lseek的位置大于文件的大小，然后在写入数据，会扩展文件大小，并且在原来的结尾和lseek处创建文件“空洞”。文件空洞并不会消耗磁盘空间，查看文件空洞可以用od。具体还是参见上面的网址。后面会继续说道文件“空洞”。大致是ls -l的size和du的size不是一样的，似乎前者包含了hole的,而du是不包含空洞的。cat就会把hole用空字符打印出来，所以一个包含了hole的文件core,用：
+	#cat core>core.copy
+	之后，再：
+	#du -s core.copy
+	根据显示的大小会发现比原来的大小（用“du -s core”看）大了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec6.html
+
+
+6、read函数
+================================================
+	read函数用来从打开的文件当中读取数据。声明如下：
+	#include <unistd.h>
+	ssize_t read(int filedes, void *buf, size_t nbytes);
+	返回：如果成功则返回读取的字节数目，如果遇到文件结尾则返回0，如果错误返回1。 
+	read读取，是从当前的文件偏移开始读取的。（对于返回1的时候如何确定是正确读取还是错误，经过网上搜索发现，一般错误的时候，read返回-1，具体情况前面讲述open函数的时候说明了对于返回值是如何处理的）
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec7.html
+
+
+7、write函数
+================================================
+	write函数用来想打开的文件写入数据。声明如下：
+	#include <unistd.h>
+	ssize_t write(int filedes, const void *buf, size_t nbytes);
+	返回：如果成功返回写入字节数目，如果错误返回1。（对于返回1如何确定是正确写入还是错误，经过网上搜索发现，一般错误的时候，write返回-1，具体情况前面讲述open函数的时候说明了对于返回值是如何处理的）
+	write写入，是从当前的文件偏移开始写入的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec8.html
+
+
+

@@ -1,0 +1,68 @@
+++++++APUE读书笔记-10信号-19sleep函数++++++
+
+
+
+19、sleep函数
+================================================	
+	我们在本文中的许多例子里都使用了sleep函数，并且我们在本章前面给出了两个有缺陷的sleep函数。
+	#include <unistd.h>
+	unsigned int sleep(unsigned int seconds);
+	返回：0或者未睡眠的秒数。
+	这个函数会导致调用进程被挂起，直到：
+	1.指定的睡眠时间到。
+	2.进程捕获到一个信号并且信号处理函数返回。
+	由于该函数和alarm信号相关，实际返回的时间往往比要求的实现稍微晚，因为可能有其他的系统活动。
+	在第1个情况中，返回的值为0。当由于捕捉到信号导致sleep返回早的时候，返回值就是还未睡眠的秒数（请求的时间减去实际的睡眠时间）。
+	虽然sleep可以通过alarm函数来实现，但是不提倡这样做。如果使用了alarm，那么这两个函数之间会相互影响。POSIX.1标准没有指定会有什么样的影响。例如，如果我们使用alarm(10)然后3秒之后，我们又做了一个sleep(5)，那么会发生什么呢？sleep将会在5秒内返回（假设期间没有收到其它的信号），但是之前的那个SIGALARM会在2秒之后产生吗？详细的情况还依赖系统的实现。
+	solaris9使用alarm实现sleep，其man手册上已经说明会正确地处理之前的alarm。例如前面的情况中，在sleep返回之前，会重新设置一个2秒之后产生的alarm；这时候sleep返回0（显然，sleep必须保存SIGALARM信号处理函数的地址，然后在返回之前重新将它设置回来）。另外，如果我们使用alarm(6)然后3秒之后又调用了sleep(5)，那么sleep会在3秒中之后返回（也就是第一个alarm到期的时候），而不是我们期望的5秒。这里，从sleep中的返回值就是2（没有睡眠的时间）。
+	FreeBSD5.2.1，Linux 2.4.22，和Mac OS X 10.3使用另外一种技术：延迟是通过naosleep(2)来提供的。这个函数是Single UNIX Specification 实时扩展中高精确度的延迟。这个函数允许sleep的实现和信号相互独立。
+	为了可移植的性质，你不能对sleep的实现做任何的假定，但是如果你将sleep和其他的时间函数相互混淆的调用的话，你就需要知道一些可能会产生的影响。
+
+	举例：
+	sleep的可靠实现
+	static void sig_alrm(int signo)
+	{
+	    /* 不做任何事情，只是返回，以唤醒sigsuspend() */
+	}
+
+	unsigned int sleep(unsigned int nsecs)
+	{
+	    struct sigaction    newact, oldact;
+	    sigset_t            newmask, oldmask, suspmask;
+	    unsigned int        unslept;
+
+	    /* 设置信号处理函数，保存之前的信息 */
+	    newact.sa_handler = sig_alrm;
+	    sigemptyset(&newact.sa_mask);
+	    newact.sa_flags = 0;
+	    sigaction(SIGALRM, &newact, &oldact);
+
+	    /*阻塞SIGALRM信号，保存当前的signal mask */
+	    sigemptyset(&newmask);
+	    sigaddset(&newmask, SIGALRM);
+	    sigprocmask(SIG_BLOCK, &newmask, &oldmask);
+
+	    alarm(nsecs);
+
+	    suspmask = oldmask;
+	    sigdelset(&suspmask, SIGALRM);    /* 虽然代码之前oldmask没有阻塞SIGALRM，但是这样确保SIGALRM一定没阻塞 */
+	    sigsuspend(&suspmask);            /* 等待信号被捕获 */
+
+		/*信号被捕获了，SIGALRM现在又被阻塞了*/
+
+	    unslept = alarm(0);
+	    sigaction(SIGALRM, &oldact, NULL);  /* 恢复之前的动作 */
+
+	    /* 重新设置回之前的signal mask，取消对SIGALRM的阻塞 */
+	    sigprocmask(SIG_SETMASK, &oldmask, NULL);
+	    return(unslept);
+	}
+
+	前面例子给出了一个POSIX.1的sleep函数实现。这个函数对之前的例子进行了改进，它会可靠地处理信号，避免了之前版本中存的竞争条件。我们也没有处理和之前设置的alarm之间的相互影响（因为前面我们也说了，POSIX.1中没有指定是什么影响）
+	这里使用可靠的实现，比之前的代码量要多很多，我们也没有使用任何跳转，所以这里当发生SIGALRM时候不会对其他正在运行的信号处理函数造成影响。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec19.html
+
+
+

@@ -1,0 +1,234 @@
+﻿++++++APUE读书笔记-15进程内部通信-03popen和pclose函数++++++
+
+
+
+3、popen和pclose函数
+================================================
+	一个常用的操作就是给一个进程创建管道，通过管道读取它的标准输出以及向它的标准输入发送数据，标准输入输出库提供过一个popen以及pclose函数，这两个函数处理了我们需要的所有细节工作：创建管道，创建子进程，关闭无用管道端，执行shell运行命令，并且等待命令结束。
+	#include <stdio.h>
+	FILE *popen(const char *cmdstring, const char *type);
+	返回：如果成功返回文件指针，如果错误返回NULL。
+
+	int pclose(FILE *fp);
+	返回：返回命令cmdstring的终止状态，或者如果错误就返回1。
+
+	函数popen调用fork然后exec执行cmdstring表示的命令，然后返回一个标准输入输出文件指针。
+	如果type是"r"，那么返回的文件指针连接的是cmdstring的标准输出。调用fp = popen(cmdstring, "r")之后：
+
+	+parent---------+         +child(cmd)-----+
+	|          fp   |<--------+  stdout       |
+	+---------------+         +---------------+
+
+	如果type是"w"，那么返回的文件指针连接的是cmdstring的标准输入。调用fp = popen(cmdstring, "w")之后：
+
+	+parent---------+         +child(cmd)-----+
+	|          fp   +-------->|  stdin        |
+	+---------------+         +---------------+
+
+	函数pclose关闭标准输入输出流，等待命令结束，并且返回shell命令的结束状态。如果shell命令无法执行，那么pclose返回的命令结束状态就像shell执行了"exit(127)"一样。
+	cmdstring使用Bourne shell执行，类似"sh -c comdstring"的形式，可以处理cmdstring中的特殊字符，具体参见"man sh"。
+
+	例子：使用popen实现刚才向pager程序标准输入发送数据的程序
+	#include <sys/wait.h>
+	#define PAGER   "${PAGER:-more}" /* environment variable, or default */
+	int main(int argc, char *argv[])
+	{
+	    char    line[MAXLINE];
+	    FILE    *fpin, *fpout;
+
+	    if (argc != 2)
+	        err_quit("usage: a.out <pathname>");
+		/*打开文件*/
+	    if ((fpin = fopen(argv[1], "r")) == NULL)
+	        err_sys("can't open %s", argv[1]);
+
+		/*打开管道和程序*/
+	    if ((fpout = popen(PAGER, "w")) == NULL)
+	        err_sys("popen error");
+
+		/*通过管道将文件内容发送给程序*/
+	    while (fgets(line, MAXLINE, fpin) != NULL) {
+	        if (fputs(line, fpout) == EOF)
+	            err_sys("fputs error to pipe");
+	    }
+	    if (ferror(fpin))
+	        err_sys("fgets error");
+	    if (pclose(fpout) == -1)
+	        err_sys("pclose error");
+
+	    exit(0);
+	}
+	使用shell命令${PAGER:-more}表示：如果PAGER定义了并且非空，那就使用PAGER的值。否则就使用字符串string.
+
+	一个实现popen和pclose的例子：
+	文中也给出了一个对popen和pclose函数的实现。如下：
+	#include <errno.h>
+	#include <fcntl.h>
+	#include <sys/wait.h>
+	static pid_t    *childpid = NULL;
+	static int      maxfd;
+
+	FILE * popen(const char *cmdstring, const char *type)
+	{
+	    int     i;
+	    int     pfd[2];
+	    pid_t   pid;
+	    FILE    *fp;
+
+	    /* only allow "r" or "w" */
+	    if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0) {
+	        errno = EINVAL;     /* required by POSIX */
+	        return(NULL);
+	    }
+
+	    if (childpid == NULL) {     /* first time through */
+	        /* allocate zeroed out array for child pids */
+	        maxfd = open_max();/*这个函数是自定义的为了获取最大文件描述符号*/
+	        if ((childpid = calloc(maxfd, sizeof(pid_t))) == NULL)
+	            return(NULL);
+	    }
+
+	    if (pipe(pfd) < 0)
+	        return(NULL);   /* errno set by pipe() */
+
+	    if ((pid = fork()) < 0) {
+	        return(NULL);   /* errno set by fork() */
+	    } else if (pid == 0) {                           /* child */
+	        if (*type == 'r') {
+	            close(pfd[0]);
+	            if (pfd[1] != STDOUT_FILENO) {
+	                dup2(pfd[1], STDOUT_FILENO);
+	                close(pfd[1]);
+	            }
+	        } else {
+	            close(pfd[1]);
+	            if (pfd[0] != STDIN_FILENO) {
+	                dup2(pfd[0], STDIN_FILENO);
+	                close(pfd[0]);
+	            }
+	        }
+
+	        /* close all descriptors in childpid[] */
+	        for (i = 0; i < maxfd; i++)
+	            if (childpid[i] > 0)
+	                close(i);
+
+	        execl("/bin/sh", "sh", "-c", cmdstring, (char *)0);
+	        _exit(127);
+	    }
+
+	    /* parent continues... */
+	    if (*type == 'r') {
+	        close(pfd[1]);
+	        if ((fp = fdopen(pfd[0], type)) == NULL)
+	            return(NULL);
+	    } else {
+	        close(pfd[0]);
+	        if ((fp = fdopen(pfd[1], type)) == NULL)
+	            return(NULL);
+	    }
+
+	    childpid[fileno(fp)] = pid; /* remember child pid for this fd */
+	    return(fp);
+	}
+
+
+	int pclose(FILE *fp)
+	{
+	    int     fd, stat;
+	    pid_t   pid;
+
+	    if (childpid == NULL) {
+	        errno = EINVAL;
+	        return(-1);     /* popen() has never been called */
+	    }
+
+	    fd = fileno(fp);
+	    if ((pid = childpid[fd]) == 0) {
+	        errno = EINVAL;
+	        return(-1);     /* fp wasn't opened by popen() */
+	    }
+
+	    childpid[fd] = 0;
+	    if (fclose(fp) == EOF)
+	        return(-1);
+
+	    while (waitpid(pid, &stat, 0) < 0)
+	        if (errno != EINTR)
+	            return(-1); /* error other than EINTR from waitpid() */
+
+	    return(stat);   /* return child's termination status */
+	}
+
+	其中popen中有许多地方需要我们注意。首先，每次fopen被调用的时候，我们都需要记住子进程的pid以及相应的文件描述符号或者文件指针。我们采取的方法是将子进程的pid存放到一个childpid数组中，这个数组的索引是文件描述符号，通过文件描述符号索引到数组childpid中的子进程pid。通过这个方法，当传递文件指针并且调用pclose的时候，我们调用标准输入输出函数fileno来获取文件指针对应的文件描述符号，然后获取到waitpid所需要的子进程pid。因为对于一个指定的进程，可能会调用popen多次，所以我们动态分配childpid数组（在第一次调用popen的时候调用），数组的元素数目是可以拥有的最大文件描述符号的数目，这样可以容纳尽可能多的子进程。
+	调用pipe和fork然后在每个进程中将特定的文件重新定向，这个过程类似我们之前做的。
+	POSIX.1要求popen在子进程中关闭之前的popen函数调用打开的文件。我们通过遍历childpid数组并且关闭其中仍然打开的文件描述符号来做到这个。
+	如果调用pclose的进程建立了SIGCHLD的信号处理函数会怎样？答案是从pclose中调用pclose将会返回EINTR错误。因为调用者允许捕捉这个信号（或者其他任何可能导致waitpid中断的信号），如果它被一个捕获的信号中断了，那么我们只是简单地再次调用waitpid(看代码即知，如果wait没错或者是信号中断的，那么就不会跳出while循环)。
+	(这里根据以前的内容可知SIGCHLD在子进程结束的时候由内核自动产生，一般这个信号会被忽略，但是如果捕获这个信号，比较常见的做法是在其信号处理函数中调用了waitpid之类的函数获取其子进程状态。
+	另外前面也说过，waitpid或wait行为如下：a.阻塞:如果进程的所有子进程正在运行的话。b.立即返回：这时候如果有一个子进程终止了并且它等待自己的终止状态被获取，那么会立即返回这个子进程的终止状态。c.立即返回并且设置错误码：这时候进程没有子进程会出现这种情况。)
+	有一个需要注意的情况就是：当程序调用waitpid获取了通过popen建立的子进程的退出状态码，然后我们调用pclose的时候pclose里面的waitpid将会发现子进程不存在了，并且返回1且设置errno为ECHILD。这种情况的这个行为是POSIX.1要求的。
+	有些早期的pclose在信号打断wait的时候会返回EINTR错误。当然，也有些版本忽略会阻塞或者在等待的时候信号SIGINT,SIGQUIT以及SIGHUP，这些都是POSIX.1中不允许的。
+	popen不应该被一个设置了set-user-ID或者set-group-ID的程序调用。当执行命令的时候，popen做的工作等价如下：
+	execl("/bin/sh", "sh", "-c", command, NULL);
+	这个执行shell命令的时候会继承调用者的环境，通过set-ID文件模式赋予的提升的权限，非法用户可能会操作这个环境这样shell执行命令就可能是非期望的了。
+	popen非常适合执行这样的功能：用它来执行一个简单的过滤，来转换运行的命令的输入或者输出。命令想要建立它自己的管道线的时候，也是这个情况。
+
+	例子
+	假设有一个应用程序向标准输出写提示符号并且从标准输入读取一行。通过popen，我们可以在应用程序和它的输入之前插入一个程序，用来转换输入。如下图(注意图中的filter program是使用popen打开的子进程)：
+	使用popen转换输入：
+	+parent-------+ popen pipe   +filter program--+
+	|             |<-------------|stdout          |
+	+-----stdout--+              +----stdin-------+
+	            \                   ^
+	             \prompt           /user input
+	           +--v---------------/--+
+	           |   user at terminal  |
+	           +---------------------+
+
+	转换的可以是例如路径扩展名称，或者提供一个历史的机制（记住之前输入的命令）。
+
+	#include <ctype.h>
+	int main(void)
+	{
+		int     c;
+		while ((c = getchar()) != EOF) {
+			if (isupper(c))
+				c = tolower(c);
+			if (putchar(c) == EOF)
+				err_sys("output error");
+			if (c == '\n')
+				fflush(stdout);
+		}
+		exit(0);
+	}
+	上面的代码给出了一个简单的过滤程序列出了这个操作。过滤程序拷贝标准输入到标准输出，把任何的大写字母转换成小写的字母。我们后面讨论协作处理程序的时候会讨论为什么我们写入一个回车符号之后会刷新标准输出。
+
+	我们把这个程序编译成为myuclc可执行文件，然后通过下面的代码程序调用popen来执行.
+	#include <sys/wait.h>
+	int main(void)
+	{
+	    char    line[MAXLINE];
+	    FILE    *fpin;
+
+	    if ((fpin = popen("myuclc", "r")) == NULL)
+	        err_sys("popen error");
+	    for ( ; ; ) {
+	        fputs("prompt> ", stdout);
+	        fflush(stdout);
+	        if (fgets(line, MAXLINE, fpin) == NULL) /* read from pipe */
+	            break;
+	        if (fputs(line, stdout) == EOF)
+	            err_sys("fputs error to pipe");
+	    }
+	    if (pclose(fpin) == -1)
+	        err_sys("pclose error");
+	    putchar('\n');
+	    exit(0);
+	}
+	我们需要在写入prompt之后需要调用fflush，因为标准输出一般都是行缓冲的，同时prompt中并没有包含回车符号(所以我们要显式将它输出)。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch15lev1sec3.html
+
+
+

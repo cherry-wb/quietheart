@@ -1,0 +1,315 @@
+++++++APUE读书笔记-14高级输入输出-09内存映射I/O++++++
+
+
+
+9、内存映射I/O
+================================================
+	内存I/O映射，允许我们将一个磁盘文件映射到内存中的一块缓存。这样当我们从缓存中获取数据的时候，我们相当于读取了文件中相应字节的数据，我们向缓存中存放数据的时候，数据会被自动地写入到文件中。这允许我们不用通过read和write系统调用实现文件的读写(即输入输出)。
+
+	内存I/O映射在虚拟内存系统中已经使用了许多年。在1981年的时候4.1BSD用它的vread和vwrite函数提供了一个不同的内存I/O映射方式。这两个函数后来从4.2BSD中被移走，打算要用mmap函数进行替换。但是mmap函数并没有被包含到4.2BSD中。mmap函数通过Single UNIX Specification的内存映射文件选项被包含，并且在所有遵循XSI的系统上面都需要有它。大多数的UNIX系统都支持它。
+	#include <sys/mman.h>
+	void *mmap(void *addr, size_t len, int prot, int flag, int filedes, off_t off );
+	如果成功则返回映射区域的起始地址，如果错误则返回MAP_FAILED。
+	把文件或者设备映射到内存。这个函数在调用进程的虚拟地址空间中创建一块映射区域。映射区域的首地址在addr中指定，len指定映射区域的长度。我们可以使用addr参数指定映射区域的起始地址，一般我们选择0这样系统自己选择映射区域的起始地址。函数会返回映射区域的起始地址。
+	filedes参数指定要映射文件的文件描述符号。我们需要首先打开这个文件描述符号，然后才能将它映射到内存的地址空间。
+	addr参数指定映射的地址。如果addr是NULL，那么由内核来选择一个地址来创建映射的区域,否则创建的时候会尽可能地使用addr的地址。在linux系统中，创建映射的时候应该是在下一个页面的边界创建,addr是NULL的时候，程序的可移植性最好。
+	len参数指定映射的字节数目，off指定从文件的哪个偏移位置开始映射，offset必须是页面大小的整数倍页面的大小可以由sysconf(_SC_PAGE_SIZE)来返回。
+	prot参数指定映射区域的保护特性。我们可以指定保护特性为PROT_NONE或者PROT_READ,PROT_WRITE,PROT_EXEC的任意组合的按位或。为一个区域设定的保护特性，不会越过文件的打开模式，例如如果我们打开文件的时候指定了只读的方式，那么我们就不能指定PROT_WRITE特性。
+	在对flag参数进行讨论之前，这里基于前面的进程内存模型，用下图描述了使用内存映射时候进程的内存布局。
+
+					内存映射文件时候的例子
+
+                  +------------------+
+     high address |                  |
+                  +------------------+
+                  |      stack       |
+                  +- - - - - - - - - +
+                  |                  |
+                ^ +------------------+ ----------------------\
+                | |                  |                        \
+             len| |  memory-mapped   |                         \
+                | | portion of file  |                          \
+                v |                  |                           \
+    start addr--->+------------------+ --------\                  \
+                  |                  |          \                  \
+                  +- - - - - - - - - +           \                  \
+                  |       heap       |            \                  \
+                  +------------------+             \                  |
+                  |  uninitialized   |              \                 |
+                  |    data (bss)    |               \                |
+                  +------------------+                |               |
+                  | initialized data |                |               |
+                  +------------------+          +-----+---------------+----+
+       low address|       text       |      file|XXXXX| memory-mapped |XXX |
+                  +------------------+          |XXXXX|portion of file|XXX |
+                                                +-----+---------------+----+
+                                                |<--->|<------------->|
+                                                | off |      len      |
+
+
+	上图主要是说明，内存映射时候的区域，在进程的堆区和栈区之间。其实这是个实现的细节问题，不同的系统实现可能有所不同。
+	flag参数会影响到映射区域的不同属性，指定区域在不同进程之间的共享方式，以及区域是否同步到相应的文件等等（具体参见man）。
+	MAP_FIXED: 指定返回的地址就是addr。不建议使用这个标记，因为它会影响程序的可移植特性。如果不指定这个标记并且addr参数非空，那么内核只是将addr作为一个可能的使用地址，不保证返回的映射地址一定就是addr。其实，将addr指定为0这样程序的可移植性才是最好的。这个MAP_FIXED标记在遵循POSIX的系统中是可选的，但是遵循XSI的系统中要求有这个标记。
+	MAP_SHARED: 这个标记描述了进程对映射区域的存储操作的特性。这个标记表示存储操作会修改被映射的文件，也就是说，存储到缓存的操作就相当与对文件进行写的操作。这个标记，或者后面的MAP_PRIVATE标记必须指定一个，但是不能同时指定。
+	MAP_PRIVATE: 这个标记表示对映射区域缓存的存储操作会导致创建一个被映射文件的拷贝，所有接下来对映射区域的引用都会映射成对这个拷贝的引用(有一个使用这个标记的情况：在调试的时候，调试器会映射程序的文本段，允许用户对其中的指令进行修改。而修改的操作只影响那个拷贝而不会影响原始的程序文件)。
+	另外，每种实现都有一个额外的MAP_XXX标记，这个是和相应的实现相关的。可以查看你系统上面的mmap的man手册了解细节。
+	参数off和addr(当指定了MAP_FIXED的时候)必须是系统虚拟内存页大小的整数倍数。如果映射区域的长度不是页的整数倍数会怎样呢？实际上，假设我们有个12字节大小的文件，系统的页大小是512字节，对这个文件进行映射的时候，系统会分配一个512字节大小的区域，前面12字节就是文件内容，而后面的500字节内容被设置为0，对后面500字节的修改不会影响文件内容，也因为这个原因mmap无法对文件实现追加内容的功能，如果追加文件的内容，我们必须先将文件的大小增加。
+	例子：使用内存映射拷贝文件
+	#include <fcntl.h>
+	#include <sys/mman.h>
+	int main(int argc, char *argv[])
+	{
+	    int         fdin, fdout;
+	    void        *src, *dst;
+	    struct stat statbuf;
+
+	    if (argc != 3)
+	        err_quit("usage: %s <fromfile> <tofile>", argv[0]);//报错并退出
+
+	    if ((fdin = open(argv[1], O_RDONLY)) < 0)
+	        err_sys("can't open %s for reading", argv[1]);//报错并退出
+
+	    if ((fdout = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, FILE_MODE)) < 0)
+	        err_sys("can't creat %s for writing", argv[2]);//报错并退出
+
+	    if (fstat(fdin, &statbuf) < 0)  //(1)获取输入文件的大小!!!(关键)
+	        err_sys("fstat error");//报错并退出
+
+	    if (lseek(fdout, statbuf.st_size - 1, SEEK_SET) == -1)//(2)设置输出文件的大小!!!(关键)
+	        err_sys("lseek error");//报错并退出
+	    if (write(fdout, "", 1) != 1)//(3)写一个文件，这样实现文件内容的追加!!!(关键)
+	        err_sys("write error");//报错并退出
+
+		//(4)映射输入文件!!!(关键)
+	    if ((src = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, fdin, 0)) == MAP_FAILED)
+	        err_sys("mmap error for input");
+
+		//(5)映射输出文件!!!(关键)
+	    if ((dst = mmap(0, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0)) == MAP_FAILED)
+	        err_sys("mmap error for output");
+
+		//(6)通过拷贝缓存，实现输入文件拷贝到输出文件。
+	    memcpy(dst, src, statbuf.st_size);
+	    exit(0);
+	}
+
+	映射区域使用两个信号。SIGSEGV信号用来表示我们访问一个不可用的内存。这个信号也会在我们尝试将数据存放到一个只读的映射区域的时候发生。SIGBUS信号表示我们访问了一个没有意义的映射区域。例如，当我们使用文件大消将一个文件映射到内存区域之后，这个文件被truncated了，然后当我们通过映射区域访问被truncated的文件部分的时候，我们就会收到SIGBUS信号。
+	内存映射区域可以通过fork被子进程继承（因为那也是父进程的地址空间）。但是，同理，exec的新程序却不会继承这个映射区域了。
+
+	再补充一个比较完整的例子，下面的例子是在ubuntu8.04进行测试成功的。
+	/*程序功能：
+	
+	 * 1)主要测试mmap和munmap的2)简单的write
+	
+	 * 具体为：
+	
+	 * 在命令中分别指定文件名，映射的长度，映射的起始地址.
+	
+	 * 将文件映射到内存中
+	
+	 * 把映射到内存中的内容用write写到标准输出。
+	
+	 * 注意，这里没有对越界进行检测。
+	
+	 * */
+	
+	#include <sys/mman.h>//mmap
+	
+	#include <unistd.h>//sysconf
+	
+	#include <fcntl.h>//file open
+	
+	#include <stdio.h>//printf
+	
+	int main(int argc, char *argv[])
+	
+	{
+	
+	    if(argc != 4)
+	
+	    {
+	
+	        write(STDOUT_FILENO,"hello\n",6);
+	
+	        printf("usage:%s <filename> <offset> <length>\n",argv[0]);
+	
+	        return 1;
+	
+	    }
+	
+	    char *filename = argv[1];//1)指定文件
+	
+	    printf("the file to be mapped is:%s\n",filename);
+	
+	    int fd = open(filename,O_RDONLY);
+	
+	
+	
+	    int offset = atoi(argv[2]);//2)指定映射起始地址(页面的整数倍)
+	
+	    printf("start offset of file to be mapped is:%d\n",offset);
+	
+	    printf("page size is:%ld\n",sysconf(_SC_PAGE_SIZE));
+	
+	    int realOffset = offset & ~(sysconf(_SC_PAGE_SIZE) - 1);//转换成页面的整数倍
+	
+	    printf("real start offset of file to be mapped is:%d\n",realOffset);
+	
+	
+	
+	    int length = atoi(argv[3]);//3)指定映射长度
+	
+	    printf("the length to be map is:%d\n",length);
+	
+	    int realLen = length+offset-realOffset;//实际写入的字节数
+	
+	    printf("the real length to be map is:%d\n",realLen);
+	
+	
+	
+	    //mmap的参数分别是：
+	
+	    //NULL,让内核自己选择映射的地址;realLen指定映射的长度；
+	
+	    //PROT_READ只读；MAP_PRIVATE不和其他的进程之间共享映射区域,数据也不写入对应的文件中；
+	
+	    //realOffset映射文件的起始地址(页面的整数倍)。
+	
+	    char *addr = mmap(NULL, realLen,PROT_READ,MAP_PRIVATE,fd,realOffset);//4)开始映射
+	
+	
+	
+	    //关闭打开的文件，实际程序退出的时候会自动关闭。
+	
+	    //关闭文件之后，相应的映射内存仍旧存在,映射的内存用munmap关闭。
+	
+	    close(fd);
+	
+	    //write的参数分别是：
+	
+	    //STDOUT_FILENO:文件描述符号（这里是标准输出）
+	
+	    //addr,将要写入文件的内容的地址
+	
+	    //realLen,写入的长度,长度以addr作为起始地址
+	
+	    write(STDOUT_FILENO,addr,realLen);//将映射的内容写到标准输出
+	
+	    munmap(addr,realLen);//5)关闭映射的内存
+	
+	    //write(STDOUT_FILENO,addr,realLen);//不能使用了
+	
+	    printf("\n");
+	
+	}
+
+	我们可以通过mprotect函数来修改一个映射区域的权限。
+	#include <sys/mman.h>
+	int mprotect(void *addr, size_t len, int prot);
+	如果成功返回0，如果错误返回1。
+	prot的值和mmap一样，addr参数也必须是系统中的页大小的整数倍。
+	内存映射区域的保护值：
+	PROT_READ:区域可读。
+	PROT_WRITE:区域可写。
+	PROT_EXEC:区域可执行。
+	PROT_NONE:区域无法访问。
+	mprotect在Single UNIX Specification的内存保护选项中被包含进去了，所有遵循XSI-conforming的系统都支持它。
+
+	如果共享映射的页被修改了，那么我们可以调用msync将改动刷新到对应的映射的文件上面。msync函数和fsync函数类似但是只在内存映射区域上面有效。
+	#include <sys/mman.h>
+	int msync(void *addr, size_t len, int flags);
+	返回：如果成功返回0，如果错误返回1。
+	如果映射是私有的映射，那么被映射的文件不会被修改，同样这里的addr必须是页对齐的。
+	flags允许我们对内存刷新的方式进行一些控制。我们可以使用MS_ASYNC来调度页面的写。如果我们想要等到写操作完成再返回，那么我们可以使用MS_SYNC。我们可以指定MS_ASYNC或者MS_SYNC。
+	另外一个可选的标志，MS_INVALIDATE，用来告诉操作系统丢弃和相应存储不一致的页。在我们使用这个标记的时候，有一些实现会丢弃指定范围所有的页，但是这个行为不是需要的。
+	(注意：flush是从缓存清空到内存，invalidate是从内存更新到缓存，实际在驱动的mmap实现中如果指定了no-cache的话那么MS_SYNC和MS_INVALIDATE就没有必要使用了,一般实现使用remap_pfn_range)
+
+	内存映射区域会在进程结束或者调用munmap的时候取消映射，关闭被映射的文件描述符号并不会取消其到内存的映射。
+	#include <sys/mman.h>
+	int munmap(caddr_t addr, size_t len);
+	返回：如果成功返回0，如果错误返回1。
+	取消addr指定地址范围的映射。以后再引用取消的映射的时候就会导致非法内存的访问。这里addr应该是页面的整数倍。munmap并不会影响被映射的对象，也就是说，被映射的对象的内容不会在调用munmap时候被写入到其中。对于一个使用MAP_SHARED的映射文件，如果其映射区域中被写入了数据，那么会由内核的虚拟内存算法完成对文件内容的更新；如果使用的标记是MAP_PRIVATE那么相应的区域内容会在调用munmap的时候被丢弃。
+
+	例子的说明
+	前面的例子使用内存映射的方式拷贝一个文件，其效果类似命令cp。
+	我们首先打开两个文件然后使用fstat获取输入文件的大小，因为我们需要这个大小来对输入文件进行映射。我们也设置输出文件的大小，我们使用lseek设置文件的大小然后向文件中写入一个字节。如果我们不设置输出文件的大小，那么我们调用mmap映射输出文件的时候返回虽然正确，但是我们第一次对这个映射区域进行引用的时候会产生一个SIG_BUS信号(前面说过这个信号)。我们可能会尝试使用ftruncate来设置文件的大小，但是并不是所有的系统使用这个函数都会增加文件的大小(虽然本书中提到的四个系统支持增加大小)。
+	然后我们调用mmap对每个文件进行映射，通过memcpy从输入缓存将数据拷贝到输出缓存。当数据从输入缓存(src)获取的时候，输入文件会自动地被内核读取；当数据写入到输出缓存(dst)的时候，数据也会自动地被内核写入到输出文件。
+	究竟数据什么时候会被写入到文件中，取决于系统的页管理算法。有些系统有相应的守护进程可以随着时间慢慢地将脏页（也就是包含数据的页）写入到磁盘。如果我们想要确保数据被安全地写入到了文件中，我们需要在退出之前调用使用MS_SYNC标记的msync。
+	在这里，通过对比给出了使用内存映射和使用read/write对文件(300M)进行拷贝所需的时间。
+
++-----------------------------------------------------------------+
+|             | Linux 2.4.22 (Intel x86)  |   Solaris 9 (SPARC)   |
+|             |---------------------------+-----------------------|
+|  Operation  | User |  System  |  Clock  | User | System | Clock |
+|-------------+------+----------+---------+------+--------+-------|
+| read/write  | 0.04 |   1.02   |  39.76  | 0.18 |  9.70  | 41.66 |
+|-------------+------+----------+---------+------+--------+-------|
+| mmap/memcpy | 0.64 |   1.31   |  24.26  | 1.68 |  7.94  | 28.53 |
++-----------------------------------------------------------------+	
+
+	Solaris 9中的cpu时间(user+system)两者几乎相等（9.88秒和9.62秒）。Linux中内存映射使用的总CPU时间几乎是read/write的两倍。可能这是由于两个系统的进程计时的方式有所不同。
+	实际上，mmap和memcpy比read/write要快。因为，我们使用mmap和memcpy做的实际工作要少。使用read/write我们将数据从内核缓存中拷贝到应用程序缓存(read)，然后将数据从应用程序缓存拷贝到内核缓存(write)。使用mmap和memcpy，我们直接将数据从一块内核缓存(这个缓存被映射到我们的地址空间），拷贝到映射到我们地址空间的另外一块内核缓存(这里只涉及到两个缓存)。
+	内存映射在拷贝正常文件的时候速度更快。也有一些限制，我们无法拷贝一些特定的设备文件（例如网络设备或者终端设备），而且我们也需要注意在文件映射之后文件的大小可能会变化。尽管如此，在一些应用程序中内存映射的好处是显然的，因为它简化了算法，我们只需要操作内存而不用读写文件了。有一个典型的使用内存映射的例子就是对一个引用位映射的显示的frame buffer设备进行操作。
+	后面我们还会介绍到内存映射，并且给出一个例子，用于在两个相关的进程之间提供共享的内存。
+
+	另外，由于mmap是一个比较重要的函数，这里做为对原书的补充，从驱动的角度，较为完整地对其进行一番叙述。如下：
+a)mmap实现
+	其实，驱动中就有对mmap的具体实现。用户调用mmap系统调用函数之后，最终会调用到相应文件驱动中的mmap函数接口（如果是普通文件，接口就是该文件所对应的文件系统的实现接口；如果是设备文件，那么这个接口就是设备文件的驱动接口）。
+	下面是一个例子：
+	static int commdrv_mmap(struct file* file, struct vm_area_struct* vma)
+	{
+	    long phy_addr;
+	    unsigned long offset;
+	    unsigned long size;
+	    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	    vma->vm_flags |= VM_LOCKED;
+	    offset = vma->vm_pgoff << PAGE_SHIFT;/*XXX assume is 12*/
+	    size = vma->vm_end - vma->vm_start;
+	    if(BUF0_OFF == offset) {
+	        phy_addr = PHYS_BASE0;
+	    } else if(BUF1_OFF == offset) {
+	        phy_addr = PHYS_BASE1;
+	    } else if(START_OFF == offset) {
+	        phy_addr = PHYS_BASE;
+	    } else {
+	        return -ENXIO;
+	    }
+	    /*phy_addr must be 4k *n*/
+	    if(remap_pfn_range(vma, vma->vm_start, phy_addr >> PAGE_SHIFT, size, vma->vm_page_prot)) {
+	        return -ENXIO;
+	    }
+	    return 0;
+	}
+	这个代码，是某个设备驱动的代码，该部分可以用来将设备中的某个区域映射到用户空间。对于以上代码，
+	"vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);"表示要映射的内存是非cached的，这样不会存在缓存中的数据和实际数据不一致的情况，但是速度会比cached的要慢。
+	offset表示要映射的数据的偏移，这个偏移量来自用户空间的mmap调用，用户空间传入的偏移在这里进行判断，虽然一般的文件就将这个偏移量做为文件偏移了，其实这个offset的含义，由驱动自己解释，不一定就是字节偏移，驱动根据这个偏移量来决定映射哪块内存，
+	size表示要映射的内存的大小。
+	"remap_pfn_range(vma, vma->vm_start, phy_addr >> PAGE_SHIFT, size, vma->vm_page_prot)"表示将根据被映射的物理地址，以及虚拟起始地址，和大小等信息，将相应的部分映射到用户空间。其中参数vma直接来自commdrv_mmap函数的参数，phy_addr是要映射的设备的物理地址(必须是页对齐的)，只有少量的信息自己设置，大多来自外部。最后映射的地址，通过用户调用的mmap函数返回，用户可以直接操作。
+
+b)mmap优点
+	mmap实现了将设备驱动在内核空间的部分地址直接映射到用户空间，使得用户程序可以直接访问和操作相应的内容。减少了额外的拷贝，而一般的read，write函数虽然表面上直接向设备写入，其实还需要进行一次拷贝。
+	例如，下面是某个设备驱动中的的write实现，当外面用户程序调用write系统调用向相应设备文件写之后，最终会进入到这个函数进行真正的读取所需操作。
+	static ssize_t commdrv_write(struct file* filp, char __user* buf,
+	        size_t count, loff_t* ppos)
+	{
+	    char* wbuf;
+	    wbuf = (char*)vmalloc(count);
+	    if(!wbuf) {
+	        return 0;
+	    }
+	    ret = copy_from_user(wbuf, (char __user*)buf, count);
+	    if(0 != ret) {
+	        vfree(wbuf);
+	        return 0;
+	    }
+	    .....do others things with wbuf......
+	    vfree(wbuf);
+	    return count;
+	}
+	由上面的代码可知，用户传入的数据指针buf，在驱动中（也就是内核空间）不能直接访问，必须使用copy_from_user将其拷贝到内核空间的一块内存，然后才能进行后续的操作（内核中不能不经过copy_from_user，直接访问用户传下来的指针buf的地址的内容）。而mmap，使得将内核空间直接映射到了用户空间，让用户空间通过返回的指针直接访问，这样内核和用户空间直接操作同样的内存。也就是说，如果不使用mmap，那么由于在内核空间的代码，和外面用户空间的代码对应的地址空间不同，这样内核空间和用户空间不能互相访问其指针；如果想要访问，对方指针的内容，那么只能通过copy_from_user之类的函数先将其数据拷贝到内核空间（相应的read一般使用copy_to_user可以将内核空间内的指针数据拷贝给用户空间的指针所指）再访问。除非直接将内存映射，否则一定要拷贝才能访问用户空间数据。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec9.html
+
+
+

@@ -1,0 +1,102 @@
+﻿++++++APUE读书笔记-04文件和目录（2）++++++
+
+
+
+4、Set-User-ID和Set-Group-ID
+================================================
+	进程对文件操作权限有三对ID：
+	real user ID
+	real group ID
+	表示当前真正的用户究竟是谁，这个字段（例如real user ID）是从passwd中取得的。
+
+	effective user ID
+	effective group ID
+	supplementary group IDs
+	利用这个ID来决定进程访问文件的权限。
+
+	saved set-user-ID
+	saved set-group-ID
+	这个ID在进程运行的时候，会保留一份effective ID的副本,在旧版本的posix中可选（即可有可无）。
+	另外，在文件的stat结构中的st_mode描述了文件的类型和权限，st_uid描述了文件的属主。
+
+	read user ID和real group ID用来表示真正的用户究竟是谁。这两个成员在我们登陆的时候从password文件中获得。一般来说，这些值在一个登陆会话中，就不会改变了。当然也有一些方法可以修改这些real ID，我们在后面（8章11节）讲到。effective user ID、effective group ID、以及 supplementary group IDs 确定我们对文件的访问权限。我们下一节会讲到。saved set-user-ID和saved set-group-ID 会在程序被执行的时候,包含effective user ID和effective group ID的拷贝。我们会在8章11节讲述setuid函数的时候讨论这些saved ID的作用。一般来说，effective user ID 等于real user ID；effective group ID等于 real group ID。每个文件都有一个属主和组属主。属主通过stat结构的st_uid成员指定；组属主通过st_gid成员指定。
+	具体来说：
+	一般程序执行的时候，进程的effective user ID等于real user ID；effective group ID等于real group ID（使用它和文件的owner比较，如果一样就可以执行文件）。但是如果文件设置了set-user-ID（在stat中的s_mode中设置），那么程序运行的时候，effectiveID就和文件的属主ID一样，这样就有特殊的权限了。set-group-ID类似。
+	例如一个文件的属主是超级用户，并且这个文件的set-user-ID位被设置，那么当那个程序文件被作为一个进程运行的时候，它就有了超级用户的权限。一般在我们执行文件而不考虑real ID（注意这个ID是针对进程的而不是文件的）的时候，就会发生这个情况。例如，UNIX 系统中，任何用户都可以修改他们自己的密码，修改的命令是passwd，这个命令实际修改的是系统文件，而系统文件只能被超级用户修改；但是由于这个passwd命令是set-user-ID被设置了的程序，这样我们就可以将密码信息写入系统的密码文件中（/etc/passwd或者/etc/shaw文件）。也就是说，这些系统文件通常只有超级用户能够修改，而这个passwd的set-user-ID位，使得运行这个程序的用户也有了超级用户的权限。因为被设置了set-user-ID的程序，可以让其他用户具有更多的权限，所以我们需要仔细考虑其安全性，第8章会讨论。
+	运行stat函数的时候set-user-ID位以及set-group-ID位被包含到文件的st_mode值中，这两个位可以通过S_ISUID和S_ISGID被检测到。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec4.html
+
+
+5、文件访问权限
+================================================
+	stat的st_mode成员，其值也包含了文件的访问权限。所有文件类型(目录，字符特别文件等)都有访问权限。每个文件有9个存取许可权位，可将它们分成三类，如下表所示：
+<sys/stat.h>中定义的9个文件访问权限位
++--------------------------------+
+| st_mode mask  |    Meaning     |
+|---------------+----------------|
+|    S_IRUSR    | user-read      |
+|---------------+----------------|
+|    S_IWUSR    | user-write     |
+|---------------+----------------|
+|    S_IXUSR    | user-execute   |
+|---------------+----------------|
+|    S_IRGRP    | group-read     |
+|---------------+----------------|
+|    S_IWGRP    | group-write    |
+|---------------+----------------|
+|    S_IXGRP    | group-execute  |
+|---------------+----------------|
+|    S_IROTH    | other-read     |
+|---------------+----------------|
+|    S_IWOTH    | other-write    |
+|---------------+----------------|
+|    S_IXOTH    | other-execute  |
++--------------------------------+
+
+	在上表开头三行中，"user"指的是文件所有者。chmod(1)命令可以修改这9个权限位。使用该命令，我们可以用u表示用户(所有者)，g表示组，o表示其他。
+	为便于直观理解，这里给出使用"ls"列出文件所有属性的命令执行结果，列出当前目录文件，并且显示详细信息的命令和结果如下： 
+# ls -l 
+总计 132 
+drwxrwxr-x 2 quietheart quietheart 4096 04-07 14:23 astah_test 
+drwxrwsrwx 9 quietheart quietheart 4096 2010-10-26 chrome 
+drwxrwxr-x 4 quietheart quietheart 4096 04-06 10:35 cpptest 
+drwxrwxr-x 2 quietheart quietheart 4096 03-28 14:19 grep_test 
+drwxrwxrwx 7 quietheart quietheart 4096 04-02 08:35 hello 
+drwxrwxr-x 2 quietheart quietheart 4096 02-01 14:44 hello2 
+drwxrwxr-x 2 quietheart quietheart 4096 03-24 09:36 lsof_test 
+-rw-rw-r-- 1 quietheart quietheart  507 12-30 11:32 minicom_script 
+-rw-rw-r-- 1 quietheart quietheart   25 2010-12-29 minicom_script1 
+-rw-rw-r-- 1 quietheart quietheart  465 12-31 10:28 minicom.sh 
+drwxrwxr-x 2 quietheart quietheart 4096 04-02 08:34 pre_test 
+-rw-r--r-- 1 quietheart quietheart  655 2010-12-29 scriptdemo 
+lrwxrwxrwx 1 root       root         10 06-30 13:51 scriptdemo.symbol -> scriptdemo 
+drwxrwxr-x 4 quietheart quietheart 4096 01-21 16:19 svn_study 
+-rwxrwxrwx 1 quietheart quietheart  108 2010-11-26 testsh.sh 
+-rwxrwxrwx 1 quietheart quietheart  444 2010-11-11 translate.sh 
+drwxr-xr-x 2 root       root       4096 05-11 16:37 wordpress 
+	这里，依次显示了文件的类型权限，硬链接数，属主，属组，大小，日期，时间，名称。这里比较难以理解的是第一列的类型权限，和第二列的硬链接数。类型权限，例如"drwxrwxr-x"，其含义是第一个字符表示类型(这里的d表示目录,l表示链接，c表示字符设备文件其他的类型不细说了)，以后的9个字符分别三个一组,每组的三个字符分别表示相应用户的读写执行权限，可以通过"chmod"来修改，第一组"rwx"表示当前用户权限,权限为可读可写可执行，第二组"rwx"表示当前组权限,权限为可读可写可执行，第三组"r-x"表示其他用户权限，权限可读不可写不可执行；硬链接数，表示该文件使用ln命令建立了多少个硬链接（通过硬链接引用文件，需要对硬链接有所理解）。如果文件是软链接(通过ln -s建立的)那么同时会显示那个软链接指向谁，例如这里的symbol。 
+
+	有些书中把这三种用户类型分别称之为所有者，组和世界。而chmod命令用o表示其他，而不是所有者。我们这里将使用术语用户、组和其他，以便和chmod命令一致。图中的三类存取许可权——读、写及执行——以各种方式由不同的函数使用。我们将这些不同的使用方法列在下面，当说明这些函数时，再进一步作讨论。
+	（a）我们用路径名打开任一类型的文件时，对该路径中包含的每一个目录，包括它可能隐含的当前工作目录都应具有执行许可权。因此，对于目录，其执行许可权位常被称为搜索位。
+	例如，为了打开文件/usr/include/stdio.h，需要具有对目录/, /usr, /usr/include的执行权限。然后，还要有对该文件本身的适当权限，这取决于以何种方式打开它(只读，读-写等)。如果当前目录是/usr/inlcude ,那么为了打开文件stdio.h，我们需要有对该目录的执行权限。如在指定打开文件stdio.h时，可以隐含当前目录，而不用显式地提及/usr/include，也可使用./stdio.h。注意，对于目录的读权限和执行权限的意义不同。读权限允许我们读目录，获得在该目录中所有文件名的列表。而当一个目录是我们要存取文件的路径名的一个分量时，对该目录的执行权限使我们可通过该目录(也就是搜索该目录，寻找一个特定的文件名)。另一个例子是，当 PATH环境变量(8.4节将说明)指定了一个我们不具有执行权的目录之时，那么shell决不会在该目录下找到可执行文件。
+	（b）对于一个文件的读权限决定了我们是否能够打开该文件进行读操作。这对应于open函数的O_RDONL和O_RDWR标志。
+	（c）对于一个文件的写权限决定了我们是否能够打开该文件进行写操作。这对应于open函数的O_WRONL和O_RDWR标志。
+	（d）在open函数中对一个文件指定O_TRUNC标志之时，首先必须对该文件具有写权限。
+	（e）在一个目录中创建一个新文件之时，首先必须对该目录具有写权限和执行权限。
+	（f）删除一个文件，必须对包含该文件的目录具有写权限和执行权限。而对该文件本身则不需要有读、写权。
+	（g）如果用6个exec函数（见8.9节）中的任何一个执行某个文件，都必须对该文件具有执行权限。
+	进程每次打开、创建或删除一个文件时，内核就进行文件存取权检查，而这种检查可能涉及文件的所有者(stat结构的st_uid和st_gid成员)，进程的有效ID(有效用户ID和有效组ID)以及进程的添加组ID (若支持的话)。两个所有者ID是文件的性质，而有效ID和添加组ID则是进程的性质。内核判断进程访问文件权限进行检查的过程是：	
+	a.如果进程的effective user ID是0，那么访问被无条件允许。
+	b.如果进程的effective user ID等于文件的owner ID（也就是进程拥有这个文件），那么访问权限依照文件的user访问权限而定。也就是说，如果user是可读的，那么进程能够读取，如果user可写的那么进程可以写，等等，如果设置user权限不可读写，那么即使进程effective user ID和owner ID(也就是user ID)一样，也是无法进行相应的访问的。
+	c.如果进程的effective group ID或者supplementary group ID和文件的group ID一样，那么访问权限会依照文件组权限的设定而定。
+	d.如果文件的other组的指定的访问权限被指定了，那么相应权限的访问会被允许。
+	以上过程是依照次序进行的，如果在1－4步骤中，进入了某一步骤的判断，并且确定了权限，那么下一个步骤会被忽略的。
+	另外，本书练习4.4提到过，如果创建一个已经存在的文件，那么这个文件的权限不会被改变，但是这个文件的内容有可能被truncate.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec5.html
+
+
+

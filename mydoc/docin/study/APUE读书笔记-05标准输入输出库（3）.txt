@@ -1,0 +1,113 @@
+﻿++++++APUE读书笔记-05标准输入输出库（3）++++++
+
+
+
+5、打开和关闭流
+================================================
+	三种打开流的方式：fopen，freopen，fdopen其原型如下：
+	#include <stdio.h>
+	FILE *fopen(const char *restrict pathname, const char *restrict type);
+	FILE *freopen(const char *restrict pathname, const char *restrict type,FILE *restrict fp);
+	FILE *fdopen(int filedes, const char *type);
+	三者返回：如果成功返回文件指针，如果错误返回NULL。
+	这里：
+	fopen打开路径名由pathname指定的文件。
+	fdopen可以接受一个已经打开的文件描述符号，将这个文件描述符和标准输入输出流关联。这样可以实现对除了磁盘normal文件之外的其他特殊文件进行流的操作（例如，有些特殊文件不能用fopen打开，那么可以先通过open或者pipe等获取其文件描述符浩，再用这个函数将其与标准流关联）。
+	freopen在一个特定的流上(由fp指示)打开一个指定的文件（其路径名由pathname指示）如若该流已经打开，则先关闭该流。此函数常用于将一个指定的文件打开为一个预定义的流：标准输入、标准输出或标准出错。
+	ISO C为type参数指定了如下15种值：
+
+				打开一个标准输入输出流的类型参数
++------------------------------------------------------------------------------------+
+|       type       |                           Description                           |
+|------------------+-----------------------------------------------------------------|
+| r or rb          | open for reading                                                |
+|------------------+-----------------------------------------------------------------|
+| w or wb          | truncate to 0 length or create for writing                      |
+|------------------+-----------------------------------------------------------------|
+| a or ab          | append; open for writing at end of file, or create for writing  |
+|------------------+-----------------------------------------------------------------|
+| r+ or r+b or rb+ | open for reading and writing                                    |
+|------------------+-----------------------------------------------------------------|
+| w+ or w+b or wb+ | truncate to 0 length or create for reading and writing          |
+|------------------+-----------------------------------------------------------------|
+| a+ or a+b or ab+ | open or create for reading and writing at end of file           |
++------------------------------------------------------------------------------------+
+
+	使用b作为type的一部分，使标准I/O系统可以区分文本文件和二进制文件。但是因为UNIX内核并不对这两种文件进行区分，所以在UNIX系统环境下指定字符b作为type的一部分实际上并没有什么作用。
+	对于fdopen，type参数的意义稍有不同。因为该描述符已被打开，所以fdopen以写方式打开时并不截短该文件。(例如，若该描述符原来是由open函数打开的，该文件那时已经存在，则其O_TRUNC标志将决定是否截短该文件。fdopen函数不能截短它为写而打开的任一文件。）另外，标准I/O以追加方式操作，也不能用于创建该文件（因为如若一个描述符引用一个文件，则该文件一定已经存在） 。
+	当用追加方式打开一文件后，则每次写都将数据写到文件的当前尾端处。如若有多个进程用标准I/O添加方式打开了同一文件，那么来自每个进程的数据都将正确地写到文件中。
+	当以读和写类型打开一文件时（type中+号），具有下列限制：
+	a)如果中间没有fflush、fseek、fsetpos或rewind，则在输出的后面不能直接跟随输入。
+	b)如果中间没有fseek、fsetpos或rewind ,或者一个输出操作没有到达文件尾端，则在输入操作之后不能直接跟随输出。
+	根据上表，下表列出了打开一个流的六种不同方式。
+
+			六种打开标准输入输出流的方法
++-----------------------------------------------------------------+
+|             Restriction              | r | w | a | r+ | w+ | a+ |
+|--------------------------------------+---+---+---+----+----+----|
+| file must already exist              | • |   |   | •  |    |    |
+|--------------------------------------+---+---+---+----+----+----|
+| previous contents of file discarded  |   | • |   |    | •  |    |
+|--------------------------------------+---+---+---+----+----+----|
+| stream can be read                   | • |   |   | •  | •  | •  |
+|--------------------------------------+---+---+---+----+----+----|
+| stream can be written                |   | • | • | •  | •  | •  |
+|--------------------------------------+---+---+---+----+----+----|
+| stream can be written only at end    |   |   | • |    |    | •  |
++-----------------------------------------------------------------+
+
+	注意，在指定w或a类型创建一个新文件时，我们无法说明该文件的存取许可权位（open函数和creat函数则能）。如果流引用的不是终端设备，那么系统默认，它被打开时是全缓存的。如果流引用终端设备，则该流是行缓存的。打开流之后，在对该流执行任何操作之前，可使用前面所述的setbuf和setvbuf改变缓存的类型。
+	可以调用fclose关闭一个打开的流。声明如下：
+	#include <stdio.h>
+	int fclose(FILE *fp);
+	返回：如果成功返回0，如果错误返回EOF。 
+	在文件被关闭之前，会将任何缓存中的输出数据刷新，而缓存中的输入数据被丢弃。如果标准I/O库已经为该流自动分配了一个缓存，则释放此缓存。当一个进程正常终止时（直接调用exit函数，或从main函数返回），则所有带未写缓存数据的标准I/O流都被刷新，所有打开的标准I/O流都被关闭。
+ 
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec5.html
+
+
+6、关于流的读写
+================================================
+	当打开一个stream的时候，我们可以有三种方式读写其中的内容.例如：fgetc,fputc.
+	a)字符方式。一次读写一个字符，如果stream有缓存那么由标准输入输出函数自己管理缓存。
+	b)行方式。一次读写一行。例如fputs,fgets.
+	c)直接方式。在ISO C中的直接方式，也有时候被称作binary I/O（二进制方式），object-at-a-time I/O（一次一个对象），record-oriented I/O（面向记录），structure-oriented I/O（面向结构）。每次读写指定的大小。例如fread,fwrite.
+
+（1）输入函数：
+	有三个函数，可以每次读取输入的一个字符，声明如下：
+	#include <stdio.h>
+	int getc(FILE *fp);
+	int fgetc(FILE *fp);
+	int getchar(void);
+	三者返回：如果成功返回下一个字符；否则到达文件结尾返回EOF，或者错误。
+	三个函数都以单个字符的方式操作流。
+	getchar和getc(stdin)一样。getc和fgetc的区别是getc可能是一个宏定义而fgetc一定是一个函数的实现。三者都返回一个unsigned char并转化成为int.这样返回值非负。不能用其返回值和EOF比较。判断文件结束有另外的方法。
+	当读取文件错误或者到达文件结尾的时候，返回值一样，这时候，需要通过ferror和feof才能加以区别。其声明如下：
+	#include <stdio.h>
+	int ferror(FILE *fp);
+	int feof(FILE *fp);
+	void clearerr(FILE *fp);
+	两者返回：如果条件符合则返回true(非0)，否则false。
+	在FILE对象中为每一个stream维护一个error flag和end of file flag。就是通过这两个函数进行判断的。使用clearerr可以清除这两个标记。
+	从流中读取之后，我们也可以通过ungetc函数将字符推送到流中，声明如下：
+	#include <stdio.h>
+	int ungetc(int c, FILE *fp);
+	返回：如果成功返回c，如果错误返回EOF。
+	这个函数可以把一个字符推送回到流中，下次读取的时候就会读到那个字符了。
+	注意这个函数只是把一个字符推送到流里面了，并没有写这个流对应的实际文件。不能把EOF推送到stream中。当推送一个字符到stream中成功的时候，会自动清除end of file flag。
+
+（2）输出函数：
+	我们也可看到相应于前面讨论的输入函数的输出函数，声明如下：
+	#include <stdio.h>
+	int putc(int c, FILE *fp);
+	int fputc(int c, FILE *fp);
+	int putchar(int c);
+	三者返回：如果成功返回c，如果错误返回EOF。 
+	这三个函数和getc,fgetc,getchar类似，不过是写而不是读取了。putchar(c)等价于putc(c,stdout)，putc可以用宏的方式实现而fputc不能用宏实现。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec6.html
+
+
+

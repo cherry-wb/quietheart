@@ -1,0 +1,29 @@
+++++++APUE读书笔记-02UNIX标准和实现-07特征测试宏++++++
+
+
+
+7、特征测试宏
+================================================
+	如前面所述，头文件中定义了大量的POSIX.1和XSI标记。但是大多数的实现也向头文件中添加了不少它们自己的定义。如果我们想要编译一个只依赖那些POSIX标记的程序，而且不使用任何和实现相关的定义限制，我们需要定义常量_POSIX_C_SOURCE。所有的POSIX.1头文件使用这个常量，当定义_POSIX_C_SOURCE的时候，排除任何与实现相关的定义。
+	之前版本的POSXI.1标准定义了_POSIX_SOURCE常量。这个常量后来在2001年的POSIX.1中被_POSIX_C_SOURCE常量替代。
+	常量_POSIX_C_SOURCE 和 _XOPEN_SOURCE被称作“特性宏”。所有的特性宏以一个下划线开始。当使用它们的时候，一般这样：
+	   cc -D_POSIX_C_SOURCE=200112 file.c
+	这样编译的C程序，和在程序代码中写了" #define _POSIX_C_SOURCE 200112"再编译的效果一样。
+	如果使用Single UNIX Specification第三个版本的特性，那么我们需要定义 _XOPEN_SOURCE为600，这样和定义_POSIX_C_SOURCE为 200112L的POSIX.1功能效果一样。
+	Single UNIX Specification定义了c99工具作为C编译环境，所以我们可以用如下命令：
+	   c99 -D_XOPEN_SOURCE=600 file.c -o file
+	为了打开gcc编译器的1999版ISO C的扩展功能，我们使用-std=c99选项，如下：
+	   gcc -D_XOPEN_SOURCE=600 -std=c99 file.c -o file
+	另外一个特性宏是_ _STDC_ _，这个宏在C编译器遵从ISO C标准的时候会自动被C编译器定义。这允许我们可以写既在ISO C 又在非ISO C编译器下编译的程序。例如，如果想要采用ISO C定义的特性，那么如果支持的话，头文件中应该包含类似如下代码：
+	   #ifdef _ _STDC_ _
+	   void  *myfunc(const char *, int);
+	   #else
+	   void  *myfunc();
+	   #endif
+	尽管大多数C编译器都支持ISOC特性，但是也有一些头文件中使用__STDC__特性宏。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch02lev1sec7.html
+
+
+

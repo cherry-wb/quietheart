@@ -1,0 +1,120 @@
+Linux下C语言编程入门-10关于信号处理操作
+十、关于信号处理操作
+=======================
+这里内容有点复杂，分几个部分来进行学习。
+
+1，关于信号屏蔽
+相关函数
+-------
+#include <signal.h>;
+int sigemptyset(sigset_t *set);/*初始化信号集合 set,将 set 设置为空.*/
+int sigfillset(sigset_t *set);/*初始化信号集合,将信号集合设置为所有信号的集合.*/
+int sigaddset(sigset_t *set,int signo);/*将信号 signo 加入到信号集合之中.*/
+int sigdelset(sigset_t *set,int signo);/*将信号从信号集合中删除.*/
+int sigismember(sigset_t *set,int signo);/*查询信号是否在信号集合之中.*/
+
+int sigprocmask(int how,const sigset_t *set,sigset_t *oset);
+这个是最为关键的一个函数.在使用之前要先设置好信号集合 set.作用是将指定的信号集合 set 加入到进程的信号阻塞集合之中去,如果提供了 oset 那么当前的进程信号阻塞集合将会保存在 oset 里面.参数 how 决定函数的操作方式.
+SIG_BLOCK:增加一个信号集合到当前进程的阻塞集合之中.
+SIG_UNBLOCK:从当前的阻塞集合之中删除一个信号集合.
+SIG_SETMASK:将当前的信号集合设置为信号阻塞集合.
+
+举例
+-------
+/*sigSet.c*/
+#include <signal.h>;
+#include <stdio.h>;
+#include <math.h>;
+#include <stdlib.h>;
+int main(int argc,char **argv)
+{
+	double y;
+	sigset_t intmask;
+	int i,repeat_factor;
+	int count = 300;
+	if(argc!=2)
+	{
+		fprintf(stderr,"Usage:%s repeat_factor\n\a",argv[0]);
+		exit(1);
+	}
+	if((repeat_factor=atoi(argv[1]))<1)repeat_factor=10;
+	sigemptyset(&intmask); /* 将信号集合设置为空 */
+	sigaddset(&intmask,SIGINT); /* 加入中断 Ctrl+C 信号*/
+	while(count--)
+	{
+		/*把intmask信号集合添加到阻塞集合中，不用保存intmask，所以第3个参数设置为空*/
+		sigprocmask(SIG_BLOCK,&intmask,NULL);
+		fprintf(stderr,"SIGINT signal blocked\n");
+		for(i=0;i<repeat_factor;i++)y=sin((double)i);
+		fprintf(stderr,"Blocked calculation is finished\n");
+		/* 下面被注释的是取消阻塞 */
+		/*sigprocmask(SIG_UNBLOCK,&intmask,NULL);
+		  fprintf(stderr,"SIGINT signal unblocked\n");
+		  for(i=0;i<repeat_factor;i++)y=sin((double)i);
+		  fprintf(stderr,"Unblocked calculation is finished\n");*/
+	}
+	exit(0);
+}
+
+说明：这个程序的效果是，当它运行的时候，你按[ctrl]+C没有反应。除非kill.
+
+2,关于设置发出被屏蔽信号时系统的动作
+有时候我们希望对信号作出及时的反映的,比如当拥护按下 Ctrl+C 时,我们不想什么事情也不做。
+
+相关函数
+-------
+#include <signal.h>;
+int sigaction(int signo,const struct sigaction *act,struct sigaction *oact);
+这个sigaction函数,意义如下：
+signo 要处理的信号了,可以是任何的合法的信号.有两个信号不能够使用(SIGKILL 和 SIGSTOP). 
+act 包含这个信号进行如何处理的信息.
+oact 保存上次的act,一般用 NULL 就行了.
+
+sigaction结构如下：
+struct sigaction {
+	void (*sa_handler)(int signo);/*指向我们想要定义的屏蔽信号时的操作的函数*/
+	void (*sa_sigaction)(int siginfo_t *info,void *act);/*同上，不常用*/
+	/*为了处理在信号处理函数运行的时候信号的发生,我们需要设置 sa_mask 成员. 我们将我们要屏蔽的信号添加到 sa_mask 结构当中去,这样这些函数在信号处理的时
+	  候就会被屏蔽掉的.（？？？以后用到再琢磨）
+	 */
+	sigset_t sa_mask;/*设置执行新设置的函数时被屏蔽的信息，另外应该屏蔽触发新函数的信号，除非设置了??NODEFER??见man*/
+	int sa_flags;/*设置信号情况，一般设为0*/
+	void (*sa_restore)(void);/*同上，不常用*/
+}
+
+举例
+-------
+/*sigAct.c*/
+#include <signal.h>;
+#include <stdio.h>;
+#include <string.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#define PROMPT "你想终止程序吗?"
+char *prompt=PROMPT;
+void ctrl_c_op(int signo)
+{
+	write(STDERR_FILENO,prompt,strlen(prompt));
+}
+int main()
+{
+	struct sigaction act;
+	act.sa_handler=ctrl_c_op;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags=0;
+	if(sigaction(SIGINT,&act,NULL)<0)
+	{
+		fprintf(stderr,"Install Signal Action Error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	while(1);
+}
+程序的效果是，当你按下[Ctrl]+C的时候，程序不会终止，但是会打印出一行提示信息。只能用kill来终止程序。
+
+3,其他信号操作函数
+现在了解的还不深，先不举例子，等之后在添加。
+int pause(void);
+int sigsuspend(const sigset_t *sigmask);
+pause 函数很简单,就是挂起进程直到一个信号发生了.
+而 sigsuspend 也是挂起进程只是在调用的时候用 sigmask 取代当前的信号阻塞集合.
+?????????

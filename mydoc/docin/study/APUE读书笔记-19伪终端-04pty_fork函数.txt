@@ -1,0 +1,105 @@
+++++++APUE读书笔记-19伪终端-04pty_fork函数++++++
+
+
+
+4、pty_fork函数
+================================================
+	我们现在使用前面的两个函数，ptym_open和ptys_open，来写一个新的函数，名字叫pty_fork。这个新的函数将在fork的时候同时打开master和slave，并且为子进程建立一个具有控制终端的session leader。
+	#include "apue.h"
+	#include <termios.h>
+	#include <sys/ioctl.h>   /* find struct winsize on BSD systems */
+	
+	pid_t pty_fork(int *ptrfdm, char *slave_name, int slave_namesz,
+	               const struct termios *slave_termios, const struct winsize *slave_winsize);
+	返回：子进程中返回0，父进程中返回子进程的进程ID，如果错误返回1。
+	(这里描述似乎不准确，因为通过代码看错误的时候返回的是-1???)
+	
+	PTY master的文件描述符号通过ptrfdm指针返回。如果slave_name非空，那么slave设备的名称会被存放在其中，调用者需要为这个参数指向的指针分配空间。
+	如果指针slave_termios非空，那么系统使用这个引用的结构来初始化slave的终端行规则。如果这个指针为空，那么系统设置slave的termios结构为系统定义的初始状态。类似，如果slave_winsize指针非空的时候，就用其引用的结构来初始化slave的窗口大小，如果这个指针为空，那么一般会将窗口大小的结构初始化为0。
+	下面代码给出了这个函数的实现，它运行在本文所描述的平台之下，会调用合适的ptym_open和ptys_open函数。
+	
+	pty_fork函数
+	#include "apue.h"
+	#include <termios.h>
+	#ifndef TIOCGWINSZ
+	#include <sys/ioctl.h>
+	#endif
+	
+	pid_t pty_fork(int *ptrfdm, char *slave_name, int slave_namesz,
+	         const struct termios *slave_termios, const struct winsize *slave_winsize)
+	{
+	    int     fdm, fds;
+	    pid_t   pid;
+	    char    pts_name[20];
+	
+	    if ((fdm = ptym_open(pts_name, sizeof(pts_name))) < 0)
+	        err_sys("can't open master pty: %s, error %d", pts_name, fdm);
+	
+	    if (slave_name != NULL) {
+	        /*
+	         * Return name of slave.  Null terminate to handle case
+	         * where strlen(pts_name) > slave_namesz.
+	         */
+	        strncpy(slave_name, pts_name, slave_namesz);
+	        slave_name[slave_namesz - 1] = '\0';
+	    }
+	
+	    if ((pid = fork()) < 0) {
+	        return(-1);
+	    } else if (pid == 0) {      /* child */
+	        if (setsid() < 0)
+	            err_sys("setsid error");
+	
+	        /*
+	         * System V acquires controlling terminal on open().
+	         */
+	        if ((fds = ptys_open(pts_name)) < 0)
+	            err_sys("can't open slave pty");
+	        close(fdm);     /* all done with master in child */
+	
+	#if defined(TIOCSCTTY)
+	        /*
+	         * TIOCSCTTY is the BSD way to acquire a controlling terminal.
+	         */
+	        if (ioctl(fds, TIOCSCTTY, (char *)0) < 0)
+	            err_sys("TIOCSCTTY error");
+	#endif
+	
+	        /*
+	         * Set slave's termios and window size.
+	         */
+	        if (slave_termios != NULL) {
+	            if (tcsetattr(fds, TCSANOW, slave_termios) < 0)
+	                err_sys("tcsetattr error on slave pty");
+	        }
+	        if (slave_winsize != NULL) {
+	            if (ioctl(fds, TIOCSWINSZ, slave_winsize) < 0)
+	                err_sys("TIOCSWINSZ error on slave pty");
+	        }
+	        /*
+	         * Slave becomes stdin/stdout/stderr of child.
+	         */
+	        if (dup2(fds, STDIN_FILENO) != STDIN_FILENO)
+	            err_sys("dup2 error to stdin");
+	        if (dup2(fds, STDOUT_FILENO) != STDOUT_FILENO)
+	            err_sys("dup2 error to stdout");
+	        if (dup2(fds, STDERR_FILENO) != STDERR_FILENO)
+	            err_sys("dup2 error to stderr");
+	        if (fds != STDIN_FILENO && fds != STDOUT_FILENO &&
+	          fds != STDERR_FILENO)
+	            close(fds);
+	        return(0);      /* child returns 0 just like fork() */
+	    } else {                    /* parent */
+	        *ptrfdm = fdm;  /* return fd of master */
+	        return(pid);    /* parent returns pid of child */
+	    }
+	}
+	
+	打开PTY master之后，调用fork。如我们前面所述，我们等待子进程调用ptys_open和setsid建立一个新的会话。当子进程调用setsid的时候，子进程不是一个进程组leader，所以会发生如第9章节5节所述的步骤：a)会创建一个新的会话，新的session leader为子进程。b)会为子进程创建一个新的进程组。c)子进程失去原有的控制终端的所有联系。在Linux和Solaris，slave会在调用ptys_open的时候变成新session控制终端。在FreeBSD和Mac OS X中，我们需要调用ioctl，参数为TIOCSCTTY来分配一个控制终端。（Linux也支持TIOCSCTTY的ioctl命令）。termios和winsize两个结构然后会在子进程中被初始化。最后，slave文件描述符号会被克隆到子进程的标准输入，标准输出，以及标准错误上。这意思是说，无论子进程exec什么程序，都将会和相应的slave PTY（控制终端）有所关联了。
+	调用fork之后，父进程返回PTY master描述符号，以及子进程的进程ID。在后面的章节中，我们在pty程序中使用pty_fork函数。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch19lev1sec4.html
+
+
+

@@ -1,0 +1,114 @@
+++++++APUE读书笔记-09进程关系（07）++++++
+
+
+
+9、用shell执行程序
+================================================
+	我们这里看看shell是如何执行程序的，以及这些如何与进程组，控制终端，以及会话联系起来,我们使用ps命令为例。
+	首先我们在solaris使用经典的不支持作业控制的bourne shell来运行ps如下：
+	ps -o pid,ppid,pgid,sid,comm
+	这个命令的输出如下：
+	     PID  PPID  PGID  SID  COMMAND
+	     949   947   949  949  sh
+	    1774   949   949  949  ps
+	ps的父进程(ppid)是shell(sh),shell和ps在同一个session中，以及同一个前台进程组中(949).
+
+	有一些平台的ps命令支持一些特殊的选项，例如打印session的controlling terinal相关联的进程组id。这个值会在TPGID列的下方显示。可是，不同版本的unix系统中ps命令的输出可能有所不同。例如，solaris9不支持这个选项，在FreeBSD5.2.1和MacOsX10.3中,如下命令：
+	    ps -o pid,ppid,pgid,sess,tpgid,command
+	以及在Linux2.4.22中，如下命令：
+	    ps -o pid,ppid,pgrp,session,tpgid,comm
+	会打印出我们想要的信息。
+
+	有一点需要注意的地方就是，把一个进程和terminal 进程组ID(即TPGID列)相互关联是有一点误导人的。 一个进程并没有终端进程控制组，一个进程属于某个进程组，而这个进程组又属于某个session，这个session可能有控制终端(controlling terminal)，也可能没有。如果session有控制终端，那么终端设备会知道前台进程的进程组ID.这个值可以使用tcsetpgrp函数在终端驱动中被杯设置,我们在前面的图中有对这一点的描述。前台进程组的ID是终端的一个属性，而不是进程的属性。终端设备驱动中获取的这个值就是ps打印的TPGID.如果一个session没有控制终端，那么ps会把这个值打印为1。
+
+	如果我们如下在后台执行这个命令：
+		ps -o pid,ppid,pgid,sid,comm &
+	输出如下：
+	        PID  PPID  PGID  SID COMMAND
+	        949   947   949  949 sh
+	       1812   949   949  949 ps
+	这里，唯一改变的是进程PID.shell不知道作业控制，所以后台作业不会被放到它自己的进程组中，控制终端也不会被从后台作业中拿出。
+
+	下面我们看看管道方式执行的情况：
+	   ps -o pid,ppid,pgid,sid,comm | cat1
+	输出如下：
+	    PID  PPID  PGID  SID COMMAND
+	    949   947   949  949 sh
+	   1823   949   949  949 cat1
+	   1824  1823   949  949 ps
+	需要注意的是：管道中的最后一个进程是shell的子进程，管道中第一个进程是其中最后一个进程的子进程。这个现象看起来好象是这样的：shell调用fork得到一个它自己的拷贝，然后这个拷贝再调用fork执行管道中其它前面的进程。
+
+	如果我们在后台执行管道，如下：
+	   ps -o pid,ppid,pgid,sid,comm | cat1 &
+	那么输出性质不变，变化的仅仅是一些pid。由于shell不处理作业控制，这样输出的后台进程组id和session进程组id都是949。
+
+	如果一个后台进程尝试从它的控制终端读取输入会怎样？例子如下：
+	   cat > temp.foo &
+	如果有作业控制，那么会把后台作业放到后台进程组中。这样如果后台作业尝试从控制终端读取的时候，会导致产生SIGTTIN信号。如果没有作业控制的处理，而且进程没有重定向它自己的标准输入，那么shell会自动地把后台进程的标准输入重定向到/dev/null。从/dev/null读取，会读取到一个文件结束符号，这样，我们后台的cat进程会立刻读取到文件结束符号，然后正常停止。
+
+	前面说了后台进程通过读取标准输入访问控制终端遇到的各种情况的处理。如果，一个后台进程特别地打开一个/dev/tty然后从这个控制终端读取信息会怎么样呢？实际上这依赖许多因素，但可能不是我们想要的。例如：
+	   crypt < salaries | lpr &
+	就是这样的。我们在后台运行这个管道，但是crypt程序打开/dev/tty,然后把改变终端字符映射（禁止回显），从设备读取，然后重置终端字符。当我们执行这个管道的时候，提示符号"Password"被crypt程序打印到终端上面来，但是我们的输入(被加密的密码)被终端shell读取，当做是一个命令的名字。我们键入到shell的下一行输入，被作为password，这样文件"salaries"就没有被正确地加密，会给打印机发送一些杂乱的信息。这里，我们有两个进程尝试同时从同一个设备读取输入，结果取决于系统。前面我们说的作业控制，就可以很好地处理处理多个进程访问一个终端的情况。
+
+	回到我们的Bourne shell的例子上面，如果我们在管道中执行三个进程，我们可以发现进程控制被这个shell使用:
+	   ps -o pid,ppid,pgid,sid,comm | cat1 | cat2
+	输入如下：
+	   PID  PPID  PGID  SID COMMAND
+	   949   947   949  949 sh
+	  1988   949   949  949 cat2
+	  1989  1988   949  949 ps
+	  1990  1988   949  949 cat1
+	有可能你的系统上面显示的命令名称不一样，例如可能为如下:
+	  PID  PPID  PGID  SID COMMAND
+	  949   947   949  949 sh
+	 1831   949   949  949 sh
+	 1832  1831   949  949 ps
+	 1833  1831   949  949 sh
+	这是因为ps和shell产生了竞争条件（在shell调用exec执行cat的时候）。这时候，shell还没有完成对cat进行的exec调用的时候，ps程序就获得了将要打印的进程列表。
+	这里，和前面一样，管道最后一个进程(cat2)是shell的子进程，前面的进程是cat2的子进程，cat2结束的时候会通知父进程shell。参考资料用图表示了这个过程，大概描述如下：
+	a)shell(949)调用fork产生新shell(1988)
+	b)shell(1988)调用fork两次产生shell(1989)(1990),然后调用exec执行了cat2(1988)
+	c)shell(1989)调用exec执行了ps(1989),shell(1990)调用exec执行了cat1(1990),两者之间通过管道进行通信
+	d)cat1(1990)和cat2(1988)通过管道通信，cat2(1988)结束的时候会通知父进程shell(949)结束状态。
+
+	现在，我们看看在Linux上面的作业控制shell执行同样的命令会怎样。这里我们使用Bourne-again shell.
+	   ps -o pid,ppid,pgrp,session,tpgid,comm
+	输出如下：
+	     PID  PPID  PGRP  SESS  TPGID COMMAND
+	    2837  2818  2837  2837   5796 bash
+	    *5796  2837 *5796  2837   5796 ps
+	在这个例子之后，我们把前台的进程组进程号前面加一个'*'标记。我们可以看到与Bourne shell例子的不同。Bourne-again shell把前台进程放到它自己的进程组中了(5796)，ps命令是进程组的leader,也是这个进程组中唯一的一个进程。
+	另外，这个进程组为前台进程组，它有控制终端。我们的登陆shell在我们执行ps的时候属于后台进程组(2837)。需要的是进程组5796和2837都属于同一会话. 本节例子中我们会发现，session不会改变。
+
+	在后台执行这个进程：
+	   ps -o pid,ppid,pgrp,session,tpgid,comm &
+	输出如下：
+	     PID  PPID  PGRP  SESS  TPGID COMMAND
+	    *2837  2818  *2837  2837   2837 bash
+	    5797  2837  5797  2837   2837 ps
+	这里，ps命令也是被放到了它自己的进程组中。但是，这个时候进程组(5797)不再是前台进程组，它是一个后台进程组。TPGID的值为2837,也就是说前台进程组是我们的login shell.(从这里可以看出，TPGID是前台进程组id，它是terminal的属性，不是进程的属性)
+
+	在一个管道中执行两个进程：
+	   ps -o pid,ppid,pgrp,session,tpgid,comm | cat1
+	输出如下:
+	     PID  PPID  PGRP  SESS  TPGID COMMAND
+	    2837  2818  2837  2837   5799 bash
+	    *5799  2837  *5799  2837   5799 ps
+	    *5800  2837  *5799  2837   5799 cat1
+	ps和cat1两个进程属于一个新的进程组（5799),并且这个新进程组是前台进程组。我们可以看到和Bourne shell例子的不同。Bourne shell首先创建管道中最后一个进程,然后管道第一个进程是其子进程。而Bourne-again shell中，shell进程是管道中所有进程的父进程。
+
+	如果我们在后台执行这个管道：
+	   ps -o pid,ppid,pgrp,session,tpgid,comm | cat1 &
+	结果类似，但是，cat1和ps被放到了同样一个后台进程组(5801)中。
+	     PID  PPID  PGRP  SESS  TPGID COMMAND
+	    *2837  2818  *2837  2837   2837 bash
+	    5801  2837  5801  2837   2837 ps
+	    5802  2837  5801  2837   2837 cat1
+	需要注意shell创建进程的次序根据shell而有所不同。
+	注意，ps输出中，TPGID是前台进程组id，它是terminal的属性，不是进程的属性.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec9.html
+
+
+

@@ -1,0 +1,30 @@
+++++++APUE读书笔记-18终端输入输出-06stty命令++++++
+
+
+
+6、stty命令
+================================================
+	前面小节中所说的所有选项都可以被检查和修改，可以在一个程序中通过函数tcgetattr函数和tcsetattr函数，或者在shell脚本中通过命令stty(1)。这个stty命令只是一个前面列出的"终端I/O函数"表中的六个函数的接口，如果我们使用-a选项执行这个命令，那么它会显示所有的终端选项：
+	$ stty -a
+	speed 9600 baud; 25 rows; 80 columns;
+	lflags: icanon isig iexten echo echoe -echok echoke -echonl echoctl
+	        -echoprt -altwerase -noflsh -tostop -flusho pendin -nokerninfo
+	        -extproc
+	iflags: -istrip icrnl -inlcr -igncr ixon -ixoff ixany imaxbel -ignbrk
+	        brkint -inpck -ignpar -parmrk
+	oflags: opost onlcr -ocrnl -oxtabs -onocr -onlret
+	cflags: cread cs8 -parenb -parodd hupcl -clocal -cstopb -crtscts
+	        -dsrflow -dtrflow -mdmbuf
+	cchars: discard = ^O; dsusp = ^Y; eof = ^D; eol = <undef>;
+	        eol2 = <undef>; erase = ^H; erase2 = ^?; intr = ^C; kill = ^U;
+	        lnext = ^V; min = 1; quit = ^; reprint = ^R; start = ^Q;
+	        status = ^T; stop = ^S; susp = ^Z; time = 0; werase = ^W;
+	通过连字符号选项名称表示这个选项被处于未激活状态。最后四行显示了当前设定的每个终端特殊字符。第一行显示了当前终端窗口的行和列，我们后面会讨论。
+	stty命令使用它的标准输入来获取和设置终端选项标记。尽管有些旧的实现使用标准输出，POSIX.1要求使用标准输入。本书中的四个系统实现提供了在标准输入上面进行操作的stty命令，也就是说，假设我们对tty1a终端的设置感兴趣，我们可以通过键入：
+	stty -a </dev/tty1a
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec6.html
+
+
+

@@ -1,0 +1,47 @@
+++++++APUE读书笔记-09进程关系（03）++++++
+
+
+3、使用网络登陆终端
+================================================
+	使用网络和串口终端登陆系统的主要区别是：电脑和终端之间连接的方式不是点到点的。在这种情况下，login只是一个可以使用的服务，就像类似ftp和smtp这样的网络服务一样。
+	有了我们之前叙述过的终端登陆，init知道哪些终端设备对于login来说是可以使用的，然后它会启动一个为每一个设备启动一个getty进程。然而，在网络登陆的情况下，所有的login来自内核的网络接口驱动(例如以太网卡驱动)，我们无法提前知道这些发生的时间。我们需要使用等待网络连接请求的方式来替代用每一个进程等待每一个可能的请求login的方式。
+	为了使用同样的软件来处理网络连接和终端连接，使用一个被称作pseudo terminal(伪终端)来模拟串口终端并把终端操作映射成为网络操作，反之亦然。(关于pseudo terminal我们后面会详细介绍)
+
+	（1）BSD下面的网络登陆：
+	在BSD下面，有一个单一的进程用来等待大多数的网络连接，这个进程是inetd进程，有时候也被称作"internet super server".这里我们将要看看在BSD系统中网络方式登陆时启动进程的顺序和过程。
+	在系统启动的时候，init会启动一个shell来运行/etc/rc脚本，通过这个脚本启动的守护进程中，其中有一个就是inetd进程。当shell脚本结束的时候，inetd的父进程变成了init; inetd会等待到达主机的TCP/IP连接请求。当一个连接请求到达的时候，inetd会fork并exec一个合适的程序。
+	假设tcp请求来自telnet的server(telnet是一个使用tcp协议的远程登陆程序)，在其他主机（以某种网络连接的形式连接到本地服务主机）的用户,或者在本地服务主机发起一个telnet client:
+	#telnet hostname
+	client从"hostname"主机打开一个tcp连接，在hostname上面启动的程序叫做telnet server.client和server通过tcp连接，使用telnet协议互相传送数据。这样，启动client端的user就会登陆到server的host上面。参考资料中给出了启动telnet server(telnetd)的过程。简单叙述如下：
+	a)最初的init进程调用fork创建子进程,然后子进程exec执行一个sh脚本(/etc/rc)
+	b)通过前面的脚本，启动inetd守护进程，这个守护进程开始等待telnet客户端发起的TCP连接请求。
+	c)当收到一个telnet请求的时候，inetd调用fork创建子进程，子进程再调用exec执行telnetd
+	从这之后，telnetd进程会打开一个伪终端设备，然后调用fork得到两个进程。父进程处理来自网络连接的通信；子进程调用exec执行login程序;父进程和子进程通过伪终端联系起来。在执行exec之前，子进程设置文件描述符号0，1，2到伪终端.如果我们正确登陆了，login之后的过程就和我们之前叙述的一样了:它会切换到我们的home目录，设置gid,uid和初始环境变量，然后login调用exec把它自己替换成我们的login shell。
+	参考资料给出了login之后简略的过程，大致如下：
+	a)init经过前面的过程,进入loginshell
+	b)这时候0,1,2文件描述符号和伪终端设备驱动联系上了。
+	c)设备驱动通过telnetd和telnet client之间的网络连接和用户终端交互。
+	这里，在设备驱动和用户终端之间有许多复杂的过程，后面会详细叙述。现在先总结一下这个整体的过程如下：
+	a)最初的init进程调用fork创建子进程,然后子进程exec执行一个sh脚本(/etc/rc)
+	b)通过前面的脚本，启动inetd守护进程，这个守护进程开始等待telnet客户端发起的TCP连接请求。
+	c)当收到一个telnet请求的时候，inetd调用fork创建子进程，子进程再调用exec执行telnetd
+	d)telnetd再fork，fork之后其中一个进程（telnetd）负责在网络上和伪终端之间收发数据;另外一个进程调用exec执行login,login将切换到我们的home目录，设置gid,uid和初始环境变量，然后login调用exec把它自己替换成我们的login shell,然后通过虚拟终端和用户交互。
+	e)telnetd fork的两个进程(这里姑且叫做telnetd,login shell)之间是通过如下方式进行交互：
+	...network messages....<->telnetd<->pseudo terminal device <->login shell<->......
+
+	这里比较重要的一点是，我们登陆的时候是通过terminal(终端)，还是network;我们的login shell的标准输入标准输出和标准错误输出是连接到终端设备或者虚拟终端设备.后面我们将会知道，login shell是posix.1的部分，终端或者伪终端是session的control terminal.
+
+	（2）MacOs X 的网络登陆
+	由于是基于Free BSD的，所以过程一样。
+
+	（3）Linux上的网络登陆
+	Linux上面的网络登陆和BSD上面一样，不同的地方是使用了不同的inetd进程，叫做xinetd.xinetd进程比inetd的控制层次好。
+
+	（4）Solaris上的网络登陆
+	目前本人还没用到，不说了,具体参考参考资料。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec3.html
+
+
+

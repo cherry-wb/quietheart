@@ -1,0 +1,84 @@
+++++++APUE读书笔记-10信号-03signal函数++++++
+
+
+
+3、signal函数
+================================================
+	UNIX系统中最简单的一个信号相关的接口就是signal函数。声明如下：
+	#include <signal.h>
+	void (*signal(int signo, void (*func)(int)))(int);
+	如果成功，这个函数返回信号之前的特性，如果有错，函数返回SIG_ERR错误。
+
+	这个信号函数由ISO C定义，它不支持进程，进程组，终端输入/输出等等特性；所以，在unix系统上面它的这个定义几乎是没有用的。
+	从UNIX V系统上继承过来的实现，支持信号函数，但是它提供的是非可靠的信号。这个函数为需要旧有语法的应用程序提供向后兼容的特性。新的程序不使用这些不可靠的信号。
+	4.4BSD提供signal函数，但是它以sigaction的形式定义，所以在4.4BSD使用它，提供了一个新的可靠信号的语法。FreeBSD5.2.1和Mac OS X 10.3采用了相同的策略。
+	Solaris 9源于System V和BSD,但是它采用System V的signal语义。
+	Linux 2.4.22系统中，signal的语义可以采用BSD或者System V的，这取决与C库的版本，以及你如何编译你的应用程序。
+	因为不同实现的signal的语义有所不同，所以最好使用sigaction函数。我们后面（第14节中）描述sigaction函数的时候，将会提供一个使用sigaction实现的signal.本文所有的例子都使用这个用sigaction实现的signal函数。
+
+	参数signo就是信号号，在前面提到过。参数func的值可以是SIG_IGN，SIG_DFL或者产生信号时候将要调用的函数的地址;如果我们指定了SIG_IGN,那么就告诉了系统，来忽略这个信号（注意SIGKILL和SIGSTOP不能被忽略）;当我们指定了SIG_DFL的时候，就告诉了系统发生信号的时候采取默认的动作;当我们指定一个函数地址的时候，函数会在发生信号的时候被调用，这个函数就是我们指定的信号处理函数。
+	从signal的原型可以看出，这个函数需要两个参数并且返回一个void类型的函数指针(指向的函数有一个int参数)。signal函数的第一个参数signo是一个整数，第二个参数是一个指针，它指向void类型的需要一个整数参数的函数。当我们调用signal建立信号处理的时候，用第二个参数指定处理信号的函数，并且返回上次的信号处理函数。
+	有许多系统使用额外的独立于实现的参数调用信号处理函数,我们后面会讨论到这个问题的。
+	如果我们检查系统头文件<signal.h>我们可能会发现如下的声明:
+	#define SIG_ERR (void (*)())-1
+	#define SIG_DFL (void (*)())0
+	#define SIG_IGN (void (*)())1
+	这些常量可以用来替换signal中的第二个参数以及相应的返回值部分。这三个值不一定必须是-1,0,和1,他们必须不能为任何已经声明的函数的地址。大多数Unix系统上面使用的就是这个值。
+
+	举例：
+	我们用一个简单的例子，运行的时候如下：
+	$ ./a.out &                   从后台启动这个进程。
+	[1]      7216
+	$ kill -USR1 7216             给它发送信号SIGUSR1
+	received SIGUSR1
+	$ kill -USR2 7216             给它发送信号SIGUSR2
+	received SIGUSR2
+	$ kill 7216                   给它发送信号SIGTERM
+	[1]+  Terminated    ./a.out
+	上面，我们使用kill命令给这个进程发送信号，也可以使用kill函数给进程发送信号。kill这个名字有点误导人，它的意思不是杀掉进程的意思，它就是用来发送信号用的。
+	这个程序的源代码如下所示：
+	static void sig_usr(int signo)
+	{
+	    if (signo == SIGUSR1)
+	        printf("received SIGUSR1\n");
+	    else if (signo == SIGUSR2)
+	        printf("received SIGUSR2\n");
+	    else
+	        err_dump("received signal %d\n", signo);
+	}
+	int
+	main(void)
+	{
+	    if (signal(SIGUSR1, sig_usr) == SIG_ERR)
+	        err_sys("can't catch SIGUSR1");
+	    if (signal(SIGUSR2, sig_usr) == SIG_ERR)
+	        err_sys("can't catch SIGUSR2");
+	    for ( ; ; )
+	        pause();
+	}
+
+	关于程序的启动：
+	当一个程序执行的时候，所有信号的状态要么是默认，要么是忽略。一般来说，除非调用exec的进程忽略这个信号，否则所有的信号都会被设置为它们默认的行为。特别地，exec函数会改变任何信号的属性（处理函数）为它们默认的属性，并且保留其他状态。（这一点很自然，因为一个进程调用了exec之后，在新的程序收到信号，这是后原来的程序中的信号处理函数的地址在新的进程的地址空间中没有任何意义，所以就不应该再捕获原来的那个函数的地址空间了）。
+	一个特例就是，交互的shell如何处理后台进程的interrupt和quit信号。
+	如果一个shell不支持作业控制，那么当我们后台执行如下进程：
+	    cc main.c &
+	shell会自动将interrupt和quit信号的属性设置成为忽略。这样如果我们键入interrupt字符，它不会影响到后台进程。如果不是这样（即设置为忽略），那么当我们键入interrupt字符的时候，它不仅会终止前台的进程，后台的所有进程也都被终止了。
+	许多交互程序使用如下代码来捕获这两个信号：
+	void sig_int(int), sig_quit(int);
+	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
+		signal(SIGINT, sig_int);
+	if (signal(SIGQUIT, SIG_IGN) != SIG_IGN)
+		signal(SIGQUIT, sig_quit);
+	这样，进程只有在当前信号不是被忽略的时候，才会捕捉信号。
+	这样做了之后，进程只有在当前信号不会被忽略的情况下才会去捕捉信号。
+	(具体点解释，假设进程在后台运行，原本交互shell是要忽略后台进程的这两个信号的，如果直接就这样设置，那么之前shell的忽略就无效了，所以设置之前要检查看是否这两个信号之前是需要被忽略的，如果是那么就不设置了，否则才设置)
+	这两个signal调用也展示了signal函数的一个局限：我们不能够在不改变当前信号属性的前提下确定当前的信号属性(即要想获得当前属性，需要先调用signal,通过signal函数返回值，返回当前的属性,也就是新设置之前的属性)。后面我们将会看到，sigaction函数会允许我们在不改变信号属性的前提下来确定信号属性。
+
+	进程创建:
+	当一个进程调用fork的时候，子进程会继承父进程的信号属性。这里，由于子进程启动的时候就是父进程内存的拷贝，所以信号捕捉函数的地址空间对于子进程来说也是有同样的意义的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec3.html
+
+
+

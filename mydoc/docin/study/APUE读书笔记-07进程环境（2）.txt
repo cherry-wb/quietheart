@@ -1,0 +1,120 @@
+++++++APUE读书笔记-07进程环境（2）++++++
+
+
+
+4、程序的命令行参数
+================================================
+	程序的命令行参数是main的参数argc,argv指定的。前面第7章第2节说过这里不重复了。注意的是，c程序的main函数参数和java程序的main函数参数有些不同，c程序中：参数argc是命令行中参数的数目（c包含命令名而java不含），argv是指向命令行参数的数组（c中argv[0]是命令名而java不含）。
+	下面的例子程序会打印出传递给该程序的所有命令行的参数，这个程序名称叫做echoarg。和Linux上面echo(1)不同的是，它并不打印第0个参数（即它本身的名称）。
+
+	将所有的命令行参数打印到标准输出的例子：
+	#include "apue.h"
+	int main(int argc, char *argv[])
+	{
+	    int     i;
+	
+	    for (i = 0; i < argc;  i++)     /* echo all command-line args */
+	        printf("argv[%d]: %s\n", i, argv[i]);
+	    exit(0);
+	}
+
+	对于上述代码，ISO C和POSIX.1都能够保证argv[argc]是一个空指针。所以我们可以用循环“for (i = 0; argv[i] != NULL; i++)”判断。运行该程序的输出如下：
+	$ ./echoarg arg1 TEST foo
+	argv[0]: ./echoarg
+	argv[1]: arg1
+	argv[2]: TEST
+	argv[3]: foo
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec4.html
+
+
+5、程序的环境变量列表
+================================================
+	类似参数列表，每个程序都有一个环境变量列表，不过不通过参数指定,而是通过全局变量environ来指定。这个变量是:
+	extern char **environ;
+	其元素是一系列以NULL结束的字符串(形式是:name=value)。
+	原来环境变量列表是通过为main指定第3个参数来传递的，不过现在看来对于一个全局变量来说没有必要这么做了，又因为ISO C的规定所以main就只有两个参数了。有专门的接口访问指定的环境变量，但是如果想要遍历整个环境变量列表那么就需要通过这个environ全局变量了。
+	具体点说，环境变量声明的格式为：
+	name=value
+	例如，如果有一个包含5个字符串环境变量的环境，那么其情况大致如下图所示：
+
+        environment       environment        environment
+         pointer             list              strings
+         +------+          +-------+
+ environ:|    --+--------->|     --+---->HOME=/home/sar\0
+         +------+          +-------+
+                           |     --+---->PATH=:/bin:/usr/bin\0
+                           +-------+
+                           |     --+---->SHELL=/bin/bash\n
+                           +-------+
+                           |     --+---->USER=sar\0
+                           +-------+
+                           |     --+---->LOGNAME=sar\0
+                           +-------+
+                           | NULL  |
+                           +-------+
+
+	这里的environ就是环境指针，指向环境列表这个字符串数组，而环境列表的数组中的每个字符串是一个以NULL字符结尾的字符串（一般就是某个环境变量的声明）。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec5.html
+
+
+6、c程序的内存布局
+================================================
+	一般来说c程序具有如下的几个部分：
+	文本段：这里包含cpu执行的机器指令。一般来说这个段是可以共享的，对于经常运行的程序来说，它在内存中只有一个拷贝,这个段也是只读的区域。
+	初始化的数据段:一般简称为数据段,包含了在程序中指定初始化的数据。像类似int a =99;这样在所有函数之外被显示指定了初始值方式定义的变量就被初始化成为这类的数据段。
+	未初始化的数据段：一般称作bss段。这样的数据段在程序运行之前被内核初始化成为0或者null指针。例如int a[100];这样在所有函数之外定义的变量就被存储在这个数据段中。
+	栈区：这个区域存放自动变量,用来保存函数调用的信息。
+	堆区：运行时动态分配内存的时候会在这里申请，一般它在非初始化数据和栈区之间。
+
+	一个典型的内存布局图示：
+
+   high address +-----------------+\ command-line arguments
+                |                 | X  and environment variables
+                +-----------------+/
+                |      stack      |
+                |- - - - - - - - -|
+                |        |        |
+                |        v        |
+                |                 |
+                |                 |
+                |                 |
+                |        ^        |
+                |        |        |
+                |- - - - - - - - -|
+                |      heap       |
+                +-----------------+\
+                |  uninitialized  | \initialized to
+                |    data(bss)    | /  zero by exec
+                +-----------------+X
+                |initialized data | \read from
+                +-----------------+  X program file
+                |      text       | /  by exec
+    low address +-----------------+/
+
+	通过size(1)命令可以察看某个程序的文本段，数据段，以及bss段的大小。例如：
+	$size /usr/bin/cc /bin/sh
+	 text     data   bss     dec     hex   filename
+	79606     1536   916   82058   1408a   /usr/bin/cc
+	619234    21120 18260  658614   a0cb6   /bin/sh
+	更为具体的信息，请参见后面给出的参考资料。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec6.html
+
+
+7、共享库
+================================================
+	大多数unix系统支持共享库，共享库把一些公共的函数从可执行文件中提取出来了，这样保证在运行的时候内存中只有一个库函数的拷贝。这样会减少可执行文件的大小，同时也带来了一些运行时间开销（在第一次启动可执行文件的时候以及第一次使用库函数的时候。）另外一个共享库优点就是如果库函数被修改了，那么只需要替换库文件就行了，不用重新链接程序（当然前提是那些被修改的函数的参数类型和数目是不变的）
+	程序可以要求使用或者不用共享库。例如可以通过cc或者ld的编译选项进行指定。
+	如：cc -static hello1.c
+	这样会导致程序在编译的时候不使用共享库。更为具体的信息在前面的预备知识“Linux系统中程序库文件简介”中描述了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec7.html
+
+
+

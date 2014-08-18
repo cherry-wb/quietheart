@@ -1,0 +1,54 @@
+++++++APUE读书笔记-13守护进程（03）++++++
+
+
+
+5、单实例守护进程
+================================================
+	有些守护进程，由于有一些特殊的操作，要求在它们运行的同时只能有一个该守护进程的实例运行。比如，守护进程可能需要互斥地访问某个设备。在使用cron守护进程的时候，如果有多个cron实例运行，那么每一个拷贝都会尝试启动一个已经调度好了的操作，这样会导致多重的操作也可能会引起一些问题。
+	如果守护进程访问一个设备，有时设备驱动会阻止对/dev下面设备节点（设备文件）的多重打开，这样就限制了同一个时间只能有一个守护进程在运行。如果没有这样的设备，那么我们就需要自己来处理这些工作了。
+	file-和record-locking机制提供了保证只有一个该守护进程运行的一种基本方式(后面我们会讨论文件和记录锁)，如果每个守护进程都创建一个文件并且给整个文件加上一个写锁，只允许一个这样的写锁被创建，那么后来尝试创建文件并且加锁的操作将会失败，通过这样的方式就可以通知后面重复运行的某个守护进程拷贝，已经有一个这样的守护进程实例在运行了。
+	文件和记录锁提供了一种方便的互斥访问机制。对于一个已经获得了整个文件范围写锁的守护进程，该锁将会在守护进程退出的时候自动被移除，这样简化了恢复的操作，不用我们为之前的守护进程做清理的工作了。
+
+	举例：
+	下面的函数给出使用文件和记录锁保证只有一个守护进程运行的方法。
+	每个守护进程都尝试创建一个文件并且把它们自己的进程ID写入这个文件，这样系统管理员可以很容易地识别这个进程。如果文件已经上锁，那么加锁函数会失败并且设置errno为EACCES或者EAGAIN,并且返回1,表示这个守护进程已经运行了。否则，我们就会将这个文件清零(truncate)，写入进程ID并且返回0。
+	我们需要清零这个文件，因为之前的守护进程的ID可能比当前的大，并且字符串也长。例如原来的ID:12345，后来的ID:9999那么我们写入之后可能会变成99995，所以清零这个文件可以防止之前运行的守护进程数据对当前的守护进程造成影响。
+
+	例子代码：
+	#define LOCKFILE "/var/run/daemon.pid"
+	#define LOCKMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
+	extern int lockfile(int);
+	int already_running(void)
+	{
+		int     fd;
+		char    buf[16];
+
+		fd = open(LOCKFILE, O_RDWR|O_CREAT, LOCKMODE);//这里打开文件
+		if (fd < 0) {
+			syslog(LOG_ERR, "can't open %s: %s", LOCKFILE, strerror(errno));
+			exit(1);
+		}
+		if (lockfile(fd) < 0) {//这里上锁
+			if (errno == EACCES || errno == EAGAIN) {
+				close(fd);
+				return(1);
+			}
+			syslog(LOG_ERR, "can't lock %s: %s", LOCKFILE, strerror(errno));
+			exit(1);
+		}
+		ftruncate(fd, 0);//这里清零
+		sprintf(buf, "%ld", (long)getpid());
+		write(fd, buf, strlen(buf)+1);//这里写入进程id
+		return(0);
+	}
+	以上代码关键的地方用注释标记了，只有四个关键步骤：
+	a)打开文件
+	b)给文件上锁
+	c)给文件清零
+	d)写入进程id
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch13lev1sec5.html
+
+
+

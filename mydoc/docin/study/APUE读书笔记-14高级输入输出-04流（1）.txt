@@ -1,0 +1,142 @@
+++++++APUE读书笔记-14高级输入输出-04流（1）++++++
+
+
+
+4、流（1）
+================================================
+	System提供的Streams(流)机制作为驱动向内核通信的一种通用接口。为了了解System V的终端接口，以及多I/O的poll函数的使用，以及基于流的管道和有名管道的实现，我们需要对流(STREAMS)进行讨论。
+	这里注意不要将这里说的"流"和我们之前讨论标准I/O库中说的"流"相互混淆。这里的流机制由Dennis Ritchie开发，澄清传统的字符I/O系统和适应网络协议。流的机制在被加强并且标准化了其名字之后，被加入到SVR3。SVR4提供了对流（也就是一个基于流的终端I/O系统）的完全支持。在本书列出的参考资料，SVR4的实现，[AT &T 1990d]有描述，Rago[1993]描述了用户级别的流编程以及内核级别的流编程。
+	流在Single UNIX Specification作为一个可选的选项(包含在"XSI STREAMS Option Group")。本书所讨论的四种平台上，只有Solaris提供了对流的本地支持。流的子系统在linux上面是可用的，但是需要你自己添加，它并不是默认被包含进去的。
+	流在用户进程和设备驱动之间提供了一条全双工的路径。不需要流向硬件设备发出信息，可以通过伪终端设备使用流，参考资料给出了一个简单的流的基本图示。这里不给出了。
+	对于这个图示，详细参见参考资料，简单描述一下层次结构从上到下为：
+	User Process<-->Stream head(系统调用接口)<-->device driver(或者伪终端设备驱动)
+	其中stream head和device driver属于内核的部分。我们可以通过ioctl命令将进程模块推送到Stream head下面。参考资料也给出了一个基本图示。这里不给出了。
+	对于这个图示，详细参见参考资料，简单描述一下，层次结构从上到下为：
+	User Process<-->Stream head(系统调用接口)<-->Process module<-->device driver(或者伪终端设备驱动)
+	我们可以推送任何数目的模块，这里使用推送，是因为新的模块就在stream head下面，并且将旧模块向下推（有点类似于后进先出的栈），我们向stream head写入数据叫"send downstream"，从device driver读取数据叫"send upstream"。
+	STREAMS模块在做为内核的一个部分被执行的时候，有点类似设备驱动模块，它们一般在编译内核的时候被直接链接进内核中了。如果系统支持动态内核模块加载（例如Linux和Solaris），那么我们可以不直接将STREAMS模块链接到内核中，而是将它推送到一个流中。然而我们无法保证这样任意组合的模块和驱动在一起能够正常地工作。
+	我们在前面访问流的时候，通过如下函数：open,close,read,write,以及ioctl。另外，有三个新的函数被添加到SVR3(System V Release 3)的内核中，用来支持STREAMS(getmsg,putmsg,以及poll)，另外还有两个函数（getpmsg和putpmsg）在SVR4中被添加进来，用来处理流中不同优先级的消息。我们后面会描述这5个函数。
+	我们用来打开流的路径位置一般位于目录/dev下面。所有的STREAMS设备都是字符设备文件。
+	尽管STREAMS文档暗示我们可以写进程模块，并且把它们就那么推送到一个流（stream）中，编写这些模块和编写设备驱动需要同样的技术。一般来说，一个特定的应用程序或者函数会将STREAMS的模块进行推送或者弹出。
+	在STREAMS之前，终端通过c-list机制进行处理。添加另外一个字符设备到内核中包含的工作有：写一个设备驱动，并且将所有内容放到驱动中。访问新的设备一般通过一个原始设备进行。也就是说，每个用户的读写都直接在设备驱动中结束。STREAMS机制对这个交互方式进行了重新整理，允许数据流以STREAMS消息的方式在stream head和驱动之间流动，并且允许任何数目的中间进程模块对数据进行操作。
+
+	流消息
+	所有在STREAMS下的输入输出都是基于消息的。stream head和用户进程通过read,write,ioctl,getmsg,getpmsg,putmsg和putpmsg来交换消息。消息也会在stream head,进程模块，和设备驱动之间上下地传递流。
+	在用户进程和stream head之间，消息包含消息类型，选项控制信息，以及数据。这里我们给出来了一个表格列出各种类型的消息是如何通过传递给write,putmsg,和putpmsg的不同参数产生的。表格就不列出了，具体参见参考资料。
+	控制和数据信息通过strbuf结构来表示：
+	struct strbuf
+	int maxlen;  /* 缓存大小 */
+	int len;     /* 当前缓存的字节数目 */
+	char *buf;   /* 指向缓存的指针*/
+	};
+
+	当我们使用putmsg或者putpmsg发送消息的时候，len指定缓存中的数据字节数目。当我们使用getmsg或者getpmsg接收消息的时候，maxlen指定缓存的大小（这样内核不会使缓存溢出），并且len被内核设置用来指明存放在缓存中的数据量。我们将会看到0长度的消息是OK并且len为1可以用来指定没有控制信息或者数据。
+	为什么我们需要传递控制信息和数据？因为提供两者就允许我们在用户进程和流之间执行服务的接口。关于服务的接口，需要参考额外的参考资料这里不说了。
+	另外一个控制信息的例子就是发送无连接的网络消息（datagram）。为了发送消息，我们需要指定消息的内容(数据)以及消息的目标地址（控制信息）。如果我们不将控制信息和数据一起发送，那么就需要一些ad hoc策略。例如，我们可以通过ioctl指定地址，接下来将数据write。另外一个技术就是让地址信息占据使用write写入的数据的前N个字节。从数据中区分控制信息，然后提供函数处理两者（putmsg和getmsg）是一个简洁的方法。
+	有大约25中不同类型的消息，但是只有一部分在用户进程和stream head之间使用。其他的在内核里面的上下流传递（这些消息类型对于编写STREAMS进程模块的人来说是有用的，但是用户级别可以完全忽略它们）。我们只根据我们使用的函数(read,write,getmsg,getpmsg,putmsg和putpmsg)来说一下三种类型的消息：
+	    a. M_DATA (用于I/O的用户数据)
+	    b. M_PROTO (协议控制信息)
+	    c. M_PCPROTO (高优先级别的协议控制信息)
+	每个流中的消息有一个队列优先级别：
+	    a. 高优先级消息（最高优先级）
+	    b. 有优先级别的消息
+	    c. 一般的消息 (最低优先级)
+	普通消息就是优先级别为0的消息。有优先级别的消息有一个1255的优先级标志，高的优先级的标志会更大。高优先级消息是一种特殊的消息，在同一个时刻，stream head只能对一个高优先级的消息进行排队。另外，如果stream head 的读队列中如果已经有了一个高优先级的消息，那么后来的高优先级消息将会被忽略。
+	每个STREAMS模块有两个输入队列。一个队列从模块的上方接收消息（消息从stream head向下流动到驱动），还有一个从模块的下方接收消息（消息从驱动向上流动到stream head）。在输入队列中的消息通过优先级进行安排。我们在前面已经提到过如何通过write,putmsg,和putpmsg函数的参数来产生各种不同优先级的消息的。
+	还有一些我们没有考虑的其他类型的消息。例如，如果stream head从下面接收到了一个M_SIG消息，那么它会产生一个信号。这也是终端行模块给一个具有控制终端的前台进程组发送终端信号的方式。
+
+	putmsg和putpmsg函数
+	putmsg和putpmsg函数用来向一个流中写入流消息（包含控制信息或者数据信息或者两者都有）:
+	#include <stropts.h>
+	int putmsg(int filedes, const struct strbuf *ctlptr, const struct strbuf *dataptr, int flag);
+	int putpmsg(int filedes, const struct strbuf *ctlptr, const struct strbuf *dataptr, int band , int flag);
+	两个函数都在成功的时候返回0，错误的时候返回1。
+	我们也可以向一个流进行write效果等价于没有任何控制信息并且flag为0的putmsg。
+	这两个函数可以产生三种不同优先级的消息:普通消息，带有优先级的消息，以及高优先级的消息。下面的表格中就说明了如何通过对这两个函数参数的不同组合产生不同优先级的消息。
+
+				write,putmsg,和putpmsg产生的STREAMS消息类型
++--------------------------------------------------------------------------------------+
+| Function | Control?  |   Data?   |  band   |   flag    | Message type generated      |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| write    |    N/A    |    yes    |   N/A   |    N/A    | M_DATA (ordinary)           |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putmsg   |    no     |    no     |   N/A   |     0     | no message sent, returns 0  |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putmsg   |    no     |    yes    |   N/A   |     0     | M_DATA (ordinary)           |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putmsg   |    yes    | yes or no |   N/A   |     0     | M_PROTO (ordinary)          |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putmsg   |    yes    | yes or no |   N/A   | RS_HIPRI  | M_PCPROTO (high-priority)   |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putmsg   |    no     | yes or no |   N/A   | RS_HIPRI  | error, EINVAL               |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  | yes or no | yes or no |  0255   |     0     | error, EINVAL               |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    no     |    no     |  0255   | MSG_BAND  | no message sent, returns 0  |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    no     |    yes    |    0    | MSG_BAND  | M_DATA (ordinary)           |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    no     |    yes    |  1255   | MSG_BAND  | M_DATA (priority band)      |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    yes    | yes or no |    0    | MSG_BAND  | M_PROTO (ordinary)          |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    yes    | yes or no |  1255   | MSG_BAND  | M_PROTO (priority band)     |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    yes    | yes or no |    0    | MSG_HIPRI | M_PCPROTO (high-priority)   |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  |    no     | yes or no |    0    | MSG_HIPRI | error, EINVAL               |
+|----------+-----------+-----------+---------+-----------+-----------------------------|
+| putpmsg  | yes or no | yes or no | nonzero | MSG_HIPRI | error, EINVAL               |
++--------------------------------------------------------------------------------------+
+
+	在这个表格中，如果控制信息部分为no那么对应ctlptr参数为NULL或者ctlptr->len为1;如果控制信息部分为yes那么对应ctlptr为非NULL并且ctlptr->len大于等于0。数据信息部分的处理方式和控制信息部分类似。
+
+	STREAMS的ioctl操作
+	前面我们说过ioctl函数处理所有其他I/O函数无法处理的工作。STREAMS系统也尊崇这个传统。
+	在Linux和Solaris之间，有几乎40种不同的流操作可以使用ioctl实现。大多数这些操作在streamio(7)的man手册中列出来了。在c程序中使用这些函数的时候必须包含头文件<stropts.h>。ioctl函数的第二个参数就是请求，它指定了要进行什么操作，所有的请求以I_开头。第三个参数取决于请求，有时它是一个整数，有时它是一个指向整数或者结构变量的指针。
+
+	例子：
+	isastream函数
+	有时候，我们需要确定一个文件描述符引用的是否是一个流。这个有点类似于isatty函数，isatty函数就是用来判断一个文件描述符是否是一个终端设备。Linux和Solaris提供了isastream函数。
+	#include <stropts.h>
+	int isastream(int filedes);
+	返回：如果是STREAMS设备则返回1(true)，如果不是则返回0（false）。
+	这个函数和isatty类似只是一个非常小的函数，所做的工作只是发送一个只有STREAMS设备上才合法的ioctl请求。后面的例子给出这个函数的可能实现。我们使用ioctl的I_CANPUT命令，用来检查被第三个参数设置的优先级(这里是0)是否可写。如果ioctl成功那么流不会变化。然后我们又将写一个程序对这个函数进行测试，具体代码参见后面。
+	代码：
+	int isastream(int fd)
+	{
+	    return(ioctl(fd, I_CANPUT, 0) != -1);
+	}
+
+
+	int main(int argc, char *argv[])
+	{
+	    int     i, fd;
+	    for (i = 1; i < argc; i++) {
+	        if ((fd = open(argv[i], O_RDONLY)) < 0) {
+	            err_ret("%s: can't open", argv[i]);
+	            continue;
+	        }
+	        if (isastream(fd) == 0)
+	            err_ret("%s: not a stream", argv[i]);
+	        else
+	            err_msg("%s: streams device", argv[i]);
+	     }
+	     exit(0);
+	}
+
+	Running this program on Solaris 9 shows the various errors returned by the ioctl function:
+	在Solaris 9上面运行这个程序，显示如下：
+	$ ./a.out /dev/tty /dev/fb /dev/null /etc/motd
+	/dev/tty: streams device
+	/dev/fb: not a stream: Invalid argument
+	/dev/null: not a stream: No such device or address
+	/etc/motd: not a stream: Inappropriate ioctl for device
+	需要注意的是/dev/tty是一个STREAMS设备，而字符设备文件/dev/fb并不是一个STREAMS设备,但是它支持其他的ioctl请求。这些设备在ioctl请求未知的情况下返回EINVAL。字符设备文件/dev/null不支持任何ioctl操作，所以会返回ENODEV错误。最后，/etc/motd是一个正规文件（普通文件），它并不是字符设备文件，所以会返回ENOTTY错误。我们从来没有接受到我们期望的ENOSTR("Device is not a stream")错误。
+	消息ENOTTY用来表示"Not a typewriter"，这是一个历史的遗留问题，UNIX内核当ioctl尝试一个非字符设备的文件标号的时候，会返回这个错误。这个消息在Solaris被更新成了"Inappropriate ioctl for device."
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec4.html
+
+
+

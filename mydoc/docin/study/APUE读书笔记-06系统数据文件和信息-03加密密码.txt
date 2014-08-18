@@ -1,0 +1,24 @@
+++++++APUE读书笔记-06系统数据文件和信息-03加密密码++++++
+
+
+
+3、加密密码
+================================================
+	passwd中的密码域的真正密码被加密，之后存放来了另外的文件中,一般是shadow文件。这个文件至少要包含用户名和加密之后的密码信息。其他的信息可选，具体参见参考网址。
+	很少有程序需要访问加密之后的密码，login和passwd可能会用到加密之后的密码，这样的程序一般是set-user-id的。shadow对外是不可读的，而passwd可以对外可读。
+
+	linux2.4和solaris有用来访问shadow有一组函数：
+	#include <shadow.h>
+	struct spwd *getspnam(const char *name);
+	struct spwd *getspent(void);
+	这两个函数如果运行正常则返回指针，出错返回NULL.
+
+	void setspent(void);
+	void endspent(void);
+	这几个函数类似访问passwd的函数。
+
+参考:
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec3.html
+
+
+

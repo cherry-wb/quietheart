@@ -1,0 +1,75 @@
+++++++APUE读书笔记-05标准输入输出库（5）++++++
+
+
+
+9、二进制I/O
+================================================
+	前面函数都是以字节或者行的方式进行操作。如果对于二进制I/O，我们更愿意一次读或写整个结构变量；虽然前面那样也能实现读写整个结构变量，但是不够方便，因此，提供了下列两个函数以执行二进制I/O操作。
+	#include <stdio.h>
+	size_t fread(void *restrict ptr, size_t size, size_t nobj,FILE *restrict fp);
+	size_t fwrite(const void *restrict ptr, size_t size, size_t nobj,FILE *restrict fp);
+	两者返回：读取或者写入的对象数目。 
+	fread函数从fp中读取nobj个内存块，每个内存块大小是size，把读取的数据存放在ptr指向的位置。如果成功了，fread会返回读取的内存块数目。如果到达文件结尾或者出错了，会返回一个小于nobj的数或者0，fread是无法区分的，这时候需要使用feof()和ferror()来进行区分。
+	fwrite向stream中写nobj个内存块，每个内存块大小是size,数据来源是ptr。如果到达文件结尾或者出错了，会返回一个小于nobj的数或者0。
+
+	这函数有两个常用的用途：
+	a)读写一个二进制数组。例如将一个数组中的第2到5个元素写入，那么如下：
+	float data[10];
+	if (fwrite(&data[2], sizeof(float), 4, fp) != 4)
+		printf("fwrite error");
+	这里，我们指定数组每个元素（浮点类型）的大小，以及元素的数目。
+	b)读写一个结构，例如：
+	struct {
+		short   count;
+		long    total;
+		char    name[NAMESIZE];
+	}item;
+	if (fwrite(&item, sizeof(item), 1, fp) != 1)
+		printf("fwrite error");
+	这里，我们指定结构大小，以及要写入的结构对象的数目（1个）。 
+	
+	注意：fread和fwrite的一个问题是：fread的数据必须是fwrite从同一个系统上面写的。大致因为：
+	a）不同系统上面，编译环境有可能不同，结构的字节对齐因素等也不同。
+	b）不同的系统，二进制文件格式可能不同，可能还包含了平台相关的信息。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec9.html
+
+
+10、流的定位
+================================================
+	有三组方法在I/O流中进行定位：
+	1)ftell和fseek:在大约version7时开始，它们把位置存放在一个长整型中去。
+	2)ftello和fseeko:在Single UNIX Specification是里面被引入，允许文件的偏移是off_t类型的。
+	3)fgetpos和fsetpos:由ISO C引入，它使用一个fpos_t类型来存放文件的位置，这个类型可以记载需要的文件大小。
+	需要移植到非Unix的程序，最好用fgetpos和fsetpos。
+	#include <stdio.h>
+	long ftell(FILE *fp);
+	返回：如果成功返回当前文件位置标识， 如果错误返回1L（应该一般是-1并且设置errno）。
+	int fseek(FILE *fp, long offset, int whence);
+	返回：如果成功返回0，如果错误返回非0（应该一般是-1）。 
+	void rewind(FILE *fp);
+	对于一个二进制文件，其位置标识是从文件起始位置开始，并以字节为计量单位。ftell用于二进制文件时，返回值就是字节位置。为了用fseek定位一个二进制文件，必须指定参数offset，以及解释这个参数含义的参数whence。 whence的值与lseek函数的相同，SEEK_SET表示从文件的起始位置开始，SEEK_CUR表示从当前文件位置计算，SEEK_END表示从文件的尾端计算。
+	对于文本文件，文件当前位置可能不以简单的字节位移量来度量。这主要是因为在非UNIX系统中，可能以不同的格式存放文本文件。为了定位一个文本文件，whence一定要是SEEK_SET，而且offset只能有两种值：0（表到文件起始位置），或对该文件的ftell所返回的值。
+	使用rewind函数也可将一个流设置到文件的起始位置。
+
+	下面的函数和前面的ftell与fseek一样，只是参数类型由long变成了off_t：
+	#include <stdio.h>
+	off_t ftello(FILE *fp);
+	返回：如果成功返回当前文件位置标识， 如果错误返回1（off_t类型，其值一般为-1）。
+	int fseeko(FILE *fp, off_t offset, int whence);
+	返回：如果成功返回0，如果错误返回非0（其值一般为-1）。 
+	因为有些系统实现将off_t定义成大于32位的了，所以有了这两个函数。
+ 
+	fgetpos和fsetpos是ISO C中引入的，声明如下：
+	#include <stdio.h>
+	int fgetpos(FILE *restrict fp, fpos_t *restrict pos);
+	int fsetpos(FILE *fp, const fpos_t *pos);
+	两者返回：如果成功返回0， 如果错误返回非0（其值一般为-1）。 
+	fgetpos将文件位置标识的当前值存入pos指向的对象中。在之后调用fsetpos时，可以使用此值将流重新定位至该位置。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec10.html
+
+
+

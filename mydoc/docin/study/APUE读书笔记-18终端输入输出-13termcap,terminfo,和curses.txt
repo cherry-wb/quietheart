@@ -1,0 +1,22 @@
+++++++APUE读书笔记-18终端输入输出-13termcap,terminfo,和curses++++++
+
+
+
+13、termcap,terminfo,和curses
+================================================
+	termcap表示"终端能力(terminal capability)"，它引用文本文件/etc/termcap并且使用一系列的函数来读取这个文件。termcap机制是在 Berkeley开发的，用来支持vi编辑器。termcap文件包含各种终端文件描述：终端支持什么特性（多少行列，是否支持backspace等等）以及如何让终端执行特定的操作（清除屏幕，将光标移动到一个指定的位置等等）。将这个信息从编译的程序中提取出来，然后将它放在一个方便编辑的文本文件中，就可以允许vi编辑器运行在各种终端上面了。
+	
+	支持termcap文件的函数之后就从vi编辑器中导出来，被放在一个独立的库curses中了。有许多特性被添加到这个库中，使得任何应用程序都可以使用它来操作屏幕。
+	
+	termcap机制并不是完美的。随着越来越多的终端被添加到这个数据文件中，当查找一个特定的终端的时候，扫描文件的时间就会增多了。数据文件也使用两个字符的名字来标识终端的各种不同的属性。这些缺点导致terminfo机制的产生以及其相关的curses库的开发。terminfo中的终端描述符号是文本描述符号的一个基本编译版本，可以在运行的时候被很快地定位。terminfo出现在SVR2并且在那之后所有的System V发布都包含了。
+	历史上，基于System V的系统使用terminfo，基于BSD的系统使用termcap，但是现在的系统同时支持两者已经是很平常的现象了，然而Mac OS X只支持terminfo。
+	
+	关于terminfo和curses库等信息，可以参见原文中列出的一些参考资料。有一个ncurses库，是自由版本，和SVR4的curses接口兼容，可以在"http://invisible-island.net/ncurses/ncurses.html"中找到。
+	
+	termcap或者terminfo本身并不处理我们本章所见到的一些问题：改变终端模式，改变终端特殊字符，处理窗口大小，等等。它们所提供的，只是一种典型的操作（清屏幕，移动光标），使这些操作可以在许多终端上实现。另外，curses可以用来处理我们本章所遇到的一些问题的细节。curses提供了设置raw模式，设置cbread模式，打开和关闭回显等类似操作的函数。但是curses库用于基于字符的哑终端，而这些哑终端现在大多已经被基于像素的图形终端所替代了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec13.html
+
+
+

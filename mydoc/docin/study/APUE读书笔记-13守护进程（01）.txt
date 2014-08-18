@@ -1,0 +1,169 @@
+++++++APUE读书笔记-13守护进程（01）++++++
+
+
+
+1、简介
+================================================
+	守护进程一般是运行时间特别长的进程，它们一般在系统启动的时候运行，在系统关闭的时候终止。因为它们都没有控制终端，所以它们一般都在后台运行。Unix下面有许多的守护进程，用来执行一些日常的行为。
+	这一章我们来看一下守护进程的结构，以及如何写一个守护进程，由于守护进程没有控制终端，所以我们需要查看一下守护进程如何在发生错误的时候报告错误的情况。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch13lev1sec1.html
+
+
+2、守护进程的特点
+================================================
+	我们首先来看一下普通的系统守护进程以及它们和前面我们讲到的进程组，控制终端，以及session(会话)之间的关系。我们使用如下的方式运行ps命令：
+	ps -axj
+	此命令运行在基于BSD的系统上面，可以查看我们关心的信息。-a选项会显示其它人拥有的进程的状态，-x选项显示没有控制终端的进程，-j选项显示作业相关的信息：会话ID，进程组ID，控制终端，和终端进程组ID.在基于system V的系统上面，类似的命令是ps -efjc，在有的Unix系统上面，出于对安全性的考虑，不允许我们查看不属于我们的进程。这个命令输出得信息类似如下：
+	PPID   PID  PGID   SID  TTY  TPGID  UID  COMMAND
+
+	   0     1     0     0  ?       -1    0  init
+
+	   1     2     1     1  ?       -1    0  [keventd]
+
+	   1     3     1     1  ?       -1    0  [kapmd]
+
+	   0     5     1     1  ?       -1    0  [kswapd]
+
+	   0     6     1     1  ?       -1    0  [bdflush]
+
+	   0     7     1     1  ?       -1    0  [kupdated]
+
+	   1  1009  1009  1009  ?       -1   32  portmap
+
+	   1  1048  1048  1048  ?       -1    0  syslogd -m 0
+
+	   1  1335  1335  1335  ?       -1    0  xinetd -pidfile /var/run/xinetd.pid
+
+	   1  1403     1     1  ?       -1    0  [nfsd]
+	
+	   1  1405     1     1  ?       -1    0  [lockd]
+	
+	1405  1406     1     1  ?       -1    0  [rpciod]
+	
+	   1  1853  1853  1853  ?       -1    0  crond
+	
+	   1  2182  2182  2182  ?       -1    0  /usr/sbin/cupsd
+	
+	我们将实际输出中我们不关心的列给去掉了，这里的每一列，依次是：PPID-父进程ID，PID-进程ID，PGID-进程组ID，SID-会话ID，TTY-终端名称，TPGID-终端进程组ID(和控制终端相关的前台进程组)，UID-用户ID和COMMAND-命令行。
+	在这个系统中(ps运行在Linux上面)，支持会话ID的概念。实际我们前面已经说过，这个就是session leader的进程ID。然而在基于BSD相关的系统上，将会打印出相应进程所属的进程组相关的session的数据结构地址。
+	你的操作系统实现决定了你能够看到哪些系统进程。父进程id为0的进程一般都是做为系统启动一部分的内核进程(init程序是一个例外，因为它是内核在启动阶段启动的一个用户命令)。内核进程是比较特殊的，它一般在整个系统的生命周期中都存在着它以超级用户权限运行，没有命令行，没有控制终端.
+	进程ID为1的进程一般为init进程，我们前面也说过了它。这个进程是一个系统的守护进程，它特别用来启动各种级别的系统服务。这些服务通常通过它们自己的守护进程来实现。
+	在linux中，keventd守护进程为在kernel中运行调度函数提供进程上下文。kapmd守护进程提供许多计算机系统中通用的高级电源管理特性的支持。kswapd守护进程也被称作pageout守护进程，它通过（随着时间的流逝）向硬盘慢慢地写入脏页，以便回收这些页，来支持虚拟内存子系统。
+	Linux内核通过两个额外的守护进程来把缓存中的数据刷新到硬盘中，bdflush和kupdated.bdflush守护进程在可用内存的数目低到一定程度的时候，将“脏”缓存中的数据刷回到硬盘上面；而kupdated守护进程是在一定的时间间隔就会将“脏”缓存中的数据刷回到磁盘，防止系统崩溃引起的数据丢失。
+	portmaper守护进程（portmap），提供将远程调用程序号映射成网络端口号码的服务。syslogd守护进程可以让任何程序记录某一个操作的消息日志信息，这些消息可以被打印到终端上面，也可以写到一个文件中去（我们后面会讲到）。
+	我们讨论过inetd(xinetd)守护进程，它在系统的网络接口上面侦听来自各种网络服务的请求.nfsd,lockd,和rpciod守护进程提供网络文件系统（NFS）的支持。
+	cron守护进程(crond)用来在指定的时间和地点执行特定的命令，许多系统管理任务都是通过cron定期执行某些程序来实现的。cupsd守护进程是打印池，用来相应系统上面的打印请求。
+	我们要注意：大多数守护进程都是以超级用户（用户ID为0）的权限运行的。所有的守护进程都没有控制终端，所以ps中其控制中断的名称被设置成问号（?），并且其终端前台进程组号为-1(参考资料中说是1应该是写错了)。内核守护进程启动的时候就没有控制终端，而用户级别的守护进程一般都是因为调用了setsid导致它们和控制终端的连接断开的。所有的用户级别的守护进程都是组leader厌session leader，并且他们都是自己组或者会话中的唯一进程。最后，我们需要注意大多数这些守护进程的父进程都是init进程。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch13lev1sec2.html
+
+	
+3、一些编码规范
+================================================
+	写一个守护进程，有一些基本的编码规则，可以避免一些由于交互产生的问题。我们先说一下这些规则，然后在后面我们写了一个函数daemonize来实现这些规则。
+	a）首先使用umask来设置文件创建模式的mask为0。被继承下来的文件创建模式被设置成拒绝特定的权限，如果守护进程创建了文件，它可能会想要设置为特定的权限。例如它想要把文件设置成组内可以读写的权限，这个时候，如果文件模式的umask屏蔽了这些权限，那么以上的设置将会没有作用。
+	b）调用fork让父进程退出。这会做如下一些事情，首先，一个守护进程作为一个简单的shell命令被运行，这样父进程的终止会使得shell认为这个程序已经运行完毕了。其次，子进程继承父进程的进程组id，这样我们可以保证它不是一个进程组的leader。这为后面可以调用setsid提供了前提条件。
+	c）调用setsid创建一个新的会话。这样前面也说过，会发生如下的三件事情：进程变成了新session的session leader；进程变成新进程组的组leader；进程不再拥有控制终端。
+	在基于system V的系统中有些人建议再次调用fork并且终止父亲进程，第二个子进程作为守护进程来运行。这样可以保证守护进程不是一个session leader，这样阻止守护进程按照System V的一些规则来请求控制终端（具体应该参照前面System V的有关内容）。另外，为了避免请求控制中断，我们要确保一旦打开终端就会设置O_NOCTTY。
+	d）改变当前工作目录为根目录。当前工作目录继承自父进程，并且这个目录可能是一个被挂载了某个文件系统的目录.守护进程一般都会一直运行直到系统的重启，所以如果一个守护进程的所在的工作目录是一个被挂载的文件系统，那么这个文件系统将会无法被卸载。
+	当然也有一些守护进程会将它们的工作目录切换到别的地方，这样它们的工作都在那个目录下面进行。例如打印机相关的守护进程将会把它的工作目录切换到spool目录。
+	e)有些守护进程会将文件描述符号0,1,2重新定向到/dev/null上面。这样任何尝试从标准输入读取，或者写入标准输出和标准错误输出的操作将会无效。因为守护进程没有和它相关联的终端设备，所以没有显示输出的地方,也没有读取用户输入的地方。即使守护进程是从一个交互的会话中启动的，由于它是运行在后台，登陆会话会终止并且不会影响到守护进程。如果其它的用户登陆到相同的终端设备上面，我们不想让守护进程的输出输出到终端上面，用户也不期望从终端上面读取数据。
+	根据以上的的五个将进程变成守护进程的规则，下面给出一个守护进程的例子。
+
+	初始化一个守护进程的例子：
+	#include "apue.h"
+	#include <syslog.h>
+	#include <fcntl.h>
+	#include <sys/resource.h>
+	
+	void daemonize(const char *cmd)
+	{
+	    int                 i, fd0, fd1, fd2;
+	    pid_t               pid;
+	    struct rlimit       rl;
+	    struct sigaction    sa;
+	    /*
+	     * Clear file creation mask.
+	     */
+	    umask(0);
+	
+	    /*
+	     * Get maximum number of file descriptors.
+	     */
+	    if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+	        err_quit("%s: can't get file limit", cmd);
+	
+	    /*
+	     * Become a session leader to lose controlling TTY.
+	     */
+	    if ((pid = fork()) < 0)
+	        err_quit("%s: can't fork", cmd);
+	    else if (pid != 0) /* parent */
+	        exit(0);
+	    setsid();
+	
+	    /*
+	     * Ensure future opens won't allocate controlling TTYs.
+	     */
+	    sa.sa_handler = SIG_IGN;
+	    sigemptyset(&sa.sa_mask);
+	    sa.sa_flags = 0;
+	    if (sigaction(SIGHUP, &sa, NULL) < 0)
+	        err_quit("%s: can't ignore SIGHUP");
+	    if ((pid = fork()) < 0)
+	        err_quit("%s: can't fork", cmd);
+	    else if (pid != 0) /* parent */
+	        exit(0);
+	
+	    /*
+	     * Change the current working directory to the root so
+	     * we won't prevent file systems from being unmounted.
+	     */
+	    if (chdir("/") < 0)
+	        err_quit("%s: can't change directory to /");
+	
+	    /*
+	     * Close all open file descriptors.
+	     */
+	    if (rl.rlim_max == RLIM_INFINITY)
+	        rl.rlim_max = 1024;
+	    for (i = 0; i < rl.rlim_max; i++)
+	        close(i);
+	
+	    /*
+	     * Attach file descriptors 0, 1, and 2 to /dev/null.
+	     */
+	    fd0 = open("/dev/null", O_RDWR);
+	    fd1 = dup(0);
+	    fd2 = dup(0);
+	
+	    /*
+	     * Initialize the log file.
+	     */
+	    openlog(cmd, LOG_CONS, LOG_DAEMON);
+	    if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+	        syslog(LOG_ERR, "unexpected file descriptors %d %d %d",
+	          fd0, fd1, fd2);
+	        exit(1);
+	    }
+	}
+	
+
+	当程序的main函数调用了daemonize函数，并且进入睡眠之后，我们可以通过ps来查看：
+	   $ ./a.out
+	   $ ps -axj
+	    PPID   PID   PGID   SID TTY TPGID UID   COMMAND
+	       1  3346   3345  3345 ?      -1 501   ./a.out
+	   $ ps -axj |  grep 3345
+	       1  3346   3345  3345 ?      -1 501   ./a.out
+
+	查看结果发现，该守护进程所在进程组PGID对应的那个进程ID在系统进程中没有，说明守护进程在一个孤儿进程组中，并且不是一个session leader所以它没有机会获取设备终端,我们在daemonize函数中的两次调用fork，导致了这个现象。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch13lev1sec3.html
+
+
+

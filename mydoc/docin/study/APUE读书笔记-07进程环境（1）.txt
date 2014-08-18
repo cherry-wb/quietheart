@@ -1,0 +1,100 @@
+++++++APUE读书笔记-07进程环境（1）++++++
+
+
+
+1、简介
+================================================
+	在下一章讲述进程控制相关的内容之前，我们需要先看一下单个进程的情况。本章，我们将会看到main函数在执行程序的时候是如何被调用到的，命令行参数是如何传递给新的程序的，典型的内存布局是什么样的，以及如何申请额外的内存，进程如何使用环境变量，以及各种终止进程的方法。另外，我们也会看到longjmp函数和setjmp函数，以及它们和堆栈的交互情况。最后我们通过讲述一个进程的资源限制来结束本章。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec1.html
+
+
+2、可执行程序的main函数
+================================================
+	当一个c程序通过exec被执行的时候，会在main函数之前首先调用一个start-up routine.根据编译时候链接阶段的设置，可执行文件会把这个start-up routine作为程序的起始地址。这个start-up routine会从内核中获取命令参数(应该对应main函数的参数)以及环境变量然后调用main函数。
+	main函数的声明如下：  
+	int main(int argc, char *argv[]);
+	这里，参数argc是命令行中参数的数目，argv是指向命令行参数的数组。这个函数的内容是我们自己实现的，依据我们自己的程序功能而有所不同。例如假设mytest.c编译生成mytest程序，那么输入"mytest arg1 arg2"之后，mytest.c中的main函数的argc就是3，其中argv[0]为"mytest"，argv[1]为arg1，argv[2]为arg2。具体我们会在7.4中对这些参数进行讲述。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec2.html
+
+
+3、进程终止
+================================================
+	有8种结束进程的方式，其中：
+	（1）正常结束的方式有5种:
+	a.从main函数中return
+	b.调用exit函数
+	c.调用_exit 或者 _Exit
+	d.最后一个线程中的start routine中return。
+	e.从最后一个线程中调用pthread_exit.
+
+	（2）非正常结束的方式有3种:
+	a.调用abort.
+	b.接收到一个信号(signal).
+	c.响应最后一个线程的cancellation请求。
+	这里，我们只考虑和线程无关的方法。
+
+	当main函数return的时候会调用到exit函数。效果类似在前面提到的start-up routine中执行了exit(main(argc,argv));
+	实际真正正常结束程序的只有三个函数：exit,_exit和_Exit.
+	_exit和_Exit会直接立即返回到内核，而exit会首先做一些清理工作(例如关闭打开的stream)然后返回到内核(例如可通过调用其他的两个exit函数)。
+	三种exit声明如下：
+	#include <stdlib.h>
+	void exit(int status);
+	void _Exit(int status);
+
+	#include <unistd.h>
+	void _exit(int status);
+	这三种函数都返回一个整数表示进程的状态，大多数unix系统都有处理这个返回状态的方式。如果a)这三种函数没有指定status而被调用b)main函数调用了return却没有在后面指定其返回值c)main函数没有指定要返回一个整数进程的exit状态是不确定的。如果main函数被指定返回的是整数，但是是隐式退出的（没有调用return而是自然地到达了函数的结尾）,那么返回值是0(这个特性是c99新加的特性，以前返回是不确定的)。在main函数中调用exit(0)和return 0的效果是等价的。
+
+	进程结束前可以调用用户注册的指定函数：
+	#include <stdlib.h>
+	int atexit(void (*func)(void));
+
+	我们把自己定义的函数的地址传递到这个函数中去，就会将我们自定的函数注册到进程退出过程中去。当调用exit函数退出进程的时候，会按照我们注册的反顺序一次调用我们注册的自定义函数。一个函数被注册了几次，那么exit的时候就会被调用几次。ISO C允许注册至少32个函数(sysconf函数可以用来确定一个系统最多可以注册多少个退出函数)。
+	这些退出函数（exit注册的函数）在1989 ANSI之前的系统中(例如SVR3和4.3BSD)是没有的。
+
+	ISO C和POSIX.1首先调用注册的exit退出函数，然后（通过fclose）关闭所有的stream.POSIX.1扩展了ISO C的一个地方是：当调用exec函数的时候会清除所有的退出注册函数。下图给出了程序启动和终止时候调用的这些函数的关系。
+
+						C程序的启动和终止
+
+     _exit+---------------------------------------------------------------------+
+      or  |                                                                     |
+     _Exit|  +----------+                                call    +-------+      |
+   <---------|  user    |                             ---------->|  exit |      |
+   |      |  |functions |\                           /  /--------|handler|      |
+   |      |  +--|----^--+ \   exit                  /  /  return +-------+      |
+   |      |  return  |     -------------\          /  /                         |
+   |      |     |    |   (doesn't return)\        /  /            ......        |
+   | _exit|     |  call                   v      /  /                           |
+   |  or  |  +--v----|--+     exit       +--------+<    call     +-------+      |
+   | _Exit|  |  main    |--------------->|  exit  |------------->|  exit |      |
+   | <-------|functions |(doesn't return)|function|<-------------|handler|      |
+   | |    |  +--|----^--+                +----|---+\    return   +-------+      |
+   | |    |  return  |                    ^   |  ^  \                           |
+   | |    |     |    |                   /    |   \  \                          |
+   | |    |     |  call       exit      /     |    \  \                         |
+   | |    |  +--v----|--+  ------------/      |     \  \  call   +-----------+  |
+   | |    |  |C start-up| /(doesn't return)   |_exit \  \------->| standard  |  |
+   | |    |  |  routine |/                    | or    \----------|I/O cleanup|  |
+   | |    |  +-----^----+                     |_Exit      return +-----------+  |
+   | |    |        |                          |                                 |
+   | |    +--------|--------------------------|---------------------------------+
+   | |             |                          |
+   | |             |exec                      |
+   v v             |                          |
+ +-----------------|--------------------------v------------------------------------------+
+ |                                    kernel                                             |
+ +---------------------------------------------------------------------------------------+
+
+
+	总结起来：程序大致退出的情况是：
+	用户函数最终会返回到main,main返回到start-routine,start-routine最后会调用exit函数；main函数和用户函数都能够调用exit或_exit或_Exit直接退出程序；exit最终会调用_exit或_Exit退出程序。
+
+参考:
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec3.html
+
+
+

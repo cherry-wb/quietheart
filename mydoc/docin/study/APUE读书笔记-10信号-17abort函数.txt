@@ -1,0 +1,62 @@
+++++++APUE读书笔记-10信号-17abort函数++++++
+
+
+
+17、abort函数
+================================================
+	在前面我们提到过abort函数会导致程序非正常地终止，
+	#include <stdlib.h>
+	void abort(void);
+	这个函数不会返回。
+	这个函数会发送SIGABRT信号给调用者.(进程不应该忽略这个信号.)ISOC要求调用abort将会通过raise(SIGABRT)给主机环境发送一个非成功的标记。
+	ISO C要求，如果信号被捕获，并且信号处理函数返回了，那么abort也不会返回到它的调用者处。如果信号被捕获了，只能通过调用exit,_exit,_Exit,longjmp,或者siglongjmp让信号处理函数不返回。POSIX.1也指定abort会覆盖进程对信号的阻塞和忽略(???)。
+	让进程捕获SIGABRT的目的是让它在进程终止之前可以进行它想要进行的清理工作。如果进程没有从信号处理函数中终止，POSIX.1已经说了，当信号处理函数返回的时候，abort会终止进程。
+	这个函数的ISO C标准，让具体实现取决定是否刷新输出流，或者删除临时文件。POSIX.1更进一步要求,如果调用abort终止了进程，那么对进程打开的I/O流的影响就像进程在终止之前为每一个流调用了fclose一样。
+	早期版本的System V会在abort函数中产生SIGIOT信号。此外，进程有可能会忽略或者捕获这个信号，并且从信号处理函数中返回，这时候，abort函数会返回到它的调用之处。
+	4.3BSD会产生SIGILL信号。在做这个之前，4.3BSD函数会取消信号的阻塞，并且重置信号处理动作为SIG_DFL（终止进程并产生core文件）。这个会阻止一个进程忽略或者捕获信号。
+	历史上，对abort的实现对标准I/O流的处理有所不同。对于保守点的编程以及更好的可移植的角度来说，如果我们想要标准I/O流被刷新，我们需要在调用abort之前来做它们。
+	由于大多数UNIX 系统在创建了tmpfile之后立即对tmpfile执行unlink操作，ISO C会警告这样的文件，但是不会考虑我们。
+
+	举例
+	void abort(void)         /* POSIX风格的abort函数 */
+	{
+	    sigset_t           mask;
+	    struct sigaction   action;
+	    /*
+	     * 调用者不能忽略SIGABRT，如果忽略则设置成默认的.
+	     */
+	    sigaction(SIGABRT, NULL, &action);
+	    if (action.sa_handler == SIG_IGN) {
+	        action.sa_handler = SIG_DFL;
+	        sigaction(SIGABRT, &action, NULL);
+	    }
+	    if (action.sa_handler == SIG_DFL)
+	        fflush(NULL);           /* 刷新所有打开的标准输入输出流 */
+	    /*
+	     * 要确保调用者没有对SIGABRT进行阻塞.
+	     */
+	    sigfillset(&mask);
+	    sigdelset(&mask, SIGABRT);  /* signal mask中只有 SIGABRT 被排除在外 */
+	    sigprocmask(SIG_SETMASK, &mask, NULL);
+	    kill(getpid(), SIGABRT);    /* 发送信号 */
+	    /*
+	     * 如果我们到达了这里，说明进程已经捕获到了 SIGABRT 信号并且返回。
+	     */
+	    fflush(NULL);               /* 刷新所有打开的标准输入输出流 */
+	    action.sa_handler = SIG_DFL;
+	    sigaction(SIGABRT, &action, NULL);  /* 设置信号为默认的处理 */
+	    sigprocmask(SIG_SETMASK, &mask, NULL);  /* just in case ... */
+	    kill(getpid(), SIGABRT);                /* and one more time */
+	    exit(1);    /* this should never be executed ... */
+	}
+
+
+	例子给出了一个根据POSIX.1指定的abort函数的实现。
+	我们首先查看是否有默认的动作发生，如果有，那么我们会刷新所有打开的标准I/O流。这一点和fclose所有打开的流的效果不是一样的，因为前者是只刷新流并没有关闭它们,但是当进程终止的时候，系统会关闭所有打开的文件。如果进程捕获到了信号并且返回了，那么我们再次刷新流，因为期间进程可能又会产生一些输出的。如果进程捕获到了信号，并且调用了_exit或者_Exit，只有这种情况我们不这样做。这时候，内存中任何没有被刷新的标准I/O缓存都会被丢弃。我们假设调用者在不想要刷新缓存的时候这样做。
+	根据前面所说过的，如果调用kill给caller发送一个信号，并且如果信号没有被阻塞，那么这个信号会在kill返回的时候被发送给进程。我们阻塞了除SIGABRT之外的所有信号，所以我们知道，如果调用的kill返回了，那么进程就捕获到了信号，并且信号处理函数已经返回了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec17.html
+
+
+

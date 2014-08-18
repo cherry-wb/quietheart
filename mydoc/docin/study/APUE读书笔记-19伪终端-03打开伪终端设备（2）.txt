@@ -1,0 +1,247 @@
+++++++APUE读书笔记-19伪终端-03打开伪终端设备（2）++++++
+
+
+
+3、打开伪终端设备（2）
+================================================
+	（2）基于BSD的伪终端
+	在基于BSD的系统中，和基于Linux的系统中，我们提供了自己的XSI函数版本。
+	在我们自己写的posix_openpt函数中，我们需要确定第一个可用的PTY master设备。为了做到这个，我们从/dev/ptyp0开始，并且一直尝试直至我们成功打开了一个PTY master或者直到我们的设备没有了。我们可以从open中得到两个不同的错误：EIO表示设备已经被使用；ENOENT表示设备不存在。在后一种情况中，因为所有的伪终端设备在使用中，我们可以停止搜索。当我们可以打开一个PTY master的时候，也就是/dev/ptyMN，那么相应的的slave名字就是/dev/ttyMN。在Linux上面，如果PTY master名字是/dev/pty/mXX，那么相应的PTY slave名字应该是/dev/pty/sXX。
+	
+	在我们定义的grantpt中，我们调用chown和chmod但是需要注意的是，这两个函数必须有超级用户的权限才能正常工作。如果改变用户属主以及保护权限是非常重要的，那么这两个函数调用应该被放到set-user-ID为root的可执行文件中去，就像Solaris系统实现它的那样。
+	
+	下面代码中的函数ptys_open只是打开slave设备，没有其他必要的初始化动作。在基于BSD的系统中对slave PTY的打开，并没有自动将该设备分配为控制终端的效果。在后面我们将会看到如何在基于BSD的系统中分配控制终端。
+	
+	BSD和Linux的伪终端打开函数
+	#include "apue.h"
+	#include <errno.h>
+	#include <fcntl.h>
+	#include <grp.h>
+	
+	#ifndef _HAS_OPENPT
+	int posix_openpt(int oflag)
+	{
+	    int     fdm;
+	    char    *ptr1, *ptr2;
+	    char    ptm_name[16];
+	
+	    strcpy(ptm_name, "/dev/ptyXY");
+	    /* array index:   0123456789   (for references in following code) */
+	    for (ptr1 = "pqrstuvwxyzPQRST"; *ptr1 != 0; ptr1++) {
+	        ptm_name[8] = *ptr1;
+	        for (ptr2 = "0123456789abcdef"; *ptr2 != 0; ptr2++) {
+	            ptm_name[9] = *ptr2;
+	
+	            /*
+	             * Try to open the master.
+	             */
+	            if ((fdm = open(ptm_name, oflag)) < 0) {
+	                if (errno == ENOENT)    /* different from EIO */
+	                    return(-1);         /* out of pty devices */
+	                else
+	                    continue;           /* try next pty device */
+	            }
+	            return(fdm);        /* got it, return fd of master */
+	            }
+	    }
+	    errno = EAGAIN;
+	    return(-1);     /* out of pty devices */
+	}
+	#endif
+	
+	#ifndef _HAS_PTSNAME
+	char * ptsname(int fdm)
+	{
+	    static char pts_name[16];
+	    char        *ptm_name;
+	
+	    ptm_name = ttyname(fdm);
+	    if (ptm_name == NULL)
+	        return(NULL);
+	    strncpy(pts_name, ptm_name, sizeof(pts_name));
+	    pts_name[sizeof(pts_name) - 1] = '\0';
+	    if (strncmp(pts_name, "/dev/pty/", 9) == 0)
+			pts_name[9] = 's';  /* change /dev/pty/mXX to /dev/pty/sXX */
+	    else
+	        pts_name[5] = 't';  /* change "pty" to "tty" */
+	    return(pts_name);
+	}
+	#endif
+	
+	#ifndef _HAS_GRANTPT
+	int grantpt(int fdm)
+	{
+	    struct group    *grptr;
+	    int             gid;
+	    char            *pts_name;
+	
+	    pts_name = ptsname(fdm);
+	    if ((grptr = getgrnam("tty")) != NULL)
+	        gid = grptr->gr_gid;
+	    else
+	        gid = -1;       /* group tty is not in the group file */
+	
+	    /*
+	     * The following two calls won't work unless we're the superuser.
+	     */
+	    if (chown(pts_name, getuid(), gid) < 0)
+	        return(-1);
+	    return(chmod(pts_name, S_IRUSR | S_IWUSR | S_IWGRP));
+	}
+	#endif
+	
+	#ifndef _HAS_UNLOCKPT
+	int unlockpt(int fdm)
+	{
+	
+	    return(0); /* nothing to do */
+	}
+	#endif
+	
+	int ptym_open(char *pts_name, int pts_namesz)
+	{
+	    char    *ptr;
+	    int     fdm;
+	
+	    /*
+	     * Return the name of the master device so that on failure
+	     * the caller can print an error message.  Null terminate
+	     * to handle case where string length > pts_namesz.
+	     */
+	    strncpy(pts_name, "/dev/ptyXX", pts_namesz);
+	    pts_name[pts_namesz - 1] = '\0';
+	    if ((fdm = posix_openpt(O_RDWR)) < 0)
+	        return(-1);
+	    if (grantpt(fdm) < 0) {     /* grant access to slave */
+	        close(fdm);
+	        return(-2);
+	    }
+	    if (unlockpt(fdm) < 0) {    /* clear slave's lock flag */
+	        close(fdm);
+	        return(-3);
+	    }
+	    if ((ptr = ptsname(fdm)) == NULL) { /* get slave's name */
+	        close(fdm);
+	        return(-4);
+	    }
+	
+	    /*
+	     * Return name of slave.  Null terminate to handle
+	     * case where strlen(ptr) > pts_namesz.
+	     */
+	    strncpy(pts_name, ptr, pts_namesz);
+	    pts_name[pts_namesz - 1] = '\0';
+	    return(fdm);            /* return fd of master */
+	}
+	
+	int ptys_open(char *pts_name)
+	{
+	    int fds;
+	
+	    if ((fds = open(pts_name, O_RDWR)) < 0)
+	        return(-5);
+	    return(fds);
+	}
+	我们定义的posix_openpt尝试16个PTY master的16个不同的组：/dev/ptyp0 到/dev/ptyTf。实际的可用PTY设备数目取决于两个因素：a)配置到内核中的数目。b)/dev目录下面建立的特殊设备文件的数目。可用的数目就是两者之间最小者。
+	
+	（3）基于Linux的伪终端
+	Linux提供访问伪终端的BSD方法，所以可以使用上面代码中同样的函数在Linux上面进行工作。然而，Linux也支持使用/dev/ptmx的伪终端克隆接口(这不是STREAMS设备)。克隆接口要求额外的步骤来辨别和解锁一个slave设备。在Linux上面我们可以使用访问伪终端设备的函数参见下面的代码。
+	
+	用于Linux的伪终端打开函数
+	#include "apue.h"
+	#include <fcntl.h>
+	#ifndef _HAS_OPENPT
+	int posix_openpt(int oflag)
+	{
+	    int     fdm;
+	
+	    fdm = open("/dev/ptmx", oflag);
+	    return(fdm);
+	}
+	#endif
+	
+	#ifndef _HAS_PTSNAME
+	char * ptsname(int fdm)
+	{
+	    int         sminor;
+	    static char pts_name[16];
+	
+	    if (ioctl(fdm, TIOCGPTN, &sminor) < 0)
+	        return(NULL);
+	    snprintf(pts_name, sizeof(pts_name), "/dev/pts/%d", sminor);
+	    return(pts_name);
+	}
+	#endif
+	
+	#ifndef _HAS_GRANTPT
+	int grantpt(int fdm)
+	{
+	    char            *pts_name;
+	
+	    pts_name = ptsname(fdm);
+	    return(chmod(pts_name, S_IRUSR | S_IWUSR | S_IWGRP));
+	}
+	#endif
+	
+	#ifndef _HAS_UNLOCKPT
+	int unlockpt(int fdm)
+	{
+	    int lock = 0;
+	
+	    return(ioctl(fdm, TIOCSPTLCK, &lock));
+	}
+	#endif
+	
+	int ptym_open(char *pts_name, int pts_namesz)
+	{
+	    char    *ptr;
+	    int     fdm;
+	
+	    /*
+	     * Return the name of the master device so that on failure
+	     * the caller can print an error message.  Null terminate
+	     * to handle case where string length > pts_namesz.
+	     */
+	    strncpy(pts_name, "/dev/ptmx", pts_namesz);
+	    pts_name[pts_namesz - 1] = '\0';
+	
+	    fdm = posix_openpt(O_RDWR);
+	    if (fdm < 0)
+	        return(-1);
+	    if (grantpt(fdm) < 0) {     /* grant access to slave */
+	        close(fdm);
+	        return(-2);
+	    }
+	    if (unlockpt(fdm) < 0) {    /* clear slave's lock flag */
+	        close(fdm);
+	        return(-3);
+	    }
+	    if ((ptr = ptsname(fdm)) == NULL) { /* get slave's name */
+	        close(fdm);
+	        return(-4);
+	    }
+	    /*
+	     * Return name of slave.  Null terminate to handle case
+	     * where strlen(ptr) > pts_namesz.
+	     */
+	    strncpy(pts_name, ptr, pts_namesz);
+	    pts_name[pts_namesz - 1] = '\0';
+	    return(fdm);            /* return fd of master */
+	}
+	
+	int ptys_open(char *pts_name)
+	{
+	    int fds;
+	
+	    if ((fds = open(pts_name, O_RDWR)) < 0)
+	        return(-5);
+	    return(fds);
+	}
+	
+	在Linux上面PTY slave设备已经被tty组拥有，所以我们grantpt中需要做的只是保证权限的正确。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch19lev1sec3.html
+
+
+

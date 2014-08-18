@@ -1,0 +1,94 @@
+++++++APUE读书笔记-18终端输入输出-10canonical模式++++++
+
+
+
+10、canonical模式
+================================================
+	Canonical模式非常简单：我们调用一个read，然后终端驱动程序会在输入完一行之后返回。导致read返回的有以下几种情况。
+	a.当所请求的字节数目被读取完成之后read会返回。我们不用读取一个整行，如果我们读取一行中的一个部分，那么不会丢失任何信息；下一次读取的位置就是上次停止的位置。
+	b.read会在遇到一个行定界符号的时候返回。前面我们说过，被解释成为canonical模式的行结束符号有：NL, EOL, EOL2, 和 EOF。前面也说过，如果ICRNL被设置并且IGNCR没有被设置，那么CR字符也会终止一个行，就像NL字符一样。
+	我们需要注意的是，对于所有这5个行定界符号，有一个字符(即EOF)会在被处理之后被终端驱动程序丢弃。剩下的4个字符会返回给调用者，作为一行的最后一个字符。
+	c.read在捕获到一个信号并且这个函数不是自动重新启动的时候返回。
+	
+	getpass函数的例子
+	我们现在看看getpass函数。这个函数会从用户终端读取某种密码，login和crypt程序就会调用这个函数。为了读取密码，函数必须关闭字符的显示，但是它也必须让终端处于canonical模式，把我们输入的组成一行的密码读取。下面代码就列举了unix系统上面一个典型的这个函数的实现。
+	
+	getpass函数的实现
+	#include <signal.h>
+	#include <stdio.h>
+	#include <termios.h>
+	
+	#define MAX_PASS_LEN    8      /* max #chars for user to enter */
+	
+	char * getpass(const char *prompt)
+	{
+	    static char     buf[MAX_PASS_LEN + 1]; /* null byte at end */
+	    char            *ptr;
+	    sigset_t        sig, osig;
+	    struct termios  ts, ots;
+	    FILE            *fp;
+	    int             c;
+	
+	    if ((fp = fopen(ctermid(NULL), "r+")) == NULL)
+	        return(NULL);
+	    setbuf(fp, NULL);
+	
+	    sigemptyset(&sig);
+	    sigaddset(&sig, SIGINT);        /* block SIGINT */
+	    sigaddset(&sig, SIGTSTP);       /* block SIGTSTP */
+	    sigprocmask(SIG_BLOCK, &sig, &osig);    /* and save mask */
+	
+	    tcgetattr(fileno(fp), &ts);     /* save tty state */
+	    ots = ts;                       /* structure copy */
+	    ts.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
+	    tcsetattr(fileno(fp), TCSAFLUSH, &ts);
+	    fputs(prompt, fp);
+	
+	    ptr = buf;
+	    while ((c = getc(fp)) != EOF && c != '\n')
+	        if (ptr < &buf[MAX_PASS_LEN])
+	            *ptr++ = c;
+	    *ptr = 0;                  /* null terminate */
+	    putc('\n', fp);            /* we echo a newline */
+	
+	    tcsetattr(fileno(fp), TCSAFLUSH, &ots); /* restore TTY state */
+	    sigprocmask(SIG_SETMASK, &osig, NULL);  /* restore mask */
+	    fclose(fp);         /* done with /dev/tty */
+	    return(buf);
+	}
+	
+	这个例子中有几个需要注意的地方。
+	a.我们不是直接在程序中使用"/dev/tty"，而是调用函数ctermid来打开控制终端。
+	b.我们只从控制终端读写，并且如果我们无法打开设备进行读写的时候我们会返回错误。也有其他的情况，BSD版本的getpass从标准输入读取，并且如果控制终端无法被打开用于读写的时候会写到标准错误输出。SystemV版本的系统会一直向标准错误输出写，但是只从控制终端读取。
+	c.我们会阻塞信号SIGINT以及SIGSTP。如果我们没有做这些，那么输入INTR字符的时候将会导致程序被abort（异常终止）并且留下一个被取消了显示字符的终端。类似地，如果输入SUSP字符将会停止程序，并且返回一个被取消了显示字符的shell。我们在我们取消显示的时候选择阻塞这些信号。如果在我们读取密码的时候产生了这些信号，那么它们会被保留，直到我们返回。也有一些其他处理这些信号的方式。有些版本会仅仅再getpass的时候忽略SIGINT（当然保存之前的动作），然后当返回的时候恢复之前的动作，但是这样也意味着在这个信号被忽略的期间（就是执行getpass的期间），任何产生的这个信号将会丢失。另外一个版本处理的方式是如果发现产生信号则捕捉SIGINT信号（也会保存之前的动作），如果产生了信号，那么在重置终端的状态和信号动作的时候将这些信号通过kill函数发送。没有任何版本的getpass函数会阻塞、捕获、或者忽略信号SIGQUIT，所以键入QUIT字符会导致程序终止同时可能会留下一个不能显示的终端。
+	d.需要注意的是，有一些shell，尤其是Korn shell，会再它们读取交互命令的时候将回显打开。这些shell一般是那些提供命令行编辑功能的shell，因此每当我们输入交互命令的时候会操作终端的状态。因此，如果我们在这些shell下面发起应用程序，并且使用QUIT字符退出应用程序的时候，这个shell将会重新为我们开启回显功能。其他的没有提供提供命令行编辑功能的shell，例如Bourne shell，将会在取消应用程序的时候留下一个没有回显的shell。如果这样，我们可以使用stty命令来重新开启回显。
+	e.我们使用标准输入输出来读写控制终端。我们特别地设置了stream为非缓冲的，否则可能会有一些交互出现在读和写这个流之间（我们需要使用一些调用来进行fflush）。我们可能会使用非缓冲的I/O，但是我们使用读取的时候需要模仿getc函数。
+	f.我们只存放了8个字符作为密码。任何其他的字符都将会被忽略。
+	
+	下面的代码调用getpass并且打印我们所输入的，以便我们可以验证ERASE和KILL字符是可以工作的（因为它们需要在canonical模式）。
+	
+	调用getpass函数
+	#include "apue.h"
+	char    *getpass(const char *);
+	int main(void)
+	{
+	    char   *ptr;
+	
+	    if ((ptr = getpass("Enter password:")) == NULL)
+	        err_sys("getpass error");
+	    printf("password: %s\n", ptr);
+	
+	    /* now use password (probably encrypt it) ... */
+	
+	    while (*ptr != 0)
+	        *ptr++ = 0;      /* zero it out when we're done with it */
+	    exit(0);
+	}
+	
+	当一个调用getpass的应用程序使用明文密码的时候，应用程序应该在内存中将它尽早清除以杜绝安全隐患。如果应用程序会产生core文件，其它程序可能会读取到相应信息；或者如果有些应用程序可以读取我们内存的时候；这都会导致我们的明文密码被读取到。（这里的明文"cleartext",意思是我们在输入提示处输入的并且通过getpass被打印出来的密码。大多数UNIX系统程序会接着将这个明文的密码变成一个"加密的密码"。例如，password的pw_passwd成员就包含了加密的密码而不是明文的密码）。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec10.html
+
+
+

@@ -1,0 +1,31 @@
+++++++APUE读书笔记-18终端输入输出-08行控制函数++++++
+
+
+
+8、行控制函数
+================================================
+	下面的四个函数提供了终端设备的行控制能力，所有的四个函数要求filedes引用一个终端设备，否则会返回错误并且设置错误号码errno为ENOTTY.
+	#include <termios.h>
+	int tcdrain(int filedes);
+	int tcflow(int filedes, int action);
+	int tcflush(int filedes, int queue);
+	int tcsendbreak(int filedes, int duration);
+	所有的四个函数返回：如果成功返回0，如果错误返回1。
+	函数tcdrain等待所有输出被传输。tcflow函数让我们可以控制输入和输出控制流。action参数必须是如下的四个值之一：
+	TCOOFF 输出被挂起。
+	TCOON 之前被挂起的输出被重启。
+	TCIOFF 系统传输STOP字符，这会导致终端设备停止发送数据。
+	TCION 系统传输START字符，这会导致终端设备重新开始发送数据。
+	
+	tcflush函数允许我们flush（丢弃）输入缓存（这里的数据是已经被终端驱动接收了但是我们还没有读取）或者输出缓存（这里的数据是我们已经写入了，但是还没有传输）。queue参数必须是如下三个常数之中的一个：
+	TCIFLUSH 输入队列被flush。
+	TCOFLUSH 输出对列被flush。
+	TCIOFLUSH 输入和输出队列都被flush。
+	
+	tcsendbreak函数会传输连续的0比特流以用于特定的延迟。如果duration参数是0，那么传输会持续大约0.25-0.5秒之间。POSIX.1指定，如果duration非0，那么传输的时间根据具体实现有所不同。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec8.html
+
+
+

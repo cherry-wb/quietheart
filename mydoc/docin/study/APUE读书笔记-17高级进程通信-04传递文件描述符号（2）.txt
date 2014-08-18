@@ -1,0 +1,371 @@
+++++++APUE读书笔记-17高级进程通信-04传递文件描述符号（2）++++++
+
+
+
+4、传递文件描述符号（2）
+================================================
+	将文件描述符号通过unix域套接字进行传输
+	为了使用unix域套接字传递文件描述符号，我们调用sendmsg(2)和recvmsg(2)函数。两个函数会接收一个指向msghdr结构的指针，这个结构包含了我们想要接收和发送的所有信息。下面的定义就和你的系统上面的结构类似：
+	struct msghdr {
+		void         *msg_name;        /* optional address */
+		socklen_t     msg_namelen;     /* address size in bytes */
+		struct iovec *msg_iov;         /* array of I/O buffers */
+		int           msg_iovlen;      /* number of elements in array */
+		void         *msg_control;     /* ancillary data */
+		socklen_t     msg_controllen;  /* number of ancillary bytes */
+		int           msg_flags;       /* flags for received message */
+	};
+	前两个成员用于在网络连接上面发送数据包，在每个数据包中可以指定目标地址。下两个元素允许我们指定一个数组缓存（分散读和聚集写），和我们前面描述的readv与writev函数类似。msg_flags域包含了描述消息接收的标记，前面谈到recvmsg的消息标记的时候对此进行过说明。
+	两个用来处理传递和接收的控制信息的成员，msg_control域指向cmsghdr（控制消息头部）结构，msg_controllen域包含控制信息的字节数目。
+	struct cmsghdr  {
+		socklen_t   cmsg_len;    /* data byte count, including header */
+		int         cmsg_level;  /* originating protocol */
+		int         cmsg_type;   /* protocol-specific type */
+		/* followed by the actual control message data */
+	};
+	为发送一个文件描述符号，我们设置cmsg_len为cmsghdr结构的大小，加上一个整数（文件描述符）的大小。cmsg_level成员被设置成为SOL_SOCKET，cmsg_type被设置成为SCM_RIGHTS，以表明我们传递访问权限。(SCM代表套接字层次控制消息。)访问权限可以只通过unix域套接字来传递。文件描述符号存放在cmsg_type域后，通过使用宏CMSG_DATA来获得指向这个整数的指针。
+	有三个宏可以被使用来访问控制数据，一个宏用来协助计算用于cmsg_len的值。
+	#include <sys/socket.h>
+	unsigned char *CMSG_DATA(struct cmsghdr *cp);
+	返回：指向与cmsghdr结构相关联的指针。
+
+	struct cmsghdr *CMSG_FIRSTHDR(struct msghdr *mp);
+	返回：指向和msghdr结构关联的，第一个cmsghdr结构，或者如果不存在则返回NULL。
+
+	struct cmsghdr *CMSG_NXTHDR(struct msghdr *mp, struct cmsghdr *cp);
+	返回：在给定了当前的cmsghdr结构的前提下，获取指向和msghdr结构关联的，下一个cmsghdr结构，或者如果到达了最后一个则返回NULL。
+
+	unsigned int CMSG_LEN(unsigned int nbytes);
+	返回：用于分配nbytes大小的数据对象。
+
+	Single UNIX Specification 定义了前面三个宏，但是忽略了CMSG_LEN。
+	CMSG_LEN宏返回用来存放大小为nbytes的数据对象的字节数目，是加入了cmsghdr结构大小之后的，根据处理器结构调整了对齐的，以及向上取整的。(??????从下面代码看好象是容纳nbytes数据的cmsghdr的大小，但是翻译上确实整个msghdr大小)
+
+	下面是用于UNIX域套接字的send_fd函数。
+	UNIX域套接字的send_fd函数
+	#include "apue.h"
+	#include <sys/socket.h>
+	/* size of control buffer to send/recv one file descriptor */
+	#define CONTROLLEN  CMSG_LEN(sizeof(int))
+	static struct cmsghdr   *cmptr = NULL;  /* malloc'ed first time */
+	/*
+	 * Pass a file descriptor to another process.
+	 * If fd<0, then -fd is sent back instead as the error status.
+	 */
+	int send_fd(int fd, int fd_to_send)
+	{
+	    struct iovec    iov[1];
+	    struct msghdr   msg;
+	    char            buf[2]; /* send_fd()/recv_fd() 2-byte protocol */
+
+	    iov[0].iov_base = buf;
+	    iov[0].iov_len  = 2;
+	    msg.msg_iov     = iov;
+	    msg.msg_iovlen  = 1;
+	    msg.msg_name    = NULL;
+	    msg.msg_namelen = 0;
+	    if (fd_to_send < 0) {
+	        msg.msg_control    = NULL;
+	        msg.msg_controllen = 0;
+	        buf[1] = -fd_to_send;   /* nonzero status means error */
+	        if (buf[1] == 0)
+	            buf[1] = 1; /* -256, etc. would screw up protocol */
+	    } else {
+	        if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+	            return(-1);
+	        cmptr->cmsg_level  = SOL_SOCKET;
+	        cmptr->cmsg_type   = SCM_RIGHTS;
+	        cmptr->cmsg_len    = CONTROLLEN;
+	        msg.msg_control    = cmptr;
+	        msg.msg_controllen = CONTROLLEN;
+	        *(int *)CMSG_DATA(cmptr) = fd_to_send;     /* the fd to pass */
+	        buf[1] = 0;          /* zero status means OK */
+	    }
+	    buf[0] = 0;              /* null byte flag to recv_fd() */
+	    if (sendmsg(fd, &msg, 0) != 2)
+	        return(-1);
+	    return(0);
+	}
+
+
+	在sendmsg调用中，我们发送协议数据（null和状态字节）以及文件描述符号。
+	为接收一个文件描述符号，我们需要分配足够的空间给cmsghdr结构以及文件描述符号，设置msg_control指向分配的区域，然后调用recvmsg。我们使用CMSG_LEN宏来计算需要的空间。
+	我们从套接字读取，直到读取到状态字节之前的null字节。所有到达这个null字节的都是来自发送者的错误消息，请看如下代码：
+
+	用于UNIX域套接字的recv_fd函数
+	#include "apue.h"
+	#include <sys/socket.h>     /* struct msghdr */
+
+	/* size of control buffer to send/recv one file descriptor */
+	#define CONTROLLEN  CMSG_LEN(sizeof(int))
+	static struct cmsghdr   *cmptr = NULL;      /* malloc'ed first time */
+	/*
+	 * Receive a file descriptor from a server process.  Also, any data
+	 * received is passed to (*userfunc)(STDERR_FILENO, buf, nbytes).
+	 * We have a 2-byte protocol for receiving the fd from send_fd().
+	 */
+	int recv_fd(int fd, ssize_t (*userfunc)(int, const void *, size_t))
+	{
+	   int             newfd, nr, status;
+	   char            *ptr;
+	   char            buf[MAXLINE];
+	   struct iovec    iov[1];
+	   struct msghdr   msg;
+
+	   status = -1;
+	   for ( ; ; ) {
+	       iov[0].iov_base = buf;
+	       iov[0].iov_len  = sizeof(buf);
+	       msg.msg_iov     = iov;
+	       msg.msg_iovlen  = 1;
+	       msg.msg_name    = NULL;
+	       msg.msg_namelen = 0;
+	       if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+	           return(-1);
+	       msg.msg_control    = cmptr;
+	       msg.msg_controllen = CONTROLLEN;
+	       if ((nr = recvmsg(fd, &msg, 0)) < 0) {
+	           err_sys("recvmsg error");
+	       } else if (nr == 0) {
+	           err_ret("connection closed by server");
+	           return(-1);
+	       }
+	       /*
+	        * See if this is the final data with null & status.  Null
+	        * is next to last byte of buffer; status byte is last byte.
+	        * Zero status means there is a file descriptor to receive.
+	        */
+	       for (ptr = buf; ptr < &buf[nr]; ) {
+	           if (*ptr++ == 0) {
+	               if (ptr != &buf[nr-1])
+	                   err_dump("message format error");
+	               status = *ptr & 0xFF;  /* prevent sign extension */
+	               if (status == 0) {
+	                   if (msg.msg_controllen != CONTROLLEN)
+	                       err_dump("status = 0 but no fd");
+	                   newfd = *(int *)CMSG_DATA(cmptr);
+	               } else {
+	                   newfd = -status;
+	               }
+	               nr -= 2;
+	           }
+	        }
+	        if (nr > 0 && (*userfunc)(STDERR_FILENO, buf, nr) != nr)
+	            return(-1);
+	        if (status >= 0)    /* final data has arrived */
+	            return(newfd);  /* descriptor, or -status */
+	   }
+	}
+	注意，我们一直在准备接收一个文件描述符号（每次调用recvmsg之前，我们设置msg_control和msg_controllen），但是，只有msg_controllen返回为非0的时候，我们才接收一个文件描述符号。
+	当传递文件描述符号的时候，一个UNIX域套接字和STREAMS pipes不同的地方就是，使用STREAMS pipes我们需要获取发送进程的进程标识。有些版本的UNIX域套接字提供类似的功能，但是接口却是不同的。
+	FreeBSD 5.2.1和Linux 2.4.22提供通过UNIX域套接字发送凭证的支持，但是它们用不同的方式来做。Mac OS X 10.3有些部分继承自FreeBSD，但是不能传递凭证。Solaris 9不支持在UNIX域套接字上面发送凭证。
+
+	通过使用FreeBSD，凭证通过cmsgcred结构来传送：
+	#define CMGROUP_MAX 16
+	struct cmsgcred {
+		pid_t cmcred_pid;                   /* sender's process ID */
+		uid_t cmcred_uid;                   /* sender's real UID */
+		uid_t cmcred_euid;                  /* sender's effective UID */
+		gid_t cmcred_gid;                   /* sender's real GID */
+		short cmcred_ngroups;               /* number of groups */
+		gid_t cmcred_groups[CMGROUP_MAX];   /* groups */
+	};
+	当我们传输凭证的时候，我们只需要为cmsgcred结构保留空间。内核将会帮助我们填充它以防止应用程序假装已经有了不同的标识。
+	在Linux上面，凭证以ucred结构来传输：
+	struct ucred {
+		uint32_t pid;   /* sender's process ID */
+		uint32_t uid;   /* sender's user ID */
+		uint32_t gid;   /* sender's group ID */
+	};
+	和FreeBSD不同，Linux需要我们在传输这个结构之前初始化这个结构。内核将会保证应用程序要么使用与调用者相关的值要么有合适的权限使用其他的值。
+
+	下面的代码展示了包含发送进程凭证的send_fd函数
+	通过UNIX域套接字发送凭证
+	#include "apue.h"
+	#include <sys/socket.h>
+
+	#if defined(SCM_CREDS)          /* BSD interface */
+	#define CREDSTRUCT      cmsgcred
+	#define SCM_CREDTYPE    SCM_CREDS
+	#elif defined(SCM_CREDENTIALS)  /* Linux interface */
+	#define CREDSTRUCT      ucred
+	#define SCM_CREDTYPE    SCM_CREDENTIALS
+	#else
+	#error passing credentials is unsupported!
+	#endif
+
+	/* size of control buffer to send/recv one file descriptor */
+	#define RIGHTSLEN   CMSG_LEN(sizeof(int))
+	#define CREDSLEN    CMSG_LEN(sizeof(struct CREDSTRUCT))
+	#define CONTROLLEN  (RIGHTSLEN + CREDSLEN)
+
+	static struct cmsghdr   *cmptr = NULL;  /* malloc'ed first time */
+
+	/*
+	 * Pass a file descriptor to another process.
+	 * If fd<0, then -fd is sent back instead as the error status.
+	 */
+	int send_fd(int fd, int fd_to_send)
+	{
+	    struct CREDSTRUCT   *credp;
+	    struct cmsghdr      *cmp;
+	    struct iovec        iov[1];
+	    struct msghdr       msg;
+	    char                buf[2]; /* send_fd/recv_ufd 2-byte protocol */
+
+	    iov[0].iov_base = buf;
+	    iov[0].iov_len =  2;
+	    msg.msg_iov     = iov;
+	    msg.msg_iovlen =  1;
+	    msg.msg_name    = NULL;
+	    msg.msg_namelen = 0;
+	    msg.msg_flags = 0;
+	    if (fd_to_send < 0) {
+	        msg.msg_control    = NULL;
+	        msg.msg_controllen = 0;
+	        buf[1] = -fd_to_send;   /* nonzero status means error */
+	        if (buf[1] == 0)
+	            buf[1] = 1; /* -256, etc. would screw up protocol */
+	    } else {
+	        if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+	            return(-1);
+	        msg.msg_control    = cmptr;
+	        msg.msg_controllen = CONTROLLEN;
+	        cmp = cmptr;
+	        cmp->cmsg_level =  SOL_SOCKET;
+	        cmp->cmsg_type   = SCM_RIGHTS;
+	        cmp->cmsg_len    = RIGHTSLEN;
+	        *(int *)CMSG_DATA(cmp) = fd_to_send;   /* the fd to pass */
+
+	        cmp = CMSG_NXTHDR(&msg, cmp);
+	        cmp->cmsg_level =  SOL_SOCKET;
+	        cmp->cmsg_type   = SCM_CREDTYPE;
+	        cmp->cmsg_len    = CREDSLEN;
+	        credp = (struct CREDSTRUCT *)CMSG_DATA(cmp);
+	#if defined(SCM_CREDENTIALS)
+	        credp->uid = geteuid();
+	        credp->gid = getegid();
+	        credp->pid = getpid();
+	#endif
+	        buf[1] = 0;     /* zero status means OK */
+	    }
+	    buf[0] = 0;         /* null byte flag to recv_ufd() */
+	    if (sendmsg(fd, &msg, 0) != 2)
+	        return(-1);
+	    return(0);
+	}
+	需要注意的是，我们只需要在Linux上面初始化凭证的数据结构。
+
+	下面的recv_ufd函数改自recv_fd，通过引用参数返回发送者的用户ID。
+	通过UNIX域套接字接收凭证
+	#include "apue.h"
+	#include <sys/socket.h>     /* struct msghdr */
+	#include <sys/un.h>
+
+	#if defined(SCM_CREDS)          /* BSD interface */
+	#define CREDSTRUCT      cmsgcred
+	#define CR_UID          cmcred_uid
+	#define CREDOPT         LOCAL_PEERCRED
+	#define SCM_CREDTYPE    SCM_CREDS
+	#elif defined(SCM_CREDENTIALS)  /* Linux interface */
+	#define CREDSTRUCT      ucred
+	#define CR_UID          uid
+	#define CREDOPT         SO_PASSCRED
+	#define SCM_CREDTYPE    SCM_CREDENTIALS
+	#else
+	#error passing credentials is unsupported!
+	#endif
+
+	/* size of control buffer to send/recv one file descriptor */
+	#define RIGHTSLEN   CMSG_LEN(sizeof(int))
+	#define CREDSLEN    CMSG_LEN(sizeof(struct CREDSTRUCT))
+	#define CONTROLLEN  (RIGHTSLEN + CREDSLEN)
+
+	static struct cmsghdr   *cmptr = NULL;      /* malloc'ed first time */
+
+	/*
+	 * Receive a file descriptor from a server process.  Also, any data
+	 * received is passed to (*userfunc)(STDERR_FILENO, buf, nbytes).
+	 * We have a 2-byte protocol for receiving the fd from send_fd().
+	 */
+	int recv_ufd(int fd, uid_t *uidptr, ssize_t (*userfunc)(int, const void *, size_t))
+	{
+	    struct cmsghdr      *cmp;
+	    struct CREDSTRUCT   *credp;
+	    int                 newfd, nr, status;
+	    char                *ptr;
+	    char                buf[MAXLINE];
+	    struct iovec        iov[1];
+	    struct msghdr       msg;
+	    const int           on = 1;
+
+	    status = -1;
+	    newfd = -1;
+	    if (setsockopt(fd, SOL_SOCKET, CREDOPT, &on, sizeof(int)) < 0) {
+	        err_ret("setsockopt failed");
+	        return(-1);
+	    }
+	    for ( ; ; ) {
+	        iov[0].iov_base = buf;
+	        iov[0].iov_len  = sizeof(buf);
+	        msg.msg_iov     = iov;
+	        msg.msg_iovlen  = 1;
+	        msg.msg_name    = NULL;
+	        msg.msg_namelen = 0;
+	        if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+	            return(-1);
+	        msg.msg_control    = cmptr;
+	        msg.msg_controllen = CONTROLLEN;
+	        if ((nr = recvmsg(fd, &msg, 0)) < 0) {
+	            err_sys("recvmsg error");
+	        } else if (nr == 0) {
+	            err_ret("connection closed by server");
+	            return(-1);
+	        }
+	        /*
+	         * See if this is the final data with null & status.  Null
+	         * is next to last byte of buffer; status byte is last byte.
+	         * Zero status means there is a file descriptor to receive.
+	         */
+	        for (ptr = buf; ptr < &buf[nr]; ) {
+	            if (*ptr++ == 0) {
+	                if (ptr != &buf[nr-1])
+	                    err_dump("message format error");
+	                status = *ptr & 0xFF;   /* prevent sign extension */
+	                if (status == 0) {
+	                    if (msg.msg_controllen != CONTROLLEN)
+	                        err_dump("status = 0 but no fd");
+
+	                    /* process the control data */
+	                    for (cmp = CMSG_FIRSTHDR(&msg);
+	                      cmp != NULL; cmp = CMSG_NXTHDR(&msg, cmp)) {
+	                        if (cmp->cmsg_level != SOL_SOCKET)
+	                            continue;
+	                        switch (cmp->cmsg_type) {
+	                        case SCM_RIGHTS:
+	                            newfd = *(int *)CMSG_DATA(cmp);
+	                            break;
+	                        case SCM_CREDTYPE:
+	                            credp = (struct CREDSTRUCT *)CMSG_DATA(cmp);
+	                            *uidptr = credp->CR_UID;
+	                        }
+	                    }
+	                } else {
+	                    newfd = -status;
+	                }
+	                nr -= 2;
+	             }
+	         }
+	         if (nr > 0 && (*userfunc)(STDERR_FILENO, buf, nr) != nr)
+	             return(-1);
+	         if (status >= 0)    /* final data has arrived */
+	             return(newfd);  /* descriptor, or -status */
+	    }
+	}
+	在FreeBSD上面，我们指定SCM_CREDS来传输凭证，在Linux上面，我们使用SCM_CREDENTIALS来传输凭证。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch17lev1sec4.html
+
+
+

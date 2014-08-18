@@ -1,0 +1,51 @@
+Linux下C语言编程入门-7关于时间的操作
+七、关于时间的操作
+=======================
+1,相关函数
+-------
+#include <time.h>
+time_t time(time_t *tloc)
+char *ctime(const time_t *clock)
+这两个都和时间表示相关。
+time 函数返回从 1970 年 1 月 1 日 0 点以来的秒数.存储在 time_t 结构之中.不过这个函数的返回值对于我们来说没有什么实际意义.
+使用第二个函数将秒数转化为字符串. 这个函数的返回类型是固定的:一个可能值为. Thu Dec 7 14:58:59 2000 这个字符串的长度是固定的为 26.
+
+int gettimeofday(struct timeval *tv,struct timezone *tz);
+这里，gettimeofday 用于时间的计算。将时间获取并保存在结构 tv 之中.tz 一般我们使用 NULL 来代替.
+timeval结构如下:
+strut timeval
+{
+	long tv_sec; /* 秒数 */
+	long tv_usec; /* 微秒数,是一个零头p28 */
+};
+
+2,举例
+-------
+#include <sys/time.h>
+#include <stdio.h>
+#include <math.h>
+void function()
+{
+	...do some thing...
+}
+main()
+{
+	struct timeval tpstart,tpend;/*开始时间和结束时间*/
+	float timeuse;/*开始时间和结束时间之差，即使用的时间，以秒计算*/
+
+	/*获得开始的时间*/
+	gettimeofday(&tpstart,NULL);
+
+	function();
+
+	/*获得结束的时间*/
+	gettimeofday(&tpend,NULL);
+
+	/*将时间差以秒为单位存储到timeuse中*/
+	timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+tpend.tv_usec-tpstart.tv_usec;
+	timeuse/=1000000;
+
+	/*打印*/
+	printf("Used Time:%f\n",timeuse);
+	exit(0);
+}

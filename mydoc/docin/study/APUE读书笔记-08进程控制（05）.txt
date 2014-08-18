@@ -1,0 +1,93 @@
+++++++APUE读书笔记-08进程控制（05）++++++
+
+
+
+6、wait和waitpid
+================================================
+	当一个进程结束的时候，无论是正常的还是非正常的，内核都会通过发送SIGCHLD信号来通知其父进程。因为child的终止是一个异步事件，所以它能够在父进程运行的任何时候发生，这个SIGCHLD信号是内核到父进程的异步通知。父进程可以选择忽略这个信号，或者提供一个函数来定义发生这个信号时候的处理动作。默认这个信号会被忽略。我们现在需要注意的是当我们调用wait或者waitpid的时候，调用的进程会：
+	a)阻塞:如果进程的所有子进程正在运行的话。
+	b)立即返回：这时候如果有一个子进程终止了，并且它等待自己的终止状态被获取，那么会同时返回这个子进程的终止状态。
+	c)立即返回并且设置错误码：进程没有子进程的时候会出现这种情况。
+
+	如果我们由于收到了SIGCHLD信号而调用wait,那么我们可以期望wait函数会立即返回，但是如果我们在一个任意的时间调用wait，那么这会导致阻塞。
+	#include <sys/wait.h>
+	pid_t wait(int *statloc);
+	pid_t waitpid(pid_t pid, int *statloc, int options);
+	两者在成功的时候都会返回进程ID,0或者在错误的时候返回1（其值一般为-1）。
+	两者的区别是：
+	a)wait函数会导致阻塞直到有一个子进程结束，waitpid有一个选项可以防止阻塞。
+	b)waitpid函数不是等待第一个结束的进程，它有一系列的选项可以指定等待哪些进程。
+	如果子进程已经结束并且成为了僵尸进程，那么wait函数会立即以那个子进程的状态返回。否则它会阻塞，直到一个子进程终止。 如果调用者阻塞了并且它有多个子进程，那么wait会在一个子进程终止的时候返回。我们是能够判断那个子进程结束的，因为wait函数的返回值就是结束进程的进程pid。
+	对于这两个函数，statloc参数是一个指向整数类型的参数，这个参数不是空，那么会返回结束进程的进程状态；如果我们不关心结束进程的状态，那么可以设置这个参数是空。
+	一般来说整数的状态值由实现来定义其含义。例如一些位代表正常的exit状态，另外一些位代表信号数（对于非正常退出的情况），有一个位代表是否生成core file.等等。POSIX.1指定退出状态可由<sys/wait.h>中定义的一些宏来进行查看。 四个互斥的宏可以告诉我们进程是如何结束的，它们都以WIF来开始，基于是从这四个宏中返回true的那个宏，其它的宏可以用来获取退出码，信号，以及其它的信息。这四个互斥的宏我们可以参见：前面的本章第5节所讲的进程exit中说明的四个宏。
+	我们在后面的作业控制中将会讨论如何stop进程。下面的例子就给出了如何使用这些宏：
+	#include <sys/wait.h>
+
+	void my_func()
+	{
+	...
+		if (wait(&status) != pid)       /* wait for child */
+		{
+			...
+		}
+	    pr_exit(status);
+	}
+
+	void pr_exit(int status)
+	{
+		if (WIFEXITED(status))
+			printf("normal termination, exit status = %d\n",
+					WEXITSTATUS(status));
+		else if (WIFSIGNALED(status))
+			printf("abnormal termination, signal number = %d%s\n",
+					WTERMSIG(status),
+	#ifdef  WCOREDUMP
+					WCOREDUMP(status) ? " (core file generated)" : "");
+	#else
+		"");
+	#endif
+		else if (WIFSTOPPED(status))
+			printf("child stopped, signal number = %d\n",
+					WSTOPSIG(status));
+	}
+
+	以前我们使用wait来等待一个指定的进程的时候，需要根据wait的返回来判断是否是目标pid，如果不是那么我们就把这个返回的pid保存起来然后继续wait，这样重复直到指定的进程结束；然后我们再次等待指定的进程结束之前需要首先遍历之前wait的时候保存的已经结束的pid列表。这很麻烦，而且缺点很多。现在我们可以利用POSIX.1中的waitpid来实现这个功能。
+	waitpid中pid参数的含义如下:
+	pid==1	:等待任何子进程，这时候waitpid和wait的含义是一样的。
+	pid>0	:等待pid值为参数pid的子进程。
+	pid==0	:等待进程组id和调用进程一样的任何子进程。
+	pid<0	:等待进程组id和参数pid的绝对值一样的任何子进程。
+	waitpid返回结束的子进程的pid并且将子进程结束状态存放在参数statloc所指的地址中。对于wait来说，出现错误的情况是调用进程没有子进程（也可能这个wait函数调用被信号所打断）。对于waitpid来说，可能出现错误的情况是指定的进程pid或者指定组id不存在，或者相应的进程pid不是调用进程的子进程。(这里的进程组在后面进程关系中有所会详细提及)
+	options参数可以额外控制watipid的行为,这个参数的值要么是0要么是以下这些值的按位或：
+	a)WCONTINUED
+	如果实现支持作业控制，那么pid指定的任何子进程（这个子进程在stop之后被continue但是它的状态没有被报告）的状态会被返回。
+	b)WNOHANG
+	如果指定的pid的子进程不是立即可用的，那么waitpid函数不会阻塞，这时候，返回值是0。
+	c)WUNTRACED
+	如果实现支持作业控制,那么任何指定pid的子进程（这个子进程被stopped了，并且它的状态在它被stopped的时候没有被报告）的状态被返回。WIFSTOPPED宏可以确定返回值是否和一个停止的子进程相关。
+	另外，Solaris 支持一个额外的不是很标准的选项常量。WNOWAIT会使得系统进程（这个进程的终止状态通过waitpid被返回）进入一个wait的状态，这样这个进程可以再次被waited.
+
+	函数waitpid提供了三个wait没有的特性：
+	a)waitpid函数使我们等待一个特定的进程，而wait却返回任何终止进程的终止状态。
+	b)waitpid函数提供了一个非阻塞的wait版本，有时候我们想要获取一个子进程的状态，但是我们不需要阻塞。
+	c)waitpid函数提供了对作业控制的支持，这是通过WUNTRACED和WCONTINUED选项来做到的。
+
+	举例：
+	在前面说过如果子进程结束了，父进程没有对它进行wait，那么子进程会变成僵尸进程。如果我们不想wait子进程，也不想让子进程变成僵尸进程，那么我们有一个手段：在父进程中fork两次。
+	具体为调用fork产生子进程，子进程再调用fork产生孙进程，然后在孙子进程执行子进程想要的动作，而子进程仅仅是创建孙子进程之后就退出，父进程仅仅wait子进程，不管孙进程，因为孙进程最后父进程变成了init.大概如下：
+	if( fork() == 0)
+	{
+		if(fork()> 0)
+		{
+			exit(0);
+		}
+		sleep(5);
+		...do child things...
+	}
+	wait(...);
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec6.html
+
+
+

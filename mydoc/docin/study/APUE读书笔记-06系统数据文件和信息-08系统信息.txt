@@ -1,0 +1,23 @@
+++++++APUE读书笔记-06系统数据文件和信息-08系统信息++++++
+
+
+
+8、系统信息
+================================================
+	获取当前主机和操作系统信息的函数：
+	#include <sys/utsname.h>
+	int uname(struct utsname *name);
+	这个函数会返回一个结构，我们也可以通过命令uname来获得这个结构的信息。成功返回0，失败返回1（实际值一般为-1）。
+
+	获取主机名称的信息，由于历史原因在BSD系列中有所提供，现在被放入了POSIX.1中:
+	#include <unistd.h>
+	int gethostname(char *name, int namelen);
+	成功返回0，失败返回1（实际值一般为-1）。
+	namelen指定name缓存的长度，如果长度足够，那么字符串以NULL结束，否则字符串是否以NULL结束是没有定义的。
+	有一个hostname命令，用来设置和获取主机名称信息(主机名称的设置需要用超级用户，函数是类似sethostname之类的),主机名称一般是在系统启动脚本中被设置的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec9.html
+
+
+

@@ -1,0 +1,78 @@
+++++++APUE读书笔记-05标准输入输出库（8）++++++
+
+
+
+13、临时文件
+================================================
+	ISO C标准定义了两个函数，它们由标准I/O库赖提供，以创建临时文件。
+	#include <stdio.h>
+	char *tmpnam(char *ptr);
+	返回：一个指向唯一路径的指针。
+	FILE *tmpfile(void);
+	返回：如果成功返回文件指针，如果错误返回NULL。 
+	tmpnam函数会产生一个字符串（合法路径），这个字符串将会和已有的任何文件名称不相同。每次调用这个函数的时候，都会产生一个不同的字符串,最多使用TMP_MAX次，TMP_MAX这个常量在<stdio.h>文件中有定义。如果ptr是NULL的，那么产生的字符串就会存储在一个静态的区域,并且返回指向这个区域的指针。之后的每一个tmpnam调用都会重写这个静态存储区域（如果我们要保存原来的值，需要自己复制一份）。如果ptr参数非NULL,那么会假设指向一个至少有L_tmpnam个字符的数组中(L_tmpnam在stdio.h中有定义)，生成的路径就存放在这个数组中，并且prt作为函数的返回值。
+	tmpfile函数创建一个临时的二进制文件(指定wb+模式),这个文件在它被关闭或者程序结束的时候会被自动删除。
+	一般tmpfile函数采用的技术是调用tmpnam来生成一个唯一的路径，然后创建相应的文件，然后立即将这个文件unlink.注意，unlink并没有把文件的内容删除了，这样，只在这个程序空间中可以访问这个文件，（在系统中已经无法再访问这个文件了，因为虽然文件的内容还健在，unlink之后没有了相应的文件路径^_^）。这样，当文件被关闭的时候，或者程序退出的时候，这个文件的内容就会被删除了。
+	例子：
+	int main(void)
+	{
+		char    name[L_tmpnam], line[MAXLINE];
+		FILE    *fp;
+		printf("%s\n", tmpnam(NULL));       /* first temp name */
+		tmpnam(name);                       /* second temp name */
+		printf("%s\n", name);
+		if ((fp = tmpfile()) == NULL)       /* create temp file */
+			err_sys("tmpfile error");
+		fputs("one line of output\n", fp);  /* write to temp file */
+		rewind(fp);                         /* then read it back */
+		if (fgets(line, sizeof(line), fp) == NULL)
+			err_sys("fgets error");
+		fputs(line, stdout);                /* print the line we wrote */
+		exit(0);
+	}
+
+	SUS定义了两个额外的函数，做为Single UNIX Specification的XSI扩展，来创建临时文件：
+	#include <stdio.h>
+	char *tempnam(const char *directory, const char *prefix);
+	返回：一个唯一路径的指针。 
+	tempnam函数是tmpnam的一个变体，它允许调用者指定生成的字符串的目录和前缀。然后这个函数按照如下的规则依次进行处理：
+	a.如果TMPDIR环境变量被定义了，那么它将会被用作directory.
+	b.如果directory是非NULL的，那么它会被用作目录。
+	c.采用stdio.h中的P_tmpdir字符串作为directory.
+	d.采用本地的一个目录，一般是/tmp做为directory.
+	如果prefix是非NULL,那么它应该是个至多5个字节的字符串，做为生成的字符串相应文件的前缀。
+	这个函数调用malloc函数来为生成的pathname存储分配空间，我们处理的时候，可以将这个pathname的存储空间给free掉。
+	如果directory是一个不存在的目录，那么规则中的2将会被忽略，然后采用下一条匹配规则。
+
+	#include <stdlib.h>
+	int mkstemp(char *template);
+	返回：如果成功返回文件描述符号，如果错误返回1。 
+	mkstemp函数，也会创建临时文件，不同的是它返回一个文件描述符号。临时文件的文件名称使用template字符串来进行生成。这个字符串是一个路径名称，它的后六个字符被设置成XXXXXX.这个函数会把这些字符替换成不同的字符，这样可以创建一个唯一的路径名称。如果mkstemp返回success,它会修改template字符串，这个字符串就是生成的临时文件。
+	和tmpfile不同，由mkstemp生成的临时文件，不会被自动地移除。如果我们想要把它从文件系统中去掉，我们需要自己亲自对它进行unlink.
+
+	tmpnam和tempnam有一个缺点：在返回 pathname和创建file的时候，会有一个时间间隙，在这个时间间隙内有可能其他的程序会创建同样的名称文件，而tempfile和mkstemp函数就没有这个缺陷。
+	mktemp函数和mkstemp类似，不同的是，它创建一个只适合用作临时文件的名称。这个mktemp函数，并不创建文件，所以它也有tmpname和tempnam同样的缺点。mktemp函数是Unix Specification中将要被废弃的函数，所以要尽量避免使用它。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec13.html
+
+
+14、标准输入输出库的替代库
+================================================
+	除了标准输入输出库(stdio)之外，还有其他的可选的输入输出库用于特定的目的。
+	标准输入输出库并不是完美的，例如在我们使用line的buffer流进行标准输入输出时候，需要拷贝两次数据：一次是从内核到标准输入输出流的buffer,另外一次是从标准输入输出流的buffer拷贝到我们自己的linebuffer（前面第5章2节中也提到过这一点）。fast i/o(fio)库解决了这个问题。
+	sfio库的速度类似fio库，通常都比stdio快。还有适合嵌入式占用内存较少的uClibc和newLibc等。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec14.html
+
+
+15、总结
+================================================
+	标准输入输出库被大多数UNIX应用程序使用，我们本章看到了这个库提供的所有函数，以及一些实现的细节和效率方面问题的考虑。我们需要注意这个库中的缓存的情况，因为正是由于这些缓存，导致产生了很多让人困扰的问题。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec15.html
+
+
+

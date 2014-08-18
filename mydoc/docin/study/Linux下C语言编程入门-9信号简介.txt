@@ -1,0 +1,46 @@
+Linux下C语言编程入门-9信号简介
+九、信号简介
+=======================
+这里简单介绍信号以及信号处理，后面会对信号的处理进行详细的介绍。
+
+如果列出当前系统所有的信号,运行如下命令：
+$kill -l
+如果想了解信号的详细解释请查看：
+$man 7 signal 
+
+信号事件的发生有两个来源:一个是硬件的原因(比如我们按下了键盘),一个是软件的原因(比如我们使用系统函数或者是命令发出信号). 
+
+1,相关函数
+-------
+有四个最常用的发送信号的函数,setitimer这个在前面的计时器里面讲述了这里就不说了。
+#include <sys/types.h>;
+#include <signal.h>
+#include <unistd.h>
+int kill(pid_t pid,int sig);
+int raise(int sig);
+unisigned int alarm(unsigned int seconds);
+
+这里，
+kill 系统调用负责向进程发送信号 sig.
+如果 pid 是正数,那么向信号 sig 被发送到进程 pid.
+如果 pid 等于 0,那么信号 sig 被发送到所以和 pid 进程在同一个进程组的进程
+如果 pid 等于-1,那么信号发给所有的进程表中的进程,除了最大的哪个进程号.
+如果 pid 由于-1,和 0 一样,只是发送进程组是-pid.
+
+raise 系统调用向自己发送一个 sig 信号.我们可以用上面那个函数来实现这个功能的.
+
+alarm 函数和时间有点关系了,这个函数可以在 seconds 秒后向自己发送一个 SIGALRM 信号:
+
+2,举例
+-------
+这里是alarm的一个例子。
+
+#include <unistd.h>;
+main()
+{
+	unsigned int i;
+	alarm(1);
+	for(i=0;1;i++)
+		printf("I=%d",i);
+}
+SIGALRM 的缺省操作是结束进程,所以程序在 1 秒之后结束.

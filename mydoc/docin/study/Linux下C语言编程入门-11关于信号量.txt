@@ -1,0 +1,60 @@
+Linux下C语言编程入门-11关于信号量
+十一、关于信号量
+=======================
+关于semop系统调用的文章待整理：
+http://www.91linux.com/html/article/program/cpp/20081120/13890.html
+
+这里讲述关于SystemV 信号量(和P,V操作有关的)的内容。
+
+1,相关函数
+-------
+key_t ftok(char *pathname,char proj);
+int semget(key_t key,int nsems,int semflg);
+int semctl(int semid,int semnum,int cmd,union semun arg);
+
+ftok 函数是根据 pathname 和 proj 来创建一个关键字。pathname文件路径的文件名必须是存在可访问的，proj是8位非零的.如果给定的pathname和proj一样的话，返回值应该是一样的（参照man）。
+
+semget 函数创建一个信号量集合.成功时返回信号集合的 ID,
+key 是一个关键字,可以是用 ftok 创建的也可以是 IPC_PRIVATE 表明由系统选用一个关键字.当key是IPC_PRIVATE，或者key是其它值但是并没有基于此key的信号量存在且semflg中指定IPC_CREAT，这两种情况会创建一个有nsems个信号的信号量集合。
+ nsems 表明我们创建的信号个数.semflg 是创建的权限标志,和我们创建一个文件的标志相同.
+
+semctl 函数对信号量进行一系列的控制.semid 是要操作的信号集合的标志,semnum 是信号集合中的第semnum个信号的号码,cmd 是操作的命令.经常用的两个值是:SETVAL(设置信号量的值)和 IPC_RMID(删除信号灯).arg 是一个给 cmd 的参数.
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+int semop(int semid, struct sembuf *sops, unsigned nsops);
+这个函数操作一个或一组信号.
+参数： 
+semid：信号集的识别码，可通过semget获取。
+sops：指向存储信号操作结构(sembuf)的数组指针，信号操作结构的原型后面会说。
+nsops：信号操作结构(sembuf)的数量，恒大于或等于1。
+返回说明： 
+成功执行时，两个系统调用都返回0。失败返回-1，errno被设为以下的某个值
+E2BIG：一次对信号的操作数超出系统的限制
+EACCES：调用进程没有权能执行请求的操作，并且不具有CAP_IPC_OWNER权能
+EAGAIN：信号操作暂时不能满足，需要重试
+EFAULT：sops或timeout指针指向的空间不可访问
+EFBIG：sem_num指定的值无效
+EIDRM：信号集已被移除
+EINTR：系统调用阻塞时，被信号中断
+EINVAL：参数无效
+ENOMEM：内存不足
+ERANGE：信号所允许的值越界
+
+下面是信号灯sembuf的结构:
+struct sembuf {
+	short sem_num; /* 信号编号*/
+	short sem_op; /* 进行什么操作 */
+	short sem_flg; /* 操作的标志 */
+};
+这三个字段的意义分别为：
+sem_num：操作信号在信号集中的编号，第一个信号的编号是0。
+sem_op：如果其值为正数，该值会加到现有的信号内含值中。通常用于释放所控资源的使用权；如果sem_op的值为负数，而其绝对值又大于信号的现值，操作将会阻塞，直到信号值大于或等于 sem_op的绝对值。通常用于获取资源的使用权；如果sem_op的值为0，则操作将暂时阻塞，直到信号的值变为0。
+sem_flg：信号操作标志，可能的选择有两种
+IPC_NOWAIT 对信号的操作不能满足时，semop()不会阻塞，并立即返回，同时设定错误信息。
+IPC_UNDO 程序结束时(不论正常或不正常)，保证信号值会被重设为semop()调用前的值。这样做的目的在于避免程序在异常情况下结束时未将锁定的资源解锁，造成该资源永远锁定。
+
+2,举例
+-------
+以后有时间整理，先把后面的整理再回到这里整理*********

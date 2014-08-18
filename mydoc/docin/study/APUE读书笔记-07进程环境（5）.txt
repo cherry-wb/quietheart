@@ -1,0 +1,45 @@
+++++++APUE读书笔记-07进程环境（5）++++++
+
+
+
+10、关于跳转函数
+================================================
+	在c语言中，我们不能够使用goto跳转到另外一个函数的标签中去,如果我们想要实现这样的功能，我们需要使用setjmp和longjmp。
+	#include <setjmp.h>
+	int setjmp(jmp_buf env);
+	void longjmp(jmp_buf env, int val);
+
+	我们需要在跳转的地方调用setjmp,其参数保存了跳转时候的各种信息，并且因为是从不同函数的跳转所以一般是全局变量。
+	setjmp的返回值，直接调用它返回的是0，通过longjmp返回的，是非0。
+	我们在需要跳转的时候，调用longjmp函数，这个函数有两个参数，一个是先前设置setjmp的变量，一个是用来设置跳转之后setjmp的返回值。
+	一个使用这两个函数的例子:
+	#include <setjmp.h>
+	jmp_buf jmpbuffer;
+	int main(void)
+	{
+		...
+		if (setjmp(jmpbuffer) != 0)
+			printf("error");
+		while (fgets(line, MAXLINE, stdin) != NULL)
+			do_line(line);
+		exit(0);
+	}
+
+	 ...
+
+	void cmd_add(void)
+	{
+	    int     token;
+		...
+	    if (token < 0)    /* an error has occurred */
+	        longjmp(jmpbuffer, 1);
+	    /* rest of processing for this command */
+	}
+	当main函数执行的时候，我们调用setjmp,这个函数记录跳转时候需要保存的信息，之后返回0。当我们调用do_line的时候，do_line会调用cmd_add,然后cmd_add调用logjmp,调用logjmp导致跳转到了main调用setjmp的地方，并且setjmp返回值变为longjmp的第2个参数指定的1.
+	跳转的时候哪些变量保存？哪些变量不保存？假设setjmp之前定义了变量并且赋值，再setjmp，之后再修改变量值；之后，调用某些函数导致longjmp。这时候，longjmp将返回setjmp的位置，我们这里假设关注的变量有5个种类：全局变量，静态变量，寄存器变量，自动变量，volatile变量，一般来说，具体会保存那些变量，以来于具体情况。多数的实现不会将自动变量和寄存器变量恢复，但是标准说他们的值是不确定的。如果你有一个自动变量，并且你不想让它在跳转的时候被回滚，那么应该把它定义成为volatile属性。全局变量和静态变量的值在进行longjmp的时候不会回滚。具体参见参考资料里面的例子。从例子中看，跳转之后确定不被恢复的是全局，静态和volatile变量。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch07lev1sec10.html
+
+
+

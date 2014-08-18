@@ -1,0 +1,24 @@
+++++++APUE读书笔记-18终端输入输出-04获取和设置终端属性++++++
+
+
+
+4、获取和设置终端属性
+================================================
+	为了获取以及设置一个termios 结构，我们分别调用tcgetattr 和 tcsetattr函数，这也是按照我们想要终端操作什么的时候，检查和修改各种选项标记以及特殊字符的基本方法。
+	#include <termios.h>
+	int tcgetattr(int filedes, struct termios *termptr);
+	int tcsetattr(int filedes, int opt, const struct termios *termptr);
+	两个函数返回：如果成功都返回0，如果错误，返回1。
+	这两个函数都使用一个指向termios结构的指针，并且都返回当前终端属性状态或者设置终端的属性。因为这两个函数只操作终端设备，所以如果filedes如果没有引用一个终端设备的时候，它们会返回1并且设置errno为ENOTTY。
+	
+	函数tcsetattr的opt参数的作用是，当我们想要新的终端属性起作用的时候，我们可以通过指定这个参数来实现。这个参数可以被指定的常数为如下这些：
+	TCSANOW 改变立即生效。
+	TCSADRAIN 改变在所有输出被传输完的时候发生。这个选项应该在我们改变输出参数的时候被使用。
+	TCSAFLUSH 改变在所有输出被传输完的时候发生。另外，如果发生变化的话，那么所有没有被读取的输入数据会被忽略（flushed）。
+	函数tcsetattr很让人困扰。这个函数在如果能够执行所要求的动作的时候会返回OK，甚至它并没有执行这些动作的时候也会返回OK。所以，如果这个函数返回了OK，我们还需要查看一下所请求的动作是否被执行了。也就是说，在我们调用完了tcsetattr函数设置了相应的属性之后，我们需要调用tcgetattr并且比较实际的终端属性和我们想要的属性，通过它们是否相同来确定是否真的执行了我们所请求的动作。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec4.html
+
+
+

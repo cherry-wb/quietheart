@@ -1,0 +1,213 @@
+++++++APUE读书笔记-15进程内部通信-09共享内存++++++
+
+
+
+9、共享内存
+================================================
+	共享内存允许两个或者更多的进程共享一块指定区域的内存。这个是最快的IPC，因为数据不需要在客户和服务进程之间进行拷贝了。共享内存唯一一个需要注意的地方就是同步多个进程访问共享内存。如果服务进程正在将数据放到共享内存区域，那么客户进程不应当在服务进程做完之前访问这个共享内存中的数据。一般来说，使用信号量来同步共享内存的访问（但是前面我们也看到了，记录锁也行）。
+	Single UNIX Specification在共享内存对象的实时扩展选项中包含一系列的访问共享内存的接口集合，但是这里我们将部讨论实时方面的扩展。
+	内核对于每个共享内存段都维护一个至少包含如下成员的数据结构：
+	struct shmid_ds {
+		struct ipc_perm  shm_perm;    /* see Section 15.6.2 */
+		size_t           shm_segsz;   /* size of segment in bytes */
+		pid_t            shm_lpid;    /* pid of last shmop() */
+		pid_t            shm_cpid;    /* pid of creator */
+		shmatt_t         shm_nattch;  /* number of current attaches */
+		time_t           shm_atime;   /* last-attach time */
+		time_t           shm_dtime;   /* last-detach time */
+		time_t           shm_ctime;   /* last-change time */
+		.
+	};
+	(其他的实现可以添加其他的额外成员)
+	类型shmatt_t被定义成一个无符号的整数，其大小至少和unsigned short那么大。文中给出了影响共享内存的系统限制。这里就不列举了。
+
+	一般首先调用的函数是shmget，用来获得共享内存标识。
+	#include <sys/shm.h>
+	int shmget(key_t key, size_t size, int flag);
+	返回值：如果成功，返回共享内存的ID，如果错误返回1。
+	前面我们讨论了将一个关键字转换成标识的方法，以及创建一个新的共享内存段和对已经存在的共享内存段的引用。当创建一个新的共享内存段的时候，shmid_ds结构变量的如下成员将会被初始化。
+	a. ipc_perm结构如同前面描述的那样被初始化(即所有的成员都会被初始化)。结构的mode成员将会被设置成相应的flag权限位。
+	b. shm_lpid, shm_nattach, shm_atime, 和 shm_dtime 都被设置成0.
+	c. shm_ctime 被设置成当前时间。
+	d. 被设置成要求的大小。
+	size参数表示共享内存段的字节大小数目。具体的实现经常会将大小向上圆整成系统页大小的整数倍，但是如果应用程序如果指定的大小值不是系统页的整数倍的话，那么最后一页剩余的那个部分是不可用的。如果创建一个新的共享内存段的时候(一般都由服务进程创建)，我们必须指定它的size参数。如果我们引用一个已经存在的共享内存段（一般都由客户进程引用），我们可以指定size参数为0。如果创建一个新的共享内存段，那么这个新创建的共享内存段中的内容被初始化成0。
+
+	shmctl函数用来处理各种类型的共享内存操作。
+	#include <sys/shm.h>
+	int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+	返回值：如果成功，返回OK，如果错误返回1。
+	cmd参数指定了如下的五个命令，这五个命令用来操作shmid所指定的共享内存段。
+	IPC_STAT 获取共享内存段的shmid_ds结构，并将它存放在buf所指向的数据结构指针中。
+	IPC_SET 根据buf指向的数据结构，设置共享内存段相应的shmid_ds结构相关的如下三个成员：shm_perm.uid, shm_perm.gid, 和 shm_perm.mode。这个命令可以被执行的前提是：进程的有效用户ID等于shm_perm.cuid或者shm_perm.uid，或者进程具有超级用户权限。
+	IPC_RMID 从系统中删除共享内存段。因为有一个维护共享内存段的附加计数值(shmid_ds结构变量中的shm_nattch成员)，共享内存段不会被删除，这个状态一直维持到最后一个使用这个共享内存段的进程终止，或者断开和它的连接。无论这段内存是否仍然在被使用，这个共享内存段的标识会被立即删除，这样就无法通过shmat函数将这段内存再次附加了。这个命令可以被执行的前提是：进程的有效用户ID等于shm_perm.cuid或者shm_perm.uid，或者进程具有超级用户权限。
+	Linux和Solaris还提供了两个命令，它们不属于Single UNIX Specification的一个部分。
+	SHM_LOCK 锁住内存中的共享内存段。这个命令只能被超级用户执行。
+	SHM_UNLOCK 解锁共享内存段。这个命令只能被超级用户执行。
+
+	当创建了一个共享内存段的时候，进程可以通过调用shmat来将这个共享内存段附加到自己的地址空间上面。
+	#include <sys/shm.h>
+	void *shmat(int shmid, const void *addr, int flag);
+	返回值：如果成功返回指向共享内存段的指针，如果错误返回1。
+	共享内存段所附加的在调用进程中的地址取决于参数addr以及在flag中是否指定了SHM_RND。
+	a. 如果addr是0，那么共享内存段会被附加到内核所选择的第一个可用的地址。建议这样做。
+	b. 如果addr是非空的并且没有指定SHM_RND，那么共享内存段会被附加到addr所指定的地址上面。
+	c. 如果addr非空，并且SHM_RND被指定了，那么共享内存段会被附加到地址(addr - addr mod SHMLBA)上面。SHM_RND命令表示取整。SHMLBA表示低地址界限倍数，一般它为2的幂。这个运算会导致地址被取整到下一个SHMLBA倍数了。
+	除非我们只在一种硬件类型上面运行应用程序（目前这个情况是不可能的），我们不应当指定共享内存段被附加的地址。相反我们应当指定addr为0以让系统自己选择地址。
+	如果SHM_RDONLY位被在flag中指定了，那么共享内存段将会以只读的方式被附加。否则共享内存段会以读写的方式被附加。
+	shmat返回的就是被附加的共享内存段的地址，或者如果错误返回1。如果shmat成功，那么内核会增加和共享内存段相关联的shmid_ds中的shm_nattch计数。
+
+	当我们使用完共享内存段之后，我们调用shmdt将其断开。注意：这不会将共享内存标识以及它相关的数据结构从系统中移除。标识会一直存在，直到有进程（通常为服务进程）特意地通过调用IPC_RMID命令的shmctl将它移除。
+	#include <sys/shm.h>
+	int shmdt(void *addr);
+	Returns: 0 if OK, 1 on error
+	返回值：如果成功，返回0，如果错误返回1。
+	addr参数就是之前调用shmat返回的值。如果成功，那么shmdt将会减少相关的shmid_ds结构变量的shm_nattch计数成员变量。
+
+	举例
+	不同的内核通过传入shmat参数0来附加地址段返回的地址依赖于系统。下面的代码展示了一个例子：
+	#include <sys/shm.h>
+	#define ARRAY_SIZE  40000
+	#define MALLOC_SIZE 100000
+	#define SHM_SIZE    100000
+	#define SHM_MODE    0600    /* 用户 读/写 */
+
+	char    array[ARRAY_SIZE];  /* 非初始化的bss数据段 */
+	int main(void)
+	{
+	    int     shmid;
+	    char    *ptr, *shmptr;
+		/*打印非初始化bss数据段（全局变量数组）地址*/
+	    printf("array[] from %lx to %lx\n", (unsigned long)&array[0], (unsigned long)&array[ARRAY_SIZE]);
+		/*打印堆栈局部变量地址*/
+	    printf("stack around %lx\n", (unsigned long)&shmid);
+
+	    if ((ptr = malloc(MALLOC_SIZE)) == NULL)
+	        err_sys("malloc error");
+		/*打印堆内存地址*/
+	    printf("malloced from %lx to %lx\n", (unsigned long)ptr, (unsigned long)ptr+MALLOC_SIZE);
+
+	    if ((shmid = shmget(IPC_PRIVATE, SHM_SIZE, SHM_MODE)) < 0)
+	        err_sys("shmget error");
+	    if ((shmptr = shmat(shmid, 0, 0)) == (void *)-1)
+	        err_sys("shmat error");
+		/*打印共享内存地址*/
+	    printf("shared memory attached from %lx to %lx\n", (unsigned long)shmptr, (unsigned long)shmptr+SHM_SIZE);
+
+	    if (shmctl(shmid, IPC_RMID, 0) < 0)
+	        err_sys("shmctl error");
+
+	    exit(0);
+	}
+
+
+	在基于intel的linux系统上面运行这个程序，输入输出如下：
+	$ ./a.out
+	array[] from 804a080 to 8053cc0
+	stack around bffff9e4
+	malloced from 8053cc8 to 806c368
+	shared memory attached from 40162000 to 4017a6a0
+
+	下图展示了这个内存布局，和我们前面说过的类似。并且注意，共享内存段放在堆栈下面。
+
+  	            +----------------------+ \
+	high address|                      |  \Command Line arguments
+	            |                      |  /And environment variables.
+ 	            +----------------------+ /
+ 	            |    Stack             |<-----0xbffff9e4
+ 	            |                      |
+	            |                      |
+	            +----------------------+
+	            |   Shared Memory      |<----0x4017a6a0 \ Shared memory of
+	            |                      |<----0x40162000 / 100,000 bytes.
+	            +----------------------+
+	            |                      |
+	            |                      |<----0x0806c368 \ Malloc of
+	            |    Heap              |<----0x08053cc8 / 100,000 bytes.
+	            +----------------------+
+	            | uninitialized data   |<----0x08053cc0 \ array[] of
+	            |    (bss)             |<----0x0804a080 / 40,000 bytes.
+	            +----------------------+
+	            |                      |
+	            |   initialized data   |
+	            +----------------------+
+	            |                      |
+	            |        text          |
+	low address +----------------------+
+
+	使用mmap将文件内容映射到地址空间上面和使用XSI IPC函数附加共享内存段的地址的原理类似。不同的主要是，mmap映射的内容由文件来存放，而共享内存映射的内容没有相应的文件。
+
+	举例：关于/dev/zero的内存映射
+	共享内存可以用于不相关的内存之间，如果内存之间是相关的，那么我们可使用其它的技术。
+	下面讲述的方法可以用于FreeBSD 5.2.1, Linux 2.4.22, 和 Solaris 9，而Mac OS X 10.3目前不支持将字符设备映射到进程地址空间。
+	设备/dev/zero在被读取的时候会提供无限个0。这个设备也接收任何写入到它的数据，但是它会忽略数据。我们在IPC中利用了它在内存映射的时候的一个特性。
+	* 一个匿名内存区域将会被创建，它的大小为mmap的第2个参数，并且向上取整为最近的系统页大小。
+	* 内存区域会被初始化为0。
+	* 如果一个祖先进程指定了MAP_SHARED标记的mmap那么多个进程可以共享这个内存区域。
+
+	下面的程序展示了使用这个设备的方法。
+	#include <fcntl.h>
+	#include <sys/mman.h>
+
+	#define NLOOPS       1000
+	#define SIZE         sizeof(long)     /* 共享内存区域大小 */
+
+	static int update(long *ptr)
+	{
+	    return((*ptr)++);    /* 返回增加之前的值 */
+	}
+
+	int main(void)
+	{
+	    int     fd, i, counter;
+	    pid_t   pid;
+	    void    *area;
+
+	    if ((fd = open("/dev/zero", O_RDWR)) < 0)
+	        err_sys("open error");
+	    if ((area = mmap(0, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
+	        err_sys("mmap error");
+	    close(fd);      /* 映射之后关闭/dev/zero */
+
+	    TELL_WAIT();
+
+	    if ((pid = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (pid > 0) {           /* 父进程 */
+	        for (i = 0; i < NLOOPS; i += 2) {
+	            if ((counter = update((long *)area)) != i)
+	                err_quit("parent: expected %d, got %d", i, counter);
+
+	            TELL_CHILD(pid);
+	            WAIT_CHILD();
+	        }
+	    } else {                         /* 子进程 */
+	        for (i = 1; i < NLOOPS + 1; i += 2) {
+	            WAIT_PARENT();
+
+	            if ((counter = update((long *)area)) != i)
+	                err_quit("child: expected %d, got %d", i, counter);
+
+	            TELL_PARENT(getppid());
+	        }
+	    }
+
+	    exit(0);
+	}
+	程序打开一个/dev/zero设备，然后调用mmap，指定了一个长整数类型的大小。需要注意的是，当区域被映射的时候，我们可以关闭设备。进程然后创建一个子进程。因为标记MAP_SHARED已经被指定，所以向内存映射的区域写的内容会被其他的进程看到。如果我们指定MAP_PRIVATE的话，这个例子就不会工作了。
+	父子进程然后交替运行，使用前面的同步函数增加一个共享内存区域的长整数。内存映射区域被mmap初始化为0。父进程把它增加到1，然后子进程把它增加到2，然后父进程把它增加到3，等等。
+	使用/dev/zero的方式，其优点在于，在我们使用mmap创建映射的内存区域的时候，实际的文件不需要存在。将/dev/zero映射会自动创建一个指定大小的映射内存区域。使用这个技术的缺点就是，它只能工作在相关的进程之间。可能使用线程会更加简单和高效。无论使用什么方式，我们都必须使用同步的机制来控制访问的数据。
+
+	匿名内存映射的例子
+	许多实现提供匿名映射的功能，类似/dev/zero具有的特性。为了使用这个功能，我们指定mmap的MAP_ANON标记，并且指定文件描述符号为-1。返回的区域是匿名的（因为它没有通过文件描述符号和任何一个路径关联），并且会创建一个可以被子进程共享的内存映射区域。
+	匿名内存映射在本书的四个平台上面都有支持。需要注意的是，Linux为这个功能定义了MAP_ANONYMOUS标记，但是为了便于程序的可移植特性，定义MAP_ANON标记为同样的值。
+	我们可以做如下三个修改将前面的例子转化成使用这个特性：a)删除将/dev/zero打开的语句。b)删除将fd关闭的语句。c)修改mmap的调用如下：
+	if ((area = mmap(0, SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0)) == MAP_FAILED)
+	在这个调用中，我们指定MAP_ANON标记，并且设置文件描述符号为-1。剩下的部分没有变化。
+
+	最后两例子，展示了在相关的进程之间进行内存的共享。如果共享内存在无关的进程之间进行，那么有两个可选的方法。应用程序可以使用XSI的共享内存函数，或者他们可以使用带有MAP_SHARED标记的mmap函数，将同一个文件映射到它们的地址空间。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch15lev1sec9.html
+
+
+

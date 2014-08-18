@@ -1,0 +1,116 @@
+++++++APUE读书笔记-12线程控制-09线程和fork++++++
+
+
+
+9、线程和fork
+================================================
+	当线程调用fork的时候，会为这个子进程创建整个进程地址空间的拷贝。根据我们之前所说的copy-on-write，子进程和父进程是完全不同的两个进程，只要内存中的内容不发生变化，那么这部分内存就会在父子进程之间共享（这样尽可能地减少了额外的拷贝）。
+	通过继承拷贝过来的地址空间，子进程也会从父进程那里继承每个互斥量，读写锁，条件变量。如果父进程包含不止一个线程，并且子进程fork返回之后不立即调用exec，那么子进程需要清除锁的状态。
+	在子进程中只有一个线程，这个线程就是父进程中调用fork的那个线程的拷贝。如果父进程中的线程持有锁那么子进程也将会持有这个锁.问题是子进程不包含持有锁的线程的拷贝，所以子进程无法知道哪些锁被持有，那些锁需要被释放。
+	如果子进程在调用fork之后直接调用exec函数那么这个问题就会被避免，这个情况下旧的地址空间会被丢弃，所以锁的状态就不用在意了.这个不总是发生的，所以如果子进程想要在fork之后继续处理，那么我们需要采用另外一种策略。
+
+	我们可以调用pthread_atfork来创建fork处理函数来清除锁的状态。
+	#include <pthread.h>
+	int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void));
+	如果成功返回0，如果失败返回错误号码。
+	使用这个函数我们安装了三个fork处理函数来帮助我们清除锁的状态。prepare在父进程中，创建子进程之前被调用,它的作用是请求所有父进程定义的锁；parent在父进程中，fork创建子进程之后但是fork返回之前被调用,这个函数用来解锁prepare请求的所有锁；child函数在子进程中fork返回之前被调用，和parent函数一样，用来释放prepare请求的所有的锁。
+	注意，这里并不是加锁一次却释放两次这个错误的操作。因为子进程空间创建的时候会拷贝父进程的所有锁，因为prepare请求了所有的锁，所以父子进程中的内容都是一个样子的（就是锁上的状态）。当parent和child解锁它那份拷贝的时候，由于copy-on-write，就会实际分贝并拷贝子进程的空间了。所以在我们看起来，父进程锁住锁的拷贝并在子进程中释放这些锁住的锁的拷贝。child和parent函数以释放它们自己内存区域中的锁的拷贝为结束，过程等价如下：
+	a.父进程请求所有的锁。
+	b.子进程请求所有的锁。
+	c.父进程释放它的锁。
+	d.子进程释放它的锁。
+	这里，前两个请求所有的锁的操作实际都是prepare函数做的。
+	我们可以多次调用pthread_atfork来安装不止一个fork处理函数的集合，如果我们不需要其中的一个函数，我们可以为相应的函数参数的地方传递一个空指针。当使用了多个fork处理函数的集合的时候，它们的调用次序也是不一样的，parent和child处理函数的调用次序和它们的安装次序是一样的，而prepare的调用次序却和它们安装的次序相反。这样能够保证多个模块注册它们自己的fork处理函数而且还满足锁的使用规则。
+
+	例如，模块A调用模块B中的函数，并且每个模块都有它自己的锁的集合。如果上锁的过程是A在B之前，那么模块B必须在模块A之前注册它的fork处理函数。当父进程调用fork的时候，会发生如下过程（假设子进程在父进程之前运行）：
+	a.模块A的prepare处理函数被调用，请求A的锁。
+	b.模块B的prepare处理函数被调用，请求B的锁。
+	c.创建子进程。
+	d.模块B的child处理函数被调用，释放子进程中B模块的所有锁。
+	e.模块A的child处理函数被调用，释放子进程中A模块的所有锁。
+	f.fork函数返回到子进程。
+	g.模块B的parent处理函数被调用，释放父进程中模块B的所有锁。
+	h.模块A的parent处理函数被调用，释放父进程中模块A的所有锁。
+	i.fork函数返回到父进程。
+
+	如果fork处理函数用来清除锁的状态，那么谁来清除条件变量的状态呢？在有一些实现中，条件变量并不需要被清除；然而实现如果使用锁来做为条件变量实现的一部分，那么就需要清除了;问题是，没有相应的接口来让我们做这件事情.如果锁嵌入到了条件变量的数据结构中，那么我们就不能在调用fork之后使用条件变量了,因为没有一个可移植的方法来清除条件变量的状态。另一方面，如果实现使用一个全局变量来保护一个进程中的条件变量,那么在fork库中，实现本身可以清除锁的状态；尽管如此，应用程序也不应当依赖这样的实现。
+
+	例子：
+	这里给出了使用pthread_atfork的例子代码。
+	#include "apue.h"
+	#include <pthread.h>
+	
+	pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
+	
+	void prepare(void)
+	{
+	    printf("preparing locks...\n");
+	    pthread_mutex_lock(&lock1);
+	    pthread_mutex_lock(&lock2);
+	}
+	void parent(void)
+	{
+	    printf("parent unlocking locks...\n");
+	    pthread_mutex_unlock(&lock1);
+	    pthread_mutex_unlock(&lock2);
+	}
+	
+	void child(void)
+	{
+	    printf("child unlocking locks...\n");
+	    pthread_mutex_unlock(&lock1);
+	    pthread_mutex_unlock(&lock2);
+	}
+	
+	void * thr_fn(void *arg)
+	{
+	    printf("thread started...\n");
+	    pause();
+	    return(0);
+	}
+	
+	int main(void)
+	{
+	    int         err;
+	    pid_t       pid;
+	    pthread_t   tid;
+	
+	#if defined(BSD) || defined(MACOS)
+	    printf("pthread_atfork is unsupported\n");
+	#else
+	    if ((err = pthread_atfork(prepare, parent, child)) != 0)
+	        err_exit(err, "can't install fork handlers");
+	    err = pthread_create(&tid, NULL, thr_fn, 0);
+	    if (err != 0)
+	        err_exit(err, "can't create thread");
+	    sleep(2);
+	    printf("parent about to fork...\n");
+	    if ((pid = fork()) < 0)
+	        err_quit("fork failed");
+	    else if (pid == 0) /* child */
+	        printf("child returned from fork\n");
+	    else        /* parent */
+	        printf("parent returned from fork\n");
+	#endif
+	    exit(0);
+	}
+	在这个例子中，我们定义了两个互斥量，lock1和lock2。prepare处理函数给它们两个上锁，child处理函数在子进程上下文中释放锁，parent处理函数在父进程上下文中释放锁。
+
+	运行的结果大致如下：
+	$ ./a.out
+	thread started...
+	parent about to fork...
+	preparing locks...
+	child unlocking locks...
+	child returned from fork
+	parent unlocking locks...
+	parent returned from fork
+
+	从这个例子的运行结果我们可以看出：prepare处理函数在调用fork之后被调用(但是在创建的进程运行之前被调用)，child处理函数在子进程的fork返回之前被调用；parent处理函数在父进程的fork返回之前被调用。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch12lev1sec9.html
+
+
+

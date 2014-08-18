@@ -1,0 +1,70 @@
+++++++APUE读书笔记-14高级输入输出-08readn和writen函数++++++
+
+
+
+8、readn和writen函数
+================================================
+	管道，FIFOs，和一些设备尤其是终端设备，网络设备，STREAMS设备，都有如下的两个特性：
+	a)读取操作返回的可能会比所要求的少，即使我们没有遇到文件结尾符号也是如此。这不是一个错误，我们应当继续从设备中读取。
+	b)write返回的也可能会比我们指定的要少。这可能是由于流控制导致的，例如downstream模块。当然这也不是一个错误，我们可以继续将剩下的数据进行写。(一般来说这个短暂的写返回只在非阻塞文件描述符号或者捕获到信号的时候产生)
+	当读写磁盘文件的时候，我们不会遇到这个情况，除非文件系统空间不足，或者我们达到了我们自己分配得空间限制导致我们无法写入我们想要写入的所有数据。
+	一般来说当我们读写管道、终端、网络设备的时候，我们需要考虑到这些因素。我们使用如下的两个函数来读写N字节的数据，让这两个函数自己处理读写请求数据多余返回数据的情况。这两个函数只是不断地多次调用read或者write函数，直到读或者写完全部N个字节的数据。
+	#include "apue.h"
+	ssize_t readn(int filedes, void *buf, size_t nbytes);
+	ssize_t writen(int filedes, void *buf, size_t nbytes);
+	两个函数会返回读或者写的字节数目，如果错误的时候会返回1。
+	这两个函数并不是什么标准中的函数，我们只是为了后面例子的方便，自己定义了这两个函数。
+	当我们想要向前面提到的任何文件类型的文件中写入数据的时候，我们调用writen函数；但我们只有提前知道我们所需要接收的字节数目的时候我们才使用readn函数。本书后面的例子中会用到这两个函数，所以这里给出了它们的实现。
+	#include "apue.h"
+
+	//从文件描述符号中读取"n"个字节的数据。
+	ssize_t readn(int fd, void *ptr, size_t n)
+	{
+	    size_t       nleft;
+	    ssize_t      nread;
+
+	    nleft = n;
+	    while (nleft > 0) {
+	        if ((nread = read(fd, ptr, nleft)) < 0) {
+	            if (nleft == n)
+	                return(-1); //错误，返回-1
+	            else
+	                break;     //错误，返回当前读取的字节数目
+	        } else if (nread == 0) {
+	            break;         //文件结尾
+	        }
+	        nleft -= nread;
+	        ptr += nread;
+	    }
+	    return(n - nleft);    //返回值>=0
+	}
+
+	//向文件描述符号写入"n"个字节.
+	ssize_t writen(int fd, const void *ptr, size_t n)
+	{
+	    size_t      nleft;
+	    ssize_t     nwritten;
+
+	    nleft = n;
+	    while (nleft > 0) {
+	        if ((nwritten = write(fd, ptr, nleft)) < 0) {
+	            if (nleft == n)
+	                return(-1);//错误返回-1
+	            else
+	                break;//错误返回当前写入的字节数目
+	        } else if (nwritten == 0) {
+	            break;
+	        }
+	        nleft -= nwritten;
+	        ptr   += nwritten;
+	    }
+	    return(n - nleft);//返回值>=0
+	}
+
+	注意，当我们遇到一个错误但是之前已经读取了一定的数据的时候，我们会返回已经读取的字节数而不返回错误。类似，如果我们达到了文件结尾那么我们会返回已经读取的数目，而不是我们请求的数目。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec8.html
+
+
+

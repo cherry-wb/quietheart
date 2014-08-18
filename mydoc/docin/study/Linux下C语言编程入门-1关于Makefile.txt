@@ -1,0 +1,50 @@
+Linux下C语言编程入门-1关于Makefile
+一、关于Makefile
+=======================
+1，Makefile构成：
+Makefile由许多规则构成，每个规则包含：
+1）目标 2）依赖 3）命令
+######Makefile的一条规则
+格式大概是
+目标:依赖
+	命令
+######
+注意，命令前面的[Tab]不能省略。
+目标是要生成的文件，依赖是生成目标文件所依赖的内容，命令用于生成目标。
+
+2,隐含变量
+Makefile 有三个非常有用的变量.分别是$@,$^,$<,它们能够简化Makefile的编写，代表的意义分别是:
+$@--目标文件,(Makefile里面冒号之前的名字)
+$^--所有的依赖文件,（Makefile里面冒号之后的文件名）
+$<--第一个依赖文件.
+例如如下简化后的 Makefile：
+#####简化的Makefile
+main:main.o mytool1.o mytool2.o
+	gcc -o $@ $^
+main.o:main.c mytool1.h mytool2.h
+	gcc -c $<
+mytool1.o:mytool1.c mytool1.h
+	gcc -c $<
+mytool2.o:mytool2.c mytool2.h
+	gcc -c $<
+#####
+
+3，隐含规则
+Makefile 的缺省规则(隐含规则)可以使Makefile进一步简化，例如：
+######利用隐含规则简化的Makefile
+..c.o:
+	gcc -c $<
+######
+这个规则表示所有的 .o 文件都是依赖与相应的.c 文件的.例如 mytool.o 依赖于 mytool.c
+
+这样 Makefile 还可以变为:
+######这是再一次简化后的 Makefile
+main:main.o mytool1.o mytool2.o
+	gcc -o $@ $^
+..c.o:
+	gcc -c $<
+######
+
+有时候虽然我们包括了正确的头文件,但是我们在编译的时候还是要连接确定的库(可能因为头文件和库不是一个东西的)，否则可能会提示找不到相关的定义。例如为了使用数学函数,我们必须和数学库(例如名字为：libm-2.1.2.so)连接,为此我们要加入 -lm 选项. gcc -o temp temp.c -lm 这样才能够正确的编译.
+我们在编译程序的时候要用到编译器的 -L 选项指定指定库的路径.比如说我们有一个库在 /home/hoyt/mylib 下,这样我们编译的时候还要加上 -L/home/hoyt/mylib.对于一些标准库来说,我们没有必要指出路径.只要它们在起缺省库的路径下就可以了.系统的缺省库的路径/lib /usr/lib /usr/local/lib 在这三个路径下面的库,我们可以不指定路径.
+如果我们不知道库名字，那么我们就只能用nm命令来查找了，暂时没有发现好的方法。

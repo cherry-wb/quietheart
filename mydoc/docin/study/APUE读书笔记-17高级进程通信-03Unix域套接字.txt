@@ -1,0 +1,268 @@
+++++++APUE读书笔记-17高级进程通信-03Unix域套接字++++++
+
+
+
+3、Unix域套接字
+================================================
+	UNIX域套接字用于和运行在同一台机器上面的进程进行通信。尽管因特网域的套接字也可以用于同样的目的，但是UNIX域的套接字的效率更高。UNIX域的套接字只拷贝数据，它门没有对协议的相关处理，没有网络头的添加和移除，没有校验和的计算，没有顺序号码的生成，也没有对发送的确认。
+
+	UNIX域套接字同时提供了流和数据报的接口。但是UNIX域数据报服务是可靠的，消息不会丢失也不会乱序。UNIX域套接字类似套接字和pipes的综合。你可以使用面向网络的套接字接口来使用它们或者你也可以使用socketpair函数创建一对匿名的，连接的UNIX域套接字。
+	#include <sys/socket.h>
+	int socketpair(int domain, int type, int protocol, int sockfd[2]);
+	返回：如果成功返回0，如果错误返回1。
+	尽管这个接口足够通用可以允许socketpair在任何域中使用，但是操作系统一般只支持对UNIX域的支持。
+
+	使用UNIX域套接字的s_pipe函数的例子
+	下面的代码展示了基于套接字的s_pipe函数实现。这个函数创建一对面向连接的UNIX域流的套接字。
+	有些基于BSD的系统使用UNIX 域套接字来实现管道，但是当pipe被调用的时候，管道第一个描述符号的读端以及第二个描述符号的写端都是关闭的。为了获得一个全双工的管道，我们必须直接调用socketpair。
+	#include "apue.h"
+	#include <sys/socket.h>
+
+	/*
+	 * Returns a full-duplex "stream" pipe (a UNIX domain socket)
+	 * with the two file descriptors returned in fd[0] and fd[1].
+	 */
+	int s_pipe(int fd[2])
+	{
+	    return(socketpair(AF_UNIX, SOCK_STREAM, 0, fd));
+	}
+
+
+	有名的UNIX域套接字
+	尽管socketpair函数创建了互相连接的套接字，但是它们并没有名字。也就是说，它们不能通过没有亲属关系的进程被访问到。在前面，我们学到了如何将一个地址绑定到一个因特网的套接字上面。如同因特网的套接字一样，UNIX域套接字可以有名称并且用来做为某些服务的通知。然而，UNIX域的套接字和因特网的套接字有所不同。
+
+	在前面我们知道，套接字的地址格式对于每个系统实现来说有所不同。一个用于UNIX域套接字的地址可以使用sockaddr_un结构来进行表示。在Linux 2.4.22和Solaris 9中，sockaddr_un结构如下，并定义在<sys/un.h>中：
+	struct sockaddr_un {
+		sa_family_t sun_family;      /* AF_UNIX */
+		char        sun_path[108];   /* pathname */
+	};
+
+	在FreeBSD 5.2.1和Mac OS X 10.3中，sockaddr_un结构的定义如下：
+	struct sockaddr_un {
+		unsigned char  sun_len;         /* length including null */
+		sa_family_t    sun_family;      /* AF_UNIX */
+		char           sun_path[104];   /* pathname */
+	};
+	sockaddr_un结构中的sun_path成员包含了一个路径。当我们将一个地址绑定到一个UNIX域的套接字上面的时候，系统以同样的名字创建了一个S_IFSOCK类型的文件。这个文件只用来通知客户程序套接字的名称。这个文件不能被打开只能用于应用程序之间的通信。
+	如果这个文件在我们想要绑定同样名称的地址的时候已经存在了，这个绑定的请求将会失败。当我们关闭套接字的时候，文件不会被自动地删除，所以我们需要确保当我们程序退出的时候将这个文件unlink。
+
+	例子
+	后面的代码展示了绑定一个地址到UNIX域套接字的例子。
+	#include "apue.h"
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	int main(void)
+	{
+	    int fd, size;
+	    struct sockaddr_un un;
+
+	    un.sun_family = AF_UNIX;
+	    strcpy(un.sun_path, "foo.socket");
+	    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+	        err_sys("socket failed");
+	    size = offsetof(struct sockaddr_un, sun_path) + strlen(un.sun_path);
+	    if (bind(fd, (struct sockaddr *)&un, size) < 0)
+	        err_sys("bind failed");
+	    printf("UNIX domain socket bound\n");
+	    exit(0);
+	}
+
+	当我们运行这个程序的时候，绑定请求成功，但是如果我们再次运行这个程序，我们会得到一个错误。因为，这个文件已经存在了，如果我们不删除这个文件那么这个程序不会再次成功运行。
+	$ ./a.out                                       run the program
+	UNIX domain socket bound
+	$ ls -l foo.socket                              look at the socket file
+	srwxrwxr-x 1 sar        0 Aug 22 12:43 foo.socket
+	$ ./a.out                                       try to run the program again
+	bind failed: Address already in use
+	$ rm foo.socket                                 remove the socket file
+	$ ./a.out                                       run the program a third time
+	UNIX domain socket bound                        now it succeeds
+
+	这里，我们确定bind的地址的大小的方法是使用offsetof函数来确定sun_path成员的偏移再加上其大小，并没有包含其中的NULL字符串结束字节。因为不同的系统实现sun_path成员前面都有什么是不一样的，我们使用<stddef.h>中的offsetof宏来从结构的最开始进行计算。这个offsetof宏的定义如下：
+	#define offsetof(TYPE, MEMBER) ((int)&((TYPE *)0)->MEMBER)
+	这个表达式会计算一个整数，这个整数代表一个成员的起始地址，并且假定整个结构的起始地址是0。
+
+	单向连接
+	服务进程可以使用标准的bind,listen和accept函数来管理unix域到客户进程的单一连接。客户进程使用connect来和服务进程进行连接；在服务进程接收到了connect请求之后，在客户和服务进程之间就存在了一条单一的连接。这样的操作和前面我们在因特网套接字中的两个例子类似。
+	下面出一个使用unix域套接字的serv_listen函数：
+
+	unix域套接字的serv_listen函数
+	#include "apue.h"
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	#include <errno.h>
+	#define QLEN 10
+	/*
+	 * Create a server endpoint of a connection.
+	 * Returns fd if all OK, <0 on error.
+	 */
+	int serv_listen(const char *name)
+	{
+	    int                 fd, len, err, rval;
+	    struct sockaddr_un  un;
+
+	    /* create a UNIX domain stream socket */
+	    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+	       return(-1);
+	    unlink(name);   /* in case it already exists */
+
+	    /* fill in socket address structure */
+	    memset(&un, 0, sizeof(un));
+	    un.sun_family = AF_UNIX;
+	    strcpy(un.sun_path, name);
+	    len = offsetof(struct sockaddr_un, sun_path) + strlen(name);
+
+	    /* bind the name to the descriptor */
+	    if (bind(fd, (struct sockaddr *)&un, len) < 0) {
+	        rval = -2;
+	        goto errout;
+	    }
+	    if (listen(fd, QLEN) < 0) { /* tell kernel we're a server */
+	        rval = -3;
+	        goto errout;
+	    }
+	    return(fd);
+
+	errout:
+	    err = errno;
+	    close(fd);
+	    errno = err;
+	    return(rval);
+	}
+	首先，我们调用socket创建一个unix域的套接字。然后我们用一个已知的名字填充sockaddr_un结构(这个结构做为bind的参数)以便绑定给套接字。注意在一些平台上面我们不需要设定sun_len成员，因为操作系统通过传给bind函数的地址长度会为我们设置这个成员。
+	最后，我们调用listen函数来告诉内核，进程将作为一个服务进程，等待来自客户进程的连接。当客户的连接请求到达的时候，服务进程再调用serv_accept函数。如下：
+
+	unix域套接字的serv_accept函数
+	#include "apue.h"
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	#include <time.h>
+	#include <errno.h>
+
+	#define STALE   30  /* client's name can't be older than this (sec) */
+
+	/*
+	 * Wait for a client connection to arrive, and accept it.
+	 * We also obtain the client's user ID from the pathname
+	 * that it must bind before calling us.
+	 * Returns new fd if all OK, <0 on error
+	 */
+	int serv_accept(int listenfd, uid_t *uidptr)
+	{
+	    int                 clifd, len, err, rval;
+	    time_t              staletime;
+	    struct sockaddr_un  un;
+	    struct stat         statbuf;
+
+	    len = sizeof(un);
+	    if ((clifd = accept(listenfd, (struct sockaddr *)&un, &len)) < 0)
+	        return(-1);     /* often errno=EINTR, if signal caught */
+
+	    /* obtain the client's uid from its calling address */
+	    len -= offsetof(struct sockaddr_un, sun_path); /* len of pathname */
+	    un.sun_path[len] = 0;           /* null terminate */
+
+	    if (stat(un.sun_path, &statbuf) < 0) {
+	        rval = -2;
+	        goto errout;
+	    }
+	#ifdef S_ISSOCK     /* not defined for SVR4 */
+	    if (S_ISSOCK(statbuf.st_mode) == 0) {
+	        rval = -3;      /* not a socket */
+	        goto errout;
+	    }
+	#endif
+	    if ((statbuf.st_mode & (S_IRWXG | S_IRWXO)) ||
+	        (statbuf.st_mode & S_IRWXU) != S_IRWXU) {
+	          rval = -4;     /* is not rwx------ */
+	          goto errout;
+	    }
+
+	    staletime = time(NULL) - STALE;
+	    if (statbuf.st_atime < staletime ||
+	        statbuf.st_ctime < staletime ||
+	        statbuf.st_mtime < staletime) {
+	          rval = -5;    /* i-node is too old */
+	          goto errout;
+	    }
+	    if (uidptr != NULL)
+	        *uidptr = statbuf.st_uid;   /* return uid of caller */
+	    unlink(un.sun_path);        /* we're done with pathname now */
+	    return(clifd);
+
+	errout:
+	    err = errno;
+	    close(clifd);
+	    errno = err;
+	    return(rval);
+	}
+
+	服务进程阻塞在accept调用上面，等待客户进程调用cli_conn。当accept返回的时候，它的返回值是连接到客户进程的一个新的文件描述符号（这个和connld模块对STREAMS子系统所做的一样）。另外，客户端赋值到它的套接字上面的路径名称（这个名称包含客户进程的进程ID）也会在accept中，通过第二个参数（指向sockaddr_un结构的指针）被返回(参见下面的cli_conn)。我们给这个路径名称赋值一个null结束符号，然后调用stat。这样我们检测路径名称确实是一个套接字并且权限只允许用户读，写，执行。我们也会检查和套接字相关的时间不会超过30秒。
+	如果所有这三项检测成功，我们假定客户进程的标识（它的有效用户ID）就是套接字的属主。尽管检测不是很完美，但是这也是我们在目前的系统上面可以做的最好的了（若内核返回有效用户ID给accept，就像ioctl的I_RECVFD命令那样，这会更好）。
+
+	客户进程通过调用cli_conn函数初始化到服务器的连接。
+	用于unix 域套接字的cli_conn函数
+	#include "apue.h"
+	#include <sys/socket.h>
+	#include <sys/un.h>
+	#include <errno.h>
+
+	#define CLI_PATH    "/var/tmp/"      /* +5 for pid = 14 chars */
+	#define CLI_PERM    S_IRWXU          /* rwx for user only */
+
+	/*
+	 * Create a client endpoint and connect to a server.
+	 * Returns fd if all OK, <0 on error.
+	 */
+	int cli_conn(const char *name)
+	{
+	    int                fd, len, err, rval;
+	    struct sockaddr_un un;
+
+	    /* create a UNIX domain stream socket */
+	    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+	        return(-1);
+
+	    /* fill socket address structure with our address */
+	    memset(&un, 0, sizeof(un));
+	    un.sun_family = AF_UNIX;
+	    sprintf(un.sun_path, "%s%05d", CLI_PATH, getpid());
+	    len = offsetof(struct sockaddr_un, sun_path) + strlen(un.sun_path);
+
+	    unlink(un.sun_path);        /* in case it already exists */
+	    if (bind(fd, (struct sockaddr *)&un, len) < 0) {
+	        rval = -2;
+	        goto errout;
+	    }
+	    if (chmod(un.sun_path, CLI_PERM) < 0) {
+	        rval = -3;
+	        goto errout;
+	    }
+	    /* fill socket address structure with server's address */
+	    memset(&un, 0, sizeof(un));
+	    un.sun_family = AF_UNIX;
+	    strcpy(un.sun_path, name);
+	    len = offsetof(struct sockaddr_un, sun_path) + strlen(name);
+	    if (connect(fd, (struct sockaddr *)&un, len) < 0) {
+	        rval = -4;
+	        goto errout;
+	    }
+	    return(fd);
+
+	errout:
+	    err = errno;
+	    close(fd);
+	    errno = err;
+	    return(rval);
+	}
+
+	我们调用socket函数创建客户端的unixt域套接字，然后我们使用一个客户端指定的名字填充一个sockaddr_un结构。
+	我们不会让系统为我们选择一个默认的地址，因为服务器无法将一个客户进程和另外一个客户进程相区别。我们所作的是将我们自己的地址绑定，这一步我们通常在开发一个使用套接字的应用程序的时候不会使用。
+	我们绑定的路径的最后5个字符来自客户进程的进程ID。我们调用unlink，防止路径已经存在。然后我们调用bind为客户端的套接字指定一个名称。这样会在文件系统中创建一个和绑定的路径名称一样的套接字文件(注意，bind会创建文件)。我们调用chmod来关闭除了用户读、写、执行之外的所有权限。在serv_accept中，服务进程检查这些权限以及套接字的用户ID来验证客户进程的标识。
+	我们然后填充另外一个sockaddr_un结构，这时候使用服务进程的公共名称。最后，我们调用connect函数向服务进程发起连接请求。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch17lev1sec3.html
+
+
+

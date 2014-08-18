@@ -1,0 +1,349 @@
+++++++APUE读书笔记-17高级进程通信-06用于打开的服务进程版本2++++++
+
+
+
+6、用于打开的服务进程版本2
+================================================
+	在前面的章节中，我们开发了一个用于打开文件的服务进程，这个服务进程通过客户进程使用fork和exec被运行，用这个例子展示了我们如何将一个文件描述符号从一个子进程传递给父进程。本节我们开发一个守护进程形式的打开服务进程。一个服务进程处理所有的客户进程请求，由于不用fork和exec了，所以我们期望这样的效率可能会更高。我们还是使用s-pipe在客户和服务进程之间传递文件描述符号（两个没有关系的进程）。我们将要使用前面介绍的三个函数：serv_listen，serv_accept和cli_conn。这个服务进程也展示了通过前面的select和poll函数如何处理多个客户进程。
+	客户进程和前面的客户进程是一样的。实际上，文件main.c是一样的，我们向open.h头文件中添加了如下的行：
+	#define CS_OPEN "/home/sar/opend" /* server's well-known name */
+
+	文件open.c相比前面的有所变化，因为我们现在使用cli_conn而不是使用fork和exec了。下面就是相关的代码：
+	csopen函数，版本2
+	#include    "open.h"
+	#include    <sys/uio.h>     /* struct iovec */
+
+	/*
+	 * Open the file by sending the "name" and "oflag" to the
+	 * connection server and reading a file descriptor back.
+	 */
+	int csopen(char *name, int oflag)
+	{
+	    int             len;
+	    char            buf[10];
+	    struct iovec    iov[3];
+	    static int      csfd = -1;
+
+	    if (csfd < 0) {     /* open connection to conn server */
+	        if ((csfd = cli_conn(CS_OPEN)) < 0)
+	            err_sys("cli_conn error");
+	    }
+
+	    sprintf(buf, " %d", oflag);     /* oflag to ascii */
+	    iov[0].iov_base = CL_OPEN " ";  /* string concatenation */
+	    iov[0].iov_len  = strlen(CL_OPEN) + 1;
+	    iov[1].iov_base = name;
+	    iov[1].iov_len  = strlen(name);
+	    iov[2].iov_base = buf;
+	    iov[2].iov_len  = strlen(buf) + 1;  /* null always sent */
+	    len = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
+	    if (writev(csfd, &iov[0], 3) != len)
+	        err_sys("writev error");
+
+	    /* read back descriptor; returned errors handled by write() */
+	    return(recv_fd(csfd, write));
+	}
+
+	客户到服务进程之间的协议保持不变。
+	下面，我们将要看到服务进程。头文件opend.h包含一些标准的头文件以及一些全局变量和函数的声明。如下所示：
+	头文件opend.h，版本2
+	#include "apue.h"
+	#include <errno.h>
+
+	#define CS_OPEN "/home/sar/opend"   /* well-known name */
+	#define CL_OPEN "open"              /* client's request for server */
+
+	extern int   debug;     /* nonzero if interactive (not daemon) */
+	extern char  errmsg[];  /* error message string to return to client */
+	extern int   oflag;     /* open flag: O_xxx ... */
+	extern char *pathname;  /* of file to open for client */
+
+	typedef struct {    /* one Client struct per connected client */
+	  int   fd;         /* fd, or -1 if available */
+	  uid_t uid;
+	} Client;
+
+	extern Client   *client;        /* ptr to malloc'ed array */
+	extern int       client_size;   /* # entries in client[] array */
+
+	int      cli_args(int, char **);
+	int      client_add(int, uid_t);
+	void     client_del(int);
+	void     loop(void);
+	void     request(char *, int, int, uid_t);
+
+	因为服务进程处理所有的客户进程请求，它必须维护每个客户连接的状态。这个通过一个opend.h中的Client数组来做到。下面代码就定义了操作这个数组的三个函数：
+	用来操作客户进程数组的函数
+	#include    "opend.h"
+	#define NALLOC  10   /* # client structs to alloc/realloc for */
+	static void client_alloc(void)   /* alloc more entries in the client[] array */
+	{
+	    int     i;
+
+	    if (client == NULL)
+	        client = malloc(NALLOC * sizeof(Client));
+	    else
+	        client = realloc(client, (client_size+NALLOC)*sizeof(Client));
+	    if (client == NULL)
+	        err_sys("can't alloc for client array");
+
+	    /* initialize the new entries */
+	    for (i = client_size; i < client_size + NALLOC; i++)
+	        client[i].fd = -1;  /* fd of -1 means entry available */
+
+	    client_size += NALLOC;
+	}
+	/*
+	 * Called by loop() when connection request from a new client arrives.
+	 */
+	int client_add(int fd, uid_t uid)
+	{
+	    int     i;
+
+	    if (client == NULL)     /* first time we're called */
+	        client_alloc();
+	again:
+	    for (i = 0; i < client_size; i++) {
+	        if (client[i].fd == -1) {   /* find an available entry */
+	            client[i].fd = fd;
+	            client[i].uid = uid;
+	            return(i);  /* return index in client[] array */
+	        }
+	    }
+	    /* client array full, time to realloc for more */
+	    client_alloc();
+	    goto again;     /* and search again (will work this time) */
+	}
+	/*
+	 * Called by loop() when we're done with a client.
+	 */
+	void client_del(int fd)
+	{
+	    int     i;
+
+	    for (i = 0; i < client_size; i++) {
+	        if (client[i].fd == fd) {
+	            client[i].fd = -1;
+	            return;
+	        }
+	    }
+	    log_quit("can't find client entry for fd %d", fd);
+	}
+	client_add第一次被调用时，会调用client_alloc给数组分配10个条目的空间。当这10个条目都被使用完了之后，后面对client_add的调用会导致realloc再次分配额外的空间。通过用这个方式动态分配额外的空间，我们不用在编译之前限制客户进程数组的数目。因为服务进程是一个守护进程，所以以上函数如果出现了错误，我们使用之前定义的log_函数来提示错误信息。
+	下面的代码中，main函数定义了全局变量，处理了命令行选项，然后调用函数循环。如果我们使用-d选项启动服务进程，那么服务进程会以交互的方式运行而不是守护进程了。当测试服务进程的时候，这个会被使用。
+
+	服务进程的main函数，版本2
+	#include    "opend.h"
+	#include    <syslog.h>
+
+	int      debug, oflag, client_size, log_to_stderr;
+	char     errmsg[MAXLINE];
+	char    *pathname;
+	Client  *client = NULL;
+
+	int main(int argc, char *argv[])
+	{
+	    int     c;
+
+	    log_open("open.serv", LOG_PID, LOG_USER);
+
+	    opterr = 0;     /* don't want getopt() writing to stderr */
+	    while ((c = getopt(argc, argv, "d")) != EOF) {
+	        switch (c) {
+	        case 'd':       /* debug */
+	            debug = log_to_stderr = 1;
+	            break;
+
+	        case '?':
+	            err_quit("unrecognized option: -%c", optopt);
+	        }
+	    }
+
+	    if (debug == 0)
+	        daemonize("opend");
+
+	    loop();     /* never returns */
+	}
+
+	loop函数导致服务进程进入无限死循环。我们将会看到这个函数的两个版本。下面的代码显示了使用select的版本。后面的代码将会显示使用poll的版本。
+	使用select实现的loop函数
+	#include    "opend.h"
+	#include    <sys/time.h>
+	#include    <sys/select.h>
+
+	void loop(void)
+	{
+	    int     i, n, maxfd, maxi, listenfd, clifd, nread;
+	    char    buf[MAXLINE];
+	    uid_t   uid;
+	    fd_set  rset, allset;
+
+	    FD_ZERO(&allset);
+
+	    /* obtain fd to listen for client requests on */
+	    if ((listenfd = serv_listen(CS_OPEN)) < 0)
+	        log_sys("serv_listen error");
+	    FD_SET(listenfd, &allset);
+	    maxfd = listenfd;
+	    maxi = -1;
+
+	    for ( ; ; ) {
+	        rset = allset;  /* rset gets modified each time around */
+	        if ((n = select(maxfd + 1, &rset, NULL, NULL, NULL)) < 0)
+	            log_sys("select error");
+
+	        if (FD_ISSET(listenfd, &rset)) {
+	            /* accept new client request */
+	            if ((clifd = serv_accept(listenfd, &uid)) < 0)
+	                log_sys("serv_accept error: %d", clifd);
+	            i = client_add(clifd, uid);
+	            FD_SET(clifd, &allset);
+	            if (clifd > maxfd)
+	                maxfd = clifd;  /* max fd for select() */
+	            if (i > maxi)
+	                maxi = i;   /* max index in client[] array */
+	            log_msg("new connection: uid %d, fd %d", uid, clifd);
+	            continue;
+	        }
+	        for (i = 0; i <= maxi; i++) {   /* go through client[] array */
+	            if ((clifd = client[i].fd) < 0)
+	                continue;
+	            if (FD_ISSET(clifd, &rset)) {
+	                /* read argument buffer from client */
+	                if ((nread = read(clifd, buf, MAXLINE)) < 0) {
+	                    log_sys("read error on fd %d", clifd);
+	                } else if (nread == 0) {
+	                    log_msg("closed: uid %d, fd %d",
+	                      client[i].uid, clifd);
+	                    client_del(clifd);  /* client has closed cxn */
+	                    FD_CLR(clifd, &allset);
+	                    close(clifd);
+	                } else {    /* process client's request */
+	                    request(buf, nread, clifd, client[i].uid);
+	                }
+	            }
+	        }
+	    }
+	}
+	这个函数调用serv_listen创建服务器端用于接收客户连接请求。剩下的部分就是一个循环，循环首先使用select调用。select返回的时候，可以确保两件事情：
+	1.文件描述符号listenfd已经准备好了读取，也就是说，有某个新的客户进程调用了cli_conn。为了处理这个，我们调用serv_accept并且之后更新客户进程的数组以及相关的记录索引信息。（我们保存最大的文件描述符号号码以便传递select的第一个参数，我们也保存客户数组中被使用元素的最大索引）
+	2.一个已经存在的客户连接准备好了被读取。这个意思是说，客户进程要么结束了，要么发送了一个新的请求。我们通过read返回0（文件结束符号）来确定客户进程已经终止。如果read返回正数，那么表明需要处理一个新的请求，这个请求通过我们调用request来进行处理。
+	我们在allset文件描述符号集合中保存当前使用的文件描述符号。一个新的客户连接到服务器上的时候，会打开这个文件描述符号集合中的合适的位；当客户进程终止的时候，会关闭相应其中合适的位。
+	无论客户进程的终止是自发的还是非自发的，当它终止的时候，我们经常能够知道，因为所有的客户的文件描述符号（包括连接到服务进程的）都会被内核自动地关闭。这一点和SXI的IPC机制有所不同。
+
+	下面是使用poll实现的loop函数的代码
+	使用poll的loop
+	#include    "opend.h"
+	#include    <poll.h>
+	#if !defined(BSD) && !defined(MACOS)
+	#include    <stropts.h>
+	#endif
+
+	void loop(void)
+	{
+	    int             i, maxi, listenfd, clifd, nread;
+	    char            buf[MAXLINE];
+	    uid_t           uid;
+	    struct pollfd   *pollfd;
+
+	    if ((pollfd = malloc(open_max() * sizeof(struct pollfd))) == NULL)
+	        err_sys("malloc error");
+
+	    /* obtain fd to listen for client requests on */
+	    if ((listenfd = serv_listen(CS_OPEN)) < 0)
+	        log_sys("serv_listen error");
+	    client_add(listenfd, 0);    /* we use [0] for listenfd */
+	    pollfd[0].fd = listenfd;
+	    pollfd[0].events = POLLIN;
+	    maxi = 0;
+
+	    for ( ; ; ) {
+	        if (poll(pollfd, maxi + 1, -1) < 0)
+	            log_sys("poll error");
+
+	        if (pollfd[0].revents & POLLIN) {
+	            /* accept new client request */
+	            if ((clifd = serv_accept(listenfd, &uid)) > 0)
+	                log_sys("serv_accept error: %d", clifd);
+	            i = client_add(clifd, uid);
+	            pollfd[i].fd = clifd;
+	            pollfd[i].events = POLLIN;
+	            if (i > maxi)
+	                maxi = i;
+	            log_msg("new connection: uid %d, fd %d", uid, clifd);
+	        }
+
+	        for (i = 1; i <= maxi; i++) {
+	            if ((clifd = client[i].fd) < 0)
+	                continue;
+	            if (pollfd[i].revents & POLLHUP) {
+	                goto hungup;
+	            } else if (pollfd[i].revents & POLLIN) {
+	                /* read argument buffer from client */
+	                if ((nread = read(clifd, buf, MAXLINE)) < 0) {
+	                    log_sys("read error on fd %d", clifd);
+	                } else if (nread == 0) {
+	hungup:
+	                    log_msg("closed: uid %d, fd %d",
+	                      client[i].uid, clifd);
+	                    client_del(clifd);  /* client has closed conn */
+	                    pollfd[i].fd = -1;
+	                    close(clifd);
+	                } else {        /* process client's request */
+	                    request(buf, nread, clifd, client[i].uid);
+	                }
+	            }
+	        }
+	    }
+	}
+
+	为了能够让客户进程和可能打开的的文件描述符号数量一样，我们动态分配pollfd结构数组的空间（前面我们定义过open_max函数）。
+	我们使用客户数组的第一个项（下标为0）存放listenfd文件描述符号，这样，一个客户进程在客户数组上面的索引就和我们使用的pollfd数组上面的索引一样了。通过listenfd文件描述符号上面的POLLIN表示一个新的客户连接到达，如前类似，我们调用serv_accept来接收连接。
+	对于一个已经存在的客户进程，我们处理用于poll的两个事件：客户进程的终止通过POLLHUP来进行表示，从一个已经存在的客户进程到来的新的请求通过POLLIN来表示。记得前面章节中的练习中说过,在仍旧存在数据可以从stream中被读取的时候，hang-up消息也可以到达stream的头。通过管道，我们想要在处理hangup之前读取所有的数据。但是这个服务进程中，当我们接收到来自客户进程的hangup的时候，我们就可以关闭到客户的连接（stream），这样会很高效地丢弃任何仍然存在在stream上面的数据，没有理由处理仍然在stream上面的请求，因为我们不会发送回任何的响应。
+
+	和使用select实现的的loop函数一样，新的客户请求通过调用request函数被处理。这个函数和前面的版本类似，它也会调用buf_args,而这个buf_args再调用cli_args，但是因为这个服务进程是一个守护进程，它会将错误消息使用log方式登记而不是将它们打印到标准错误输出流中了。
+	request函数，版本2
+	#include    "opend.h"
+	#include    <fcntl.h>
+
+	void request(char *buf, int nread, int clifd, uid_t uid)
+	{
+	    int     newfd;
+
+	    if (buf[nread-1] != 0) {
+	        sprintf(errmsg,
+	          "request from uid %d not null terminated: %*.*s\n",
+	          uid, nread, nread, buf);
+	        send_err(clifd, -1, errmsg);
+	        return;
+	    }
+	    log_msg("request: %s, from uid %d", buf, uid);
+
+	    /* parse the arguments, set options */
+	    if (buf_args(buf, cli_args) < 0) {
+	        send_err(clifd, -1, errmsg);
+	        log_msg(errmsg);
+	        return;
+	    }
+
+	    if ((newfd = open(pathname, oflag)) < 0) {
+	        sprintf(errmsg, "can't open %s: %s\n",
+	          pathname, strerror(errno));
+	        send_err(clifd, -1, errmsg);
+	        log_msg(errmsg);
+	        return;
+	    }
+
+	    /* send the descriptor */
+	    if (send_fd(clifd, newfd) < 0)
+	        log_sys("send_fd error");
+	    log_msg("sent fd %d over fd %d for %s", newfd, clifd, pathname);
+	    close(newfd);       /* we're done with descriptor */
+	}
+	这就是第二个版本的打开服务进程，它做为一个守护进程处理所有的客户请求。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch17lev1sec6.html
+
+
+

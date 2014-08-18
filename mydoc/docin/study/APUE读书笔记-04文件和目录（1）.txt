@@ -1,0 +1,97 @@
+++++++APUE读书笔记-04文件和目录（1）++++++
+
+
+
+1、简介
+================================================
+	在之前的章节中我们讨论了进行I/O的基本函数。前面的讨论集中在正规文件上（就是普通的文件），例如打开文件、读取写入文件。这里我们将要讲述关于文件系统的一些额外信息，以及文件的属性。我们从stat函数开始将起，然后讲述stat结构的每个成员，这样可以看到文件的所有属性。在这个过程中，我们也会讲到每个修改这些属性的函数：改变属主，改变权限等等。我们将会看到UNIX文件系统以及符号链接更为细节的内容。我们通过操作目录的函数来结束本章，并且基于此我们可以编写一个遍历整个目录的函数。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec1.html
+
+
+2、stat，fstat，和lstat函数
+================================================
+	本章主要描述如下三个函数以及它们的返回值。
+	#include <sys/stat.h>
+	int stat(const char *restrict pathname, struct stat *restrict buf);
+	int fstat(int filedes, struct stat *buf);
+	int lstat(const char *restrict pathname, struct stat *restrict buf);
+	返回：三者如果成功均返回0，错误返回1（其实其值一般应该是-1）。 
+	stat返回pathname所指定的文件的相关信息结构到buf中；fstat返回filedes描述符上打开的文件的相关信息到buf中；lstat返回pathname所指定的文件的信息到buf中，与stat不同的是，如果pathname代表一个符号链接，那么它返回符号链接的信息而不像stat那样返回符号链接所指向的文件的信息。
+	buf指向的stat结构基本定义如下：
+	struct stat {
+		mode_t    st_mode;      /* file type & mode (permissions) */
+		ino_t     st_ino;       /* i-node number (serial number) */
+		dev_t     st_dev;       /* device number (file system) */
+		dev_t     st_rdev;      /* device number for special files */
+		nlink_t   st_nlink;     /* number of links */
+		uid_t     st_uid;       /* user ID of owner */
+		gid_t     st_gid;       /* group ID of owner */
+		off_t     st_size;      /* size in bytes, for regular files */
+		time_t    st_atime;     /* time of last access */
+		time_t    st_mtime;     /* time of last modification */
+		time_t    st_ctime;     /* time of last file status change */
+		blksize_t st_blksize;   /* best I/O block size */
+		blkcnt_t  st_blocks;    /* number of disk blocks allocated */
+	};
+
+	POSIX.1并没有要求有st_rdev，st_blksize，以及st_blocks成员。它们在SUS（即Single UNIX Specification）中的XSI扩展中定义。需要注意的是每个成员都被指定成系统基本数据类型。我们将会对这个结构的每个成员进行讲述，来学习文件的属性。实际"ls -l"命令就是调用stat函数，返回文件所有信息。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec2.html
+
+
+3、文件类型
+================================================
+	至今我们已介绍了两种类型的文件——普通文件和目录。UNIX系统的大多数文件是普通文件或目录，此外也有一些其它的文件类型：
+	(a) 普通文件(regular file，本书有的地方称作正规文件)。这是最常见的文件类型，它包含了某种形式的数据。这种数据可以是文本也可以是二进制数据，这对于内核而言并无区别。对普通文件内容的解释由处理该文件的应用程序进行。
+	(b) 目录文件(directory file)。这种文件包含了其他文件的名字以及指向与这些文件有关信息的指针。对一个目录文件具有读许可权的任一进程都可以读该目录的内容，但只有内核可以写目录文件。
+	(c) 字符特殊文件(character special file)。也称字符设备文件，这种文件用于系统中某些类型的设备，例如某些键盘，鼠标等。
+	(d) 块特殊文件(block special file)。也称块设备文件，磁盘设备就是这种类型的。
+	系统中的所有设备文件要么是字符特殊文件，要么是块特殊文件，用它来表示一个设备，通过系统调用操作这些设备文件，进而达到操作设备的目的，这也是Unix/Linux设备管理，基于文件系统的一个原因。
+	(e) FIFO。这类文件用于进程间的通信，也称为有名管道。
+	(f) 套接字( socket )。这类文件用于进程间的网络通信。套接字也可用于在一台宿主机上的进程之间的非网络通信。
+	(g) 符号连接(symbolic link)。这种文件指向另一个文件。相当于"Windows"下指向某一个文件的“快捷方式”。
+文件类型信息包含在stat结构的st_mode成员中。下表给出用来确定文件类型的的宏。这些宏的参数都是stat结构中的st_mode成员。
+
+	<sys/stat.h>中定义的文件类型宏
+	+--------------------------------------+
+	|   Macro    |      Type of file       |
+	|------------+-------------------------|
+	| S_ISREG()  | regular file            |
+	|------------+-------------------------|
+	| S_ISDIR()  | directory file          |
+	|------------+-------------------------|
+	| S_ISCHR()  | character special file  |
+	|------------+-------------------------|
+	| S_ISBLK()  | block special file      |
+	|------------+-------------------------|
+	| S_ISFIFO() | pipe or FIFO            |
+	|------------+-------------------------|
+	| S_ISLNK()  | symbolic link           |
+	|------------+-------------------------|
+	| S_ISSOCK() | socket                  |
+	+--------------------------------------+
+
+
+	另外，POSIX.1允许实现（这里的实现也就是系统实现，以后都这样说）将内部通信（IPC）对象（例如消息队列和信号量）做为文件。下表中的宏允许我们通过stat结构确定IPC对象的类型。这些宏不像上面表中使用st_mode成员做为参数，它的参数是指向stat结构的指针。
+	<sys/stat.h>中定义的IPC类型宏
+	+---------------------------------------+
+	|     Macro     |    Type of object     |
+	|---------------+-----------------------|
+	| S_TYPEISMQ()  | message queue         |
+	|---------------+-----------------------|
+	| S_TYPEISSEM() | semaphore             |
+	|---------------+-----------------------|
+	| S_TYPEISSHM() | shared memory object  |
+	+---------------------------------------+
+
+
+	后面对队消息队列，信号量，和共享内存对象进行讨论（15章）。本书提到的UNIX系统实现中没有将它们当做文件。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec3.html
+
+
+

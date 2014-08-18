@@ -1,0 +1,58 @@
+++++++APUE读书笔记-09进程关系（05）++++++
+
+
+
+6、控制终端
+================================================
+	会话和进程组有一些其它的特性:
+	a.会话可以有一个单个的控制终端。这个控制终端一般都是我们登陆时候的终端设备（在终端登陆的情况下），或者是一个伪终端设备（在网络登陆的情况下）。
+	b.建立到控制终端连接的会话leader被称作控制进程。
+	c.在一个会话中的进程组可以被分成一个单一的前台进程组，以及一个或者多个后台进程组。
+	d.如果一个session有一个控制终端，那么它有一个单一的前台进程组，这个session（session就是会话）其他的进程组是后台进程组。
+	e.当我们键入终端的中断键（一般都是DELETE或者Control-C）的时候，会发送给所有在前台进程组中的进程一个中断信号。
+	f.当我们敲入终端的quit键（一般是Control-backslash）的时候,这会导致一个quit信号发送给所有前台进程组的进程。
+	g.如果一个modem(或者网络)的连接断开被终端的接口检测到了，那么会给控制进程（session leader）发送一个hang-up信号。
+	参考资料给出了一个图描述了这个叙述。这里不给出原图形了，简单总结原图的意思就是：
+	a.controlling terminal在检测到modem disconnect之类的情况的时候会给login shell(也是后台进程组中的进程，也是session leader，也是控制进程)发送hang-up信号。
+	b.终端输入或者终端发起的信号会发送给session中的前台进程组。
+	c.另外，一个session中还有可能存在其他的后台进程组。
+
+	一般来说，我们不用担心控制终端，因为在我们登陆进去的时候它会自动被建立。
+	POSIX.1把分配控制终端机制留给了各自实现。
+	从UNIX System V继承过来的系统，会在session leader打开第一个没有和session建立联系的终端设备的时候分配一个控制终端.当然这假设session leader调用的open没有指定O_NOCTTY标志。
+	基于BSD的系统会在session leader调用ioctl(有一个TIOCSCTTY请求参数，第三个参数是空指针)的时候给一个session分配一个控制终端。在调用之前，session不能已经有了controlling terminal(否则调用不成功).一般来说，这个ioctl调用后面需要接着一个setsid调用，这个调用保证进程是一个没有控制终端的session leader.在BSD系列的系统中，POSIX.1中open的O_NOCTTY标记并没有使用，除非是要和其他系统相互兼容的时候。
+
+	有时候一个程序想要和controlling terminal进行交互，并且不考虑标准输入输出是否被重新定向了。程序用来确保自己是要和controlling terminal进行交互的方法是通过打开/dev/tty文件.这个特殊文件在内核中和controlling terminal是同义的。一般来说，如果程序没有controlling terminal,那么打开这个设备文件会失败。
+	一个经典的例子是getpass函数，这个函数读取密码（这时候terminal 的echo是关闭的）.这个函数被crypt程序调用，可以在管道中使用。例如：
+	crypt < salaries | lpr
+	解密salaries文件然后通过管道输出到打印池。因为crypt从标准输入读取输入文件，不用使用标准输入输入密码。并且，crypt程序每次运行的时候，需要输入加密的密码，这样我们就不用将密码保存在文件中了(保存在文件中有安全隐患)。
+	有一些已知的方法将crypt使用的encoding给break,这里不说了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec6.html
+
+
+7、tcgetpgrp, tcsetpgrp, 和 tcgetsid 函数
+================================================
+	我们需要一种方法来告诉内核哪个进程组是前台的，这个终端设备驱动知道向哪里发送终端输入以及终端产生的信号
+	#include <unistd.h>
+	pid_t tcgetpgrp(int filedes);
+	如果成功返回前台的进程组id，否则出错并返回1（其值实际为-1）。
+
+	int tcsetpgrp(int filedes, pid_t pgrpid);
+	如果成功返回0，否则出错并返回1（其值实际为-1）。
+
+	tcgetpgrp函数返回和参数filedes相关的打开的终端的前台进程组id。
+	如果进程有一个控制终端,那么函数tcsetpgrp会设置前台进程组id为pgrpid.pgrpid的值必须是当前同一个会话中的进程组id的值，filedes必须是session的控制终端的引用。
+	大多数应用程序不会直接调用这两个函数，它们一般是被作业控制的shell来进行调用的。
+
+	Single UNIX Specification定义了一个XSI扩展，叫做tcgetsid允许应用程序通过一个给定的控制tty的描述符号获得session leader的进程组id。
+	#include <termios.h>
+	pid_t tcgetsid(int filedes);
+	如果成功返回session leader的进程组id，否则出错并返回1（其值实际为-1）。
+	需要管理控制终端的应用程序可以使用tcgetsid函数来辨别控制终端session leader的session id（这个和session leader所在的进程组一样）。
+
+参考：http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec7.html
+
+
+

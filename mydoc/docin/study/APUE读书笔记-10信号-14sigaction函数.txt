@@ -1,0 +1,197 @@
+++++++APUE读书笔记-10信号-14sigaction函数++++++
+
+
+
+14、sigaction函数
+================================================
+	sigaction允许我们检查或修改，或者检查并修改和一个特定信号相关联的动作。这个函数取代了早期Unix发行版本中的signal函数,实际后面我们将给出使用这个函数实现的signal函数。
+	#include <signal.h>
+	int sigaction(int signo, const struct sigaction  *restrict act, struct sigaction *restrict oact);
+	如果成功，这个函数返回0,如果错误，这个函数返回1（其值实际为-1）。
+	参数signo是我们要修改或者检测的动作相关联的信号号。如果act参数非空，那么我们修改这个动作;如果oact参数非空，那么系统通过这个参数返回之前的动作。这个函数使用的结构如下：
+	struct sigaction
+	{
+	  void      (*sa_handler)(int);   /* 信号处理函数的地址,可以是SIG_IGN或者SIG_DFL */
+	  sigset_t sa_mask;               /* 需要阻塞的额外的信号*/
+	  int      sa_flags;              /* 信号选项，后面会说 */
+	  /*备选的信号处理函数,sigaction使用SA_SIGINFO时候会用到，参见后面解释*/
+	  void     (*sa_sigaction)(int, siginfo_t *, void *);
+	};
+	当我们修改一个信号的处理动作的时候，如果sa_handler包含了信号处理动作的地址(而不是SIG_IGN或者SIG_DFL)，那么sa_mask会指定在调用信号处理函数之前添加到进程的一系列signal mask中的信号的集合，当信号处理函数返回的时候，进程的signal mask再被恢复成原来的样子。这样，我们就可以在调用信号处理函数的时候指定我们想要阻塞的信号.操作系统会包含调用信号处理函数是发送的signal mask中的信号。这样我们可以保证，无论何时当我们处理一个信号的时候，另一次同样的信号的产生会被阻塞，直到我们处理完这个信号的第一次发生。回忆前面所讲的，一个信号发生多次的时候，一般不会被排队,也就是说，假设一个信号在它被阻塞期间被发送了5次，那么当取消它的阻塞的时候，这个信号的信号处理函数一般只会被调用一次。
+	一旦我们给一个指定的信号添加了动作，这个信号的动作会一直保持安装的状态，直到我们调用sigaction显示地改变它。这和早期unix系统的非可靠信号机制有所不同，POSIX.1要求，一个信号的信号处理函数会一直保持被安装的状态，直到我们显示地去改变它们。
+	action结构的sa_flags域指定了信号的处理函数的各种处理方式选项,后面的表中就列出了这些选项的意义。
+	一定注意！！！这些选项有的系统支持，有的系统不支持，这里只是大致说一下它们的含义，详细的请参见参考资料。
+	SA_INTERRUPT :被这个信号所打断的系统调用不会被自动重启。（可以参见前面相关内容）
+	SA_NOCLDSTOP :如果信号是SIGCHLD,那么当子进程停止（作业控制中）的时候不会发送信号。当然，当子进程终止的时候，还是会发送这个信号的(但是请参考后面的SA_NOCLDWAIT选项),作为XSI的扩展，当这个标记被设置的时候，子进程从停止到继续的时候不会发送SIGCHLD信号。
+	SA_NOCLDWAIT :如果信号是SIGCHLD的时候，这个选项会在调用进程的子结束的时候，阻止系统创建僵尸进程。如果进程后来调用wait，那么调用进程会阻塞，直至所有的子进程终止，然后返回1并且设置errno为ECHILD.
+	SA_NODEFER :当捕获信号的时候，在信号捕捉函数执行的时候，信号不会被系统自动的阻塞(除非信号在sa_mask中).需要注意的是这样的操作符合早期的非可靠信号的特点。
+	SA_ONSTACK :如果一个可选的堆栈使用sigaltstack声明了，那么信号会在可选的堆栈上被发送给进程。
+	SA_RESETHAND :这个特性使得信号被恢复成默认的值，并且在进入信号处理函数的时候清除SA_SIGINFO标记.需要注意的是，这种操作符合早期的非可靠信号.然而，SIGILL和SIGTRAP不能被自动地重置。设置这个标记，会使得sigaction的行为好似设置了SA_NODEFER标记。
+	SA_RESTART :被信号打断的系统调用会被自动重启。
+	SA_SIGINFO :这个标记为信号处理函数提供了一个额外的信息:一个指向siginfo结构的指针，以及一个指向进程上下文标记的指针。
+	sa_sigaction域是一个可选的信号处理函数，sigaction当使用SA_SIGINFO标记的时候，会使用它。在实现中，有可能对sa_sigaction域和sa_handler域使用了同一个存储区域，所以应用程序每次只能使用其中的一个域。
+	一般来说，信号处理函数的调用如下：
+	void handler(int signo);
+
+	但是,如果设置了SA_SIGINFO标记，那么信号处理函数的调用如下：
+	void handler(int signo,siginfo_t *info,void *context);
+
+	siginfo_t结构的信息包含信号产生的原因。下面给出了它定义的一个常用形式，所有遵守POSIX.1的实现都必须至少包含si_signo和si_code成员。
+	struct siginfo {
+	int    si_signo;  /* 信号号码 */
+	int    si_errno;  /* 如果非0表示<errno.h>中的errno */
+	int    si_code;   /* 一些依赖于信号的额外的信息 */
+	pid_t  si_pid;    /* 发送信号的进程ID */
+	uid_t  si_uid;    /* 发送进程的real user ID */
+	void  *si_addr;   /* 导致错误的地址 */
+	int    si_status; /* 退出码或者信号号 */
+	long   si_band;   /* SIGPOLL的标志数 */
+	/* 这里，可以增加其它可能的域 */
+	};
+	再后面，给出了许多信号的si_code信息含义，这些是Single UNIX Specification定义的，不同的实现可能会增加一些其他的si_code。
+
+					siginfo_t 编码值
++--------------------------------------------------------------------------------------------+
+| Signal  | Code          | Reason                                                           |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_ILLOPC    | illegal opcode                                                   |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_ILLOPN    | illegal operand                                                  |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_ILLADR    | illegal addressing mode                                          |
+|---------+---------------+------------------------------------------------------------------|
+| SIGILL  | ILL_ILLTRP    | illegal trap                                                     |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_PRVOPC    | privileged opcode                                                |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_PRVREG    | privileged register                                              |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_COPROC    | coprocessor error                                                |
+|---------+---------------+------------------------------------------------------------------|
+|         | ILL_BADSTK    | internal stack error                                             |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_INTDIV    | integer divide by zero                                           |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_INTOVF    | integer overflow                                                 |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_FLTDIV    | floating-point divide by zero                                    |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_FLTOVF    | floating-point overflow                                          |
+|---------+---------------+------------------------------------------------------------------|
+| SIGFPE  | FPE_FLTUND    | floating-point underflow                                         |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_FLTRES    | floating-point inexact result                                    |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_FLTINV    | invalid floating-point operation                                 |
+|---------+---------------+------------------------------------------------------------------|
+|         | FPE_FLTSUB    | subscript out of range                                           |
+|---------+---------------+------------------------------------------------------------------|
+| SIGSEGV | SEGV_MAPERR   | address not mapped to object                                     |
+|---------+---------------+------------------------------------------------------------------|
+|         | SEGV_ACCERR   | invalid permissions for mapped object                            |
+|---------+---------------+------------------------------------------------------------------|
+|         | BUS_ADRALN    | invalid address alignment                                        |
+|---------+---------------+------------------------------------------------------------------|
+| SIGBUS  | BUS_ADRERR    | nonexistent physical address                                     |
+|---------+---------------+------------------------------------------------------------------|
+|         | BUS_OBJERR    | object-specific hardware error                                   |
+|---------+---------------+------------------------------------------------------------------|
+|         | trAP_BRKPT    | process breakpoint trap                                          |
+|---------+---------------+------------------------------------------------------------------|
+| SIGTRAP | TRAP_TRACE    | process trace trap                                               |
+|---------+---------------+------------------------------------------------------------------|
+|         | CLD_EXITED    | child has exited                                                 |
+|---------+---------------+------------------------------------------------------------------|
+|         | CLD_KILLED    | child has terminated abnormally (no core)                        |
+|---------+---------------+------------------------------------------------------------------|
+|         | CLD_DUMPED    | child has terminated abnormally with core                        |
+|---------+---------------+------------------------------------------------------------------|
+| SIGCHLD | CLD_TRAPPED   | traced child has trapped                                         |
+|---------+---------------+------------------------------------------------------------------|
+|         | CLD_STOPPED   | child has stopped                                                |
+|---------+---------------+------------------------------------------------------------------|
+|         | CLD_CONTINUED | stopped child has continued                                      |
+|---------+---------------+------------------------------------------------------------------|
+|         | POLL_IN       | data can be read                                                 |
+|---------+---------------+------------------------------------------------------------------|
+|         | POLL_OUT      | data can be written                                              |
+|---------+---------------+------------------------------------------------------------------|
+| SIGPOLL | POLL_MSG      | input message available                                          |
+|---------+---------------+------------------------------------------------------------------|
+|         | POLL_ERR      | I/O error                                                        |
+|---------+---------------+------------------------------------------------------------------|
+|         | POLL_PRI      | high-priority message available                                  |
+|---------+---------------+------------------------------------------------------------------|
+|         | POLL_HUP      | device disconnected                                              |
+|---------+---------------+------------------------------------------------------------------|
+|         | SI_USER       | signal sent by kill                                              |
+|---------+---------------+------------------------------------------------------------------|
+|         | SI_QUEUE      | signal sent by sigqueue (real-time extension)                    |
+|---------+---------------+------------------------------------------------------------------|
+| Any     | SI_TIMER      | expiration of a timer set by timer_settime (real-time extension) |
+|---------+---------------+------------------------------------------------------------------|
+|         | SI_ASYNCIO    | completion of asynchronous I/O request (real-time extension)     |
+|---------+---------------+------------------------------------------------------------------|
+|         | SI_MESGQ      | arrival of a message on a message queue (real-time extension)    |
++--------------------------------------------------------------------------------------------+
+
+	如果信号是SIGCHLD，那么si_pid,si_status,和si_uid域会将被设置。如果信号是SIGILL或者SIGSEGV，那么si_addr包含相应的错误地址（尽管地址可能不是非常精确）.如果信号是SIGPOLL，那么si_band域将会包含一些流消息的优先标志，这些流消息会产生POLL_IN, POLL_OUT,或者POLL_MSG事件。si_errno域包含导致信号被产生的条件的错误号码(尽管它的作用已经被实现定义了)。
+	信号处理函数的context参数是一个无类型的指针，它可以被强制转换成ucontext_t结构，这个结构标志发送信号时候的进程的上下文。
+	当实现支持实时信号扩展的时候，信号处理函数使用SA_SIGINFO来建立的话，会导致信号被“可靠地”排队。为了实时应用程序的使用，有一个独立的保留的信号范围。如果信号是被sigqueue来发起的，那么siginfo结构可以包含应用程序相关的数据。这里，我们不会过于深入地讨论实时扩展。
+
+
+	信号函数举例
+	现在让我们来使用sigaction实现signal函数，这也是许多平台所做的。有些二进制兼容的系统，可能会提供旧有的，非可靠的信号函数的支持。除非你特别指定要使用这些旧有的非可靠的信号（为了向后兼容），否则你应该使用下面实现的signal函数，或者直接调用sigaction.(正如你可能会猜测的，对旧有的signal函数的实现，应该是调用sigaction同时指定SA_RESETHAND和SA_NODEFER)，本文所有的调用signal的例子，调用的都是下面的方式实现的signal。
+
+	注意，我们必须使用sigemptyset来初始化结构的sa_mask成员，因为我们无法保证"act.sa_mask=0;"这句话是好用的。
+	我们特地为除了SIGALRM之外的所有的信号设置SA_RESTART标记，这样任何被其他信号打断之后，都会自动地重新启动。我们没有设置SIGALRM重启的原因是想要允许我们设置一个I/O操作的超时(前面应该也提到过)。
+	一些旧的系统，例如SunOs，定义了SA_INTERRUPT标记，这些系统默认重新启动被打断的系统调用，所以指定这个标记导致系统调用被中断。Linux定义了SA_INTERRUPT标记，便于和使用它的应用程序相互兼容，但是，默认在sigaction安装到信号处理函数的时候是没有重新启动系统的。Single UNIX Specification 的XSI扩展指定sigaction函数如果不设置SA_RESTART标记，就不会重新启动被打断的系统调用。
+
+	一个使用sigaction实现的signal：
+
+	/*这个是使用POSIX的sigaction()实现的可靠版本的signal()*/
+	Sigfunc *signal(int signo, Sigfunc *func)
+	{
+	    struct sigaction    act, oact;
+	    act.sa_handler = func;
+	    sigemptyset(&act.sa_mask);
+	    act.sa_flags = 0;
+	    if (signo == SIGALRM) {
+	#ifdef SA_INTERRUPT
+	       act.sa_flags |= SA_INTERRUPT;
+	#endif
+	    } else {
+	#ifdef  SA_RESTART
+	        act.sa_flags |= SA_RESTART;
+	#endif
+	    }
+	    if (sigaction(signo, &act, &oact) < 0)
+	        return(SIG_ERR);
+	    return(oact.sa_handler);
+	}
+
+	一个signal_intr函数的例子
+	下面给出了一个signal函数，这个函数尝试阻止任何被打断的系统调用被重启。
+	为了增加可移植特性，我们指定了SA_INTERRUPT标记，如果这个标记被定义了，那么就会防止被中断的系统调用重新启动。
+
+	signal_intr函数
+	Sigfunc *signal_intr(int signo, Sigfunc *func)
+	{
+	    struct sigaction    act, oact;
+
+	    act.sa_handler = func;
+	    sigemptyset(&act.sa_mask);
+	    act.sa_flags = 0;
+	#ifdef  SA_INTERRUPT
+	    act.sa_flags |= SA_INTERRUPT;
+	#endif
+	    if (sigaction(signo, &act, &oact) < 0)
+	        return(SIG_ERR);
+	    return(oact.sa_handler);
+	}
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec14.html
+
+
+

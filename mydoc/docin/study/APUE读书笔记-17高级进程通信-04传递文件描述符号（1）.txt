@@ -1,0 +1,188 @@
+++++++APUE读书笔记-17高级进程通信-04传递文件描述符号（1）++++++
+
+
+
+4、传递文件描述符号（1）
+================================================
+	在进程之间传递打开的文件描述符号这个功能非常强大。它可以使得客户服务程序具有不同的设计方案。它允许一个进程（一般这个进程都是服务进程）去做打开一个文件的所有工作（包括将网络名称转换为网络地址，向modem拨号，协商文件锁，等等），然后简单地向调用进程传递回去一个文件描述符号，这个文件符号可以用于输入输出函数。所有打开文件的细节工作在客户进程端来看都是被隐藏了的。
+	我们必须对“传递一个打开的文件描述符号”这个词语非常了解。在最开始的时候，我们展示过两个进程打开同样一个文件的情况，尽管这两个进程共享同样的v-node，但是每一个进程有它自己的文件表项。
+	当我们在进程之间传递打开的文件描述符号的时候，我们想要两个进程之间共享同一个文件表项，如下图所示：
+
+	                从上面的进程打开的文件传递到底下的进程
+
+	  +-process table entry--+
+	  |     fd     file      |
+	  |    +flags+-pointer-+ |
+	  |fd0 |-----|---------| |
+	  |fd1 |-----|---------| |   ---->+file table---------+
+	  |fd2 |-----|---------| |  /  -->| file status flags |
+	  |fd3 |-----|---------|----  /   +-------------------+
+	  |    |    ......     | |   /    | current offset    |
+	  |    +---------------+ |   |    +-------------------+
+	  |                      |   |    | v-node pointer    |------> +-v-node table---+
+	  +----------------------+   |    +-------------------+        |    v-node      |
+	                             |                                 |   information  |
+	                             |                                 +----------------+
+	  +-process table entry--+   |                                 |    i-node      |
+	  |     fd     file      |   |                                 |   information  |
+	  |    +flags+-pointer-+ |  /                                  +_.............._+
+	  |fd0 |-----|---------| | /                                   |    current     |
+	  |fd1 |-----|---------| |/                                    |   file size    |
+	  |fd2 |-----|---------| /                                     +----------------+
+	  |fd3 |-----|---------|/|
+	  |fd4 |-----|---------| |
+	  |    |    ......     | |
+	  |    +---------------+ |
+	  |                      |
+	  |                      |
+	  +----------------------+
+
+	从技术来看，我们将一个指向文件表的指针从一个进程传递给另外一个进程。这个指针被分配给接收进程的第一个可用的文件描述符号。（也就是说，我们传递一个打开的文件描述符号，但是文件描述符号的号码在两个进程中并不一定一样，上图就是一个很明显的例子）两个进程共享一个打开的文件表实际就是调用fork的时候发生的事情(可以参见前面讲述fork时候一个描述fork之后父子之间共享打开文件的图)。
+	当一个文件描述符号从一个进程被传递到另外一个进程的时候，发送进程在传递完了文件描述符号之后会关闭掉文件描述符号。发送进程关闭文件描述符号并不会真的关闭掉文件或者设备，因为文件描述符号对于接收进程来说仍然是打开的（即便接受进程没有特地接收文件描述符号）。
+	我们定义如下的三个函数来发送和接收文件描述符号，在本节的后面，我们将会展示对于流和套接字的这三个函数的代码。
+	#include "apue.h"
+	int send_fd(int fd, int fd_to_send);
+	int send_err(int fd, int status, const char *errmsg);
+	两者返回：如果成功返回0，如果错误返回1。
+
+	int recv_fd(int fd, ssize_t (*userfunc)(int, const void *, size_t));
+	返回：如果成功返回文件描述符号，如果错误返回负数。
+
+	如果进程（通常是服务进程）想要发送文件描述符号给另外一个进程，那么调用send_fd或者send_err。进程（通常客户进程）如果等待接收文件描述符号则调用recv_fd。
+	函数send_fd通过fd代表的unix域的套接字或者stream pipe来发送文件描述符号"fd_to_send"。
+	我们将要使用s-pipe来引用双向的通信通道，这个通道可以采用streams pipe或者unix域套接字实现。
+	send_err函数使用fd发送errmsg，并且fd后面接着的status状态值必须在范围1到255之间。
+	客户进程调用recv_fd来接收一个文件描述符号。如果所有的过程成功（发送者调用send_fd），那么会返回一个非负数的文件描述符号作为函数的返回值。否则，返回值表示send_err发出的状态(在1到-255区间之间的负数)。另外，如果服务进程发送一个错误的消息，那么客户进程的userfunc函数将会被调用来处理这个消息。userfunc函数的第一个参数是STDERR_FILENO，后面接着的是指向错误消息的指针以及它的长度。userfunc函数的返回值就是写入的字节数目或者表示错误时候的负数。一般来说客户进程会指定一个常用的write函数作为userfunc。
+	我们自己实现了一个这三个函数所使用的协议：为了发送一个文件描述符号，send_fd发送两个字节的0，后面接着实际的文件描述符号。为了发送一个错误，send_err发送错误消息errmsg，后面接着一个字节的0，然后是状态字节的绝对值（从1到255）。函数recv_fd读取s-pipe上面的所有内容直到它遇到一个null字节，任何此刻读取到的字符都会被传递到调用者的userfunc中。recv_fd的下一个字节就是状态字节，如果状态字节是0，那么会传递一个文件描述符号；否则不会接收到文件描述符号（因为基于前面send_fd的协议，如果发送文件描述符号，那么开始0实际就是null，所以相当于一个"空字符串+0+描述符号"；而不发送文件描述符号相当于"错误消息字符串+状态绝对值"）。
+	函数send_err在写错误消息到s-pipe之后调用send_fd函数。如下所示：
+	send_err函数
+	#include "apue.h"
+	/*
+	 * Used when we had planned to send an fd using send_fd(),
+	 * but encountered an error instead. We send the error back
+	 * using the send_fd()/recv_fd() protocol.
+	 */
+	int send_err(int fd, int errcode, const char *msg)
+	{
+	    int     n;
+
+	    if ((n = strlen(msg)) > 0)
+	        if (writen(fd, msg, n) != n)    /* send the error message */
+	            return(-1);
+
+	    if (errcode >= 0)
+	        errcode = -1;   /* must be negative */
+
+	    if (send_fd(fd, errcode) < 0)
+	        return(-1);
+
+	    return(0);
+	}
+
+
+	下面将看到函数send_fd和recv_fd函数的实现。
+
+	将文件描述符号通过基于流的管道进行传递。
+	文件描述符号用两个ioctl命令：I_SENDFD和I_RECVFD，通过streams pipes被交换。发送一个文件描述符号的时候我们设置ioctl的第三个参数为实际的文件描述符号。代码如下：
+	对于streams pipes的send_fd函数
+	#include "apue.h"
+	#include <stropts.h>
+
+	/*
+	 * Pass a file descriptor to another process.
+	 * If fd<0, then -fd is sent back instead as the error status.
+	 */
+	int send_fd(int fd, int fd_to_send)
+	{
+	    char    buf[2];     /* send_fd()/recv_fd() 2-byte protocol */
+
+	    buf[0] = 0;         /* null byte flag to recv_fd() */
+	    if (fd_to_send < 0) {
+	        buf[1] = -fd_to_send;   /* nonzero status means error */
+	        if (buf[1] == 0)
+	            buf[1] = 1; /* -256, etc. would screw up protocol */
+	    } else {
+	        buf[1] = 0;     /* zero status means OK */
+	    }
+
+	    if (write(fd, buf, 2) != 2)
+	        return(-1);
+	    if (fd_to_send >= 0)
+	        if (ioctl(fd, I_SENDFD, fd_to_send) < 0)
+	            return(-1);
+	    return(0);
+	}
+
+	当我们接收一个文件描述符号的时候，ioctl的第3个参数是一个如下strrecvfd结构的指针：
+	struct strrecvfd {
+		int    fd;       /* new descriptor */
+		uid_t  uid;      /* effective user ID of sender */
+		gid_t  gid;      /* effective group ID of sender */
+		char   fill[8];
+	};
+	recv_fd函数从streams pipe中读取信息，直到2字节协议的第一个字节被接收（null字节）。当我们通过I_RECVFD的ioctl命令请求的时候，流头部的读取队列的下一条消息必须是来自I_SENDFD调用的文件描述符号，或者我们获得一个错误。函数代码如下所示：
+	    streams pipe的recv_fd函数
+	#include "apue.h"
+	#include <stropts.h>
+
+	/*
+	 * Receive a file descriptor from another process (a server).
+	 * In addition, any data received from the server is passed
+	 * to (*userfunc)(STDERR_FILENO, buf, nbytes). We have a
+	 * 2-byte protocol for receiving the fd from send_fd().
+	 */
+	int recv_fd(int fd, ssize_t (*userfunc)(int, const void *, size_t))
+	{
+	    int                 newfd, nread, flag, status;
+	    char                *ptr;
+	    char                buf[MAXLINE];
+	    struct strbuf       dat;
+	    struct strrecvfd    recvfd;
+
+	    status = -1;
+	    for ( ; ; ) {
+	        dat.buf = buf;
+	        dat.maxlen = MAXLINE;
+	        flag = 0;
+	        if (getmsg(fd, NULL, &dat, &flag) < 0)
+	            err_sys("getmsg error");
+	        nread = dat.len;
+	        if (nread == 0) {
+	            err_ret("connection closed by server");
+	            return(-1);
+	        }
+	        /*
+	         * See if this is the final data with null & status.
+	         * Null must be next to last byte of buffer, status
+	         * byte is last byte. Zero status means there must
+	         * be a file descriptor to receive.
+	         */
+	        for (ptr = buf; ptr < &buf[nread]; ) {
+	            if (*ptr++ == 0) {
+	                if (ptr != &buf[nread-1])
+	                    err_dump("message format error");
+	                 status = *ptr & 0xFF;   /* prevent sign extension */
+	                 if (status == 0) {
+	                     if (ioctl(fd, I_RECVFD, &recvfd) < 0)
+	                         return(-1);
+	                     newfd = recvfd.fd;  /* new descriptor */
+	                 } else {
+	                     newfd = -status;
+	                 }
+	                 nread -= 2;
+	            }
+	        }
+	        if (nread > 0)
+	            if ((*userfunc)(STDERR_FILENO, buf, nread) != nread)
+	                 return(-1);
+
+	        if (status >= 0)    /* final data has arrived */
+	            return(newfd);  /* descriptor, or -status */
+	    }
+	}
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch17lev1sec4.html
+
+
+

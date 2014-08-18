@@ -1,0 +1,46 @@
+++++++APUE读书笔记-10信号-12sigprocmask函数++++++
+
+
+
+12、sigprocmask函数
+================================================
+	前面说过，一个进程的signal mask是一个信号集合，这个信号集合中的信号是将要发送给这个进程的但是被阻塞了的信号的集合。进程可以检测它的signal mask,也可以修改它的signal mask或者通过下面的sigprocmask函数来一步达到上述两个目的。
+	#include <signal.h>
+	int sigprocmask(int how, const sigset_t *restrict set, sigset_t *restrict oset);
+	这个函数在成功的时候返回0，错误的时候返回1（值一般为-1）。
+	首先，如果参数oset是非空指针，那么当前进程的signal mask会被返回到这个oset上面。
+	第二，如果set参数非空，那么就通过how参数来指定怎样修改当前的信号。关于how参数的可能取值下面已经列出，
+	SIG_BLOCK 使进程的signal mask变成set参数和oset参数的合并。也就是说set指定要增加的signal mask集合。
+	SIG_UNBLOCK 使进程的signal mask变成当前signal mask和set参数指定的signal mask的补集的交集.也就是说，set包含的是我们想要取消阻塞的signal mask。
+	SIG_SETMASK 使进程的当前signal mask被set参数所指的signal mask替换。也就是说set包含的就是新设置的signal mask.
+	这里，SIG_BLOCK是一个"或"操作，SIG_SETMASK是一个赋值操作。同时注意，SIGKILL和SIGSTOP不能被阻塞。
+	如果set参数为空，进程的signal mask不会变化，并且how参数也会被忽略。
+	调用sigprocmask之后，如果有任何非阻塞的信号处于提交状态，那么这些信号中至少有一个会在sigprocmask返回的时候被发送给进程。
+	sigprocmask只是为单线程的进程所定义的，如果操作多线程进程中线程的signal mask,那么有别的函数，以后会讲。
+
+	举例：
+	void pr_mask(const char *str)
+	{
+	    sigset_t    sigset;
+	    int         errno_save;
+
+	    errno_save = errno;     /* 可被信号处理函数调用 */
+	    if (sigprocmask(0, NULL, &sigset) < 0)
+	        err_sys("sigprocmask error");
+
+	    printf("%s", str);
+	    if (sigismember(&sigset, SIGINT))   printf("SIGINT ");
+	    if (sigismember(&sigset, SIGQUIT))  printf("SIGQUIT ");
+	    if (sigismember(&sigset, SIGUSR1))  printf("SIGUSR1 ");
+	    if (sigismember(&sigset, SIGALRM))  printf("SIGALRM ");
+	    /* 省略其他信号 */
+	    printf("\n");
+	    errno = errno_save;
+	}
+	上面的函数会打印调用进程的signal mask中的signal的名字。后面的讲解中可能会调用到这个函数,由于篇幅原因，这里没有列出所有的信号的检测。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec12.html
+
+
+

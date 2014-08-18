@@ -1,0 +1,132 @@
+++++++APUE读书笔记-03文件输入输出（5）++++++
+
+
+
+13、fcntl函数
+================================================
+	fcntl函数用来改变一个已经打开的文件的性质。其声明如下：
+	#include <fcntl.h>
+	int fcntl(int filedes, int cmd, ... /* int arg */ );
+	返回：如果成功，返回值取决于参数cmd；如果错误返回1（其实其值一般应该是-1）。 
+	filedes是文件描述符号，cmd是要进行的操作，arg是操作的参数,不多说了。fcntl函数有五种功能：
+	a.复制一个已有文件描述符（cmd＝F_DUPFD）。
+	b.获得/设置文件描述符标记（cmd=F_GETFD或F_SETFD）。
+	c.获得/设置文件状态标志（cmd=F_GETFL或F_SETFL）。
+	d.获得/设置异步I/O所有权（cmd=F_GETOWN或F_SETOWN）。
+	e.获得/设置记录锁（cmd=F_GETLK,F_SETLK或F_SETLKW）。
+	更多信息参见参考资料。
+	下面的例子，对应的程序以一个文件描述符号作为参数，运行之后，打印相应文件描述符号的文件标记。代码如下：
+	打印制定文件描述符号的文件标记
+	#include "apue.h"
+	#include <fcntl.h>
+	int main(int argc, char *argv[])
+	{
+	
+	    int       val;
+	
+	    if (argc != 2)
+	        err_quit("usage: a.out <descriptor#>");
+	
+	    if ((val = fcntl(atoi(argv[1]), F_GETFL, 0)) < 0)
+	        err_sys("fcntl error for fd %d", atoi(argv[1]));
+	
+	    switch (val & O_ACCMODE) {
+	    case O_RDONLY:
+	        printf("read only");
+	        break;
+	
+	    case O_WRONLY:
+	        printf("write only");
+	        break;
+	
+	    case O_RDWR:
+	        printf("read write");
+	        break;
+	
+	    default:
+	        err_dump("unknown access mode");
+	    }
+	
+	    if (val & O_APPEND)
+	        printf(", append");
+	    if (val & O_NONBLOCK)
+	        printf(", nonblocking");
+	#if defined(O_SYNC)
+	    if (val & O_SYNC)
+	        printf(", synchronous writes");
+	#endif
+	#if !defined(_POSIX_C_SOURCE) && defined(O_FSYNC)
+	    if (val & O_FSYNC)
+	        printf(", synchronous writes");
+	#endif
+	    putchar('\n');
+	    exit(0);
+	}
+
+	运行如下：
+	$ ./a.out 0 < /dev/tty
+	read only
+	$ ./a.out 1 > temp.foo
+	$ cat temp.foo
+	write only
+	$ ./a.out 2 2>>temp.foo
+	write only, append
+	$ ./a.out 5 5<>temp.foo
+	read write
+	这里，在使用O_SYNC标记的时候，会在write同时等待写到磁盘上才返回，这样明显占用了系统时间，但是在ext2系统上不认这个标记。在正常没有O_SYNC的write会写到磁盘缓存上面，所以占用时间少，正常没有O_SYNC的write后面接着一个fsync的话并不是和O_SYNC的write一样了，而是也占用很少的时间，因为在下次新write的时候会刷新之前的缓存，所以在fsync的时候，实际只把很少的一部分数据写到磁盘中了。
+	另外，"5<>temp.foo"表示打开文件temp.foo用于读写，并且其文件描述符号为5。这个语法比较特殊，举几个例子如下（以下例子在ubuntu8.04上面实践）：
+	$touch tempfile
+	$5<>tempfile echo 1111 >&5
+	注意方向不能错，如：$echo 1111 >&5 5<>tempfile是错误的。
+	或者：
+	$exec 5<>tempfile
+	$echo 1111 >&5
+	exec相当于单独执行，之后/dev/fd/里面会有5这个描述符号。
+	之后我们会发现，文件tempfile里面有1111这样的内容了。
+	关闭描述符号：
+	$exec >&5-
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec14.html
+
+
+14、ioctl函数
+================================================
+	ioctl函数可以支持任何的io操作而不仅仅是读和写，有许多终端操作就是用这个函数来实现。ioctl函数声明如下：
+	#include <unistd.h>        /* System V */
+	#include <sys/ioctl.h>     /* BSD and Linux */
+	#include <stropts.h>       /* XSI STREAMS */
+	int ioctl(int filedes, int request, ...);
+	返回：如果错误返回1（其实一般是-1），如果成功返回0，参数中也会存放其它返回值。 
+	由于UNIX/LINUX中对所有内容都看作文件，包括系统的设备，程序中我们将一切资源看做文件，然后以文件的方式操作相应的资源（例如open，write，read，ioctl，close）。一般在特殊文件（如设备文件）对应的驱动中等地方需要实现这个函数，因为许多驱动的功能，不仅仅只是通过普通系统调用中已有的接口（例如read，write等）就能表达的。例如，我们编写一个摄像机的驱动，想要实现播放，暂停，停止等，显然这些操作都是和设备相关的，所以这个时候就在驱动程序中实现这个函数。
+	对于这个函数，参数filedes就表示其所操作的文件描述符号；request表示要操作的命令码（命令码表示某种操作，而其值和具体设备相关，例如上面的摄像机设备，我们可以在驱动中规定一个命令码"PLAY"）；剩下的"..."表示request命令的参数，参数可有可无。这个函数功能是依据文件描述符号所代表的资源而不同，这里不多说了，写设备驱动的时候，这个函数非常重要。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec15.html
+
+
+15、/dev/fd
+================================================
+	比较新的系统都提供名为/dev/fd的目录，其中包含名为 0、1、2等的文件。打开文件/dev/fd/n相当于复制描述符n(假定描述符n是打开的)。所以调用：
+	fd = open("/dev/fd/0", mode);
+	相当于：
+	fd = dup(0);
+	大多数系统忽略所指定的mode，而另外一些则要求mode是所涉及的文件(在这里则是标准输入)原先打开时所使用的mode的子集。例如，若描述符0被只读打开，那么我们也只对fd进行读操作。即使下列调用成功：
+	fd = open("/dev/fd/0", O_RDWR);
+	我们仍然不能对fd进行写操作。某些系统提供路径名/dev/stdin ,/dev/stdout和/dev/stderr。这些相当于/dev/fd/0,/dev/fd/1和/dev/fd/2。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec16.html
+
+
+总结
+================================================
+	本章描述了UNIX系统提供的基本输入输出（I/O）函数。这些函数也经常被称作非缓冲I/O函数，因为，每次read或者write都会发起一次内核的系统调用。通过使用read和write，我们看到了不同I/O大小的时候对读取一个文件的时间的影响（在一定范围内，请求数据越大，读写系统调用被发起的次数越少，导致占用系统时间也减少）。我们也看到了将被写入的数据刷新到磁盘上面的方法，以及它们对应用程序执行效率的影响。
+	当多进程向同一个文件追加内容的时候，以及当多个进程创建同样一个文件的时候，介绍了原子操作。我们也看到了内核内部用来共享打开文件信息的相关数据结构。我们将在后面的章节中，继续谈到这些数据结构。
+	我们也讨论了函数ioctl和函数fcntl。后面第14章的时候，我们会回到这些函数，我们将使用ioctl操作STREAMS I/O系统，使用fcntl来实现记录锁。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec17.html
+
+
+

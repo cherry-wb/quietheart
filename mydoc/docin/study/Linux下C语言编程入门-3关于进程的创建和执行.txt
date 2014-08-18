@@ -1,0 +1,95 @@
+Linux下C语言编程入门-3关于进程的创建和执行
+三、关于进程的创建和执行
+=======================
+1,相关函数
+-------
+#include <unistd.h>;
+pid_t fork();
+当 fork 掉用失败的时候(内存不足或者是用户的最大进程数已到)fork 返回-1,否则 fork 的返回值有重要的作用.对于父进程 fork 返回子进程的 ID,而对于 fork 子进程返回 0.我们就是根据这个返回值来区分父子进程的.
+
+#include <sys/types.h>;
+#include <sys/wait.h>;
+pid_t wait(int *stat_loc);
+pid_t waitpid(pid_t pid,int *stat_loc,int options);
+有时候我们希望子进程继续执行,而父进程阻塞直到子进程完成任务.这个时候我们可以调用 wait 或者 waitpid 系统调用.
+wait导致进程挂起，直到任何一个子进程结束。成功时(因一个子进程结束)wait 将返回子进程的 ID,否则返回-1,并设置全局变量 errno.stat_loc 是子进程的
+退出状态.子进程调用 exit,_exit 或者是 return 来设置这个值. 
+这个返回值如下：
+WIFEXITED:判断子进程退出值是非 0
+WEXITSTATUS:判断子进程的退出值(当子进程退出时非 0?????????.man里面说子进程正常有返回值的时候这个宏返回true).
+WIFSIGNALED:子进程由于有没有获得的信号而退出（即由于信号的原因而退出）.
+WTERMSIG:子进程没有获得的信号号(在 WIFSIGNALED 为真时才有意义).
+waitpid 等待指定的子进程直到子进程返回.如果 pid 为正值则等待指定的进程(pid).如果为 0 则等待任何一个组 ID 和调用者的组 ID 相同的进程.为-1 时等同于 wait 调用.小于-1 时等待任何一个组 ID 等于 pid 绝对值的进程. stat_loc 和 wait 的意义一样. options 可以决定父 进 程 的 状 态 . 可 以 取 两 个 值 WNOHANG : 父 进 程 立 即 返 回 当 没 有 子 进 程 存 在 时 .WUNTACHED:当子进程结束时 waitpid 返回,但是子进程的退出状态不可得到。
+wait等价于：waitpid(-1, &status, 0);
+
+#include <unistd.h>;
+int execl(const char *path,const char *arg,...);
+int execlp(const char *file,const char *arg,...);
+int execle(const char *path,const char *arg,...);
+int execv(const char *path,char *const argv[]);
+int execvp(const char *file,char *const argv[]):
+父进程创建子进程后,子进程一般要执行不同的程序我们可以使用系统调用 exec 族.其具体的含义可以等用到的时候或者有时间的时候在研究。
+
+2,举例1
+-------
+/*头文件*/
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/wait.h>;
+#include <stdio.h>;
+#include <errno.h>;
+#include <math.h>;
+void main(void)
+{
+	/*相关定义*/
+	pid_t child;
+	int status;
+
+	printf("This will demostrate how to get child status\n");
+	if((child=fork())==-1)
+	{/*创建子进程失败*/
+		printf("Fork Error :%s\n",strerror(errno));
+		exit(1);
+	}
+	else if(child==0)
+	{/*创建子进程成功,这里是子进程执行的代码段，父进程不会执行到这里。如果子进程转而执行其他的程序，需要用excel*/
+		int i;
+		printf("I am the child:%ld\n",getpid());
+		for(i=0;i<1000000;i++) sin(i);
+		i=5;
+		printf("I exit with %d\n",i);
+		exit(i);/*子进程退出,退出的返回值存放到了wait的参数(status)里面*/
+	}
+	while(((child=wait(&status))==-1)&(errno==EINTR));/*阻塞，wait调用获取子进程返回值到status中；EINTR表示系统调用阻塞时，被信号中断*/
+	if(child==-1)
+		printf("Wait Error:%s\n",strerror(errno));/*wait调用失败*/
+
+	else if(!status)
+		printf("Child %ld terminated normally return status is zero\n",child);/*子进程返回0*/
+	else if(WIFEXITED(status))/*子进程退出值是非0,WIFEXITED在子进程正常返回的情况返回值，这时它返回true*/
+		printf("Child %ld terminated normally return status is %d\n",child,WEXITSTATUS(status));
+	else if(WIFSIGNALED(status))/*如果子进程由于收到信号而结束*/
+		printf("Child %ld terminated due to signal %d znot caught\n",child,WTERMSIG(status));
+}
+
+3,举例2
+-------
+讲述关于守护进程的创建.
+后台进程的创建思想: 首先父进程创建一个子进程.然后子进程杀死父进程,信号处理所有的工作由子进程来处理.
+
+/*****代码片段举例****/
+...
+pid_t child;
+if((child=fork())==-1)
+{/*创建子进程*/
+	printf("Fork Error:%s\n",strerror(errno));
+	exit(1);
+}
+else if(child>0)
+	while(1);/*父进程进入死循环*/
+if(kill(getppid(),SIGTERM)==-1)
+{/*杀死父进程*/
+	printf("Kill Parent Error:%s\n",strerror(errno));
+	exit(1);
+}
+...

@@ -1,0 +1,136 @@
+++++++APUE读书笔记-12线程控制-04同步属性++++++
+
+
+
+4、同步属性
+================================================
+	和线程属性类似，同步对象也有同步属性。在这里，将要介绍mutexes, readerwriter locks, 和 condition variables的相关属性。
+	（1）Mutex属性
+	我们使用pthread_mutexattr_init函数来初始化pthread_mutexattr_t结构，pthread_mutexattr_destroy来反初始化结构。
+	#include <pthread.h>
+	int pthread_mutexattr_init(pthread_mutexattr_t *attr);
+	int pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
+	两者在成功的时候都返回0，失败的时候返回错误号码。
+	函数pthread_mutexattr_init会使用默认的值来初始化这个Mutex（互斥信号量）属性结构,这里有两个重要的属性就是process-shared属性和type属性。在POSIX.1中，process-shared属性是可选的，可以在编译期间检查_POSIX_THREAD_PROCESS_SHARED来看是否支持这个选项或者运行期间调用_SC_THREAD_PROCESS_SHARED 参数的sysconf函数来进行检查。尽管POSIX标准没有要求这个属性，但是Single UNIX Specification 的XSI扩展需要支持这个选项。
+	在一个进程中，多个线程可以访问同一个同步对象，这个行为是默认的，这个时候，process-shared属性被设置成PTHREAD_PROCESS_PRIVATE.
+	我们后面将会看到会有一种机制允许每个独立的进程把同一个范围的内存映射到他们自己独立的地址空间。通过多个进程之间共享数据经常会要求同步，类似在多个线程之间访问共享数据一样。如果process-shared的属性被设置成PTHREAD_PROCESS_SHARED，那么从一个共享区域分配的互斥量将会用于在多个进程之间进行同步。
+
+	我们可以使用pthread_mutexattr_getpshared函数来获取process-shared属性对应的pthread_mutexattr_t结构,我们可以通过函数pthread_mutexattr_setpshared来更改process-shared属性。
+	#include <pthread.h>
+	int pthread_mutexattr_getpshared(const pthread_mutexattr_t * restrict attr, int *restrict pshared);
+	int pthread_mutexattr_setpshared (pthread_mutexattr_t *attr, int pshared);
+	两者成功的时候都返回0，失败的时候返回错误号码。
+	process-shared属性被设置为PTHREAD_PROCESS_PRIVATE的时候，线程库会提供非常高效的mutex实现，这也是多线程程序中的默认情况。这样，线程库可以限制实现代价比较大的在进程之间共享互斥信号量的情况。
+
+	互斥信号量的属性类型控制这互斥信号量的特性。POSIX.1定义了四种类型。PTHREAD_MUTEX_NORMAL类型是一个标准的互斥信号量，这样的类型不会作任何的特定错误检查或者死锁检查。PTHREAD_MUTEX_ERRORCHECK类型的互斥信号量提供错误的检查。
+	PTHREAD_MUTEX_RECURSIVE类型的互斥量允许同样一个线程多次上锁而不用首先解锁。递归互斥两维护一个锁数目，并且它会一直持有锁，一直到解锁次数达到了上锁的次数。所以如果你对一个递归类型的互斥量进行锁定两次，但是解锁一次，这个互斥量仍然处于被锁状态，知道第二次解锁。
+	最后，PTHREAD_MUTEX_DEFAULT类型用来请求特定的默认含义，允许系统实现把这个映射成为其他的类型。例如在Linux上面，这个类型就被映射成普通互斥量类型。
+	本节给出了一个表，这个表列举出了四种类型的互斥量分别在：“本线程没有持有被锁住的锁，但是调用了解锁”，“解锁一个已经被解开的锁”，“没有释放锁的前提下再次加锁”这三种情况下的行为。大致描述如下，具体可以参照参考资料中的内容。
+	PTHREAD_MUTEX_NORMAL:解锁不是自己持有的锁（未定义其行为），重复解锁（未定义其行为），重复加锁（会死锁）。
+	PTHREAD_MUTEX_ERRORCHECK:解锁不是自己持有的锁（返回错误），重复解锁（返回错误），重复加锁（返回错误）。
+	PTHREAD_MUTEX_RECURSIVE:解锁不是自己持有的锁（返回错误），重复解锁（返回错误），重复加锁（可以）。
+	PTHREAD_MUTEX_DEFAULT:解锁不是自己持有的锁（未定义行为），重复解锁（未定义行为），重复加锁（未定义行为）。
+
+	我们可以使用pthread_mutexattr_gettype来获得互斥量类型的属性，可以使用pthread_mutexattr_settype来改变互斥量类型的属性。
+	#include <pthread.h>
+	int pthread_mutexattr_gettype(const pthread_mutexattr_t * restrict attr, int *restrict type);
+	int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+	两者成功返回0，失败返回错误号码。
+	记得前面说过，需要使用一个互斥量来保护和一个条件变量相关联的条件。在阻塞这个线程之前，pthread_cond_wait 和 pthread_cond_timedwait函数释放这个和条件相关联的互斥量。这就允许其他线程获得这个互斥量，改变条件，释放互斥量，再通知给条件变量信号。因为必须持有互斥量以改变条件，所以这里使用一个递归互斥量并不是一个好的办法。如果一个递归互斥量多次被上锁，然后在调用pthread_cond_wait的时候使用了，那么这个条件永远不会被满足，因为pthread_cond_wait的解锁行为并没有释放互斥量。
+	当你需要把一个存在的单线程下的接口修改用于多线程环境下但是却由于考虑兼容性的限制不能修改你的函数的接口的时候，递归递归互斥量就很有用了。然而，使用递归锁也是不太好的方法，最好在没有其它的解决方法的时候使用递归锁。
+
+	例子：
+	下面就给出了一个使用递归锁解决并发问题的例子。这里func1和func2是库中的函数，由于存在使用这函数的程序，而我们无法改变这样的程序所以我们不能改变函数的接口(可以改变函数的实现)。
+
+    +------+
+    | main |
+    +------+
+       .
+       .              +-------+
+    func1(x) -------->| func1 |
+       .              +-------+
+       .     pthread_mutex_lock(x->lock)
+       .                  .
+       .                  .
+       .                  .
+       .               func2(x) -----------------+
+       .                  .                      |
+       .                  .                      |
+       .                  .                      |
+       .    pthread_mutex_unlock(x->lock)        |
+       .                                         |
+       .                                     +---v---+
+   func2(x) -------------------------------->| func2 |
+                                             +-------+
+                                     pthread_mutex_lock(x->lock)
+                                                 .
+                                                 .
+                                                 .
+                                    pthread_mutex_unlock(x->lock)
+
+	这个图形描述的意义大概就是：如果func1和func2都操作某一个数据结构，同时可能会有多个线程调用这两个函数，那么func1和func2函数在操作这个数据结构的时候必须要进行上锁。而如果func1调用了func2而互斥量却是非递归的话，就会在一个线程中造成死锁（即还没有解锁就对同一个信号量上锁两次）。当然，我们可以通过这种方式来避免使用递归锁：(func1中)在调用func2之前释放锁，在func2返回之后重新获取锁。但是这却在func1函数中打开了一个时间窗口，期间可能会有其他的线程将互斥量的控制权“抢”走,这样func1还在执行中就失去了互斥量。
+	下面给出来一种不用递归互斥量的情况。
+
+    +------+
+    | main |
+    +------+
+       .
+       .              +-------+
+    func1(x) -------->| func1 |
+       .              +-------+
+       .     pthread_mutex_lock(x->lock)
+       .                  .
+       .                  .
+       .                  .
+       .           func2_locked(x)-----------------------------------------+
+       .                  .                                                |
+       .                  .                                                |
+       .                  .                                                |
+       .    pthread_mutex_unlock(x->lock)                                  |
+       .                                                                   |
+       .                                     +-------+                     |
+   func2(x) -------------------------------->| func2 |                     |
+                                             +-------+                     |
+                                     pthread_mutex_lock(x->lock)           |
+                                                 .                  +------v-------+
+                                           func2_locked(x) -------->| func2_locked |
+                                                 .                  +--------------+
+                                    pthread_mutex_unlock(x->lock)
+
+	我们通过使用一个“私有”的func2_locked函数使得func2和func1的接口不用被修改，并且也不用使用递归锁了。func2的内容就仅仅是上锁->调用func2_locked->解锁，而func1原来调用func2的地方改成调用func2_locked，func2_locked只用来操作数据。具体参见图示。这样的结果是，不会出现因原来func1调用func2导致同一个线程上锁两次的情况，因为把func2中"上锁的部分"和"实际操作的部分"分离了，func1实质调用func2只是需要其"实际操作的部分"也就是func2_locked,而不需要其"上锁的部分"，根据这样修改func1就避免了那一次没有必要的加锁。
+	提供一个函数的上锁版本以及非上锁版本这在简单情况下经常好用。在更复杂的情况中，例如当一个库函数需要调用其外的某个函数，然后这个函数利用回调机制又调用到了这个库，这时候我们就需要依赖递归锁了。
+
+	参考资料中也给出了一种使用递归互斥量的代码的情况，内容有点复杂，这里不详细列举了。具体可以参考其中的内容，加深对递归互斥量的理解。
+
+	（2）读写锁属性
+	和互斥量类似，读写锁也具有一些类似的属性。我们使用pthread_rwlockattr_init来初始化一个pthread_rwlockattr_t结构，使用pthread_rwlockattr_destroy来反初始化这个结构。
+	#include <pthread.h>
+	int pthread_rwlockattr_init(pthread_rwlockattr_t *attr);
+	int pthread_rwlockattr_destroy (pthread_rwlockattr_t *attr);
+	两个函数在成功的时候都返回0，失败的时候返回错误的号码。
+
+	读写锁只提供process-shared属性，这个属性和互斥量的process_shared属性的功能是一样的。也有一对函数来获取或者设置这个属性，如下：
+	#include <pthread.h>
+	int pthread_rwlockattr_getpshared(const pthread_rwlockattr_t * restrict attr, int *restrict pshared);
+	int pthread_rwlockattr_setpshared (pthread_rwlockattr_t *attr, int pshared);
+	这两个函数在成功的时候都返回0，在失败的时候返回错误号码。
+	虽然POSIX只为读写锁定义了一个属性，但是我们在系统的实现上也可以定义其他的非标准属性。
+
+	（3）条件变量属性
+	类似互斥量和读写锁，条件变量也有相应的属性，并且也有一对函数来初始化和反初始化相应的条件属性结构变量。
+	#include <pthread.h>
+	int pthread_condattr_init(pthread_condattr_t *attr);
+	int pthread_condattr_destroy(pthread_condattr_t *attr);
+	两个函数成功的上返回0，失败的时候返回错误号码。
+
+	和其他的同步机制类似，条件变量也具有process-shared属性,以及相应的设置和获取函数。
+	#include <pthread.h>
+	int pthread_condattr_getpshared(const pthread_condattr_t * restrict attr, int *restrict pshared);
+	int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
+	两个函数成功的时候都返回0，失败的时候都返回错误号码。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch12lev1sec4.html
+
+
+

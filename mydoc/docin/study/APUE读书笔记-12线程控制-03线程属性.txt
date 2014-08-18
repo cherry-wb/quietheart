@@ -1,0 +1,97 @@
+++++++APUE读书笔记-12线程控制-03线程属性++++++
+
+3、线程属性
+================================================
+	在前面我们使用pthread_create函数的时候，我们都在其pthread_attr_t参数的位置传入了一个NULL指针。我们可以使用一个pthread_attr_t结构变量来修改线程的默认属性，在创建线程的时候将属性和线程相关联。
+	#include <pthread.h>
+	int pthread_attr_init(pthread_attr_t *attr);
+	int pthread_attr_destroy(pthread_attr_t   *attr);
+	两个函数当成功的时候返回0，失败的时候返回错误号码。
+	我们使用pthread_attr_init函数来初始化pthread_attr_t结构，调用完pthread_attr_init函数之后，pthread_attr_t将会包含所有线程具有的默认属性。如果想要修改特定的属性，我们可以调用相应的特定函数后面会对这些函数进行讲解。
+	我们使用pthread_attr_destroy来反初始化一个pthread_attr_t结构，如果pthread_attr_init为属性对象分配了一些动态的空间，那么pthread_attr_destroy将会把这些内存释放。另外pthread_attr_destroy会把属性对象初始化成一个非法的值，这样如果错误地使用了它，那么pthread_create将会返回错误。
+	pthread_attr_t属性对应用程序来说是封装好了的，应用程序不需要知道这个结构的内部是如何实现的，这提高了程序的可移植性质。POSIX.1定义了一些独立的函数来获取或者设置这些属性。
+	参考资料中列出了POSIX.1定义的一些线程的属性，POSIX.1也定义了一些使用real-time线程选项时候的额外属性，但是这里不对它们进行讨论。资料中也列出了那些属性在那些平台上面是可用的以及在哪些平台上可以通过一些废弃的接口来进行访问等等，下面只列出这些属性以及含义，具体请参考参考资料。
+	detachstate:这个属性描述线程是否处于detached状态。
+	guardsize:线程栈结尾哨兵缓存的字节大小。
+	stackaddr:线程栈的最低地址。
+	stacksize:线程栈的字节大小。
+
+	前面我们介绍了线程的detached的概念，如果我们不关心已经存在的线程的结束状态，那么我们可以调用pthread_detach函数让操作系统在线程结束的时候回收线程所占有的资源。
+	如果我们在创建线程的时候就知道我们对线程的结束状态不关心，那么我们可以通过修改线程属性结构pthread_attr_t的detachstate属性（成员），让线程在启动的时候就处于detached状态。我们可以通过pthread_attr_setdetachstate函数来修改线程的属性，可以设置成两种值：
+	(a)PTHREAD_CREATE_DETACHED表示可以以detached的状态启动一个线程;
+	(b)PTHREAD_CREATE_JOINABLE表示正常启动一个线程，这样线程结束时应用程序可以获取线程的终止状态。
+
+	#include <pthread.h>
+	int pthread_attr_getdetachstate(const pthread_attr_t *restrict attr, int *detachstate);
+	int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+	两个函数成功的时候都返回0，失败的时候返回错误号码。
+	我们可以通过调用pthread_attr_getdetachstate来获取线程当前的detached状态，获取的状态存放在第二个整数指针的参数里面，它的值取决于给定的pthread_attr_t结构，可以为PTHREAD_CREATE_DETACHED或者PTHREAD_CREATE_JOINABLE。
+
+	举例：
+	一个创建deatched的线程的函数的例子：
+	#include "apue.h"
+	#include <pthread.h>
+
+	int makethread(void *(*fn)(void *), void *arg)
+	{
+		int             err;
+		pthread_t       tid;
+		pthread_attr_t  attr;
+
+		err = pthread_attr_init(&attr);
+		if (err != 0)
+			return(err);
+		err = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		if (err == 0)
+			err = pthread_create(&tid, &attr, fn, arg);
+		pthread_attr_destroy(&attr);
+		return(err);
+	}
+
+	注意，我们忽略了从pthread_attr_destroy的返回值。在这个case里面，我们对线程的属性做了适当的初始化，所以pthread_attr_destroy没有失败。虽然如此，但是如果真的失败了，那么清理的工作会很困难：我们需要首先析构我们刚刚创建的线程，这个线程很可能已经运行了，并且和当前的函数是异步执行的。通过忽略pthread_attr_destroy的错误返回，最差的情况就是如果pthread_attr_init分配了任何的内存那么会泄露一小部分内存。但是如果pthread_attr_init成功地初始化了线程的属性之后pthread_attr_destroy没有成功地清理，那么我们没有任何方法可以恢复，因为属性的结构对于应用程序来说是不可见的。总之，只有pthread_attr_destroy这个接口可以清理这个结构，要是它也失败了，那就没有办法了。
+	支持线程栈属性对于POSIX的操作系统来说是可选的，但是对于XSI的系统来说确实需要的。在编译的期间，你可以检查_POSIX_THREAD_ATTR_STACKADDR和_POSIX_THREAD_ATTR_STACKSIZE标号来确定你的线程是否支持这些堆栈属性，如果有相应的定义，那么线程就支持相应的属性。也可以在运行期间通过传入参数_SC_THREAD_ATTR_STACKADDR和_SC_THREAD_ATTR_STACKSIZE对sysconf函数进行调用来进行检测。
+
+	POSIX.1定义了一些可以操作堆栈属性的接口，pthread_attr_getstackaddr和pthread_attr_setstackaddr是两个比较旧的函数，在Single UNIX Specification 3中已经标记它们为作废，最好不要使用它们了，应该使用pthread_attr_getstack和pthread_attr_setstack做为替代的方法。这样可以消除一些旧接口的二义性。
+	#include <pthread.h>
+	int pthread_attr_getstack(const pthread_attr_t *restrict attr, void **restrict stackaddr, size_t *restrict stacksize);
+	int pthread_attr_setstack(const pthread_attr_t *attr, void *stackaddr, size_t *stacksize);
+	两个函数成功的时候返回0，失败的时候返回错误号码。
+	这两个函数可以用来操作stackaddr和stacksize的线程属性。
+	在进程中的虚拟地址空间是固定的，因为只有一个堆栈所以大小一般不会存在问题。但是如果在线程的环境下，所有的线程共享同一个虚拟地址空间。如果你的应用程序使用了过多的线程，那么这些线程的总共的堆栈大小可能会超过总共的虚拟地址空间的大小，这个时候你可能需要减小你的线程的默认堆栈的大小。另外，如果你的线程调用函数分配了很大的自动化变量或者调用函数的堆栈祯层次很深，那么你可能会需要比默认堆栈大小更多的堆栈空间。
+	如果你的进程会由于线程堆栈消耗光地址空间，那么可以使用malloc或者mmap来分配空间做为备选的堆栈空间，并且使用pthread_attr_setstack设置线程的堆栈地址为你刚才创建的空间的地址。通过参数stackaddr设置的地址必须是内存中可以访问的地址中的最低地址，并且根据处理器的架构进行了相应的对齐。
+	stackaddr属性被定义为堆栈的内存最低地址，但是不一定是堆栈的最开始地址，因为如果给定的处理器结构的堆栈增长方向是从高地址向低地址增长的话stackaddr属性表示的就是堆栈的末尾而不是开始。
+	原来的pthread_attr_getstackaddr和pthread_attr_setstackaddr的一个缺陷就是，stackaddr是无法确定的，它可能会被解释为堆栈的起始或者被堆栈使用的最低内存地址.如果堆栈增长方向是从高向低增长的并且stackaddr参数指向的是内存的低地址，这时候你需要知道堆栈的大小来确定堆栈的起始位置。而替代它们的pthread_attr_getstack和pthread_attr_setstack就解决了这个问题。
+
+	应用程序可以使用pthread_attr_getstacksize和pthread_attr_setstacksize来获取和设置堆栈的大小。
+	#include <pthread.h>
+	int pthread_attr_getstacksize(const pthread_attr_t *restrict attr, size_t *restrict stacksize);
+	int pthread_attr_setstacksize(pthread_attr_t *attr , size_t stacksize);
+	pthread_attr_setstacksize函数可以用来改变默认的堆栈大小，并且我们也不用亲自处理线程堆栈的空间分配问题。
+
+	guardsize线程属性控制线程结尾的扩展内存的大小，保护堆栈溢出。默认被设置为PAGESIZE字节。我们可以设置guardsize线程属性为0来禁止这个特性：即没有guardbuffer.当然，如果我们改变了线程的stackaddr属性，那么系统假设我们会自己管理我们的堆栈，并且禁止guard缓存，这就像我们已经将guardsize线程属性设置成0一样。
+	#include <pthread.h>
+	int pthread_attr_getguardsize(const pthread_attr_t *restrict attr, size_t *restrict guardsize);
+	int pthread_attr_setguardsize(pthread_attr_t *attr , size_t guardsize);
+	如果线程的guardsize属性被修改了，那么操作系统会自动对它们“向上取整”设置为页大小的整数倍。如果线程的堆栈指针溢出到guard区域，那么应用程序将会接受到错误，可能会伴随这一个信号。
+	Single UNIX Specification定义了一些其他的可选的线程属性作为real-time线程选项的一个部分，我们这里不会讨论它们。
+
+	更多的线程属性
+	线程还有许多在pthread_attr_t结构之外的线程属性：
+	(a)取消状态(后面讲)
+	(b)取消类型(后面讲)
+	(c)并发度
+
+	并发度控制用户层线程映射的底部的内核线程或者进程的数目。如果一个实现其用户线程和内核级线程映射关系是一对一的，那么改变并发程度并没有什么效果（因为可能所有的用户级的线程被调度了???）。然而，在内核线程或者进程的上面如果映射了多个用户线程，那么我们可能就能够通过提高在一段时间内用户层线程的数目来提高性能。函数pthread_setconcurrency可以提示系统使用需要的并发度。
+	#include <pthread.h>
+	int pthread_getconcurrency(void);
+	返回：当前的并发度。
+	int pthread_setconcurrency(int level);
+	如果成功返回0，如果失败返回错误号码。
+	函数pthread_getconcurrency返回当前并发度，如果操作系统控制并发程度（也就是说没有之前的pthread_setconcurrency调用），那么这个函数将会返回0。
+	通过pthread_setconcurrency来指定的并发度，实际只是给操作系统的一个提示。我们不能保证设置的并发度一定会被采纳,只是告诉操作系统应用程序想要采用除了0之外的其他并发度。所以，应用程序也可以通过调用参数为0的pthread_setconcurrency来取消之前用非零参数对它的调用。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch12lev1sec3.html
+
+
+

@@ -1,0 +1,53 @@
+++++++APUE读书笔记-06系统数据文件和信息-02passwd文件++++++
+
+2、passwd文件
+================================================
+	Unix的用户数据库文件，描述的数据项包含许多字段，具体参考给出的参考网址。
+	从前用户数据库文件就存放在/etc/passwd中,文件的每一行就表示了一个数据项，其中包含各种字段，例如用户名，用户id,等等。大体上每个数据项对应系统中的每一个用户，在第1章2节处给出了一个数据项内容的例子。
+	对于数据项的字段需要注意几点：
+	a)一般都有一个名称为root用户，这个用户的ID是0，这个用户是超级用户。
+	b)密码域只是一个单个的字母(x)，只是为了占位用的。以前是密码但是有安全隐患，现在把密码存放在了其他的地方。
+	c)有些域可以为空，如果密码域为空则表示这个用户没有密码。
+	d)shell字段（通常是最后一个字段），指明了用户登录的时候执行的shell程序，一般为/bin/sh,这里需要注意的是squid把/dev/null作为登录的shell,这样显然是无法登录的，目的就是为了防止以用户squid来登录。
+	有许多服务程序它们的守护进程都有各自的用户id,以帮助执行服务，squid用户就是用于执行squid 代理缓冲的进程而设置的。除了使用/dev/null之外，也可以指定其他的东西来防止用户登录系统，例如/bin/false,/bin/true,等等。
+	e)nobody用户用于允许用户以一个用户id（例如UId=65534,Gid=65534）来登录系统，但是没有权限。它们可以访问的文件应该是全世界都可以读写的文件，一般来说没有这样的文件。
+	f)有些系统提供了一个finger命令来读取passwd中的comment域，这个域的每项内容用','来分割。
+	有些系统提供了vipw命令，这个命令的作用是编辑passwd，group等相关文件。并且在编辑的时候可以保持与它们相关的其他文件的内容的一致，这和使用一些类似的图形工具来进行编辑的效果是一样的。
+
+	posix.1定义了两个可以从passwd文件中获取数据项的函数:
+	struct passwd *getpwuid(uid_t uid);
+	struct passwd *getpwnam(const char *name);
+	getpwuid在在ls将文件索引节点中的user id映射成为登录的用户名称的时候会被用到。getpwnam在我们输入用户名称时候login程序会用到。
+	两个函数,如果运行失败了，返回NULL;成功之后都返回一个指向passwd结构的指针，这个指针内容是一个函数内部的静态变量，所以我们每次调用这两个函数的时候都会导致这个指针中的内容被后来的调用所覆盖。
+
+	如果想要遍历passwd文件中的所有内容，那么使用如下的函数：
+	#include <pwd.h>
+	struct passwd *getpwent(void);
+
+	void setpwent(void);
+	void endpwent(void);
+	这三个函数不是posix中的，而是Single Unix Specification中的XSI定义的，一般的系统都支持这个功能。
+	函数getpwent如果运行失败了，返回NULL;成功之后返回一个passwd指针。返回的指针指向的是一个静态变量，每次调用其值都会被修改，每次调用getpwent都会返回下一条passwd记录。这个函数在第一次调用的时候会自动打开passwd文件，但是使用完了之后我们需要使用endpwent来关闭相应的文件。
+	函数setpwent实现的是回滚功能，使用它之后，会回滚到第一个记录。getpwent会返回第一记录了。
+	函数endpwent用来在使用完passwd之后关闭相应的文件。
+	如果想要从最开始遍历passwd的话，例如如果实现getpwname，这三个函数的调用次序一般大致如下：
+	struct passwd *getpwnam(const char *name)
+	{
+		struct passwd  *ptr;
+		setpwent();
+		while ((ptr = getpwent()) != NULL)
+		{
+			if (strcmp(name, ptr->pw_name) == 0)
+			{
+				break;
+			}
+		}
+		endpwent();
+
+	}
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec2.html
+
+
+

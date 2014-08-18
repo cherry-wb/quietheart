@@ -1,0 +1,12 @@
+++++++APUE读书笔记-14高级输入输出-01简介++++++
+
+
+1、简介
+================================================
+	这一章描述了大量的函数和内容，它们涉及到高级的I/O操作：非阻塞I/O，记录锁，System V流，多I/O(select和poll函数相关的内容)，readv和writev函数，内存映射I/O（关于mmap）。我们需要在后面描述进程内部通信以及许多例子的时候涉及到这些内容。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec1.html
+
+
+

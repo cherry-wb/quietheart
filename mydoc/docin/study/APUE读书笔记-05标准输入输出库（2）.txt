@@ -1,0 +1,79 @@
+++++++APUE读书笔记-05标准输入输出库（2）++++++
+
+
+
+3、标准输入、标准输出和标准错误
+================================================
+	有三个重要的流：stdin,stdout,stderr表示标准输入，输出和错误流，它们对应的文件描述符号是：STDIN_FILENO,STDOUT_FILENO,和STDERR_FILENO.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec3.html
+
+
+4、关于库函数和buffer
+================================================
+	使用标准输入输出（Standard I/O）库函数进行操作的目的就是为了使用最小数目的的read和write系统调用(通过自动管理设置多大的缓存等等)。Standard I/O一般选择合适的大小来分配缓存。可能是BUFSIZ常量的值(在<stdio.h>中定义)，也可能是stat结构中的st_blksize成员。
+
+（1）三种类型的缓存
+	a)Fully Buffered.在这种情况下当stand i/o的缓存被填满的时候才会发生i/o.一般使用standard i/o操作磁盘上面的文件的时候使用的是这种类型的buffer.
+这里需要注意在UNIX环境中，刷新（flush）这个术语有两种意思。在标准I/O库方面，刷新意味着将缓存中的内容写到磁盘上（该缓存可以只是局部填写的）。在终端驱动程序方面（例如在第11章中所述的tcflush函数），刷新表示丢弃已存在缓存中的数据。这里的刷新（flush）是指标准I/O缓存的写操作。缓存可由标准I/O例程自动地刷新（例如当填满一个缓存时） ，或者可以调用函数fflush刷新一个流。
+	b)Line Buffered.在这种情况下，当输入或者输出的时候遇到了一个换行符号的时候才会发生i/o.一般终端的标准输入和标准输出会用到这种类型的缓存。
+	对于这种Line Buffered,需要注意的是：Line Buffer的缓存大小是固定的，当遇到换行符号之前缓存被填满了的时候，也会发生i/o。还有一个就是：当从一个unbuffer的方式进行请求输入的时候；以及当从Line Buffered请求输入的时候；这两种情况下也都会刷新(flushed)行缓存输出的缓存。
+	c)Unbuffered.standard i/o不会缓存字符。一般标准错误流会使用这种类型的缓存，这样可以保证信息尽可能快地出现。
+
+	ISO C规定：
+	（a）standard input /output 当引用的不是交互式的设备的时候，是fully buffered.
+	（b）standard error一定不能是fully buffered.
+	但是，上面的规定却不是非常确定的，一般而言：
+	（a）standard error是unbuffered.
+	（b）其他的stream如果它们引用的是terminal设备，那么就是line Buffered；否则是fully buffered.
+
+（2）设置缓存
+	如果不是用默认的缓存类型，有两个可以设置缓存的函数：
+	#include <stdio.h>
+	void setbuf(FILE *restrict fp, char *restrict buf);
+	int setvbuf(FILE *restrict fp, char *restrict buf, int mode, size_t size);
+	这两个函数必须在stream被open之后，并且任何i/o操作之前，被调用。
+
+	使用setbuf我们可以设置和取消buffer.如果设置buffer,指向buf的指针的数据的大小必须是BUFSIZ,一般这样stream就是fully buffered.但是如果stream是和terminal相关联的也有些系统会把buffered设置为line buffered的。如果取消buffer,那么buf参数是NULL的。
+
+	使用setvbuf,我们可以精确地指定我们想要的buffer类型。我们通过modde参数来进行指定：
+	_IOFBF:表示fully buffered.
+	_IOLBF:表示line buffered.
+	_IONBF:表示unbuffered.
+	如果我们指定为unbuffered,那么buf和size参数会被忽略.
+	如果指定了fully buffered或者line buffered那么:我们可以通过buf和size来设置缓存和大小。如果这时候的buf参数是NULL那么standio 会自动分配一个合适的大小，例如BUFSIZ.
+	注意，你需要保证在stream closed的时候，buf是存在的。如果我们自行指定分配的buffer是一个函数内部的局部变量，我们需要在这个函数返回之前把这个stream给closed了，另外，因为某些实现使用这个buffer的一部分做为记录的空间，所以我们存放在这个buffer中的数据应该小于它的实际大小。一般我们应该让系统自己选择分配合适的缓存和大小。
+	有些C库使用stat结构的st_blksize作为最优输入输出缓存大小，通过后面的讨论我们能够看出，GNU C库就是使用这个方法。
+
+				关于setbuf和setvbuf函数
++--------------------------------------------------------------------------------------------------------+
+| Function |  mode  |    buf    |          Buffer and length           |        Type of buffering        |
+|----------+--------+-----------+--------------------------------------+---------------------------------|
+|          |        | non-null  | user buf of length BUFSIZ            | fully buffered or line buffered |
+|setbuf    |        |-----------+--------------------------------------+---------------------------------|
+|          |        | NULL      | (no buffer)                          | unbuffered                      |
+|----------+--------+-----------+--------------------------------------+---------------------------------|
+|          |        | non-null  | user buf of length size              |                                 |
+|          |_IOLBF  |-----------+--------------------------------------|fully buffered                   |
+|          |        | NULL      | system buffer of appropriate length  |                                 |
+|          |--------+-----------+--------------------------------------+---------------------------------|
+| setvbuf  |        | non-null  | user buf of length size              |                                 |
+|          |_IOFBF  |-----------+--------------------------------------|line buffered                    |
+|          |        | NULL      | system buffer of appropriate length  |                                 |
+|          |--------+-----------+--------------------------------------+---------------------------------|
+|          | _IONBF | (ignored) | (no buffer)                          | unbuffered                      |
++--------------------------------------------------------------------------------------------------------+
+
+	我们需要注意，如果我们以一个函数中的自动变量为标准输入输出分配缓存，那么我们需要在返回函数之前关闭流。另外，有些实现使用这个缓存的部分内容作为内部索引之用，所以实际存放于缓存中的数据会比缓存的大小要小。一般来说，我们让系统自己选择缓存大小，以及自动分配缓存。这样，当我们关闭流的时候，标准I/O库会自动释放缓存。
+	我们可以用fflush函数将流刷新，其声明如下：
+	#include <stdio.h>
+	int fflush(FILE *fp);
+	返回：如果成功返回0，如果错误返回EOF。
+	fflush会导致在stream中没有被written的数据被提交到kernel中去。特别地，如果fp为NULL，那么这个函数会导致所有的输出流被刷新。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec4.html
+
+
+

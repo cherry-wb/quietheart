@@ -1,0 +1,62 @@
+++++++APUE读书笔记-09进程关系（04）++++++
+
+
+
+4、进程组ID
+================================================
+	除了进程ID,进程还有组ID.进程组是一个或者多个进程的集合，通常和相同的job相互关联,job从同样的终端接收信号。每个进程有唯一的进程组id,进程组id类似进程id是一个正数可以存放在pid_t中。
+	函数getpgrp返回调用进程的进程组id。如下：
+	#include <unistd.h>
+	pid_t getpgrp(void);
+	原来BSD体系的系统getpgrd函数有一个pid参数，会返回对应那个pid进程id的进程所在的组。Single UNIX Specification定义了getpgid函数作为extension,用来模拟这个函数。
+	#include <unistd.h>
+	pid_t getpgid(pid_t pid);
+	如果传入的参数是0,那么返回调用进程的组id.(这和没有参数的getpgid调用一样)
+
+	进程组leader可以创建一个进程组，可以在组内创建一个进程，然后终止退出。只要进程组内有进程，无论进程组leader是否存在，进程组也都会存在。组内最后一个进程可以终止，也可以加入一个其它的进程组。
+	通过调用如下函数创建或者加入一个已经存在的进程组：
+	#include <unistd.h>
+	int setpgid(pid_t pid, pid_t pgid);
+	函数正确运行的时候，返回0；错误的时候返回1（其值一般为-1）。
+	函数会将进程id等于pid的进程的进程组id设置成pgid.如果两个参数相等，那么进程pid就变成了一个进程组leader.如果pid等于0，那么进程id假设就是调用该函数进程的进程id.当然，如果pgid为0，那么就使用pid进程的进程组id。
+	一个进程只能设置它自己或者它的子进程的进程组id。另外，如果它的子进程调用了exec，那么这个进程就不能够改变它这个子进程的进程组id了。
+	在大多数的作业控制shell中，这个函数在执行fork之后会被调用，一般都是在父进程中设置一下子进程的进程组id，然后再在子进程中设置一下它自己的进程组id；这里实际上有一个调用是冗余的，但是通过这样做（也就是在父子进程中都调用setpgid）我们可以保证子进程被放在了它自己的进程组中（在父子两进程做这样的假设之前），如果我们没有这样做，那么我们可能会碰到一些竞争条件，这个竞争条件会导致子进程的进程组成员关系取决于哪个进程被首先执行。
+	当我们后面说到信号的时候，我们将会看到我们是如何发送一个信号到某个单个的进程（通过进程pid进行标识），或者某个进程组（通过进程组id进行标识）的。类似地，在前面的waitpid函数中我们已经看到，我们可以等待某个特定的进程或者进程组。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec4.html
+
+
+5、Session
+================================================
+	一个session是一个或者多个进程组的集合。参考资料中给出了一个简单的图来表示这个意思。
+	这里不给出图了，叙述一下图中描述的情况：
+	有一个session，session中有三个进程组。第一个进程组中有一个login shell进程；第二个进程组中有两个进程：proc1,proc2；第三个进程组中有三个进程：proc3,proc4,proc5。
+	在个进程组中的进程，一般都是通过shell管道的方式来产生的，上面叙述的图中的后两个进程组是通过如下的命令产生的:
+	proc1 | proc2 &
+	proc3 | proc4 | proc5
+
+	一个进程是通过调用函数setsid来建立一个会话(session)的。这个函数如下：
+	#include <unistd.h>
+	pid_t setsid(void);
+	这个函数正确的时候返回进程组id，错误的时候返回1（其值实际为-1）。
+	如果调用这个函数的进程不是一个进程组leader,那么这个函数创建一个新的session,这时候有如下三个事情发生：
+	a.进程变成这个新session的session leader(一个session leader就是创建这个session的进程)，并且这个进程成为这个新的session中的唯一的进程。
+	b.进程变成一个新的进程组的leader。这个新的进程组id就是这个调用setsid函数的进程的进程id。
+	c.进程没有controlling terminal(控制终端)。我们将在下一节讨论控制终端。如果再进程调用setsid函数之前这个进程具有了一个控制终端，那么和那个控制终端的联系会被断开。
+	如果调用进程已经是一个进程组的leader了，那么这个函数这个函数会返回一个错误。为了确保不会发生这种情况，一般的方法是调用fork创建一个子进程，然后让父进程终止，子进程继续；这样我们可以保证子进程不是一个进程组leader，因为子进程会自动继承父进程的进程组id，但是子进程的进程号却是新产生的（和父进程不同）(所以子进程的pid就不等于父进程的pid，所以也不等于其进程组的组id了，因为组id和组leader的pid相等).
+
+	Single UNIX Specification只说了"session leader",并没有和进程ID和进程组ID类似的"session ID"的说法。很显然，一个session leader就是一个单个的进程，所以我们说到 session ID的时候，就认为那是这个session的session leader的进程pid。session ID的概念是在SVR4中引入的。BSD体系的系统没有支持这个概念，但是已经被更新包含了这个相关的东西。 getsid函数返回一个进程的session leader的的进程组id。getsid函数在Single UNIX Specification中被作为XSI扩展包含进去了。
+	Solaris和Single UNIX Specification差不多，它尽量避免使用"session id"的概念,它采用的说法是"process group ID of the session leader".这两种说法是相等的，一个session 的leader一直都是一个process group的leader。
+
+	获取session id的函数:
+	#include <unistd.h>
+	pid_t getsid(pid_t pid);
+	如果正确会返回session leader的process group ID,错误的时候返回1（其值实际为-1）。
+	如果pid是0，那么getsid返回调用进程的session的进程组id。由于某些安全性的因素，有些实现可能会在pid参数和进程id不属于同一个session的情况下限制调用进程获取相应的"session id"。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch09lev1sec5.html
+
+
+

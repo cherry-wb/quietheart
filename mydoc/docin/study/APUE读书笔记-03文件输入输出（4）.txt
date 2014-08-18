@@ -1,0 +1,85 @@
+++++++APUE读书笔记-03文件输入输出（4）++++++
+
+
+
+10、原子性操作
+================================================
+	原子性的操作就是在操作过程中不会被打断的操作，适用于多线程。例如：
+	在文件结尾写入数据需要：
+	a）使用lseek定位到文件结尾
+	b）使用write写。
+	但是这就不是原子操作了，在两步之间可能会被别的线程打断。所以要想原子操作，可以用带有append标志的open打开文件之后再write。
+	还有例如：向一个指定的位置读写数据也类似，使用pread和pwrite函数指定偏移量的读写，是原子性的。
+	另外，前面讲述open函数的时候也提到过，对于标记O_EXCL  如果同时指定了O_CREAT，而文件已经存在，那么就出错，利用这点这样可以测试文件是否存在，不存在则创建，并且这个操作是原子的。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec11.html
+
+
+11、dup和dup2函数
+================================================
+	下面两个函数可以用来复制文件描述符号：
+	#include <unistd.h>
+	int dup(int filedes);
+	int dup2(int filedes, int filedes2);
+	两者返回：如果成功返回新的文件描述符号，如果错误返回1（其实一般是数值的-1）。 
+	由dup返回的文件描述符一定是当前可用文件描述符中的最小数值。用dup2则可以用filedes2参数指定新描述符的数值。如果filedes2已经打开，则先将其关闭。如若filedes等于filedes2，则dup2返回filedes2，而不关闭它。
+	函数返回的新描述符号共享filedes参数对应的文件表。如下图：
+
+                                    调用dup之后内核的数据结构关系
+                                                                                           
+      process table entry                                               v-node table    
+      +------------------+                                      +-->+------------------+  
+      |      fd    file  |                                      |   |     v-node       |  
+      |     flags pointer|                                      |   |  information     |  
+      |     +----+-----+ |                                      |   +------------------+  
+      | fd0 |    |     | |                                      |   |     i-node       |  
+      |     +----+-----+ |                                      |   |  information     |  
+      | fd1 |    |     |---------\                              |   + - - - - - - - - -+  
+      |     +---+------+ |        \                             |   | current file size|  
+      | fd2 |  ......  | |         -->+-------------------+     |   +------------------+  
+      |     +----+-----+ |        /   |file status flags  |    /   
+      | fd3 |    |     |---------/    +-------------------|   /    
+      |     +----+-----+ |            |current file offset|  /     
+      |     |          | |            +-------------------+ /      
+      |     +----------+ |            | v-node pointer    |/       
+      |                  |            +-------------------+        
+      +------------------+                                         
+                                                                   
+                                                               
+	复制一个描述符的另一种方法是使用 fcntl函数，下一节将对该函数进行说明。实际上，调用：
+	dup(filedes);
+	等价于：
+	fcntl (filedes, F_DUPFD, 0);
+	而调用：
+	dup2(filedes, filedes2) ；
+	等价于：
+	close (filedes2) ;
+	fcntl(filedes, F_DUPFD, filedes2);
+	在最后一种情况下，dup2并不完全等同于close加上fcntl。它们之间的区别是：
+	(a) dup2是一个原子操作。
+	(b) 在dup2和fcntl之间有某些不同的errno。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec12.html
+
+
+12、sync，fsync，和fdatasync函数
+================================================
+	一般UNIX实现都在内核中有一个buffer缓存，或者页缓存，大多数的磁盘输入输出操作都会通过这个缓存。当我们将数据写入到一个文件中的时候，数据一般都会被内核首先拷贝到这些缓存中去，然后排队，到一定时间的时候会将相应的数据写入磁盘。这个技术也叫做延迟写。
+	内核最终会将延迟写的块写入到磁盘上。一般在内核想要使用这块缓存来做其它的磁盘块操作的时候就会这样。为了确保磁盘上面文件系统和缓存中的内容的一致，提供了sync，fsync，以及fdatasync函数。
+	#include <unistd.h>
+	int fsync(int filedes);
+	int fdatasync(int filedes);
+	返回：如果成功返回0，如果错误返回1（其实一般是-1）。
+	void sync(void);
+	函数sync只是简单地将所有被修改的缓存块排队，以用于写；它不会等待磁盘的写入发生。
+	函数sync一般都会被系统守护进程（一般是update进程）周期地调用。这样就保证对内和的块缓存有规律地刷新。命令sync（参见Linux/Unix用户手册sync）也会调用sync函数。
+	函数fsync只是引用一个单个的文件，这个文件通过文件描述符号参数filedes来指定，然后等待磁盘写操作完成，最后返回。使用fsync一般用于类似数据库这样的应用程序，以保证所做的修改确实地被写入到了磁盘中。
+	fdatasync函数和fsync类似，但是它只是影响文件的数据部分。而通过fsync文件的属性也会被同时更新。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch03lev1sec13.html
+
+
+

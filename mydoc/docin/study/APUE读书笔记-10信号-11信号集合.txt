@@ -1,0 +1,62 @@
+++++++APUE读书笔记-10信号-11信号集合++++++
+
+
+
+11、信号集合
+================================================
+	我们需要一种数据类型来表示包含多个信号的信号集合，我们使用诸如sigprocmask这样的函数来告诉内核不让信号集合中的信号发生。我们前面也提到过，信号的数量可能会超过整数的位数，所以我们不使用整数来表示信号集合（其中每个位代表一个信号）。POSIX.1定义了数据类型sigset_t来包含信号集合，使用如下5个函数来操作信号集合。
+	#include <signal.h>
+	int sigemptyset(sigset_t *set);
+	int sigfillset(sigset_t *set);
+	int sigaddset(sigset_t *set, int signo);
+	int sigdelset(sigset_t *set, int signo);
+	以上四个函数成功的时候返回0，错误的时候返回1。
+	int sigismember(const sigset_t *set, int signo);
+	这个函数如果返回1表示真，返回0表示假，有错误返回1（实际值一般为-1）。
+
+	函数sigemptyset初始化set参数指向的信号集合，这样所有的信号都被排除。函数sigfillset初始化信号集合，这样所有的信号都被包含进来。所有的应用程序在使用信号集合(signal set)之前，都应该调用sigemptyset或者sigfillset对信号集合操作一次，因为我们不能假设C对外部变量或者静态变量的初始化（为0）是和相应系统的信号实现相对应的。
+	当我们初始化一个信号集合之后，我们可以为这个信号集合添加或者删除指定的信号。函数sigaddset添加一个信号到已经存在的信号集合(set参数)，sigdelset从信号集合(set参数)中删除一个信号。所有这些需要一个信号集合(set)做为参数的函数，我们一般都将信号集合set的地址作为参数传递。
+
+	关于这些函数的实现：
+	如果系统的信号数目比整数的位数少，那么信号集合就可以用一个整数来表示，用这个整数的每个位表示集合中的一个信号。前面已经提过这些，当然这要假定系统有31个信号，整数位数是32位。sigemptyset函数把这个整数清零，sigfillset函数把这个整数所有的位打开。这两个函数在<signal.h>头文件中，可以用如下宏来实现。
+	   #define sigemptyset(ptr)   (*(ptr) = 0)
+	   #define sigfillset(ptr)    (*(ptr) = ^~(sigset_t)0, 0)
+	注意，sigfillset必须返回0，这里我们使用C语言中的逗号表达式的语法特性来实现这个目的。
+	下面分别给出了sigaddset,sigdelset,sigismember的实现。
+
+	#include     <signal.h>
+	#include     <errno.h>
+	
+	/* <signal.h> usually defines NSIG to include signal number 0 */
+	#define SIGBAD(signo)   ((signo) <= 0 || (signo) >= NSIG)
+	
+	int sigaddset(sigset_t *set, int signo)
+	{
+	    if (SIGBAD(signo)) { errno = EINVAL; return(-1); }
+	
+	    *set |= 1 << (signo - 1);       /* turn bit on */
+	    return(0);
+	}
+	
+	int sigdelset(sigset_t *set, int signo)
+	{
+	    if (SIGBAD(signo)) { errno = EINVAL; return(-1); }
+	
+	    *set &= ~(1 << (signo - 1));    /* turn bit off */
+	    return(0);
+	}
+	
+	int sigismember(const sigset_t *set, int signo)
+	{
+	     if (SIGBAD(signo)) { errno = EINVAL; return(-1); }
+	
+	     return((*set & (1 << (signo - 1))) != 0);
+	}
+
+	我们可能想在<signal.h>头文件中，用一行宏来实现这三个函数的功能，但是POSIX.1要求我们检查信号参数的合法性，如果不合法就设置errno。这个在宏中比较难做，所以使用函数来实现它们。
+
+参考:
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec11.html
+
+
+

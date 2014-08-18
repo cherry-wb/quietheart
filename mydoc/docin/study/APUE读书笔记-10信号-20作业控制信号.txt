@@ -1,0 +1,73 @@
+++++++APUE读书笔记-10信号-20作业控制信号++++++
+
+
+
+20、作业控制信号
+================================================	
+	POSIX.1考虑用下面6种信号来进行作业控制：
+	SIGCHLD  子进程被停止或者终止。
+	SIGCONT  如果之前停止的话，继续进程。
+	SIGSTOP  停止信号（无法被捕获或者忽略）。
+	SIGTSTP  用于交互的停止信号。
+	SIGTTIN  后台进程组的一个进程从控制终端读取。
+	SIGTTOU  后台进程组的一个进程向控制终端写。
+	除了SIGCHLD之外，大多数应用程序不会处理这些信号：交互的shell一般已经做了处理这些信号的所有工作。当我们键入挂起字符的时候（一般为C-z），SIGTSTP信号会发送给所有在前台进程组的进程。当我们告诉shell重新启动一个前台或者后台的作业的时候，shell会给所有作业中的进程发送一个SIGCONT信号。类似，如果SIGTTIN或者SIGTTOU被发送给了一个进程，那么进程默认来说会被停止（stop），并且作业控制shell会识别出这个现象，并且通知我们。
+	一个例外的进程就是控制terminal的进程，例如vi编辑器。它需要知道什么时候用户想要进行挂起，这样它能够恢复终端的状态到vi启动时候的状态。并且，当它在前台重新开始的时候，vi编辑其需要设置终端状态为之前它想要的状态，并且它需要重新绘制终端屏幕。后面的例子中我们将会看到一个类似vi的程序是如何处理这个状况的。
+	有一些作业控制的交互信号。当四个停止信号（SIGTSTP,SIGSTOP,SIGTTIN,或者SIGTTOU）被发送给一个进程的时候，那个进程中任何提交状态的SIGCONT信号都会被丢弃。类似的，当SIGCONT信号被发送给一个进程的时候，那个进程任何提交状态的stop信号都会被丢弃。
+	注意：默认SIGCONT的行为是重新开始一个被停止的进程；如果进程没有被停止，那么它被忽略。一般来说，我们不必对这个信号进行什么特殊的处理。当SIGCONT被发送给一个被停止的进程的时候，进程会被继续，即使这个信号被阻塞或者忽略。
+	举例：
+
+	如何处理SIGTSTP
+	#define BUFFSIZE   1024
+	static void sig_tstp(int signo) /* SIGTSTP的信号处理函数 */
+	{
+	    sigset_t    mask;
+
+	    /* ... 将光标移动到左上角，重新设置tty的模式... */
+
+	    /*
+	     * 解开SIGTSTP的阻塞，因为在我们处理的时候它被阻塞。
+	     */
+	    sigemptyset(&mask);
+	    sigaddset(&mask, SIGTSTP);
+	    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+	    signal(SIGTSTP, SIG_DFL);   /* 重新设置SIGTSTP的特性为默认 */
+
+	    kill(getpid(), SIGTSTP);    /* 给我们自己发送SIGTSTP信号. */
+
+	    /* 我们不会从kill中返回，直到我们重新继续了 */
+
+	    signal(SIGTSTP, sig_tstp);  /* 重新建立信号处理函数 */
+
+	    /* ... 重新设置tty模式，重新绘制屏幕... */
+	}
+	int main(void)
+	{
+	    int     n;
+	    char    buf[BUFFSIZE];
+
+	    /*
+	     * 只有我们使用作业控制的shell运行的时候才捕获SIGTSTP。
+	     */
+	    if (signal(SIGTSTP, SIG_IGN) == SIG_DFL)
+	        signal(SIGTSTP, sig_tstp);
+
+	    while ((n = read(STDIN_FILENO, buf, BUFFSIZE)) > 0)
+	        if (write(STDOUT_FILENO, buf, n) != n)
+	            err_sys("write error");
+
+	    if (n < 0)
+	        err_sys("read error");
+
+	    exit(0);
+	}
+
+	上面例子中的程序，给出了当一个程序处理作业控制的时候，使用的一般的代码次序。这个程序只是简单地把它的标准输入拷贝到它的标准输出，但是，在信号处理函数中，已经用注释给出了用来管理屏幕的程序的典型的动作。当程序启动的时候，只有当SIGTSTP的处理动作被设置为SIG_DFL的时候，它才会捕获SIGTSTP信号。这样的原因是，当程序通过一个不支持作业控制的shell（例如/bin/sh）启动的时候，信号的处理动作应该被设置为SIG_IGN。实际上，shell并不会显示地忽略这个信号，init会设置三个作业控制信号的处理动作(SIGTSTP,SIGTTIN,SIGTTOU)为SIG_IGN。这个动作然后会被所有的登陆shell继承下来。只有作业控制的shell才会设置这三个信号的处理动作为SIG_DFL。
+	当我们键入suspend字符的时候，进程接收到SIGTSTP信号，调用信号处理函数。这里，我们做了所有与终端处理相关的动作：将光标移动到左上角，恢复终端模式，等等。我们然后在重新设置SIGTSTP的处理动作为默认的动作（即停止进程）并将它解阻塞之后，给自己发送一个同样的SIGTSTP（我们还得解阻塞这个信号的原因是我们目前正在处理同样的信号）。这样，进程停止了，只有当它接收到SIGCONT的时候（一般这个信号来自作业控制shell,而且是源于一个fg命令），它才继续执行。我们不会捕获SIGCONT信号，它的默认处理动作就是重新开始一个停止了的进程；当发生这个的时候，程序会继续执行，就好象它刚刚从kill中返回一样。当程序继续的时候，我们会重新设置SIGTSTP信号的处理动作，并且做我们想要作的一些终端处理动作（例如我们可以重新绘制屏幕）。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec20.html
+
+
+

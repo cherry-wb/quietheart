@@ -1,0 +1,81 @@
+++++++APUE读书笔记-08进程控制（09）++++++
+
+
+
+12、解释器文件（类似脚本文件的东西）
+================================================
+	当前所有的unix文件系统支持解释器文件(interpreter file),这种文件是一种文本文件，一般以如下形式开头：
+	#! pathname [ optional-argument ]
+	这里，'!'后面的空格是可选择的。最常见的解释器文件就是这样开头的：
+	#!/bin/sh
+	这里的是shell脚本，这里，解释器文件的pathname一般是一个绝对路径，因为没有对这个路径的特殊处理（例如不会使用PATH环境变量来处理这个路径）。这些文件在系统调用exec的时候，在内核中被处理，实际在内核中被执行的文件不是这个解释器文件而是通过解释器文件中第一行的pathname中指定的可执行文件（也就是解释器）.所以需要注意区分解释器文件（一个以#!pathname开头的文本文件）与解释器(解释器文件开头pathname所指定的文件)。
+	注意，系统对解释器文件第一行有个长度的限制，这个限制包括所有的空格、回车、参数、#!字符等等任何字符。
+	在 FreeBSD 5.2.1, 这个限制是 128 字节。Mac OS X 10.3 把这个限制提高到512字节。Linux2.4.22支持127字节，solaris9是1023字节。
+	例子说明1：
+		一个执行解释文件的例子：
+	#include <sys/wait.h>
+	
+	int
+	main(void)
+	{
+	    pid_t   pid;
+	    if ((pid = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (pid == 0) {          /* child */
+	        if (execl("/home/sar/bin/testinterp",
+	                  "testinterp", "myarg1", "MY ARG2", (char *)0) < 0)
+	            err_sys("execl error");
+	    }
+	    if (waitpid(pid, NULL, 0) < 0) /* parent */
+	        err_sys("waitpid error");
+	    exit(0);
+	}
+
+
+	如下运行命令序列：
+	   $ cat /home/sar/bin/testinterp
+	   #!/home/sar/bin/echoarg foo
+	   $ ./a.out
+	   argv[0]: /home/sar/bin/echoarg
+	   argv[1]: foo
+	   argv[2]: /home/sar/bin/testinterp
+	   argv[3]: myarg1
+	   argv[4]: MY ARG2
+	这里，testinterp文件内容从命令中已知，
+	程序echoarg是把它所有参数打印出来，有另外一个程序通过exec调用这个testinterp文件，如下：
+	execl("/home/sar/bin/testinterp","testinterp", "myarg1", "MY ARG2", (char *)0) < 0)
+	从这个例子可以看出，解释器(echoarg)把这个pathname解释成arg[0],arg[1]就是解释器文件中pathname后面的选项foo,而解释器的arg[2]参数就是这个解释器文件，执行解释器文件的参数myarg1,MY ARG2后排到了arg[3],arg[4]。也就是内核中把execl第一个参数testinterp替换成了解释器文件中的pathname因为内核认为这样会包含更多的执行动作指定选项等信息。
+
+	有些特殊程序运行脚本文件需要用-f选项，这时候，我们需要在前面的#!处相应添加-f,例如awk脚本，前面需要有：
+	#!/bin/awk -f
+	因为awk用-f选项来指定文件名称。
+	执行其他非shell脚本，实际解释文件是不必要的，但是解释文件效率确实比较高效，它使得
+	a)我们可以用"<脚本名> <选项>"方式执行，而不必知道是什么程序然后再用"<程序名> [-f] <脚本名> <选项>"方式执行。
+	b)如果我们前面不加#!/bin/<程序名> [-f]那么也行，需要修改脚本内容，成了shell脚本。但是这样效率会很低，因为会先启动shell,然后shell启动<程序>。
+	c)一般如果不用#!那么系统会自动选择一个shell做为执行shell，一般为/bin/sh,实际这样让系统自己选择会降低一些效率。
+	上述解释文件，如果shell不是使用'#'做为注释的话就不好用了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec12.html
+
+
+13、system接口
+================================================
+	system函数是一个POSIX接口，它可以从程序中启动一个系统的命令。
+	如下：
+	#include <stdlib.h>
+	int system(const char *cmdstring);
+	这里，如果cmdstring参数为空，那么当命令支持处理则system返回非0，根据这一点，我们可以确定在一个操作系统上面是否支持这个system函数。
+	system函数会调用fork,exec,和waitpid函数，它的返回值如下：
+	a)如果fork失败或者waitpid返回错误但是错误不是EINTR,那么system返回1，并且设置errno。
+	b)如果exec失败，以表示shell无法执行，那么返回就像shell执行了exit(127)。
+	c)如果fork,exec,waitpid成功执行，那么会返回shell的终止状态（waitpid的格式）。
+	原来system返回errno(EINTR)表示收到信号中断了,因为无法从这样的状态恢复。后来POSIX添加了这样不会返回错误码的特性。在本节有一个简易的system实现（没有考虑信号处理）。使用system的优点是它会做信号处理以及错误处理。
+	system后面使用了一个类似while (waitpid(pid, &status, 0) < 0) {...}的语句来等待指定子进程（system出来的）结束。以前没有waitpid的时候使用的是类似while ((lastpid = wait(&status)) != pid && lastpid != -1);这会忽略system调用之前的子进程。
+	最好不要在一个有set-user-id的程序中调用system，因为这样会有安全漏洞，让任何一个程序可能以root身份运行。尽管新版本的bash shell会在与real uid不匹配的时候重置执行程序的effective uid。如果必须要这样作，那么用fork和exec这样保证程序能够在fork之后恢复原来的权限，一定不要用system.因为system会启动一个shell，而shell使用IFS(分割符号)做为输入域的分割符号，旧版本的shell不会重置这个变量，所以会为一些人创造可乘之机。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec13.html
+
+
+

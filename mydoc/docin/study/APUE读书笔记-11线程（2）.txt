@@ -1,0 +1,216 @@
+++++++APUE读书笔记-11线程（2）++++++
+
+
+
+4、线程创建
+================================================
+	传统的unix进程模型，只支持每个进程只有一个线程控制。在概念上来说，这和基于线程模型的只有一个线程的进程是一样的。使用pthreads,当一个程序运行的时候，它会启动一个只有一个线程的进程，程序运行的时候，如果它不创建新的线程，那么它和传统的unix进程运行没有什么两样.通过pthread_create可以创建线程。
+	#include <pthread.h>
+	int pthread_create(pthread_t *restrict tidp, const pthread_attr_t *restrict attr,
+	                   void *(*start_rtn)(void), void *restrict arg);
+	返回0表示成功，失败则返回错误号码。
+
+	当pthread_create函数返回成功的时候，tidp指向新创建的线程的id的内存地址；attr用来自定义各种线程属性，后面会讲到，这里设置为NULL表示采用默认的属性.
+	新创建的线程从start_rtn函数指针指向的地址开始运行，arg是传递给这个函数的参数，它是一个无类型的指针，如果想要给函数传递多个参数那么就将参数存放在一个结构体中，把结构体的地址赋给arg.
+	当一个线程创建的时候，无法确保是调用线程先运行还是新创建的线程先运行。新创建的线程可以访问进程空间地址，继承调用线程的floating-point环境和signal mask,然而被pending的信号会被清除。
+	注意，线程函数失败的时候会返回一个错误码。它不象其他会设置errno变量，为每个线程提供错误码，只是为了兼容使用它们的函数.对于线程来说，从函数中返回错误码是很清晰的做法，这样把错误的范围就只限定在产生这个错误的函数的身上了,而不是通过修改一个全局性质的变量，使得这个函数具有一些副作用。
+
+	举例：
+	尽管没有一个打印线程ID的可移植的方法，我们可以自己写一个小的测试程序来实现它，这样可以看到一些线程是如何工作的信息。后面的程序就是创建了一个线程，然后打印进程ID,主线程ID,以及新创建的线程ID.
+	为了处理主线程和新线程之间的竞争，这个例子有两个比较奇怪的行为：
+	1）主线程需要睡眠一会。如果主线程不睡眠，那么可能在新创建的线程还没有来得及运行的时候主线程就结束了，进而导致整个进程的退出。这个取决于系统的线程功能实现以及调度算法。
+	2）新线程是通过pthread_self来获取自己的线程id。新线程不是通过读取共享的内存或者pthread_create的参数(tidp)来获得它的线程id的，因为这样不安全。如果这样使用，那么新创建的线程若先运行的话，那么调用线程还没有来得及初始化这些数据，就会被新线程使用了。
+	对于这个例子，具体的代码参见参考资料，我们看到的现象是：
+	Solaris中，两个线程的进程id相等，线程id是两个整数。主线程比新线程先运行。
+	FreeBSD中，两个线程的进程id相等，线程id是两个相差范围不大的地址。主线程比新线程先运行。
+	MacOS X中，两个线程的进程id相等，线程id是两个相差范围很大的地址。主线程比新线程先运行。
+	Linux中，两个线程的进程id不相等，线程id是两个整数。新线程比主线程先运行。
+	Linux中两个线程的进程id不相等，这是个不足的地方,它是使用特殊参数的clone系统调用来创建子进程，子进程可以通过参数配置共享父进程哪些上下文环境，例如文件描述符号或者内存。
+	注意这个例子的现象中我们可以看到，除了linux之外，其他的系统都是主线程先运行。这样我们可以知道我们不能随意假设主线程或者新线程究竟哪个首先被运行。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch11lev1sec4.html
+
+
+5、线程终止
+================================================
+	当进程的任何一个线程调用exit,_exit或者_Exit的时候，整个进程都会被终止。类似地，当信号的默认处理动作是终止进程的时候，给一个线程发送信号会导致整个进程的终止。我们后面会讨论线程和信号的交互。
+	正常地终止一个线程而不终止整个进程，有三个方法：
+	a)线程从它的起始函数中正常地返回。这时候，线程的退出码就是返回值。
+	b)线程被同一个进程中的其他线程取消。
+	c)线程调用pthread_exit.
+
+	#include <pthread.h>
+	void pthread_exit(void *rval_ptr);
+	参数rval_ptr是一个无类型的指针，它可以被进程中的其他线程通过调用pthread_join来使用。
+
+	#include <pthread.h>
+	int pthread_join(pthread_t thread, void **rval_ptr);
+	如果成功返回0，如果失败，返回错误号码。
+	调用这个函数的线程将会阻塞，直到这个函数所指定的线程调用了pthread_exit,或者从其主函数中返回，或者被取消。如果线程从它的主函数中返回，rval_prt将会包含相应的返回码;如果线程被取消，rval_ptr指向的内存地址将会被设置为PTHREAD_CANCELED.
+	调用pthread_join会自动地把线程至于detached状态，以便恢复线程的资源（稍后会讲到）。如果线程已经是detached状态了，那么pthread_join会失败并且返回EINVAL.
+	如果我们对线程的返回值不感兴趣，那么我们可以把rval_ptr设置为空，这样会等待指定的线程但是不获取线程的退出状态。
+
+	举例
+	void *thr_fn1(void *arg)
+	{
+		printf("thread 1 returning\n");
+		return((void *)1);
+	}
+
+	void *thr_fn2(void *arg)
+	{
+		printf("thread 2 exiting\n");
+		pthread_exit((void *)2);
+	}
+
+	int main(void)
+	{
+		int         err;
+		pthread_t   tid1, tid2;
+		void        *tret;
+
+		err = pthread_create(&tid1, NULL, thr_fn1, NULL);
+		if (err != 0)
+			err_quit("can't create thread 1: %s\n", strerror(err));//一个出了错就退出程序的函数.
+		err = pthread_create(&tid2, NULL, thr_fn2, NULL);
+		if (err != 0)
+			err_quit("can't create thread 2: %s\n", strerror(err));
+		err = pthread_join(tid1, &tret);
+		if (err != 0)
+			err_quit("can't join with thread 1: %s\n", strerror(err));
+		printf("thread 1 exit code %d\n", (int)tret);
+		err = pthread_join(tid2, &tret);
+		if (err != 0)
+			err_quit("can't join with thread 2: %s\n", strerror(err));
+		printf("thread 2 exit code %d\n", (int)tret);
+		exit(0);
+	}
+
+	运行如下：
+	$ ./a.out
+	    thread 1 returning
+	    thread 2 exiting
+	    thread 1 exit code 1
+	    thread 2 exit code 2
+
+	可以看出，一个线程如果从start函数中退出，或者调用pthread_exit退出，那么其他的进程可以通过pthread_join来获取进程的结束状态。
+	我们可以给pthread_create和pthread_exit传递一个无类型的指针，这样指针可以指向复杂的结构，包含更多得信息。需要注意的是当线程结束的时候，指针指向的位置应该还是合法的。如果指针指向的位置是在栈上面分配的，那么当线程结束之后，栈内容就不确定了。而调用pthread_join的调用者却使用了刚才栈所在地址的内容。
+
+	线程可以通过调用pthread_cancel函数请求同一个进程中的其他线程被取消。
+	#include <pthread.h>
+	int pthread_cancel(pthread_t tid);
+	返回值：0表示成功，错误码表示失败。
+	默认情况下pthread_cancel调用和线程tid自己调用具有PTHREAD_CANCELED参数的pthread_exit。线程可以选择忽略其他线程对它的取消，以及选择如何被取消以后会讲到。然而pthread_cancel不会等待线程结束，它只是做一个请求。
+
+	线程可以设置退出时候调用的函数，这个和进程使用atexit函数设置进程退出时候调用得函数类似。这些函数叫做“线程清理函数”，可以为线程设置多个清理函数，这些清理函数被记录在栈中，这也意味这这些函数的调用次序和它们被注册的次序相反。
+	#include <pthread.h>
+	void pthread_cleanup_push(void (*rtn)(void *), void *arg);
+	void pthread_cleanup_pop(int execute);
+	当线程执行如下动作的时候，pthread_cleanup_push会调度清理函数，函数由rtn指向并且参数是arg:
+	a)调用pthread_exit
+	b)响应取消请求
+	c)使用非0的execute参数调用pthread_cleanup_pop.
+	当pthread_cleanup_pop参数为0的时候，不会调用清理函数，这个时候会把最后一次调用pthread_cleanup_push的函数去掉。
+	这些函数的使用限制就是它们是使用宏实现的，它们必须在一个线程的同一个作用域内成对匹配使用，pthread_cleanup_push宏包含是一个'{',pthread_cleanup_pop宏包含一个'}'。
+
+	举例：
+	void cleanup(void *arg)
+	{
+	    printf("cleanup: %s\n", (char *)arg);
+	}
+
+	void * thr_fn1(void *arg)
+	{
+	    printf("thread 1 start\n");
+	    pthread_cleanup_push(cleanup, "thread 1 first handler");
+	    pthread_cleanup_push(cleanup, "thread 1 second handler");
+	    printf("thread 1 push complete\n");
+	    if (arg)
+	        return((void *)1);
+	    pthread_cleanup_pop(0);
+	    pthread_cleanup_pop(0);
+	    return((void *)1);
+	}
+
+	void * thr_fn2(void *arg)
+	{
+	    printf("thread 2 start\n");
+	    pthread_cleanup_push(cleanup, "thread 2 first handler");
+	    pthread_cleanup_push(cleanup, "thread 2 second handler");
+	    printf("thread 2 push complete\n");
+	    if (arg)
+	        pthread_exit((void *)2);
+	    pthread_cleanup_pop(0);
+	    pthread_cleanup_pop(0);
+	    pthread_exit((void *)2);
+	}
+
+	int main(void)
+	{
+	    int         err;
+	    pthread_t   tid1, tid2;
+	    void        *tret;
+
+	    err = pthread_create(&tid1, NULL, thr_fn1, (void *)1);
+	    if (err != 0)
+	        err_quit("can't create thread 1: %s\n", strerror(err));
+	    err = pthread_create(&tid2, NULL, thr_fn2, (void *)1);
+	    if (err != 0)
+	        err_quit("can't create thread 2: %s\n", strerror(err));
+	    err = pthread_join(tid1, &tret);
+	      if (err != 0)
+	        err_quit("can't join with thread 1: %s\n", strerror(err));
+	    printf("thread 1 exit code %d\n", (int)tret);
+	    err = pthread_join(tid2, &tret);
+	    if (err != 0)
+	        err_quit("can't join with thread 2: %s\n", strerror(err));
+	    printf("thread 2 exit code %d\n", (int)tret);
+	    exit(0);
+	}
+
+	上面的例子展示了如何使用线程的清理函数。需要注意的是尽管我们没有打算给线程的启动函数传递非0参数，我们还是需要调用pthread_cleanup_pop函数来匹配pthread_cleanup_push函数，否则程序无法编译通过。
+
+	运行这个程序的输出是：
+	$ ./a.out
+	thread 1 start
+	thread 1 push complete
+	thread 2 start
+	thread 2 push complete
+	cleanup: thread 2 second handler
+	cleanup: thread 2 first handler
+	thread 1 exit code 1
+	thread 2 exit code 2
+	从输出中我们可以看到，两个线程都正常地启动和退出了，但是只有第二个线程调用了清理函数。因此，如果线程是通过从启动函数中正常返回而终止的话，就不会执行清理函数。并且我们也应该注意启动函数的调用次序和它们被安装的次序是相反的。
+
+	实际线程和进程有许多类似的函数，下表给出了这个对比。
+
+					进程和线程相关函数的对比
++-------------------------------------------------------------------------------------------------------+
+| Process primitive |  Thread primitive   |                         Description                         |
+|-------------------+---------------------+-------------------------------------------------------------|
+| fork              | pthread_create      | create a new flow of control                                |
+|-------------------+---------------------+-------------------------------------------------------------|
+| exit              | pthread_exit        | exit from an existing flow of control                       |
+|-------------------+---------------------+-------------------------------------------------------------|
+| waitpid           | pthread_join        | get exit status from flow of control                        |
+|-------------------+---------------------+-------------------------------------------------------------|
+| atexit            | pthread_cancel_push | register function to be called at exit from flow of control |
+|-------------------+---------------------+-------------------------------------------------------------|
+| getpid            | pthread_self        | get ID for flow of control                                  |
+|-------------------+---------------------+-------------------------------------------------------------|
+| abort             | pthread_cancel      | request abnormal termination of flow of control             |
++-------------------------------------------------------------------------------------------------------+
+
+	默认来说，一个线程的终止状态会一直保留到pthread_join被调用。一个终止的线程所占的内存会在detached的时候立即被回收，当一个线程被detached的时候，不能使用pthread_join函数等待获取它的终止状态。对一个detached的线程调用pthread_join会失败，并且返回EINVAL。我们可以使用pthread_detach来将一个线程detach.
+
+	#include <pthread.h>
+	int pthread_detach(pthread_t tid);
+	返回：如果成功返回0，如果失败返回错误编号。
+	后面我们可以看到，我们可以通过修改传递给pthread_create的线程属性参数来建立一个开始就处于detached状态的线程。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch11lev1sec5.html
+
+
+

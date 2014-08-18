@@ -1,0 +1,93 @@
+Linux下C语言编程入门-19其他相关
+十九、其他相关
+=======================
+这里的内容有点杂乱，以后随着自己学习的深入会将它们整理到各自应该属于的章节中的。*********
+
+1,UDP并发服务器
+-------
+人们把并发的概念用于 UDP 就得到了并发 UDP 服务器模型.算法和并发的 TCP 模型一样,除非服务器在处理客户端的请求所用的时间比较长以外,人们实际上很少用这种模型.
+
+2,并发 TCP 服务器实例:(不多作解释了)
+-------
+#include <sys/socket.h>;
+#include <sys/types.h>;
+#include <netinet/in.h>;
+#include <string.h>;
+#include <errno.h>;
+#define MY_PORT 8888
+int main(int argc ,char **argv)
+{
+	int listen_fd,accept_fd;
+	struct sockaddr_in client_addr;
+	int n;
+	if((listen_fd=socket(AF_INET,SOCK_STREAM,0))<0)
+	{
+		printf("Socket Error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	bzero(&client_addr,sizeof(struct sockaddr_in));
+	client_addr.sin_family=AF_INET;
+	client_addr.sin_port=htons(MY_PORT);
+	client_addr.sin_addr.s_addr=htonl(INADDR_ANY);
+	n=1;
+	/* 如果服务器终止后,服务器可以第二次快速启动而不用等待一段时间 ?????????*/
+	setsockopt(listen_fd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(int));
+	if(bind(listen_fd,(struct sockaddr *)&client_addr,sizeof(client_addr))<0)
+	{
+		printf("Bind Error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	listen(listen_fd,5);
+	while(1)
+	{
+		accept_fd=accept(listen_fd,NULL,NULL);
+		if((accept_fd<0)&&(errno==EINTR))
+			continue;
+		else if(accept_fd<0)
+		{
+			printf("Accept Error:%s\n\a",strerror(errno));
+			continue;
+		}
+		if((n=fork())==0)
+		{
+			/* 子进程处理客户端的连接 */
+			char buffer[1024];
+			close(listen_fd);
+			n=read(accept_fd,buffer,1024);
+			write(accept_fd,buffer,n);
+			close(accept_fd);
+			exit(0);
+		}
+		else if(n<0)
+			printf("Fork Error:%s\n\a",strerror(errno));
+		close(accept_fd);
+	}
+}
+
+######################################################
+3,关于原始套接字：
+-------
+前面已经学习过了网络程序的两种套接字(SOCK_STREAM,SOCK_DRAGM).在这里我们介绍另外一种套接字--原始套接字(SOCK_RAW). 应用原始套接字,
+我们可以编写出由 TCP 和 UDP 套接字不能够实现的功能. 注意原始套接字只能够由有 root 权限的人创建.
+
+例子比较复杂，也没有弄懂，这里就省略了，有时间再琢磨。*********
+
+?????????
+原始套接字和一般的套接字不同的是以前许多由系统做的事情,现在要由我们自己来做了。当我们创建了一个 TCP 套接字的时候,我们只是负责把我们要发送的内容(buffer)传递给了系统. 系统在收到我们的数据后,回自动的调用相应的模块给数据加上 TCP 头部,然后加上 IP 头部. 再发送出去.而现在是我们自己创建各个的头部,系统只是把它们发送出去. 在实例中,由于我们要修改我们的源 IP 地址,所以我们使用了 setsockopt 函数,如果我们只是修改 TCP 数据,那么 IP 数据一样也可以由系统来创建的.
+
+4,一些工具
+-------
+关于GCC选项
+GCC 选项包括一个以上的字符. 因此你必须为每个选项指定各自的连字符, 并且就象大多数 Linux 命令一样你不能在一个单独的连字符后跟一组选项.
+
+xxgdb
+xxgdb 是 gdb 的一个基于 X Window 系统的图形界面. xxgdb 包括了命令行版的 gdb上的所有特性. xxgdb 使你能通过按按钮来执行常用的命令. 设置了断点的地方也用图形来显示.
+
+cproto
+cproto 读入 C 源程序文件并自动为每个函数产生原型申明. 用 cproto 可以在写程序时为你节省大量用来定义函数原型的时间.
+
+indent
+indent 实用程序是 Linux 里包含的另一个编程实用工具. 这个工具简单的说就为你的代码产生美观的缩进的格式. indent 也有很多选项来指定如何格式化你的源代码.这些选项的更多信息请看 indent 的指南页, 在命令行上键入 indent -h .
+
+gprof
+gprof 是安装在你的 Linux 系统的 /usr/bin 目录下的一个程序. 它使你能剖析你的程序从而知道程序的哪一个部分在执行时最费时间.

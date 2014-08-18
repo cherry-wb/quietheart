@@ -1,0 +1,126 @@
+++++++APUE读书笔记-04文件和目录（3）++++++
+
+
+
+6、新创建的文件和目录
+================================================
+	文件的userID将被设置为进程的effective user ID.
+	文件的groupID可以是进程的effective group ID，也可以是文件父目录的group ID.
+	具体如下：
+	如果文件所在的目录设置了set-group-ID，那么就是父目录的groupID，否则就是进程的effective groupID，这是Linux2.4和solaris的特性。ext2,ext3可以在mount的时候指定这两种方式。FreeBSD 5.2.1 和 Mac OS X 10.3却一直是所在父目录的group ID.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec6.html
+
+
+7、access函数
+================================================
+	一般都是用effective id来判断使用的权限的，有时候也需要使用real id来进行判断。例如尽管有的进程在set-user-id的情况下具有了root权限可以访问，我们还是需要知道这个进程的real id.
+	access函数根据进程的real userid 和real group id来进行判断权限(判断的过程是把前面的四步的effective id换成real id)，其声明如下：
+	#include <unistd.h>
+	int access(const char *pathname, int mode);
+	返回：如果成功返回0，如果错误返回1。 
+	这里的mode参数是如下常数的按位或：
+
+	<unistd.h>中access函数的模式常数
+	+-------------------------------------+
+	| mode |         Description          |
+	|------+------------------------------|
+	| R_OK | test for read permission     |
+	|------+------------------------------|
+	| W_OK | test for write permission    |
+	|------+------------------------------|
+	| X_OK | test for execute permission  |
+	|------+------------------------------|
+	| F_OK | test for existence of file   |
+	+-------------------------------------+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec7.html
+
+
+8、umask函数
+================================================
+	在前面讨论了文件权限基础上，这一节讲述和进程相关的文件创建屏蔽码。创建文件之前，指定需要忽略（屏蔽）的位。umask函数用来设置进程创建文件的屏蔽码（它也是少数几个没有错误返回的函数之一）。umask的声明如下：
+	#include <sys/stat.h>
+	mode_t umask(mode_t cmask);
+	返回：之前的文件创建模式屏蔽码。
+	cmask参数是前面表中列出的9个文件访问许可权限值之一。
+	进程创建文件或者目录的时候，一定会使用文件创建屏蔽码。使用create或者open创建文件的时候，通过其参数指定文件权限，但是如果之前有一个umask设置了相应的位之后，那么open/create指定的权限相应于umask位的那些地方不会被设置。例如umask是002,open创建的时候是222,那么最终是220.最后一个被umask屏蔽了。查看umask有一个umask命令：
+	$umask
+	输出0022表示，8进制的022,在创建的时候被屏蔽了.
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec8.html
+
+
+9、chmod和fchmod函数
+================================================
+	两个函数使我们可以更改已有文件的访问权限：
+	#include <sys/stat.h>
+	int chmod(const char *pathname, mode_t mode);
+	int fchmod(int filedes, mode_t mode);
+	两者返回：如果成功，返回0，如果错误，返回1。 
+	chmod对一个路径指定的文件进行操作，而fchmod对一个打开的文件描述符号filedes对应的文件进行操作。
+	进程的有效用户ID必须等于文件的属主，或者超级用户，才能够修改文件的权限。
+
+	<sys/stat.h>中声明的chmod中的mode值
+	+----------------------------------------------------------+
+	|    mode     |                Description                 |
+	|-------------+--------------------------------------------|
+	| S_ISUID     | set-user-ID on execution                   |
+	|-------------+--------------------------------------------|
+	| S_ISGID     | set-group-ID on execution                  |
+	|-------------+--------------------------------------------|
+	| S_ISVTX     | saved-text (sticky bit)                    |
+	|-------------+--------------------------------------------|
+	| S_IRWXU     | read, write, and execute by user (owner)   |
+	|-------------+--------------------------------------------|
+	|     S_IRUSR | read by user (owner)                       |
+	|-------------+--------------------------------------------|
+	|     S_IWUSR | write by user (owner)                      |
+	|-------------+--------------------------------------------|
+	|     S_IXUSR | execute by user (owner)                    |
+	|-------------+--------------------------------------------|
+	| S_IRWXG     | read, write, and execute by group          |
+	|-------------+--------------------------------------------|
+	|     S_IRGRP | read by group                              |
+	|-------------+--------------------------------------------|
+	|     S_IWGRP | write by group                             |
+	|-------------+--------------------------------------------|
+	|     S_IXGRP | execute by group                           |
+	|-------------+--------------------------------------------|
+	| S_IRWXO     | read, write, and execute by other (world)  |
+	|-------------+--------------------------------------------|
+	|     S_IROTH | read by other (world)                      |
+	|-------------+--------------------------------------------|
+	|     S_IWOTH | write by other (world)                     |
+	|-------------+--------------------------------------------|
+	|     S_IXOTH | execute by other (world)                   |
+	+----------------------------------------------------------+
+
+	需要注意的是，一般“ls -l”命令只显示文件内容改变的时间，而chmod修改的是i-node的最近更改时间。由于chmod函数更新的只是文件i节点最近一次被更改的时间。更改之后，按系统默认方式， ls -l列出的也只是最后修改文件内容的时间，而不是chmod的时间。
+	另外，chmod函数在下列条件下自动清除两个权限位：
+	a)如果我们试图设置普通文件的粘滞位 ( S_ISVTX )，而且又没有超级用户优先权，那么mode中的粘滞位自动被关闭(下一节说明粘住位)。也就是只有超级用户才能设置普通文件的粘住位。这样可以防止不怀好意的用户设置粘住位。
+	b)新创建文件的组ID可能不是调用进程所属的组。前面说过，新文件的组ID可能是父目录的组ID。特别地，如果新文件的组ID不等于进程的有效组ID或者进程添加组ID中的一个，以及进程没有超级用户特权，那么set-group-ID位自动被关闭。这就防止了用户创建一个并非该用户所属的组拥有的set-group-ID文件。 
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec9.html
+
+
+10、关于文件的stickybit
+================================================
+	也就是S_ISVTX bit,在早于请求页的unix系统的时候，如果可执行文件设置了这个位，那么，第一次运行可执行文件的时候，会在进程退出的时候将可执行文件的text段（包含机器指令的部分）拷贝一份保存到swap分区。因为swap分区连续存储，这样下次运行的时候会更快。由于现在有了虚拟内存和更快的文件系统，所以这个位就不那么需要了。
+	在当前的系统，对这个位进行了扩展，unix标准允许这个位设置目录，如果目录设置了这个位，那么目录中的文件可以在如下的情况下被重新命名或者删除：
+	用户具有目录的写权限，并且满足下面的条件之一：
+	a）用户拥有这个文件
+	b）用户拥有这个目录
+	c）用户是超级用户
+	/tmp 和 /var/spool/uucppublic就是一个典型的应用，任何用户可以在这个目录里面创建和删除文件，但是只能删除属于自己的文件。
+	saved-text bit不是POSIX标准，它是XSI扩展。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch04lev1sec10.html
+
+
+

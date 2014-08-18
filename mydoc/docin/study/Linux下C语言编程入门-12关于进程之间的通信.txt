@@ -1,0 +1,220 @@
+Linux下C语言编程入门-12关于进程之间的通信
+十二、关于进程之间的通信
+=======================
+1,消息队列
+SystemV消息队列可以实现进程之间通信。
+1.1,相关函数
+-------
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+int msgget(key_t key,int msgflg);
+int msgsnd(int msgid,struct msgbuf *msgp,int msgsz,int msgflg);
+int msgrcv(int msgid,struct msgbuf *msgp,int msgsz,long msgtype,int msgflg);
+int msgctl(Int msgid,int cmd,struct msqid_ds *buf);
+
+对于msgget 函数，它和semget类似,返回一个消息队列的标志,
+key 是一个关键字,可以是用 ftok 创建的也可以是其他。当key是IPC_PRIVATE，或者key是其它值但是并没有基于此key的消息队列存在且msgflg中指定IPC_CREAT，这两种情况会创建一个消息队列。
+
+对于msgsnd函数,它是用来进行消息通讯时发送消息的.
+msgid是要发送的消息队列的标志；
+msgp是要发送的消息缓冲内容（见后面消息缓冲的结构）；
+msgsz是消息的大小；
+msgflg指出缓冲区用完时候的操作.接受函数指出无消息时候的处理.一般0.
+
+对于msgrcv函数，它是用来进行消息通讯时接收消息的,
+msgid是要发送的消息队列的标志；
+msgp是要发送的消息缓冲内容（见前面消息缓冲的结构）；
+msgsz是消息的大小；
+msgtype指定接收消息队列中的哪一个消息（0为第一个），见后面消息缓冲结构；
+msgflg指出缓冲区用完时候的操作.接受函数指出无消息时候的处理.一般0.
+
+对于msgctl函数，它和semctl类似是对消息进行控制（用到再仔细研究）.*********
+
+
+另外，消息缓冲的结构(struct msgbuf)如下：
+struct msgbuf {/*消息缓冲的结构*/
+	long msgtype; /* 消息类型必须要有的*/
+	....... /* 其他数据类型自定义的*/
+}
+如果 msgtype=0,接收消息队列的第一个消息.大于 0 接收队列中消息类型等于这个值的第一个消息.小于 0 接收消息队列中小于或者等于 msgtype 绝对值的所有消息中的最小一个消息. 
+
+1.2,举例
+-------
+下面举例说明一下消息发送和接收的过程.
+(注意，前面已经说过，注释中有"$$$$$$$$$$$"的是关键)
+
+/***********服务端 server.c*************/
+#include <stdio.h>;
+#include <string.h>;
+#include <stdlib.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/stat.h>;
+#include <sys/msg.h>;
+#define MSG_FILE "server.c"
+#define BUFFER 255
+#define PERM S_IRUSR|S_IWUSR
+struct msgtype {
+	long mtype;
+	char buffer[BUFFER+1];
+};/*定义消息队列内容的结构*/
+int main()
+{
+	struct msgtype msg;/*消息队列内容*/
+	key_t key;/*用于创建消息的key*/
+	int msgid;/*消息队列标识*/
+	if((key=ftok(MSG_FILE,'a'))==-1)
+	{/*获取key，以创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4*/
+		fprintf(stderr,"Creat Key Error:%s\a\n",strerror(errno));
+		exit(1);
+	}
+	if((msgid=msgget(key,PERM|IPC_CREAT|IPC_EXCL))==-1)
+	{/*根据key创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		fprintf(stderr,"Creat Message Error:%s\a\n",strerror(errno));
+		exit(1);
+	}
+	while(1)
+	{
+		/*接收消息队列中msg.mtype为1的消息（根据第4个参数指定）到msg中$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		msgrcv(msgid,&msg,sizeof(struct msgtype),1,0);
+		/*打印相应消息中的缓存*/
+		fprintf(stderr,"Server Receive:%s\n",msg.buffer);
+		/*设置msg的消息类型成员，以便发送时让另外一个程序的msgrcv能够识别$$$$$$$$$$$$$$$$$$$$$*/
+		msg.mtype=2;
+		/*把msg发送出去（反馈）$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		msgsnd(msgid,&msg,sizeof(struct msgtype),0);
+	}
+	exit(0);
+}
+
+/*********客户端(client.c)***********/
+#include <stdio.h>;
+#include <string.h>;
+#include <stdlib.h>;
+#include <errno.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/msg.h>;
+#include <sys/stat.h>;
+#define MSG_FILE "server.c"
+#define BUFFER 255
+#define PERM S_IRUSR|S_IWUSR
+	struct msgtype {
+		long mtype;
+		char buffer[BUFFER+1];
+	};
+int main(int argc,char **argv)
+{
+	struct msgtype msg;/*定义消息队列内容的结构*/
+	key_t key;
+	int msgid;
+	if(argc!=2)
+	{
+		fprintf(stderr,"Usage:%s string\n\a",argv[0]);
+		exit(1);
+	}
+	if((key=ftok(MSG_FILE,'a'))==-1)
+	{/*获取key，以创建消息队列，注意这里的key和server程序的key是一样的，这样创建的消息队列就一样了$$$$$$$$$$$$$$$$$$*/
+		fprintf(stderr,"Creat Key Error:%s\a\n",strerror(errno));
+		exit(1);
+	}
+	if((msgid=msgget(key,PERM))==-1)
+	{/*根据key创建消息队列$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		fprintf(stderr,"Creat Message Error:%s\a\n",strerror(errno));
+		exit(1);
+	}
+	/*设置msg的消息类型成员，以便发送时让另外一个程序的msgrcv能够识别$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+	msg.mtype=1;
+	/*把要发送的消息拷贝到msg消息缓存中$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+	strncpy(msg.buffer,argv[1],BUFFER);
+	/*把消息发送出去$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+	msgsnd(msgid,&msg,sizeof(struct msgtype),0);
+	/*消息缓存清空*/
+	memset(&msg,'\0',sizeof(struct msgtype));
+	/*接收反馈$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+	msgrcv(msgid,&msg,sizeof(struct msgtype),2,0);
+	fprintf(stderr,"Client receive:%s\n",msg.buffer);
+	exit(0);
+}
+
+}
+
+/*************记得使用完了要删除，删除的方法如下*******************/
+if( msgctl( qid, IPC_RMID, 0) == -1)
+{
+	....
+}
+
+2,共享内存
+共享内存,可以实现进程通信
+
+2.1,相关函数
+-------
+SystemV 提供了以下几个函数以实现共享内存:
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/shm.h>;
+int shmget(key_t key,int size,int shmflg);
+void *shmat(int shmid,const void *shmaddr,int shmflg);
+int shmdt(const void *shmaddr);
+int shmctl(int shmid,int cmd,struct shmid_ds *buf);
+
+对于shmget函数,它和semget类似,返回一个共享内存的标志,
+key 是一个关键字,可以是用 ftok 创建的也可以是其他,
+size是共享内存大小
+
+shmflg参考man shmget,这里不说了（用到再仔细研究）.*********
+
+对于shmctl函数，它和semctl类似是对共享内存进行控制（用到再仔细研究）.*********
+
+对于shmat函数,它是用来连接共享内存的,根据他它的返回地址指向共享内存的地址
+shmid是要连接的共享内存的标志
+
+shmaddr一般用0就可以了（用到再仔细研究）.*********
+shmflg一般用0就可以了（用到再仔细研究）.*********
+
+对于shmdt函数,使用共享内存结束以后我们使用它来断开这个内存.（用到再仔细研究）.*********
+
+举例：
+#include <stdio.h>;
+#include <string.h>;
+#include <errno.h>;
+#include <unistd.h>;
+#include <sys/stat.h>;
+#include <sys/types.h>;
+#include <sys/ipc.h>;
+#include <sys/shm.h>;
+#define PERM S_IRUSR|S_IWUSR
+int main(int argc,char **argv)
+{
+	int shmid;
+	char *p_addr,*c_addr;/*指向共享内存的指针*/
+	if(argc!=2)
+	{
+		fprintf(stderr,"Usage:%s\n\a",argv[0]);
+		exit(1);
+	}
+	if((shmid=shmget(IPC_PRIVATE,1024,PERM))==-1)
+	{/*创建共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		fprintf(stderr,"Create Share Memory Error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	if(fork())
+	{/*0为子，非0为父*/
+		p_addr=shmat(shmid,0,0);/*连接共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		memset(p_addr,'\0',1024);
+		strncpy(p_addr,argv[1],1024);/*使用共享内存$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
+		exit(0);
+	}
+	else
+	{/*子*/
+		c_addr=shmat(shmid,0,0);/*连接共享内存*/
+		printf("Client get %s",c_addr);/*使用共享内存*/
+		exit(0);
+	}
+}
+
+使用完毕之后需要用ipcrm 释放资源的?????????

@@ -1,0 +1,164 @@
+++++++APUE读书笔记-14高级输入输出-04流（2）++++++
+
+
+
+4、流（2）
+================================================
+	例子
+	如果ioctl请求是I_LIST，那么系统会返回推送到流上面的所有模块的名称,包含最顶端的驱动(这里，我们说到最顶端是因为在多I/O的时候，可能会有不止一个驱动)。第三个参数是一个指向str_list结构的指针。
+	struct str_list {
+		int                sl_nmods;   /* 数组元素数目 */
+		struct str_mlist  *sl_modlist; /* 数组第一个元素 */
+	};
+
+	struct str_mlist {
+		char l_name[FMNAMESZ+1]; /* null terminated module name */
+	};
+	我们把sl_modlist设置指向str_mlist结构中的数组的第一个元素，并且将sl_modlist设置成为数组当中元素的数目。
+	在l_name成员中,常量FMNAMESZ在 <sys/conf.h>中被定义，一般为8，另外还有一个空字节结束符号。
+	如果ioctl的第三个参数设置为0，那么会返回模块的数目(做为ioctl的返回值)而不是模块的名称。我们根据这个来确定模块的数目并且分配指定数目的str_mlist结构。
+	下面的例子给出了I_LIST操作的使用，返回的名称中模块的driver没有什么不同，我们打印模块名称的时候，我们知道链表中的最后一项就是流底部的驱动。
+	列出stream上的模块名称
+	int main(int argc, char *argv[])
+	{
+		int                 fd, i, nmods;
+		struct str_list     list;
+		if (argc != 2)
+			err_quit("usage: %s <pathname>", argv[0]);
+		if ((fd = open(argv[1], O_RDONLY)) < 0)
+			err_sys("can't open %s", argv[1]);
+		if (isastream(fd) == 0)
+			err_quit("%s is not a stream", argv[1]);
+
+		/*获取模块数目*/
+		if ((nmods = ioctl(fd, I_LIST, (void *) 0)) < 0)
+			err_sys("I_LIST error for nmods");
+		printf("#modules = %d\n", nmods);
+
+		/*根据数目分配标记每个模块名称的链表元素*/
+		list.sl_modlist = calloc(nmods, sizeof(struct str_mlist));
+		if (list.sl_modlist == NULL)
+			err_sys("calloc error");
+		list.sl_nmods = nmods;
+
+		/*获得模块名称*/
+		if (ioctl(fd, I_LIST, &list) < 0)
+			err_sys("I_LIST error for list");
+
+		/*打印名称*/
+		for (i = 1; i <= nmods; i++)
+			printf(" %s: %s\n", (i == nmods) ? "driver" : "module", list.sl_modlist++->l_name);
+
+		exit(0);
+	}
+	如果我们从控制台(console)登陆和网络登陆上面运行这个程序，可以看到控制终端上面被推送了哪些流模块，如下：
+	$ who
+	sar        console     May 1 18:27
+	sar        pts/7       Jul 12 06:53
+	$ ./a.out /dev/console
+	#modules = 5
+	module: redirmod
+	module: ttcompat
+	module: ldterm
+	module: ptem
+	driver: pts
+	$ ./a.out /dev/pts/7
+	#modules = 4
+	module: ttcompat
+	module: ldterm
+	module: ptem
+	driver: pts
+	在两种情况下，模块几乎相同。不同的地方就是控制台登陆的时候最顶部多了一个模块，这个模块用于虚拟控制台的重定向。在这台计算机上面，有一个窗口系统运行在控制台上面，所以/dev/console实际引用了一个伪终端而不是硬件设备。我们在后面会对伪终端进行介绍。
+
+	向流设备中写
+	在前面我们说过对一个STREAMS设备进行write操作会导致产生M_DATA消息。虽然这在一般时候都是正确的，但是有些细节的东西需要考虑。首先，流的最顶部处理模块指定了向下发送的包的最大和最小长度（我们无法从模块请求这些值）。如果我们写入的长度超过了最大的长度，那么stream head通常会将数据分割为多个包。
+	下一个需要考虑的是，如果我们向流中写入了0字节，那么会发生什么？除非流指向一个管道或者FIFO，否则会向下发送一个0长度的消息。而管道或FIFO默认会忽略0长度的write，这样才能和从前的版本兼容。我们可以通过ioctl修改流的写模式来改变这个默认的特性。
+	当前，只定义了两种写模式
+	SNDZERO 一个向管道或者FIFO的0长度的写将会导致一个0长度的消息向下发送。默认来说，这个0长度的写不发送任何消息。
+	SNDPIPE 导致SIGPIPE被发送给调用的进程，而这个进程在流发生了错误之后还调用了write或者putmsg.
+	一个流也拥有一个读模式，我们将在描述了getmsg和getpmsg函数之后再看看它们。
+
+	getmsg和getpmsg函数
+	STREAMS消息通过read,getmsg或者getpmsg从一个stream head进行读取。
+	#include <stropts.h>
+	int getmsg(int filedes,struct strbuf *restrict ctlptr,struct strbuf *restrict dataptr,int *restrict flagptr);
+	int getpmsg(int filedes, struct strbuf *restrict ctlptr, struct strbuf *restrict dataptr, int *restrict bandptr, int *restrict flagptr);
+	返回:两个函数在正确的时候返回非负，错误的 时候返回1。
+
+	需要注意的是flagptr和bandptr是指向整数的指针。这些整数指针所指向的整数必须在调用这个函数之前被设置以便指定所需要的消息的类型，并且这个整数也会在函数返回的时候被设置成读取的消息类型。
+	如果整数指针指向的flagptr为0，那么getmsg会返回stream head中的读队列中的下一条消息。如果下一条消息是高优先级的消息（此时flagptr是0吗??????），那么被 flagptr 所指向的整数会在返回的时候被设置成RS_HIPRI。如果我们只是想要接收高优先级的消息，那么我们在调用getmsg函数之前必须先设置指针flagptr所指定的整数为RS_HIPRI.
+
+	getpmsg使用不同的常量。我们可以设置flagptr所指向的指针为MSG_HIPRI这样仅仅接收高优先级别的消息。我们也可以设置为MSG_BAND并且设置bandptr所指向的整数为某个非0的优先级数值，这样来接收指定优先级的消息(当然更高级别的消息同时也会被接收)。如果我们只想接收第一个可用的消息，我们可以设置flagptr所指向的整数为MSG_ANY；返回的时候，这个整数会被MSG_HIPRI或者MSG_BAND所覆盖，这取决于所接收的消息类型。如果我们所接收的消息不是一个高优先级的消息，那么bandptr所指向的整数将会包含消息的优先级。
+
+	如果ctlptr是空或者ctlptr->maxlen是1，那么消息的控制部分将会留在stream head的读取队列，我们将会不处理它。类似地，如果dataptr是空或者dataptr->maxlen是1，那么消息的数据部分不会被处理并且留在stream head的读取队列中。另外，我们将会获得我们的缓存能够容纳的尽量多的消息的数据和控制部分，并且任何在stream head队列中剩余的部分用于下次调用。
+
+	如果调用的getmsg或者getpmsg返回了一个消息，那么返回值为0。如果消息中的一些控制部分留在了stream head读取队列中，那么会返回MORECTL；类似地，如果消息中的一些数据部分留在了stream head的读取队列中，那么会返回MOREDATA；如果控制和数据信息都有留下，那么返回(MORECTL|MOREDATA)。
+
+	读取模式
+	我们需要考虑如果我们从一个STREAMS设备中读取，会发生什么。有两个潜在的问题：
+	a.在流上的消息的记录边界上会发生什么？
+	b.如果我们调用read并且下一条流上面的消息是控制信息的时候，会发生什么？
+	默认的对情况1的处理叫做字节流模式。在这个模式中，一个从流中的读取会不断地取得数据，直到请求的字节数目被读取到或者直到已经没有更多的数据了。STREAMS消息的边界在这个模式下面被忽略。默认对情况2的处理导致的是如果在队列的开始有一个控制消息，那么读取会返回一个错误。我们可以改变这两个默认的处理。
+	使用ioctl，如果我们将请求设置为I_GRDOPT，第三个参数是一个指向整数的指针，并且当前的流的读模式会被返回到那个整数当中。一个I_SRDOPT请求会将第三个参数的整数的值获取到并且设置读的模式为那个值。
+	读的模式可以被指定为如下的三个常量：
+	RNORM: 默认的正常情况，也就是前面提到的字节流模式。
+	RMSGN: 消息的非忽略模式。读取的时候会从流中取得数据知道请求的字节数目已经被读取到，或者直到遇到了一个消息的边界。如果读取使用一部分消息，那么消息中剩余的数据会被留在流中用于后面的读取。
+	RMSGD: 消息的忽略模式。这个和非忽略模式类似，不同的是如果读取使用的是消息的一部分，那么剩余的消息会被忽略。
+	当在流中遇到了包含协议控制信息的消息的时候，有三个额外的常量可以被用来指定到读模式中以设置读取操作的行为：
+	RPROTNORM: 协议正常模式，读取的时候会返回一个EBADMSG错误码。这是默认的行为。
+	RPROTDAT: 协议数据模式，读取的时候会把控制部分当做数据返回。
+	RPROTDIS: 协议忽略模式，读取会忽略控制信息，但是会返回消息中的任何数据。
+	在同一个时间，只能设置一种消息读模式和协议读模式。默认的读取模式就是（RNORM|RPROTNORM）
+
+	举例
+	下面的代码作用是将标准输入的内容拷贝到标准输出，前面章节中实际有一个类似的例子，这个例子和前面例子的区别是，这里使用getmsg而不是read来从标准输入中读取信息。
+	代码大致如下：
+	#include "apue.h"
+	#include <stropts.h>
+	#define BUFFSIZE     4096
+	int main(void)
+	{
+		int             n, flag;
+		char            ctlbuf[BUFFSIZE], datbuf[BUFFSIZE];
+		struct strbuf   ctl, dat;
+
+		ctl.buf = ctlbuf;
+		ctl.maxlen = BUFFSIZE;
+		dat.buf = datbuf;
+		dat.maxlen = BUFFSIZE;
+		for ( ; ; ) {
+			flag = 0;       /* 返回任何消息 */
+			if ((n = getmsg(STDIN_FILENO, &ctl, &dat, &flag)) < 0)
+				err_sys("getmsg error");
+			fprintf(stderr, "flag = %d, ctl.len = %d, dat.len = %d\n",
+					flag, ctl.len, dat.len);
+			if (dat.len == 0)
+				exit(0);
+			else if (dat.len > 0)
+				if (write(STDOUT_FILENO, dat.buf, dat.len) != dat.len)
+					err_sys("write error");
+		}
+	}
+	如果我们在Solaris中运行这个程序(Solaris的管道和终端都是使用stream实现)，我们会得到如下的输出：
+	$ echo hello, world | ./a.out           请求基于流的管道
+	flag = 0, ctl.len = -1, dat.len = 13
+	hello, world
+	flag = 0, ctl.len = 0, dat.len = 0     表示一个STREAMS已经挂断
+	$ ./a.out                              请求基于流的终端
+	this is line 1
+	flag = 0, ctl.len = -1, dat.len = 15
+	this is line 1
+	and line 2
+	flag = 0, ctl.len = -1, dat.len = 11
+	and line 2
+	^D                                      输入终端的EOF字符
+	flag = 0, ctl.len = -1, dat.len = 0     tty的文件结束末尾和挂断是不一样的。
+	$ ./a.out < /etc/motd
+	getmsg error: Not a stream device
+	当管道关闭的时候（echo结束时），上面程序会看到流被挂断，控制部分和数据部分的长度都是0。（我们后面讨论管道）然而通过终端键入文件结束符号，只导致数据长度被返回为0。终端的文件结束符号和流的挂断是不一样的。另外正如我们所预料的，当我们把标准输入重新定向成一个非流的设备(文件)的时候，getmsg会返回一个错误。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch14lev1sec4.html
+
+
+

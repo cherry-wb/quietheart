@@ -1,0 +1,39 @@
+++++++APUE读书笔记-08进程控制（04）++++++
+
+
+
+5、进程exit
+================================================
+	前面已经说过，
+	（1）进程正常终止有五种方式：
+	a)在main函数中执行return,这实际和调用exit是一样的。
+	b)调用exit函数。这个函数由ISO C来定义，它会调用所有注册的“退出回调函数”，以及关闭所有的标准I/O流。因为ISO C没有处理文件描述符号，多进程，和作业控制，所以这个函数对于unix系统来说是不完整的。
+	c)调用_exit或者_Exit函数。ISO C定义了_Exit来为进程提供一种不运行“退出回调函数”以及信号处理的结束的方式，标准I/O流是否被flushed这取决于实现。在UNIX系统上，_Exit和_exit是同义的,它不会刷新标准I/O流。_exit函数被exit调用，并且会处理一些和UNIX系统相关的细节；_exit在POSIX.1中被定义。在大多数UNIX系统的实现中，exit(3)是一个标准C库函数，然而_exit(2)是一个系统调用。
+	d)在进程的最后一个线程中执行return.但是，线程return的值不会作为进程的return值。当最后一个线程return的时候，进程会以0来表示它的termination status.
+	e)在进程的最后一个线程中调用pthread_exit函数。和前面的情况类似，进程的exit status始终是0，而不考虑pthread_exit的参数值。
+	（2）还有三种非正常终止的形式：
+	a)调用abort.实际上这是下一个形式的特殊情况，调用abork会发送SIGABRT信号。
+	b)当进程接收到特定的信号的时候。信号可以被进程自己来产生（例如调用abort函数），可以由其他进程产生，或者由内核产生（例如进程引用了一个非法的内存地址空间，或者尝试除以0）。
+	c)最后一个线程响应取消请求。默认来说，取消会延迟发生：一个线程请求其他线程被取消，然后过一会目标线程才会终止。
+	不管进程是怎么终止的，在内核中执行的代码都是一样的。内核会关闭被终止进程的所有打开的文件描述符号，释放它使用的内存以及其他类似。
+	对于前面，我们一般希望系统会让终止进程通知父进程它是如何终止的。对于三种exit(exit,_Exit,_exit),这是通过传入exit的参数来表示的。对于非正常终止的方式，是内核而不是进程产生一个termination status来表示非正常终止的原因。无论怎样，被终止进程的父进程都是通过wait或者waitpid函数来获得终止状态的。
+	这里我们需要区分一下两种终止状态：如果是通过三种exit终止的（正常终止），那么终止状态叫做exit status，是exit函数的参数；如果非正常终止，叫做termination status.在调用_exit的时候，exit status会被内核转换成为termination status.如果进程正常结束了，那么父进程会获得子进程的exit status.
+
+	wait或者waitpid会把它们等待的在子进程退出时候得到的status返回并存储起来，然后用下面的宏来判断其含义：
+	a)WIFEXITED(status):
+	如果是子进程正常终止的时候产生的status，那么该宏返回True.这时候我们可以通过WEXITSTATUS(status)来获取子进程退出时，调用的三种exit函数参数的低八位。
+	b)WIFSIGNALED (status):
+	如果是子进程是由于接收到它没有捕获的信号而非正常终止的时候产生的status，该宏返回True.我们可以使用WTERMSIG (status)来获得导致子进程终止的signal number.另外一些系统定义了WCOREDUMP (status)，如果终止进程会产生core file，该宏返回true.
+	c)WIFSTOPPED (status):
+	如果是发送信号导致当前子进程被stop的时候返回的status（此时子进程是终止还是stop状态???），那么该宏返回true。这是后我们可以使用WSTOPSIG (status)来获得导致子进程stop的信号。
+	d)WIFCONTINUED (status):
+	如果子进程在从job stop之后被continued导致返回了status,那么会返回True(对POSIX.1的XSI扩展,只对waitpid而言).
+	如果一个父进程在子进程结束之前结束了会怎样？实际上，如果发生这种情况，那么init进程会变成终止进程的所有子进程的父进程。我们已经说了，init是进程的父进程。一般来说当一个进程终止的时候，内核会遍历所有活动的进程，查看被终止的进程是否是其他还存在的某进程的父进程。如果存在被终止进程的子进程，那么存在的子进程的父进程id(ppid)被设置为1（也就是init进程的进程号）.这样我们可以保证所有的进程都有父进程。
+	还有一个我们需要注意的地方，就是如果一个子进程先于父进程终止。如果子进程完全地消失了，如果当父进程最后想要检查子进程是否terminated的时候，父进程不能获得它的termination status.内核会保存每一个终止进程的少量信息，这样当终止的进程的父进程调用wait或者waitpid的时候会用到它们。至少，这些信息里要包含PID以及进程的termination status,以及进程占用的CPU time.内核能够丢弃进程使用过的所有内存以及关闭它打开的文件。在UNIX 系统的属于中，进程如果terminated了，但是它的父进程没有wait它，那么这个进程就会被叫做zombie(僵尸进程)。使用ps(1)命令可以打印进程的状态，僵尸进程的状态是Z.如果我们些一个很长的程序，fork了许多的子进程，那么除非我们调用wait等它们来获取他们的termination status,否则它们会变成zombies.有些系统提供可以阻止创建僵尸进程的方法。
+	最后我们还需要考虑的是：如果一个进程是init的子进程，那么如果它terminate的话会怎样？它会成为一个zombie吗？答案是“不”，因为init本身必然会调用wait函数来获得termination status,它就是那么设计的。通过这样，init可以防止系统被过多的僵尸进程占用资源。当我们说一个init的子进程的时候，我们的意思是这个进程要么就是直接从init那里继承的，要么就是它的父亲在它之前终止了，它被设置成从init继承。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec5.html
+
+
+

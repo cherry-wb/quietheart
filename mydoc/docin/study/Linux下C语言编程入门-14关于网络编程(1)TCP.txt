@@ -1,0 +1,334 @@
+Linux下C语言编程入门-14关于网络编程(1)TCP
+十四、关于网络编程(1)TCP
+=======================
+网络程序通过 socket 和其它几个函数的调用,会返回一个通讯的文件描述符,我们可以将这个描述符看成普通的文件的描述符来操作,这就是 linux 的设备无关性的好处.我们可以通过向描述符读写操作实现网络之间的数据交流.
+网络程序是由两个部分组成的--客户端和服务器端.它们的建立步骤一般是:
+服务器端:
+socket-->bind-->listen-->accept
+客户端:
+socket-->connect
+这里很关键的是bind和connect，一个把套接字和本身的server“绑定”，一个把套接字和待连接的server“连接”
+
+1,相关函数
+这里，我们把常用的函数列出，然后后面也给出了其中几个重要的数据结构的定义。
+1.1,建立连接相关函数：
+-------
+int socket(int domain, int type,int protocol)
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
+int listen(int sockfd,int backlog)
+int accept(int sockfd, struct sockaddr *addr,int *addrlen)
+int connect(int sockfd, struct sockaddr * serv_addr,int addrlen)
+
+socket函数创建通信终端，返回终端描述。
+domain:说明我们网络程序所在的主机采用的通讯协族(AF_UNIX 和 AF_INET 等). AF_UNIX 只能够用于单一的 Unix 系统进程间通信,而 AF_INET 是针对 Internet 的,因而可以允许在远程 主机之间通信(当我们 man socket 时发现 domain 可选项是 PF_*而不是 AF_*,因为glibc 是 posix 的实现 所以用 PF 代替了 AF,不过我们都可以使用的).
+type: 我们网络程序所采用的通讯协议(SOCK_STREAM,SOCK_DGRAM 等) SOCK_STREAM表明我们用的是 TCP 协议,这样会提供按顺序的,可靠,双向,面向连接的比特流. SOCK_DGRAM表明我们用的是 UDP 协议,这样只会提供定长的,不可靠,无连接的通信.
+protocol:由于我们指定了 type,所以这个地方我们一般只要用 0 来代替就可以了 socket 为网络通讯做基本的准备.成功时返回文件描述符,失败时返回-1,看errno 可知道出错的详细情况.
+
+bind函数将本地的端口同 socket 返回的文件描述符捆绑在一起.
+为sockfd描述的套接字绑定一个名字（指定一个由my_addr确定的地址）函数成功时返回 0,失败的情况和socket 一样。
+sockfd:是由 socket 调用返回的文件描述符.
+my_addr:是一个指向 sockaddr 的指针. 在<linux/socket.h>;中有 sockaddr 的定义(见前面).
+addrlen:是 sockaddr 结构的长度.
+
+
+listen函数将bind的文件描述符变为监听套接字.返回的情况和 bind 一样.
+sockfd:是 bind 后的文件描述符.
+backlog:设置请求排队的最大长度.当有多个客户端程序和服务端相连时, 使用这个表示可以介绍的排队长度. 
+
+
+accept函数成功时返回最后的服务器端的文件描述符,这个时候服务器端可以向该描述符写信息了. 失败时返回-1.
+sockfd:是 listen 后的文件描述符.
+bind,listen 和 accept 是服务器端用的函数,accept 调用时,服务器端的程序会一直阻塞到有一个客户程序发出了连接. 
+addr,addrlen 是用来给客户端的程序填写的,服务器端只要传递指针就可以了.
+
+connect函数是客户端用来同服务端连接的.成功时返回 0,失败时返回-1.
+sockfd:socket 返回的文件描述符.sockfd 是同服务端通讯的文件描述符 
+serv_addr:储存了服务器端的连接信息.其中 sin_add 是服务端的地址
+addrlen:serv_addr 的长度
+-------
+
+1.2,字节转换相关函数：
+-------
+unsigned long int htonl(unsigned long int hostlong)
+unsigned short int htons(unisgned short int hostshort)
+unsigned long int ntohl(unsigned long int netlong)
+unsigned short int ntohs(unsigned short int netshort)
+这四个转换函数中,h 代表 host, n 代表 network.s 代表 short l 代表 long 第一个函数的意义是将本机器上的 long 数据转化为网络上的 long. 其他几个函数的意义也差不多...
+机器在表示数据的字节顺序是不同的为了统一起来,在 Linux 下面,使用这些字节转换函数.
+
+struct hostent *gethostbyname(const char *hostname)
+struct hostent *gethostbyaddr(const char *addr,int len,int type)
+标志一台机器可以用 IP 或者是用域名.用这两个函数进行转换.
+两个函数失败时返回 NULL 且设置 h_errno 错误变量,调用 h_strerror()可以得到详细的出错信息.
+在man中指出，这两个函数已经过时了用 getaddrinfo和getnameinfo替代了.
+gethostbyname函数将机器名(如 linux.yessun.com)转换为一个结构指针.在这个结构里面储存了域名的信息.
+gethostbyaddr函数将一个 32 位的 IP 地址(C0A80001)转换为结构指针.
+
+int inet_aton(const char *cp,struct in_addr *inp)
+char *inet_ntoa(struct in_addr in)
+IP 都是数字加点(192.168.0.1)构成的, 而在 struct in_addr 结构中用的是 32 位的 IP,使用这两个函数转换.
+这里，a 代表 ascii n 代表 network.
+inet_aton函数将 a.b.c.d 的 IP 转换为 32 位的 IP,存储在 inp指针里面.
+inet_ntoa函数将 32 位 IP 转换为 a.b.c.d 的格式.
+-------
+
+1.3,服务信息函数:(端口.IP 和服务信息)
+-------
+int getsockname(int sockfd,struct sockaddr *localaddr,int *addrlen)
+int getpeername(int sockfd,struct sockaddr *peeraddr, int *addrlen)
+struct servent *getservbyname(const char *servname,const char *protoname)
+struct servent *getservbyport(int port,const char *protoname)
+
+getsockname函数不常用后面不详述了。
+getpeername函数不常用后面不详述了。
+getservbyname函数用于得到端口号。
+getservbyport函数用于得到指定的端口号的服务。
+-------
+
+1.4,通信相关函数：（读、写）
+-------
+ssize_t write(int fd,const void *buf,size_t nbytes)
+ssize_t read(int fd,void *buf,size_t nbyte)
+
+建立了连接之后，只要往文件描述符里面读写东西就可以了。
+write函数将 buf中的 nbytes 字节内容写入文件描述符 fd.成功时返回写的字节数.失败时返回-1. 并设置 errno 变量. 
+1)返回值大于 0,表示写了部分或者是全部的数据.
+2)返回的值小于 0,此时出现了错误.
+如果错误为 EINTR 表示在写的时候出现了中断错误.
+如果为 EPIPE 表示网络连接出现了问题(对方已经关闭了连接).
+
+read函数负责从fd中读取内容.当读成功时,read 返回实际所读的字节数,如果返回的值是 0 表示已经读到文件的结束了,小于0 表示出现了错误.
+如果错误为 EINTR 说明读是由中断引起的, 如果是 ECONNREST 表示网络连接出了问题.
+-------
+
+1.5,相关结构：
+-------
+struct sockaddr{
+unisgned short as_family;
+char sa_data[14];
+};
+不过由于系统的兼容性,我们一般不用这个头文件,而使用另外一个结构(struct sockaddr_in) 来代替.
+在<linux/in.h>中有sockaddr_in 的定义
+struct sockaddr_in{
+unsigned short sin_family;/*一般为 AF_INET因为主要使用 Internet*/
+unsigned short int sin_port;/*我们要监听的端口号*/
+struct in_addr sin_addr;/*只含一个32位整数成员的结构,设置为 INADDR_ANY 表示可以 和任何的主机通信*/
+unsigned char sin_zero[8];/*是用来填充的???*/
+
+在<netdb.h>;中有 struct hostent 的定义
+struct hostent{
+char *h_name; /* 主机的正式名称 */
+char *h_aliases; /* 主机的别名 */
+int h_addrtype; /* 主机的地址类型 AF_INET*/
+int h_length; /* 主机的地址长度 对于 IP4 是 4 字节 32 位*/
+char **h_addr_list; /* 主机的 IP 地址列表 */
+}
+#define h_addr h_addr_list[0] /* 主机的第一个 IP 地址*/
+
+struct servent
+{/*关于服务信息的定义*/
+char *s_name; /* 正式服务名 */
+char **s_aliases; /* 别名列表 */
+int s_port; /* 端口号 */
+char *s_proto; /* 使用的协议 */
+}
+-------
+
+2,举例1
+第一个例子代码片段（建立连接并通信）
+/*******服务器端代码片段*******/
+/*头文件*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+/*相关定义*/
+int sockfd,new_fd;/*两个文件描述符,后者是被接受的套接字的文件描述符*/
+struct sockaddr_in server_addr;/*服务器相关*/
+struct sockaddr_in client_addr;/*客户机相关*/
+int sin_size,portnumber;
+char hello[]="Hello! Are You Fine?\n";
+......
+/* 服务器端开始建立 socket 描述符 */
+if((sockfd=socket(AF_INET,SOCK_STREAM,0))==-1)
+{/*三个参数表示：是internet,是TCP，默认的0*/
+	fprintf(stderr,"Socket error:%s\n\a",strerror(errno));
+	exit(1);
+}
+......
+/* 服务器端填充 sockaddr 结构 */
+bzero(&server_addr,sizeof(struct sockaddr_in));/*先把结构里面所有的数据都清零*/
+server_addr.sin_family=AF_INET;/*表示internet*/
+server_addr.sin_addr.s_addr=htonl(INADDR_ANY);/*表示可以和任何主机通信*/
+server_addr.sin_port=htons(portnumber);/*表示要监听的端口号*/
+......
+/* 捆绑 sockfd 描述符 */
+if(bind(sockfd, (struct sockaddr *)(&server_addr), sizeof(struct sockaddr))==-1)
+{
+	fprintf(stderr,"Bind error:%s\n\a",strerror(errno));
+	exit(1);
+}
+......
+/* 监听 sockfd 描述符 */
+if(listen(sockfd,5)==-1)
+{/*参数：监听的描述符号,允许的排队长度*/
+	fprintf(stderr,"Listen error:%s\n\a",strerror(errno));
+	exit(1);
+}
+......
+/*接收客户请求*/
+while(1)
+{
+	/* 服务器阻塞,直到客户程序建立连接 */
+	sin_size=sizeof(struct sockaddr_in);
+	if((new_fd=accept(sockfd,(struct sockaddr *)(&client_addr),&sin_size))==-1)
+	{/*参数：套接字，客户信息(会自动获得,如果不关心可以设为空)，信息结构的大小，返回接受的套接字文件描述符*/
+		fprintf(stderr,"Accept error:%s\n\a",strerror(errno));
+		exit(1);
+	}
+	fprintf(stderr,"Server get connection from %s\n",inet_ntoa(client_addr.sin_addr));
+	......
+		/*向接受的套接字描述符写，以发送信息*/
+		if(write(new_fd,hello,strlen(hello))==-1)
+		{
+			fprintf(stderr,"Write Error:%s\n",strerror(errno));
+			exit(1);
+		}
+	/* 这个通讯已经结束 */
+	close(new_fd);
+	/* 循环下一个 */
+}
+close(sockfd);
+
+
+/*******客户端代码片段*******/
+/*头文件*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+/*相关定义*/
+int sockfd;
+char buffer[1024];/*存放接收到的信息*/
+struct sockaddr_in server_addr;/*描述服务器的结构*/
+struct hostent *host;/*存放server的地址*/
+int portnumber,nbytes;/*想要连接的端口号，和read的返回值*/
+
+
+/*获取待连接的服务器信息*/
+if((host=gethostbyname(argv[1]))==NULL)
+{/*根据argv[1]指示的服务器主机名字字符串(如 linux.yessun.com)，获得主机结构（其中存放了域名信息）,host描述的是server的*/
+	fprintf(stderr,"Gethostname error\n");
+	exit(1);
+}
+if((portnumber=atoi(argv[2]))<0)
+{/*获取待连接的服务器端口*/
+	fprintf(stderr,"Usage:%s hostname portnumber\a\n",argv[0]);
+	exit(1);
+}
+
+/* 客户程序开始建立 sockfd 描述符 */
+if((sockfd=socket(AF_INET,SOCK_STREAM,0))==-1)
+{/*参数意义同前*/
+	fprintf(stderr,"Socket Error:%s\a\n",strerror(errno));
+	exit(1);
+}
+/* 客户程序填充服务端的资料 */
+bzero(&server_addr,sizeof(server_addr));/*先清零*/
+server_addr.sin_family=AF_INET;/*网络类型internet*/
+server_addr.sin_port=htons(portnumber);/*把请求的端口添到服务器信息的结构中*/
+server_addr.sin_addr=*((struct in_addr *)host->h_addr);/*一个字符串地址,server的*/
+
+/* 客户程序发起连接请求 */
+if(connect(sockfd,(struct sockaddr *)(&server_addr),sizeof(struct sockaddr))==-1)
+{
+	fprintf(stderr,"Connect Error:%s\a\n",strerror(errno));
+	exit(1);
+}
+
+/* 连接成功读取接收到的信息 */
+if((nbytes=read(sockfd,buffer,1024))==-1)
+{/*把sockfd当作文件描述符来读取其中的信息（来自server的信息）*/
+	fprintf(stderr,"Read Error:%s\n",strerror(errno));
+	exit(1);
+}
+buffer[nbytes]='\0';
+printf("I have received:%s\n",buffer);
+/* 结束通讯 */
+close(sockfd);
+-------
+
+3,举例2
+第二个例子代码片段：(获取主机信息)
+/*头文件*/
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+	/*相关定义*/
+	struct sockaddr_in addr;
+	struct hostent *host;
+	char **alias;
+
+
+	/*根据ip或者域名获取主机信息*/
+if(inet_aton(*argv,&addr.sin_addr)!=0)
+{/*这里我们假设是 IP，把argv中的ip地址（a.b.c.d）,获取32位到&addr.sin_addr中*/
+
+	host=gethostbyaddr((char *)&addr.sin_addr,4,AF_INET);/*根据刚刚转换的ip获得服务器主机信息*/
+
+	printf("Address information of Ip %s\n",*argv);
+}
+else
+{
+	/* 失败,难道是域名?*/
+	host=gethostbyname(*argv);/*若不是ip根据域名形式获得服务主机信息*/
+	printf("Address informationof host %s\n",*argv);
+}
+if(host==NULL)
+{
+	/* 都不是 ,算了不找了*/
+	fprintf(stderr,"No address information of %s\n",*arg
+			v);
+}
+
+/*打印主机信息*/
+printf("Official host name %s\n",host->h_name);/*打印主机名字*/
+
+/*打印主机别名*/
+printf("Name aliases:");
+for(alias=host->h_aliases;*alias!=NULL;alias++)
+printf("%s ,",*alias);
+
+/*打印IP地址*/
+printf("\nIp address:");
+for(alias=host->h_addr_list;*alias!=NULL;alias++)
+printf("%s ,",inet_ntoa(*(struct in_addr *)(*alias)));
+-------
+
+4,举例3
+第三个例子代码片段：(数据的传递)
+......
+/* 客户端向服务端写 */
+struct my_struct my_struct_client;
+write(fd,(void *)&my_struct_client,sizeof(struct my_struct);
+/* 服务端的读*/
+/*在网络上传递数据时我们一般都是把数据转化为 char 类型的数据传递.*/
+char buffer[sizeof(struct my_struct)];
+struct *my_struct_server;
+read(fd,(void *)buffer,sizeof(struct my_struct));
+my_struct_server=(struct my_struct *)buffer;
+......
+-------

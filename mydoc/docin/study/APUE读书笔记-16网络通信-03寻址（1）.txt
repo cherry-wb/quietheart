@@ -1,0 +1,127 @@
+++++++APUE读书笔记-16网络通信-03寻址（1）++++++
+
+
+
+3、寻址（1）
+================================================
+	在前面的小节里面，我们学到了如何创建和销毁一个套接字。在我们使用套接字之前，我们需要知道如何定位到我们交互的进程。定位我们需要通信的进程，有两个部分，一个是我们想要连接的计算机的网络地址，一个是用来定位具体进程的计算机上面的服务。
+
+	（1）字节顺序
+	当和同一个计算机上面的进程进行通信的时候，我们不用担心字节顺序。字节顺序是处理器的特性，用来表示在一个大的数据类型中字节如何进行排序，例如整数。下面的图示表示了32位整数是如何进行排序的。
+	32位整数的字节顺序
+	big-endian:
+	+---------------------------------+
+	|   n   |  n+1   |  n+2  |  n+3   |
+	+---------------------------------+
+	MSB                           LSB
+
+	little-endian:
+	+---------------------------------+
+	|  n+3  |  n+2   |  n+1  |   n    |
+	+---------------------------------+
+	MSB                           LSB
+
+	如果处理器结构支持big-endian字节序，那么高字节地址出现在低位字节(LSB)。Little-endian字节顺序相反，高位字节内容(MSB)出现在左面，而低位字节内容出现在右面。因此，如果我们想要指定一个32位整数值为0x04030201，最高位字节包含4，最低位字节包含1，并且并不考虑字节次序。如果我们将这个整数的地址当做字符地址赋给一个字符指针cp，那么我们将会看到字节顺序的不同。在little-endian的处理器上面，cp[0]会引用最低位字节值1，cp[3]会引用最高位字节值4；而在big-endian处理器上面，cp[0]的值为4即最高字节，cp[3]包含1即最低字节位。下图给出了本文中四个平台的字节次序。
+
+			测试平台的字节次序
++-----------------------------------------------------------+
+| Operating system | Processor architecture | Byte order    |
+|------------------+------------------------+---------------|
+| FreeBSD 5.2.1    | Intel Pentium          | little-endian |
+|------------------+------------------------+---------------|
+| Linux 2.4.22     | Intel Pentium          | little-endian |
+|------------------+------------------------+---------------|
+| Mac OS X 10.3    | PowerPC                | big-endian    |
+|------------------+------------------------+---------------|
+| Solaris 9        | Sun SPARC              | big-endian    |
++-----------------------------------------------------------+
+
+	另外有些处理器还可以配置成两种字节顺序都可以支持。
+	网络协议会指定一个字节次序，这样不同的计算机系统之间可以交换消息的信息而不用在意字节次序了。TCP/IP协议套件使用big-endian字节次序，字节次序在应用程序交换格式化数据的时候是可见的。通过TCP/IP，地址以网络字节次序表示，所以有时应用程序需要在网络字节次序和处理器字节次序之间进行转换。例如，在打印一个可读的地址的时候这个就很常见。
+
+	有四个函数可以用于TCP/IP应用程序当中，在处理器字节次序和网络字节次序之间进行转换。
+	#include <arpa/inet.h>
+	uint32_t htonl(uint32_t hostint32);
+	返回一个以网络字节顺序表示的32位整数。
+
+	uint16_t htons(uint16_t hostint16);
+	返回一个以网络字节顺序表示的16位整数。
+
+	uint32_t ntohl(uint32_t netint32);
+	返回一个以主机字节次序表示的32位整数。
+
+	uint16_t ntohs(uint16_t netint16);
+	返回一个以主机字节次序表示的16位整数。
+
+	字符'h'表示"host"字节次序，字符'n'表示"network"字节次序。字符'l'表示"long"(也就是4个字节)整数，字符's'表示"short"(也就是两个字节)整数。这四个函数定义在<prpa/inet.h>中，有些老的系统中把它们放在<netinet/in.h>中。
+	(据说，这里inet表示网络层向上暴露的接口，neti表示网络层向下链路层暴露的接口)
+
+	（2）地址格式
+	一个地址可以用来标识一个特定通信域中的套接字端。为特定的域指定特定的地址格式，这样不同的地址格式可以被传递到socket相关的函数中去。地址被强制转换成通用的sockaddr数据结构:
+	struct sockaddr {
+		sa_family_t   sa_family;   /* address family 例如AF_INET*/
+		char          sa_data[];   /* variable-length address */
+		.
+	};
+	实现上可以添加额外的数据成员，还可以定义sa_data[]成员的大小，例如，在linux系统上面，结构体定义如下：
+	struct sockaddr {
+		sa_family_t  sa_family;     /* address family */
+		char         sa_data[14];   /* variable-length address */
+	};
+	FreeBSD结构定义如下：
+	struct sockaddr {
+		unsigned char  sa_len;        /* total length */
+		sa_family_t    sa_family;     /* address family */
+		char           sa_data[14];   /* variable-length address */
+	};
+
+	因特网地址定义在<netinet/in.h>中。在IPv4因特网域(AF_INET)，套接字地址使用结构sockaddr_in来表示:
+	struct in_addr {
+		in_addr_t       s_addr;       /* IPv4 address */
+	};
+	struct sockaddr_in {
+		sa_family_t    sin_family;   /* address family */
+		in_port_t      sin_port;     /* port number */
+		struct in_addr sin_addr;     /* IPv4 address */
+	};
+	in_port_t数据类型被定义成uint16_t。in_addr_t数据类型被定义成uint32_t类型。这些整数数据类型指定了数据类型中的位号码，并且定义在<stdint.h>中。
+
+	和AF_INET域相比较，IPv6因特网域(AF_INET6)套接字地址使用sockaddr_in6结构来表示：
+	struct in6_addr {
+		uint8_t        s6_addr[16];     /* IPv6 address */
+	};
+	struct sockaddr_in6 {
+		sa_family_t     sin6_family;     /* address family */
+		in_port_t       sin6_port;       /* port number */
+		uint32_t        sin6_flowinfo;   /* traffic class and flow info */
+		struct in6_addr sin6_addr;       /* IPv6 address */
+		uint32_t        sin6_scope_id;   /* set of interfaces for scope */
+	};
+
+	下面是Single UNIX Specification要求定义的。不同的实现可以自由添加额外的成员。例如，在Linux上面，sockaddr_in数据结构被定义成如下：
+	   struct sockaddr_in {
+	     sa_family_t     sin_family;     /* address family */
+	     in_port_t       sin_port;       /* port number */
+	     struct in_addr  sin_addr;       /* IPv4 address */
+	     unsigned char   sin_zero[8];    /* filler */
+	   };
+	这里，sin_zero成员是一个过滤域，应当被设置成全0。
+
+	需要注意的是，尽管sockaddr_in和sockaddr_in6结构非常的不一样，但是他们都被强制转换成sockaddr数据结构并传递给socket函数。在后面，我们将会看到UNIX域套接字和两种因特网域套接字的地址格式都不一样。
+
+	有时候我们需要以人可以阅读而不是计算机阅读的格式打印一个地址。BSD的网络软件包含inet_addr和inetntoa函数，用来在二进制的地址格式和点分十进制的字符串地址格式（a.b.c.d）之间进行转换。这些函数只能在IPv4地址上进行工作。有两个新的函数inet_ntop和inet_pton可以提供类似的功能，它们能够支持IPv4和IPv6地址格式。
+	#include <arpa/inet.h>
+	const char *inet_ntop(int domain, const void *restrict addr, char *restrict str, socklen_t size);
+	返回值：成功的时候指向地址字符串的指针，错误的时候返回空。
+
+	int inet_pton(int domain, const char *restrict str, void *restrict addr);
+	返回值：成功的时候返回1，如果格式非法则返回0，如果错误则返回1。(费解???)
+
+	inetntop函数可以将一个以网络字节次序的二进制质地转换成文本字符串;inet_pton将一个文本字符串转化成二进制的以网络字节次序表示的地址。这里，domain参数只能成传递两个值：AF_INET和AF_INET6。
+	对于inet_ntop，size参数指定str缓存的大小（用来容纳字符串）。有两个常量：INET_ADDRSTRLEN可以有足够的空间容纳一个IPv4的地址，INET6_ADDRSTRLEN可以有足够的空间容纳一个IPv6的地址。对于inet_pton，addr缓存需要有足够的的空间，如果domain是AF_INET那么可以容纳一个32位的地址，如果domain是AF_INET6那么可以容纳一个128位的地址。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch16lev1sec3.html
+
+
+

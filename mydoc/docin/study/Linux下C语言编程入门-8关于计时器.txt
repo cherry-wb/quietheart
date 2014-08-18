@@ -1,0 +1,85 @@
+Linux下C语言编程入门-8关于计时器
+八、关于计时器
+=======================
+有3个内部间隔计时器:
+ITIMER_REAL:减少实际时间.到时的时候发出 SIGALRM 信号.
+ITIMER_VIRTUAL:减少有效时间(进程执行的时间).产生 SIGVTALRM 信号.
+ITIMER_PROF:减少进程的有效时间和系统时间(为进程调度用的时间).这个经常和上面一个使用用来计算系统内核时间和用户时间.产生 SIGPROF 信号.
+
+1,相关函数
+-------
+#include <sys/time.h>
+int getitimer(int which,struct itimerval *value);
+int setitimer(int which,struct itimerval *newval,struct itimerval *oldval);
+这两个函数中，which 表示使用三个计时器中的哪一个.
+getitimer 函数得到间隔计时器的时间值.保存在 value 中 .
+setitimer 函数设置间隔计时器的时间值为 newval.并将旧值保存在 oldval 中.
+涉及到的相关结构如下：
+struct itimerval
+{
+	/*时间间隔，它一般是不变的，当it_value的时间到达0之后，发送信号，然后再把it_value设置为it_interval的值，继续减少it_value*/
+	struct timeval it_interval;
+	/*it_value 是不断减少的时间,当这个值为 0 的时候就发出相应的信号了. 然后设置为 it_interval 值.*/
+	struct timeval it_value;
+}
+
+2,举例
+-------
+这个例子每执行两秒中之后会输出一个提示.
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+#define PROMPT "时间已经过去了两秒钟\n\a"
+char *prompt=PROMPT;
+unsigned int len;
+
+void prompt_info(int signo)
+{/*打印提示*/
+	write(STDERR_FILENO,prompt,len);
+}
+
+void init_sigaction(void)
+{/*ITIMER_PROF时间间隔相联的为SIGPROF信号设置相应的处理信息*/
+
+	/*和信号处理相关的结构，该结构在后面有详细的描述*/
+	struct sigaction act;
+	act.sa_handler=prompt_info;
+	act.sa_flags=0;
+
+	/*把信号集合act.sa_mask清空，使得它不包含任何信号*/
+	sigemptyset(&act.sa_mask);
+
+	/*为SIGPROF信号设置相应的处理信息？？*/
+	sigaction(SIGPROF,&act,NULL);
+}
+
+void init_time()
+{/*设置时间间隔*/
+
+	/*前面提到的时间间隔相关结构*/
+	struct itimerval value;
+
+	/*不断减少的时间的初始值为2秒，2秒后它自动减小到0*/
+	value.it_value.tv_sec=2;
+	value.it_value.tv_usec=0;
+
+	/*时间间隔为2秒，每两秒钟会自动的把减少到"零"的value.it_value(发送完信号之后)再设置为it_interval值*/
+	value.it_interval=value.it_value;
+
+	/*利用这个函数，把时间间隔的信息设置为刚才赋值的value*/
+	setitimer(ITIMER_PROF,&value,NULL);
+}
+int main()
+{
+	/*打印信息相关*/
+	len=strlen(prompt);
+	/*设置信号处理函数相关*/
+	init_sigaction();
+	/*设置时间间隔相关*/
+	init_time();
+	/*死循环一直运行*/
+	while(1);
+	exit(0);
+}

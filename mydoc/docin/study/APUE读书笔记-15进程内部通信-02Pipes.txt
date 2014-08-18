@@ -1,0 +1,190 @@
+++++++APUE读书笔记-15进程内部通信-02Pipes++++++
+
+
+
+2、Pipes
+================================================
+	Pipes是一种比较老的IPC(内部进程通信)技术，所有UNIX系统都提供这种通信方式.Pipes有两个限制：
+	a)由于历史原因，它是半双工的（即数据只能在一个方向上面流动）。有些系统提供全双工的Pipes但是出于可移植的考虑，我们还是最好不要做“Pipes是全双工的”这样的假设。
+	b)Pipes只能被具有共同祖先的进程之间使用。一般来说，一个进程创建了一个Pipes，然后这个进程调用fork，之后Pipes就在子进程和父进程之间使用了。
+	我们在后面将会看到，FIFOs没有第二个限制，同时Unix domain sockets和基于流的有名管道两个限制都没有。
+	尽管具有以上限制，半双工的pipes仍然是最常使用的IPC通信方式。每当你建立一系列管道线的命令让shell执行的时候，shell会为每个命令创建独立的进程，将一个命令的标准输出通过管道连接到下一个命令的标准输入。
+	管道使用如下函数创建：
+	#include <unistd.h>
+	int pipe(int filedes[2]);
+	如果成功，返回0，如果错误返回1。
+	通过filedes参数返回两个文件描述符号，其中filedes[0]用于读，filedes[1]用于写，filedes[1]的输出就是filedes[0]的输入。
+	在 4.3BSD, 4.4BSD, 和 Mac OS X 10.3中Pipes通过UNIX domain sockets来实现，尽管UNIX domain sockets默认是全双工的，这些操作系统使用管道的时候还是使用半双工的模式。
+	POSIX.1允许支持全双工的pipes实现，在这些实现中，filedes[0]和filedes[1]可以被打开用来读或者写。在这里用一个图形展示了管道。具体参见参考资料，这里只是说明一下图的含义：在用户进程中，数据从filedes[1]流出，经过内核中的pipes，再由pipes流出，流入到用户进程中的filedes[0]。
+	对于pipes两端的文件描述符号，fstat函数返回一个FIFO的文件类型，我们可以使用S_ISFIFO宏来对pipe进行检测。
+	POSIX.1强调stat结构的st_size成员在pipe中是没有定义的，但是有许多系统会将st_size填充为pipe中可以读取的字节的数目，可是这个特性也是不具有移植性的。
+	一个在单一进程中的pipe是没有多大意义的。一般来说，进程都先调用一个pipe然后调用fork，这样在父子进程之间创建一个IPC通道。如下图所示：
+
+	 +-----Parent-------+             +--------Child---------+
+	 |  fd0       fd1   |             |   fd0          fd1   |
+	 +-----^------\-----+             +-^------------/-------+
+	        \      \                   /            /
+	         \      \                 /            /
+	          \+-----v-----Kernel----/----------+ /
+	           \              Pipes             |v
+	           +--------------------------------+
+
+	在fork之后，数据如何流动，是由我们自己决定的。如果是从父进程流向子进程，那么父进程关闭管道的读端(fd0)，子进程关闭管道的写端(fd1)，如下：
+
+	 +-----Parent-------+             +--------Child---------+
+	 |  fd0       fd1   |             |   fd0          fd1   |
+	 +------------\-----+             +-^--------------------+
+	               \                   /
+	                \                 /
+	           +-----v-----Kernel----/----------+
+	           |              Pipes             |
+	           +--------------------------------+
+
+	当管道的一端被关闭的时候，通常会遵循如下原则：
+	a)如果我们从一个写端被关闭的管道中读取数据，那么这个管道中的数据被读取完毕的时候，read将会返回一个0表示文件的结束(所以最好关闭多余的文件描述符号)。(技术上来说，除非没有向管道写的进程否则不会产生文件结束符号,在多进程中，我们可能会复制出多个管道的文件描述符号，对管道进行读写，但是一般来说，对于一个管道只有一个读和写的进程。后面我们讲到FIFO的时候，会看到有多个写，一个读的情况)
+	b)如果我们写一个读端被关闭的管道，那么会产生SIGPIPE信号。如果我们忽略这个信号或者捕捉这个信号并且从信号处理函数中返回，那么write返回1并且设置errno为EPIPE。
+	当我们写一个管道(pipe或者FIFO)的时候，常数PIPE_BUF指定内核的管道缓存大小。一个对同一个管道的小于或者等于PIPE_BUF字节的写操作将不会被其它进程打扰。但是如果多个进程写一个管道，并且我们写入的数据大于PIPE_BUF字节，那么数据可能会被其它写进程的数据干扰。我们可以使用pathconf或者fpathconf来确定PIPE_BUF的大小。
+	例子：
+	如下是在父子进程之间创建管道，并且向管道之中发送数据的例子：
+	int main(void)
+	{
+	    int     n;
+	    int     fd[2];
+	    pid_t   pid;
+	    char    line[MAXLINE];
+
+	    if (pipe(fd) < 0)
+	        err_sys("pipe error");
+	    if ((pid = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (pid > 0) {       /* parent */
+	        close(fd[0]);
+	        write(fd[1], "hello world\n", 12);
+	    } else {                /* child */
+	        close(fd[1]);
+	        n = read(fd[0], line, MAXLINE);
+	        write(STDOUT_FILENO, line, n);
+	    }
+	    exit(0);
+	}
+	这个例子我们调用read和write直接对管道文件描述符号进行操作，实际更有趣的操作是将管道文件描述符号复制到标准输入输出上面。一般子进程之后会运行其他进程，然后那个程序从它的标准输入(管道)读取，写入到标准输出（管道）。
+
+	又一个例子：
+	假设一个程序显示它的标准输出，一次显示一页，我们想要使用自己喜欢的pager(页显示工具)而不是unix系统默认的来显示这些内容。为了防止将输出写入到一个临时文件然后再调用system来显示这个文件中的内容，我们使用管道直接输出到pager中。我们这样来做：我们创建一个pipe，然后调用fork创建子进程，然后在子进程中设置标准输入为管道的读端，然后使用exec执行我们喜欢的pager程序。代码如下：
+	#include <sys/wait.h>
+	#define DEF_PAGER   "/bin/more"     /* default pager program */
+	int main(int argc, char *argv[])
+	{
+	    int    n;
+	    int    fd[2];
+	    pid_t  pid;
+	    char   *pager, *argv0;
+	    char   line[MAXLINE];
+	    FILE   *fp;
+
+	    if (argc != 2)
+	        err_quit("usage: a.out <pathname>");
+
+	    if ((fp = fopen(argv[1], "r")) == NULL)
+	        err_sys("can't open %s", argv[1]);
+	    if (pipe(fd) < 0)
+	        err_sys("pipe error");
+
+	    if ((pid = fork()) < 0) {
+	        err_sys("fork error");
+	    } else if (pid > 0) {                              /* parent */
+	        close(fd[0]);       /* close read end */
+
+	        /* parent copies argv[1] to pipe */
+	        while (fgets(line, MAXLINE, fp) != NULL) {
+	            n = strlen(line);
+	            if (write(fd[1], line, n) != n)
+	                err_sys("write error to pipe");
+	        }
+	        if (ferror(fp))
+	            err_sys("fgets error");
+
+	        close(fd[1]);   /* close write end of pipe for reader */
+
+	        if (waitpid(pid, NULL, 0) < 0)
+	            err_sys("waitpid error");
+	        exit(0);
+	    } else {                                        /* child */
+	        close(fd[1]);   /* close write end */
+	        if (fd[0] != STDIN_FILENO) {
+	            if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO)
+	                err_sys("dup2 error to stdin");
+	            close(fd[0]);   /* don't need this after dup2 */
+	        }
+
+	        /* get arguments for execl() */
+	        if ((pager = getenv("PAGER")) == NULL)
+	            pager = DEF_PAGER;
+	        if ((argv0 = strrchr(pager, '/')) != NULL)
+	            argv0++;        /* step past rightmost slash */
+	        else
+	            argv0 = pager;  /* no slash in pager */
+
+	        if (execl(pager, argv0, (char *)0) < 0)
+	            err_sys("execl error for %s", pager);
+	    }
+	    exit(0);
+	}
+
+
+	在调用fork之前，我们创建一个pipe。在fork之后，父进程关闭它的读取端，子进程关闭它的写入端。子进程然后调用dup2把标准输入重新定向到管道的读取端。当pager程序执行的时候，它的标准输入就变成了管道的读取端。
+	当我们将一个文件描述符号重新定向到另外一个文件描述符号上面的时候（例如这里子进程中的标准输入被重新定向到了fd[0]），我们需要确保那个文件描述符号不是程序使用过的。如果那个文件描述符号已经是是程序使用的了，那么我们调用dup2将会关闭这个文件描述符号（然后再重新打开这个文件符号不过打开的对应就是新的文件了），有可能整个程序就只有一份那个被关闭的文件符号的打开。在这个程序中，如果标准输入没有被shell打开过(默认shell会在启动程序的时候打开标准输入输出和错误文件描述符号)，那么程序开头的fopen将会使用文件描述符号0，也就是最小的未被使用的文件描述符号，这样fd[0]将会不等于标准输入。然而，当我们调用dup2关闭一个文件文件描述符号以便重定向到另外一个的时候，我们会做一个文件描述符号的比较，为了确保稳定。
+	注意我们使用环境变量PAGER来获取用户pager程序的名称，如果这个不能工作，那么我们使用默认的，这也是一个使用环境变量比较常用的方法。
+
+	使用管道实现的同步函数
+	前面我们调用过TELL_WAIT, TELL_PARENT, TELL_CHILD, WAIT_PARENT,和WAIT_CHILD，并且我们曾经使用信号实现过这些函数，这里我们有一个使用管道实现这些函数的方法。(前面使用信号的方法，没有在这里列举出来，但是管道的方法比较简介，列举了)代码如下：
+	static int  pfd1[2], pfd2[2];
+	void TELL_WAIT(void)
+	{/*创建管道*/
+	    if (pipe(pfd1) < 0 || pipe(pfd2) < 0)
+	        err_sys("pipe error");
+	}
+	void TELL_PARENT(pid_t pid)
+	{/*子进程写*/
+	    if (write(pfd2[1], "c", 1) != 1)
+	        err_sys("write error");
+	}
+	void WAIT_PARENT(void)
+	{/*子进程读*/
+	    char    c;
+	    if (read(pfd1[0], &c, 1) != 1)
+	        err_sys("read error");
+
+	    if (c != 'p')
+	        err_quit("WAIT_PARENT: incorrect data");
+	}
+	void TELL_CHILD(pid_t pid)
+	{/*父进程写*/
+	    if (write(pfd1[1], "p", 1) != 1)
+	        err_sys("write error");
+	}
+	void WAIT_CHILD(void)
+	{/*父进程读*/
+	    char    c;
+
+	    if (read(pfd2[0], &c, 1) != 1)
+	        err_sys("read error");
+
+	    if (c != 'c')
+	        err_quit("WAIT_CHILD: incorrect data");
+	}
+	我们在调用fork之前创建两个管道，然后父进程在调用TELL_CHILD的时候向前面的管道中写入字符p，子进程调用TELL_PARENT的时候向后面的（另外一个）管道写入字符c。相应的WAIT_xxx函数从对应的管道中阻塞的读取相应的字符。
+	注意每个管道都有一个额外的读端，这并没有什么大问题。也就是说，子进程可以从管道pfd1[0]中读，父进程也可以，但是没有关系，父进程是不会尝试中这个管道中读取数据的。
+                        使用两个管道用于父子进程同步
+
+               parent                           child
+            +----------+         "p"         +-----------+
+            |   pfd1[1]|-------------------->| pfd1[0]   |
+            |   pfd2[0]|<--------------------| pfd2[1]   |
+            +----------+         "c"         +-----------+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch15lev1sec2.html
+
+
+

@@ -1,0 +1,76 @@
+++++++APUE读书笔记-10信号-13sigpending函数++++++
+
+
+
+13、sigpending函数
+================================================
+	sigpending函数返回发送给进程的被阻塞的信号的集合以及处于提交给当前进程的信号的集合。通过函数的参数返回这个信号的集合。
+	#include <signal.h>
+	int sigpending(sigset_t *set);
+	函数如果成功返回0，失败返回1（其值实际为-1）。
+	举例：
+	static void sig_quit(int signo)
+	{
+	    printf("caught SIGQUIT\n");
+	    if (signal(SIGQUIT, SIG_DFL) == SIG_ERR)
+	        err_sys("can't reset SIGQUIT");
+	}
+	int main(void)
+	{
+	    sigset_t    newmask, oldmask, pendmask;
+
+	    if (signal(SIGQUIT, sig_quit) == SIG_ERR)
+	        err_sys("can't catch SIGQUIT");
+
+	    /*
+	     * 保存当前的signal mask并且阻塞信号SIGQUIT
+	     */
+	    sigemptyset(&newmask);
+	    sigaddset(&newmask, SIGQUIT);
+	    if (sigprocmask(SIG_BLOCK, &newmask, &oldmask) < 0)
+	        err_sys("SIG_BLOCK error");
+
+	    sleep(5);   /* 这里,SIGQUIT会保持提交状态 */
+	    if (sigpending(&pendmask) < 0)
+	        err_sys("sigpending error");
+	    if (sigismember(&pendmask, SIGQUIT))
+	        printf("\nSIGQUIT pending\n");
+
+	    /*
+	     * 恢复原来的signal mask，以取消对SIGQUIT的阻塞
+	     */
+	    if (sigprocmask(SIG_SETMASK, &oldmask, NULL) < 0)
+	        err_sys("SIG_SETMASK error");
+	    printf("SIGQUIT unblocked\n");
+
+	    sleep(5);   /* 这里，SIGQUIT将会终止进程同时产生core文件*/
+	    exit(0);
+	}
+
+	例子给出了我们已经描述的所有的信号的特性。
+	进程阻塞SIGQUIT,保存它当前的signal mask，然后睡眠5秒。任何在这个期间发生的quit信号都会被阻塞，不会发送给进程直到这个信号取消阻塞。在5秒睡眠的最后，我们检查信号是否处于提交状态并且取消信号的阻塞。
+	注意，我们在阻塞信号之前，把原来的mask保存，在我们取消信号阻塞的时候，我们使用原来的mask做了一步SIG_SETMASK。当然，我们可能会使用SIG_UNBLOCK来取消我们已经阻塞的信号。但是，我们需要注意，如果我们写的函数可以被其他地方调用，并且如果我们需要在我们的函数中阻塞一个信号，我们不能使用SIG_UNBLOCK来取消对信号的阻塞。这里，我们需要使用SIG_SETMASK然后把信号恢复成它原来的值.这样做，是因为，那个调用我们函数的地方，可能在调用我们之前就特别地指定了要阻塞这个信号，所以我们不能仅仅简单地取消那个信号的阻塞。
+	如果我们在睡眠时发送了quit信号，而这个信号现在处于提交状态并且是取消阻塞的状态，那么它会在sigprocmask返回之前被发送给进程。我们将会看到这个现象的发生，因为处理函数中的printf输出，在sigprocmask调用接下来的printf输出之前。
+	进程然后再睡眠5秒，由于捕获信号之后，我们会把信号处理还原成默认，如果我们发送quit信号的时候是在睡眠的期间，信号就会把进程终止。
+	在下面的输出中，当我们输入[Ctrl]\的时候，终端会打印^\（终端退出字符）:
+	$ ./a.out
+
+	    ^\                       generate signal once (before 5 seconds are up)
+	    SIGQUIT pending          after return from sleep
+	    caught SIGQUIT           in signal handler
+	    SIGQUIT unblocked        after return from sigprocmask
+	    ^\Quit(coredump)         generate signal again
+	    $ ./a.out
+
+	    ^\^\^\^\^\^\^\^\^\^\     generate signal 10 times (before 5 seconds are up)
+	    SIGQUIT pending
+	    caught SIGQUIT           signal is generated only once
+	    SIGQUIT unblocked
+	    ^\Quit(coredump)         generate signal again
+	消息"Quit(coredump)"是shell看到它的一个子进程非正常结束的时候，打印出来的。需要注意的是，当我们第二次运行程序的时候，我们在进程睡眠的时候发起quit信号10次，然而这个信号在它取消阻塞的时候只给进程发送了一次，这说明在这个系统上，信号没有被排队。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch10lev1sec13.html
+
+
+

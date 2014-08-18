@@ -1,0 +1,24 @@
+++++++APUE读书笔记-02UNIX标准和实现-09各标准之间冲突与总结++++++
+
+
+
+9、各个标准之间的冲突
+================================================
+	总体来看，这些标准之间相互之间配合是非常好的。但是它们之间也有一些不同，由于SUSv3是POSIX.1的超集，我们这里主要讲述ISO C标准和POSIX.1标准之间的差别。
+	ISO C定义的函数clock返回进程使用的CPU时间。这个返回值是clock_t类型的，我们需要将它除以一个CLOCKS_PER_SEC(定义在<time.h>头文件中)，得到实际的秒数。POSIX定义的times函数返回调用进程，以及其所有中止子进程的CPU时间以及clock时间。所有这些时间值都是clock_t类型。sysconf函数用来获得每秒的时钟滴答数目（clock ticks per second）用于times函数的返回值。这样，我们所了同样的每秒时钟滴答数目，ISO C和POSIX.1都对它进行了不同的定义。两个标准都是用同样的clock_t数据类型来存放这些不同的值。这样的差别在Solaris中也可以看到，clock函数返回微秒数目（因此CLOCKS_PER_SEC是1百万分之一），而sysconf函数返回的却是100，表示每秒有100个时钟滴答。
+	另外一个可能有冲突的就是当ISO C标准指定一个函数的时候，并没有像POSIX.1那样指定。有些函数在POSIX环境下（考虑了多进程）和在ISO C环境下（很少考虑其所在操作系统的情况）的实现有所不同。然而，为了兼容，许多遵从POSIX的系统实现了ISO C函数。signal函数就是一个例子。如果我们在不知道的情况下使用了Solaris提供的signal函数（希望写一个可以移植的能够运行在ISO C环境和老的UNIX系统的代码），那么它所提供的功能可能和POSIX.1得sigaction函数提供的功能有所不同，这个后面会讲到。
+
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch02lev1sec8.html
+
+
+10、总结
+================================================
+	过去的20年间，UNIX编程环境的标准化上面发生了许多的事情。我们这里讨论了一些重要的标准，如ISO C，POSIX，Single UNIX Specification以及它们在我们本书中所涉及到的四个系统中的作用。我们本书所涉及的四个系统即是：FreeBSD, Linux, Mac OS X, 以及 Solaris。这些标准尝试定义一些特定的参数，这些参数可以随实现而变化，但是我们也看到了这样的局限。我们会随着阅读，看到许多限制和魔术数常量。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch02lev1sec10.html
+
+
+

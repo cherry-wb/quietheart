@@ -1,0 +1,36 @@
+++++++APUE读书笔记-05标准输入输出库（1）++++++
+
+
+
+1、简介
+================================================
+	在本章，我们描述了标准输入输出库。由于这个库也被许多非UNIX的操作系统实现了，所以这个库由ISO C标准指定。其它的接口被SUS定义，作为ISO C标准的扩展。
+	标准输入输出库处理了诸如缓存分配，以及分配优化的大小的块进行I/O，这样我们就不必担心如何使用正确的块大小进行I/O了（如原书3章9节所描述的那样）。这样，这个库就很容易使用了，但是同时，也引入了我们没有预料到的其他一些问题。
+	标准I/O库由Dennis Ritchie在大约1975年编写,它作为Mike Lesk编写的可移植I/O库的主要版本.并且在30年的期间内,对它改动非常少。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec1.html
+
+
+2、流和文件描述符号
+================================================
+	我们使用系统调用来操作文件的时候，是通过文件描述符号来标识这个文件，如果我们使用标准库函数来进行文件操作的我们通常是把一个stream和这个文件相关联了，然后通过这个stream对这个流进行操作，也即，标准I/O库是以流（stream）为中心进行操作的。
+	当我们使用库函数fopen打开一个文件的时候，会返回一个指向FILE对象的指针，这个对象包含了I/O库管理stream需要的所有信息，例如被操作的文件的描述符号，指向这个stream的缓存的指针，以及缓存的大小（注意这个缓存和系统调用时可能经过的内核的缓存不同，经过内核的缓存更接近下层，在第3章8节讨论I/O效率时的最后也提到过，但这属于内核驱动范围了，可以暂时忽略），当前缓存中的字符数目，错误标志等等。我们把这个FILE对象做为参数传递给标准输入输出库函数，就可以实现相应的操作了（使用库函数操作，也不用费心去关心输入输出缓存设置为多大才好了）。
+	应用程序不用检验FILE对象。引用一个流，只需将FILE指针作为参数传递给每个标准I/O函数。本书中，我们称指向FILE的指针(类型为FILE*)为文件指针。
+	通常，有单字节和多字节字符。stream的orientation用于决定读写的是单字节字符还是多字节字符。在最开始一个stream创建的时候，它是没有orientation的，这时候，如果使用了一个多字节I/O函数对这个stream进行操作(例如<wchar.h>中的函数)，那么这个stream就被设置为wide-oriented的；同理如果用单字节的I/O函数对这个stream进行操作，那么这个stream就被设置为byte-oriented的。一旦设置了stream的方向，除非被关闭，否则就不能改变了。当一个stream被set的时候，只有两个函数可以改变这个stream的orientation。它们是：fwide和freopen.
+	freopen原型如下：
+	FILE *freopen(const char *path, const char *mode, FILE *stream);
+	它会把stream的orientation给clear.把原来的stream给关掉，然后把参数指定的新的stream和这个文件相互关联。
+
+	fwide原型如下：
+	#include <stdio.h>
+	#include <wchar.h>
+	int fwide(FILE *fp, int mode);
+	这里，如果mode是负数，那么设置成byte-oriented;如mode是正数，那么设置成wide-oriented;如果mode是0那么不会做设置，但也返回当前流的orientation值。
+	需要注意的是fwide不会改变已经被oriented的stream,也不会返回error（也就是那个流刚开始被创建之后没有被使用过就没有被设置过，这个时候则可以用这个函数来设置）。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch05lev1sec2.html
+
+
+

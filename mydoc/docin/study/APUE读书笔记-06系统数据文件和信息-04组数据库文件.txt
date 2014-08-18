@@ -1,0 +1,27 @@
+++++++APUE读书笔记-06系统数据文件和信息-04组数据库文件++++++
+
+
+
+4、组数据库文件
+================================================
+	组信息的数据库文件存储在/etc/group文件中，其中存放了组的相关结构信息。
+	我们可以通过下面函数获取组数据项信息：
+	#include <grp.h>
+	struct group *getgrgid(gid_t gid);
+	struct group *getgrnam(const char *name);
+	如果运行正常返回相应的组数据项结构的指针，如果错误返回NULL.
+	函数和访问passwd的相关函数类似，也是posix.1的。
+
+	类似passwd相关函数，也有如下遍历组数据项的函数:
+	#include <grp.h>
+	struct group *getgrent(void);
+	这个函数如果运行正常则返回指针，出错或者到达文件结尾返回NULL.
+	void setgrent(void);
+	void endgrent(void);
+	这三个函数类似passwd的相关函数，setgrent如果在文件没有打开的时候会打开文件，然后rewinds。getgrent获取下一个组项。endgrent关闭组文件，这三个函数不是posix.1而是single unix的xsi扩展。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch06lev1sec4.html
+
+
+

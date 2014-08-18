@@ -1,0 +1,516 @@
+++++++APUE读书笔记-16网络通信-05数据传输++++++
+
+
+
+5、数据传输
+================================================
+	由于socket末端使用文件描述符号来替代，当被连接起来的时候，我们就可以使用read和write来和socket进行通信了。需要记住的是如果我们使用connect函数的时候设置了默认的通信对等端，那么数据报的socket可以被认为是连接好了的。使用read和write与套接字描述符号进行通信是非常有意义的，因为它以为着我们可以把套接字描述符号传递给本来是用来操作本地文件的函数。我们也可以把套接字描述符号传递给子进程，子进程执行exec另外一个程序而那个程序却不用知道关于套接字的信息。
+	尽管我们能够使用read和write交换数据，但是这也只是我们使用这两个函数所能做的所有的事情了。如果我们想要指定选项，从多个客户端接受包，或者发送带外的数据，我们需要使用六个特定的sockt函数来进行数据传输。
+
+	有三个函数用来发送数据，同时也有三个函数用来接收数据。首先我们来看看发送数据的函数。
+	最简单的就是send，它和write的功能类似，但是允许我们指定标记来改变我们看待被传输的数据的方式。
+	#include <sys/socket.h>
+	ssize_t send(int sockfd, const void *buf, size_t nbytes, int flags);
+	返回：如果成功那么返回发送的字节数目，如果错误则返回1。
+	和write类似，套接字使用send的时候需要被连接。buf和nbytes参数和write中相应的参数的含义一样。
+	和write不同的是，send支持第四个参数flags。Single UNIX Specification定义了两个参数，但是一般实现都会定义一些额外的参数。大致如下面列出的，具体哪个系统支持，请参见参考资料，详细这里就不一一列举了。
+	MSG_DONTROUTE 不在本地网络之外对包进行路由。
+	MSG_DONTWAIT 打开非阻塞操作（与使用O_NONBLOCK等价）。
+	MSG_EOR 如果协议支持，那么这个表示记录的结尾。
+	MSG_OOB 如果协议支持，那么发送带外数据。
+	如果send返回成功，并不意味这另一端的进程接收到了数据。所有我们能够保证的只是：当send成功的时候，数据被发送到网络中了，并且没有错误。
+	对于一个支持消息边界的协议，如果我们尝试发送一个单个的消息，这个消息的大小比协议支持的最大大小要大，那么send将会返回失败并且设置errno为EMSGSIZE。对于一个字节流协议，send将会阻塞，直到整个数据都被传输完毕。
+
+	sendto函数和send函数类似。不同的是，sendto允许我们指定一个无连接套接字使用的目标地址。
+	#include <sys/socket.h>
+	ssize_t sendto(int sockfd, const void *buf, size_t nbytes, int flags, const struct sockaddr *destaddr,
+					 socklen_t destlen);
+	返回：如果成功返回字节数目，如果错误返回1。
+	使用面向连接的套接字，目标地址被忽略，因为目标已经隐含在了连接中。使用无连接的套接字，如果我们不首先通过connect函数设置目标地址，那么我们就无法使用send发送，所以sendto函数给了我们一个可以选择的方法来发送消息。
+
+	我们有不只一种方法通过套接字传输数据。我们可以调用sendmsg，通过msghdr结构指定用来传输数据的多个缓存，这个和使用writev函数有点类似。
+	#include <sys/socket.h>
+	ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+	返回：如果成功，返回发送的字节数目，如果错误返回1。
+	POSIX.1定义msghdr结构至少包含如下成员：
+	struct msghdr {
+		void          *msg_name;         /* optional address */
+		socklen_t      msg_namelen;      /* address size in bytes */
+		struct iovec  *msg_iov;          /* array of I/O buffers */
+		int            msg_iovlen;       /* number of elements in array */
+		void          *msg_control;      /* ancillary data */
+		socklen_t      msg_controllen;   /* number of ancillary bytes */
+		int            msg_flags;        /* flags for received message */
+		.
+		.
+		.
+	};
+	对于msg_iov成员，我们前面看见过iovec结构，我们将在后面看到辅助数据的使用。
+
+	函数recv和read函数类似，但是允许我们指定一些如何接收数据的控制选项。
+	#include <sys/socket.h>
+	ssize_t recv(int sockfd, void *buf, size_t nbytes, int flags);
+	返回：返回消息的字节长度，如果没有消息返回0并且对等端做顺序的shutdown(???)，或者如果错误返回1。
+	传递给recv的flags参数通过一个表格的形式进行列出，其中只有三个是Single UNIX Specification定义的。这里只给出一个大致的列举，具体那个实现支持它们，请参见参考资料。
+
+						recv套接字调用使用的标记
++-------------------------------------------------------------------------------------------------+
+|    Flag     |                                    Description                                    |
+|-------------+-----------------------------------------------------------------------------------|
+| MSG_OOB     | 如果协议支持，那么获取带外数据。                                                  |
+|-------------+-----------------------------------------------------------------------------------|
+| MSG_PEEK    | 返回包内容但是不会消耗包。                                                        |
+|-------------+-----------------------------------------------------------------------------------|
+| MSG_TRUNC   | 返回一个包的实际长度，即使它被截断了。                                            |
+|-------------+-----------------------------------------------------------------------------------|
+| MSG_WAITALL | 等待，直到所有数据可用(只对SOCK_STREAM)                                           |
++-------------------------------------------------------------------------------------------------+
+
+	当我们指定MSG_PEEK标记的时候，我们可以查看下一次将要读取的数据而不用消耗实际的数据（也就是说数据不会在被看到之后被清除掉）。下次调用read或者recv相关的函数的时候，将会返回我们这里查看到的数据。
+	通过使用SOCK_STREAM套接字，我们可以接收比我们请求少的数据。MSG_WAITALL标记会阻止这个现象发生，不让recv返回直至所有请求的数据被接收到。对于SOCK_DGRAM和SOCK_SEQPACKET套接字，MSG_WAITALL标记对它们的行为没有区别，因为这些基于消息的套接字类型在单个读取的时候已经返回了整个的消息。
+	如果发送者调用了shutdown函数来结束数据的传输，或者如果网络协议默认支持依次shutdown并且发送者关闭了套接字，那么recv将会在我们已经接收到所有的数据的时候返回0。
+
+	如果我们对发送者是谁很感兴趣，那么我们可以使用recvfrom来获得数据得以发送的源地址。
+	#include <sys/socket.h>
+	ssize_t recvfrom(int sockfd, void *restrict buf, size_t len, int flags, struct sockaddr *restrict addr,
+	                 socklen_t *restrict addrlen);
+	返回：会返回消息的字节长度，如果没有消息返回0并且对等端会顺序调用shutdown，或者如果错误返回1。
+	如果addr参数非空，它将会包含发送数据所来自的套接字末端地址。当调用recvfrom的时候，我们需要设置addrlen参数指向一个整数，这个整数用来包含addr参数所指向的套接字缓存的字节大小。当返回的时候，这个整数会被设置成实际字节的大小。
+	因为通过这个函数我们可以获取发送者的地址，recvfrom实际和无连接的套接字一块使用。否则，recvfrom表现的行为和recv一样。
+
+	和readv类似地如果想要接收数据到多个缓存，或者我们想要接收辅助的数据，我们可以使用recvmsg。
+	#include <sys/socket.h>
+	ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+	返回：消息的字节长度，如果没有消息返回0并且对等端允许调用shutdown，或者如果错误返回1。
+	recvmsg函数使用msghdr结构（我们看到sendmsg中使用了）指定接收数据的输入缓存。我们可以设置flags参数来更改默认的recvmsg行为。返回的时候，msghdr结构的msg_flags成员会被设置，以表示接收数据的各种特性(msg_flags成员在进入recvmsg的时候被忽略)。对于recvmsg返回的可能值，在下面的表格中列出来了。后面会对recvmsg函数的使用举一个例子。Specification定义的。这里只给出一个大致的列举，具体那个实现支持它们，请参见参考资料。
+
+			recvmsg返回的msg_flags中的标记
++---------------------------------------------------------+
+|     Flag     |               Description                |
+|--------------+------------------------------------------|
+| MSG_CTRUNC   | 控制数据被截断。                         |
+|--------------+------------------------------------------|
+| MSG_DONTWAIT | recvmsg 以一种非阻塞的模式被调用。       |
+|--------------+------------------------------------------|
+| MSG_EOR      | 返回接收的记录结尾。                     |
+|--------------+------------------------------------------|
+| MSG_OOB      | 接收带外数据。                           |
+|--------------+------------------------------------------|
+| MSG_TRUNC    | 截断正常数据。                           |
++---------------------------------------------------------+
+
+
+	面向连接的客户端的例子
+	下面的程序，显示了一个客户的命令，这个命令和服务进行通信，从系统的uptime命令获取输出。我们将这个服务称作"remote uptime"(或简称"ruptime")。
+	这个程序连接服务器，读取服务器发送的字符串，然后打印字符串到标准输出。因为我们使用SOCK_STREAM套接字，我们不能保证我们会在一个recv调用中读取整个字符串，所以我们使用一个循环进行调用，直到它返回0。
+	#include <netdb.h>
+	#include <errno.h>
+	#include <sys/socket.h>
+	#define MAXADDRLEN  256
+	#define BUFLEN      128
+	extern int connect_retry(int, const struct sockaddr *, socklen_t);
+	void print_uptime(int sockfd)
+	{
+	    int     n;
+	    char    buf[BUFLEN];
+
+	    while ((n = recv(sockfd, buf, BUFLEN, 0)) > 0)
+	        write(STDOUT_FILENO, buf, n);
+	    if (n < 0)
+	        err_sys("recv error");
+	}
+
+	int main(int argc, char *argv[])
+	{
+	    struct addrinfo *ailist, *aip;
+	    struct addrinfo hint;
+	    int             sockfd, err;
+
+	    if (argc != 2)
+	        err_quit("usage: ruptime hostname");
+	    hint.ai_flags = 0;
+	    hint.ai_family = 0;
+	    hint.ai_socktype = SOCK_STREAM;
+	    hint.ai_protocol = 0;
+	    hint.ai_addrlen = 0;
+	    hint.ai_canonname = NULL;
+	    hint.ai_addr = NULL;
+	    hint.ai_next = NULL;
+	    if ((err = getaddrinfo(argv[1], "ruptime", &hint, &ailist)) != 0)
+	        err_quit("getaddrinfo error: %s", gai_strerror(err));
+	    for (aip = ailist; aip != NULL; aip = aip->ai_next) {
+	        if ((sockfd = socket(aip->ai_family, SOCK_STREAM, 0)) < 0)
+	            err = errno;
+	        if (connect_retry(sockfd, aip->ai_addr, aip->ai_addrlen) < 0) {
+	            err = errno;
+	        } else {
+	            print_uptime(sockfd);
+	            exit(0);
+	        }
+	    }
+	    fprintf(stderr, "can't connect to %s: %s\n", argv[1],
+	      strerror(err));
+	    exit(1);
+	}
+
+	如果服务进程支持多个网络接口或者多个网络协议，getaddrinfo函数可能返回多个候选地址。我们一次对每个进行尝试，当找到一个允许我们连接的服务的时候为止。我们使用前面自定义的connect_retry函数来建立和服务器之间的连接。
+
+	面向连接的服务端的例子
+	下面的程序给出了提供前面客户端的uptime的服务输出程序。
+	#include <netdb.h>
+	#include <errno.h>
+	#include <syslog.h>
+	#include <sys/socket.h>
+
+	#define BUFLEN  128
+	#define QLEN 10
+
+	#ifndef HOST_NAME_MAX
+	#define HOST_NAME_MAX 256
+	#endif
+
+	extern int initserver(int, struct sockaddr *, socklen_t, int);
+
+	void serve(int sockfd)
+	{
+	    int     clfd;
+	    FILE    *fp;
+	    char    buf[BUFLEN];
+
+	    for (;;) {
+	        clfd = accept(sockfd, NULL, NULL);
+	        if (clfd < 0) {
+	            syslog(LOG_ERR, "ruptimed: accept error: %s",
+	              strerror(errno));
+	            exit(1);
+	        }
+	        if ((fp = popen("/usr/bin/uptime", "r")) == NULL) {
+	            sprintf(buf, "error: %s\n", strerror(errno));
+	            send(clfd, buf, strlen(buf), 0);
+	        } else {
+	            while (fgets(buf, BUFLEN, fp) != NULL)
+	                send(clfd, buf, strlen(buf), 0);
+	            pclose(fp);
+	        }
+	        close(clfd);
+	    }
+	}
+
+	int main(int argc, char *argv[])
+	{
+	    struct addrinfo *ailist, *aip;
+	    struct addrinfo hint;
+	    int             sockfd, err, n;
+	    char            *host;
+
+	    if (argc != 1)
+	        err_quit("usage: ruptimed");
+	#ifdef _SC_HOST_NAME_MAX
+	    n = sysconf(_SC_HOST_NAME_MAX);
+	    if (n < 0)  /* best guess */
+	#endif
+	        n = HOST_NAME_MAX;
+	    host = malloc(n);
+	    if (host == NULL)
+	        err_sys("malloc error");
+	    if (gethostname(host, n) < 0)
+	        err_sys("gethostname error");
+	    daemonize("ruptimed");
+	    hint.ai_flags = AI_CANONNAME;
+	    hint.ai_family = 0;
+	    hint.ai_socktype = SOCK_STREAM;
+	    hint.ai_protocol = 0;
+	    hint.ai_addrlen = 0;
+	    hint.ai_canonname = NULL;
+	    hint.ai_addr = NULL;
+	    hint.ai_next = NULL;
+	    if ((err = getaddrinfo(host, "ruptime", &hint, &ailist)) != 0) {
+	        syslog(LOG_ERR, "ruptimed: getaddrinfo error: %s",
+	          gai_strerror(err));
+	        exit(1);
+	    }
+	    for (aip = ailist; aip != NULL; aip = aip->ai_next) {
+	        if ((sockfd = initserver(SOCK_STREAM, aip->ai_addr,
+	          aip->ai_addrlen, QLEN)) >= 0) {
+	            serve(sockfd);
+	            exit(0);
+	        }
+	    }
+	    exit(1);
+	}
+
+	为了获取地址，服务进程需要获取它所运行的主机的名称。有些系统没有定义_SC_HOST_NAME_MAX常量，所以我们使用HOST_NAME_MAX。如果系统没有定义HOST_NAME_MAX那么我们自己定义它。POSIX.1指明了主机名称的最小值为255字节（不包含结束符号），所以我们定义HOST_NAME_MAX为256字节以便能够包含结束符号。
+	服务进程调用gethostname来得到主机的名称，同时查看用于remote uptime服务的地址。可能会返回多个地址，但是我们只是选择第一个来建立套接字末端。
+	我们使用前面自己定义的initserver函数来初始化等待连接请求到达处的套接字末端（实际上，我们使用另外一个版本，具体还是参见参考资料吧）。
+
+	例子：另外一个可选的面向连接的服务进程
+	之前我们说过使用文件描述符号可以访问套接字，这一点非常重要，因为这样程序在网络环境下不用了解关于网络相关的信息。下面的程序就展示了这一点。不是读取uptime命令的标准输出并且将它发送到客户端，而是服务进程让uptime命令的标准输出和标准错误输出变成连接到客户端的套接字。
+	#include <netdb.h>
+	#include <errno.h>
+	#include <syslog.h>
+	#include <fcntl.h>
+	#include <sys/socket.h>
+	#include <sys/wait.h>
+
+	#define QLEN 10
+
+	#ifndef HOST_NAME_MAX
+	#define HOST_NAME_MAX 256
+	#endif
+
+	extern int initserver(int, struct sockaddr *, socklen_t, int);
+
+	void serve(int sockfd)
+	{
+	    int     clfd, status;
+	    pid_t   pid;
+
+	    for (;;) {
+	        clfd = accept(sockfd, NULL, NULL);
+	        if (clfd < 0) {
+	            syslog(LOG_ERR, "ruptimed: accept error: %s",
+	              strerror(errno));
+	            exit(1);
+	        }
+	        if ((pid = fork()) < 0) {
+	            syslog(LOG_ERR, "ruptimed: fork error: %s",
+	              strerror(errno));
+	            exit(1);
+	        } else if (pid == 0) {  /* 子进程 */
+	            /* 父进程调用daemonize函数，这样STDIN_FILENO，STDOUT_FILENO，和STDERR_FILENO被打开到/dev/null。
+	             * 因此，不需要通过检查clfd是否等于这些值之一来对调用close进行保护。
+	             */
+	            if (dup2(clfd, STDOUT_FILENO) != STDOUT_FILENO ||
+	              dup2(clfd, STDERR_FILENO) != STDERR_FILENO) {
+	                syslog(LOG_ERR, "ruptimed: unexpected error");
+	                exit(1);
+	            }
+	            close(clfd);
+	            execl("/usr/bin/uptime", "uptime", (char *)0);
+	            syslog(LOG_ERR, "ruptimed: unexpected return from exec: %s",
+	              strerror(errno));
+	        } else {        /* 父进程 */
+	            close(clfd);
+	            waitpid(pid, &status, 0);
+	        }
+	    }
+	}
+
+	int main(int argc, char *argv[])
+	{
+	    struct addrinfo *ailist, *aip;
+	    struct addrinfo hint;
+	    int             sockfd, err, n;
+	    char            *host;
+
+	    if (argc != 1)
+	        err_quit("usage: ruptimed");
+	#ifdef _SC_HOST_NAME_MAX
+	    n = sysconf(_SC_HOST_NAME_MAX);
+	    if (n < 0)  /* best guess */
+	#endif
+	        n = HOST_NAME_MAX;
+	    host = malloc(n);
+	    if (host == NULL)
+	        err_sys("malloc error");
+	    if (gethostname(host, n) < 0)
+	        err_sys("gethostname error");
+	    daemonize("ruptimed");
+	    hint.ai_flags = AI_CANONNAME;
+	    hint.ai_family = 0;
+	    hint.ai_socktype = SOCK_STREAM;
+	    hint.ai_protocol = 0;
+	    hint.ai_addrlen = 0;
+	    hint.ai_canonname = NULL;
+	    hint.ai_addr = NULL;
+	    hint.ai_next = NULL;
+	    if ((err = getaddrinfo(host, "ruptime", &hint, &ailist)) != 0) {
+	        syslog(LOG_ERR, "ruptimed: getaddrinfo error: %s",
+	          gai_strerror(err));
+	        exit(1);
+	    }
+	    for (aip = ailist; aip != NULL; aip = aip->ai_next) {
+	        if ((sockfd = initserver(SOCK_STREAM, aip->ai_addr,
+	          aip->ai_addrlen, QLEN)) >= 0) {
+	            serve(sockfd);
+	            exit(0);
+	        }
+	    }
+	    exit(1);
+	}
+
+
+	不是使用popen来运行uptime命令以及从连接到命令标准输出的管道上面读取输出，我们使用fork创建子进程并且之后使用dup2来让子进程的STDIN_FILENO打开到/dev/null，STDOUT_FILENO和STDERR_FILENO打开到套接字的末端。当我们执行uptime命令的时候，命令向标准输出写，因为标准输出连接到了套接字，数据会被发送会ruptime的客户端命令。
+	父进程可以安全地关闭连接到客户端的文件描述符号，因为子进程仍旧打开着它。父进程在继续之前等待子进程完成，这样子进程不会变成僵尸进程。因为uptime命令不会占用太多的时间，所以父进程可以在接收下一条请求之前等待字进程退出。但是如果子进程执行过长的时间的化，可能这个方法就不那么好用了。
+	前面的例子使用的是面向连接的套接字。但是我们如何选择合适的类型？什么时候我们使用面向连接的套接字，什么时候我们使用无连接的套接字？这个打开取决于我们需要做多少工作以及我们可以容忍多少的错误。
+	对于一个无连接的套接字，对数据包到达的次序没有太多的要求，所以如果我们不能将我们所有的数据放到一个包中，我们就需要考虑次序的问题，包的最大长度是通信协议的特性。另外，对于无连接的套接字，可能会出现丢包的情况。如果我们的应用程序不能容忍丢包的情况，那么我们应该使用面向连接的套接字。
+	容忍包的丢失以为着我们可以有两个选择。如果我们使用可靠的通信方式，那么我们需要给我们的包进行编号，当我们检测到包的丢失的时候可以请求重新传送。由于一个包可能会延迟导致好象是丢失了，但是在我们再次请求传输的时候又出现了，所以我们也应当可以辨别重复的包然后忽略它们。
+	另外一个选择就是我们可以重新尝试命令来处理错误。对于一个简单的应用程序，这个就足够了，但是对于一个复杂的应用程序，它并不一定可行。所以，一般来说这时候我们最好使用面向连接的套接字服务。
+	使用面向连接的套接字的缺点就是，我们在建立连接的时候需要做更多的工作和时间，并且每个连接都会消耗更多的操作系统资源。
+
+	无连接客户的例子
+	下面的程序就是使用数据包接口的uptime客户端程序。
+	#include <netdb.h>
+	#include <errno.h>
+	#include <sys/socket.h>
+
+	#define BUFLEN      128
+	#define TIMEOUT     20
+
+	void sigalrm(int signo)
+	{
+	}
+
+	void print_uptime(int sockfd, struct addrinfo *aip)
+	{
+	    int     n;
+	    char    buf[BUFLEN];
+
+	    buf[0] = 0;
+	    if (sendto(sockfd, buf, 1, 0, aip->ai_addr, aip->ai_addrlen) < 0)
+	        err_sys("sendto error");
+	    alarm(TIMEOUT);
+	    if ((n = recvfrom(sockfd, buf, BUFLEN, 0, NULL, NULL)) < 0) {
+	        if (errno != EINTR)
+	            alarm(0);
+	        err_sys("recv error");
+	    }
+	    alarm(0);
+	    write(STDOUT_FILENO, buf, n);
+	}
+	int main(int argc, char *argv[])
+	{
+	    struct addrinfo     *ailist, *aip;
+	    struct addrinfo      hint;
+	    int                  sockfd, err;
+	    struct sigaction     sa;
+
+	    if (argc != 2)
+	        err_quit("usage: ruptime hostname");
+	    sa.sa_handler = sigalrm;
+	    sa.sa_flags = 0;
+	    sigemptyset(&sa.sa_mask);
+	    if (sigaction(SIGALRM, &sa, NULL) < 0)
+	        err_sys("sigaction error");
+	    hint.ai_flags = 0;
+	    hint.ai_family = 0;
+	    hint.ai_socktype = SOCK_DGRAM;
+	    hint.ai_protocol = 0;
+	    hint.ai_addrlen = 0;
+	    hint.ai_canonname = NULL;
+	    hint.ai_addr = NULL;
+	    hint.ai_next = NULL;
+	    if ((err = getaddrinfo(argv[1], "ruptime", &hint, &ailist)) != 0)
+	        err_quit("getaddrinfo error: %s", gai_strerror(err));
+
+	    for (aip = ailist; aip != NULL; aip = aip->ai_next) {
+	        if ((sockfd = socket(aip->ai_family, SOCK_DGRAM, 0)) < 0) {
+	            err = errno;
+	        } else {
+	            print_uptime(sockfd, aip);
+	            exit(0);
+	        }
+	     }
+
+	     fprintf(stderr, "can't contact %s: %s\n", argv[1], strerror(err));
+	     exit(1);
+	}
+	基于数据包的客户端的main函数和面向连接的客户端类似，只是安装了一个SIGALARM的信号处理函数。我们使用alarm函数防止recvfrom函数调用导致无限的阻塞。
+	使用面向连接的协议，我们需要在交换数据之前连接到服务端。这个连接请求就已经足够让服务端确定它需要给客户提供什么样子的服务。但是，在基于数据包的协议中，我们需要一个方法来通知服务端我们需要它为我们提供服务。在这个例子中，我们只是简单地给服务端发送一个一个字节长度的消息，服务端可以接收到它，从数据包中获得我们的地址，然后使用这个地址来发送相应信息。如果服务端提供了多个服务，我们使用这个请求消息来识别我们需要的服务，但是由于服务端只做一件事情，这一个字节消息的内容无关紧要。
+	如果服务端没有运行，客户端将会在调用recvfrom的地方无限阻塞下去。在面向连接的例子里面，connect调用将会在服务端没有运行的时候调用失败。为了避免无限的阻塞，我们在调用recvfrom之前设置alarm。
+
+	无连接服务的例子
+	下面的程序是数据报版本的uptime服务的例子。
+
+	通过数据报提供系统uptime的server
+	#include "apue.h"
+	#include <netdb.h>
+	#include <errno.h>
+	#include <syslog.h>
+	#include <sys/socket.h>
+
+	#define BUFLEN      128
+	#define MAXADDRLEN  256
+
+	#ifndef HOST_NAME_MAX
+	#define HOST_NAME_MAX 256
+	#endif
+
+	extern int initserver(int, struct sockaddr *, socklen_t, int);
+
+	void serve(int sockfd)
+	{
+	    int         n;
+	    socklen_t   alen;
+	    FILE        *fp;
+	    char        buf[BUFLEN];
+	    char        abuf[MAXADDRLEN];
+
+	    for (;;) {
+	        alen = MAXADDRLEN;
+	        if ((n = recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr *)abuf, &alen)) < 0) {
+	            syslog(LOG_ERR, "ruptimed: recvfrom error: %s", strerror(errno));
+	            exit(1);
+	        }
+	        if ((fp = popen("/usr/bin/uptime", "r")) == NULL) {
+	            sprintf(buf, "error: %s\n", strerror(errno));
+	            sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)abuf, alen);
+	        } else {
+	            if (fgets(buf, BUFLEN, fp) != NULL)
+	                sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)abuf, alen);
+	            pclose(fp);
+	        }
+
+	    }
+
+	}
+
+	int main(int argc, char *argv[])
+	{
+	    struct addrinfo *ailist, *aip;
+	    struct addrinfo hint;
+	    int             sockfd, err, n;
+	    char            *host;
+
+	    if (argc != 1)
+	        err_quit("usage: ruptimed");
+	#ifdef _SC_HOST_NAME_MAX
+	    n = sysconf(_SC_HOST_NAME_MAX);
+	    if (n < 0)  /* best guess */
+	#endif
+	        n = HOST_NAME_MAX;
+	    host = malloc(n);
+	    if (host == NULL)
+	        err_sys("malloc error");
+	    if (gethostname(host, n) < 0)
+	        err_sys("gethostname error");
+	    daemonize("ruptimed");
+	    hint.ai_flags = AI_CANONNAME;
+	    hint.ai_family = 0;
+	    hint.ai_socktype = SOCK_DGRAM;
+	    hint.ai_protocol = 0;
+	    hint.ai_addrlen = 0;
+	    hint.ai_canonname = NULL;
+	    hint.ai_addr = NULL;
+	    hint.ai_next = NULL;
+	    if ((err = getaddrinfo(host, "ruptime", &hint, &ailist)) != 0) {
+	        syslog(LOG_ERR, "ruptimed: getaddrinfo error: %s",
+	          gai_strerror(err));
+	        exit(1);
+	    }
+	    for (aip = ailist; aip != NULL; aip = aip->ai_next) {
+	        if ((sockfd = initserver(SOCK_DGRAM, aip->ai_addr,
+	          aip->ai_addrlen, 0)) >= 0) {
+	            serve(sockfd);
+	            exit(0);
+	        }
+	    }
+	    exit(1);
+	}
+	服务端阻塞在recvfrom等待服务请求，当一个请求到来的时候，我们保存请求的地址并且使用popen来执行uptime命令。我们使用sendto函数将输出发送回客户端，这时候的目标地址是被设置成了请求者的地址。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch16lev1sec5.html
+
+
+

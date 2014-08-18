@@ -1,0 +1,199 @@
+++++++APUE读书笔记-18终端输入输出-05终端选项标记++++++
+
+
+
+5、终端选项标记
+================================================
+	这一节中，我们列出了各种终端选项标记，扩展了前面我们所省略的列表中的相应描述。列表以字母次序列出它们并且标记了这些选项是属于四个终端标记域中的哪一个。（控制选项的域，一般来说并不是像选项名字那样的明显）我们也会看见，每个选项通过Single UNIX Specification来定义，并且列出了支持它们的平台。
+	
+	所有列出来的标记(flags)指定了一个或者多个我们需要打开或者清除的位，除非我们把flag叫做mask。一个mask定义了多个位，这些位组合在一起定义了一系列值的集合。我们对于mask和每个value都有一个定义好了的名字。例如，为了设置字符的大小，我们首先使用字符大小的mask也就是CSIZE将一些位清零，然后设置一个CS5, CS6, CS7, 或 CS8中之一的某个值。
+	
+	有六个延迟值被Linux和Solaris支持，它们也是masks，它们分别是：BSDLY, CRDLY, FFDLY, NLDLY, TABDLY, 和 VtdLY。无论如何，延迟mask为0表示没有延迟，如果一个延迟被指定了，那么OFILL 和 OFDEL标记可以决定驱动是否做实际的延迟，或者是否来传输填充字符以取代之。
+	
+	例子
+	下面的代码列出了使用这些mask来获取一个值或者设置一个值的例子
+	使用tcgetattr和tcsetattr函数的例子
+	#include "apue.h"
+	#include <termios.h>
+	int main(void)
+	{
+	    struct termios term;
+	
+	    if (tcgetattr(STDIN_FILENO, &term) < 0)
+	        err_sys("tcgetattr error");
+	
+	    switch (term.c_cflag & CSIZE) {
+	    case CS5:
+	        printf("5 bits/byte\n");
+	        break;
+	    case CS6:
+	        printf("6 bits/byte\n");
+	        break;
+	    case CS7:
+	        printf("7 bits/byte\n");
+	        break;
+	    case CS8:
+	        printf("8 bits/byte\n");
+	        break;
+	    default:
+	        printf("unknown bits/byte\n");
+	    }
+	
+	    term.c_cflag &= ~CSIZE;     /* zero out the bits */
+	    term.c_cflag |= CS8;        /* set 8 bits/byte */
+	    if (tcsetattr(STDIN_FILENO, TCSANOW, &term) < 0)
+	        err_sys("tcsetattr error");
+	
+	    exit(0);
+	}
+	
+	我们现在对每个标记进行描述。
+	ALTWERASE (c_lflag, FreeBSD, Mac OS X)如果设置了这个，那么会在输入WERASE字符的时候使用一个可选的word-erase算法。不是向前移动直到遇到空白字符了，这个标记会导致WERASE字符向前移动，直到遇到第一个非字母和数字的字符。
+	
+	BRKINT (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris)如果这个标记被设置，并且IGNBRK没有被设置，那么当接收到一个BREAK的时候会将输入和输出队列刷新，并且产生SIGINT信号。如果中断设备是一个控制终端，那么信号用于前台进程组。如果IGNBRK或者BRKINT都没有被设置，那么BREAK被做为一个单个的字符'\0'被读取，除非PARMRK被设置的时候，这样BREAK会被做为一个三个字节的序列\377, \0, \0。
+	
+	BSDLY (c_oflag, XSI, Linux, Solaris)Backspace延迟mask，值为BSO或者BSI。
+	
+	CBAUDEXT (c_cflag, Solaris)扩展波特率。用来使能大于B38400的波特率。（后面讨论波特率）
+	
+	CCAR_OFLOW (c_cflag, FreeBSD, Mac OS X)通过使用RS-232 modem carrier signal(DCD, 被认为是 Data- Carrier-Detect)使能输出的硬件流控制。这个和MDMBUF标记一样。
+	
+	CCTS_OFLOW (c_cflag, FreeBSD, Mac OS X, Solaris)通过使用Clear-To-Send(CTS)RS-232 signal使能输出的硬件流控制。
+	
+	CDSR_OFLOW (c_cflag, FreeBSD, Mac OS X)根据Data-Set-Ready (DSR) RS-232 signal进行输出的流控制。
+	
+	CDTR_IFLOW (c_cflag, FreeBSD, Mac OS X)根据Data-Terminal-Ready (DTR) RS-232 signal进行输入的流控制。
+	
+	CIBAUDEXT (c_cflag, Solaris)扩展输入波特率。用来使能大于B38400的输入波特率。
+	
+	CIGNORE (c_cflag, FreeBSD, Mac OS X)忽略控制标记。
+	
+	CLOCAL (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris)如果设置了那么modem status lines会被忽略。这一般意味着设备被直接连接了。当这个标记没有被设置的时候，对于一个终端设备的打开经常会被阻塞，直至例如modem相应一个call以及建立一个连接。
+	
+	CMSPAR (c_oflag, Linux) 选择标记或者空白一致(space parity)。如果PARODD被设置了，那么相应的parity位会被设置为始终为1。否则，parity位始终为0（space parity）。
+	
+	CRDLY (c_oflag, XSI, Linux, Solaris) 回车返回延迟掩码。掩码值为 CR0, CR1, CR2, or CR3.
+	
+	CREAD (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置，那么接收者被激活，并且字符可以被接收。
+	
+	CRTSCTS (c_cflag, FreeBSD, Linux, Mac OS X, Solaris) 其动作取决于平台。对于Solaris中，会在设置的时候激活带外硬件流控制。在其他的三个平台上面，会激活带外和带内的硬件流控制。(等价 CCTS_OFLOW|CRTS_IFLOW).
+	
+	CRTS_IFLOW (c_cflag, FreeBSD, Mac OS X, Solaris) 输入的Request-To-Send (RTS) 流控制。
+	
+	CRTSXOFF (c_cflag, Solaris) 如果设置，那么带内硬件流控制会被激活。Request-To-Send RS-232信号的状态控制流控制。
+	
+	CSIZE (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 这个成员是一个掩码，指定了用于传输和接收的每个字节的位的数目，大小不包含parity位，如果有的话，值可以是：CS5, CS6, CS7, and CS8, for 5, 6, 7, 每个字节分别 8 位.
+	
+	CSTOPB (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置，那么会使用两个停止位；否则使用一个停止位。
+	
+	ECHO (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置，那么输入字符会被回显给终端设备。输入的字符在canonical或者noncanonical模式中都可以显示。
+	
+	ECHOCTL 如果被设置，并且如果ECHO被设置，那么除了TAB,NL,和START，STOP的ASCII控制字符（字符的范围在0-37之间）会被显示为^X，这里X代表控制字符+100之后形成的字符。也就是说，Control-A字符（ASCII码为10进制的1），会被显示成^A。类似，DELETE字符会被显示成^?。如果这个标记没有被设置，那么ASCII控制字符就以它们自己的形式被显示出来。也就是说，通过ECHO标记，这个标记可以影响canonical和noncanonical模式下面的控制字符的显示。
+	需要注意的是，有些系统显示的EOF字符有所不同，因为它的常用值为Control-D(Control-D是EOT字符的ASCII，导致终端挂起)，具体请参见你的手册。
+	
+	ECHOE (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置了，并且如果ICANON被设置了，那么ERASE字符会从显示中擦除当前行的上一个字符。这个一般在终端驱动中写入三个字符序列来做到：backspace,space,backspace。
+	如果WERASE字符被支持，那么ECHOE导致使用一个或者多个这样的三个字符序列，将之前的单词被擦除。
+	如果支持ECHOPRT标记，那么这里叙述的ECHOE的动作是假设ECHOPRT没有被设置的情况下的。
+	
+	ECHOK (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，并且如果ICANON被设置，那么KILL字符会从显示器中擦除当前行，或者输出一个NL字符（为了强调表征整行被擦除）。
+	如果支持ECHOKE标记，那么这里对ECHOK的描述是假设ECHOKE没有被设置。
+	
+	ECHOKE (c_lflag, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，并且如果ICANON被设置，那么KILL字符通过删除一行中的每一个字符被显示。每一个字符被擦除的方式通过ECHOE和ECHOPRT标记被选择。
+	
+	ECHONL (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置并且如果ICANON被设置，那么甚至在ECHO没有被设置的时候，NL字符也会被显示。
+	
+	ECHOPRT (c_lflag, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，并且ICANON和ECHO两者也被设置了，那么ERASE字符（如果支持的话,WERASE字符也是）会导致所有的被擦除的字符以它们被擦处的方式打印出来。这在硬拷贝终端以便查看具体什么字符被删除的时候，会非常有用（估计应该类似抓取log的时候）。
+	
+	EXTPROC (c_lflag, FreeBSD, Mac OS X) 如果被设置了，那么canonical字符处理会在操作系统以外进行。可以出现这个情况的可以是：当串口通信设备可以通过处理一些行处理动作来脱离主机处理器。或者当使用伪终端的时候。
+	
+	FFDLY (c_oflag, XSI, Linux, Solaris) 形成提供延迟掩码。这个掩码的值可以是FFO或者FF1。
+	
+	FLUSHO (c_lflag, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置了，那么输出会被flushed。这个标记当我们键入DISCARD字符的时候被设置;这个标记在我们键入另外一个DISCARD字符的时候会被清除。我们可以通过设置或者清楚这个终端标记来设置或者清除相应的条件。
+	
+	HUPCL (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置了，那么当最后一个进程关闭设备的时候modem 控制行会被lowered（也就是modem连接被断开）。
+	
+	ICANON (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么canonical模式就会起作用。这将会激活如下字符：EOF, EOL, EOL2, ERASE, KILL, REPRINT, STATUS, 以及 WERASE.输入的字符会被汇集成行。
+	如果canonical模式没有被激活，那么read请求直接从输入对列中被满足。一个read不会返回，直到最小字节数目(MIN)字节数据被接收，或者到达超时（TIME），具体参见后面。
+	
+	ICRNL (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置并且如果IGNCR没有被设置，那么会将接收到的CR字符转换成NL字符。
+	
+	IEXTEN (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，那么扩展的实现定义的特殊字符会被识别并且被处理。
+	
+	IGNBRK (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置，那么会忽略输入的BREAK条件。可以查看BRKINT来寻找一种方法，通过这个方法来让BREAK条件既产生SIGINT信号或者也被做为数据读取。
+	
+	IGNCR (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么接收到的CR字符会被忽略。如果这个标记没有被设置，那么就会在ICRNL被设置的时候将接收到的CR转换成NL字符。
+	
+	IGNPAR (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 当被设置的时候，具有framing错误的输入字节（除了BREAK）或者一个具有parity错误的输入字节将会被忽略。
+	
+	IMAXBEL (c_iflag, FreeBSD, Linux, Mac OS X, Solaris) 当输入队列满的时候，会响铃。
+	
+	INLCR (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么接收到的NL字符会被转换成CR字符。
+	
+	INPCK (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 当被设置了，那么input parity检测会被激活，如果INPCK没有被设置，那么input parity检测不会被激活。
+	Parity(应该是奇偶校验码之类的东西) "generation and detection" 和 "input parity checking" 是两个不同的东西。"generation and detection"的奇偶校验检测使用PARENB标记进行控制，设置这个标记经常导致特定串口的设备驱动为出去的字符产生parity并且检测收到的字符的parity(等值,或者校验码之类的东西)。标记PARODD决定parity是奇数还是偶数。如果一个输入字符到达，但是parity（等值）是错误的，那么会检测INPCK标记的状态，如果这个标记被设置，那么会检测IGNPAR标记（以查看是否忽略产生parity错误的输入字节）；如果字节不被忽略，那么PARMRK标记会被检测，来确定应该传递给读取进程的字符。
+	
+	ISIG (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，那么输入字符会和特定的字符进行比较，而这个特定的字符是导致产生终端发起的信号（INTR,QUIT,SUSP,和DSUSP）的字符；如果相等，那么会产生相应的信号。
+	
+	ISTRIP (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris)当设置的时候，合法的输入字节会被strip成7个比特；当这个标记没有被设置的时候，所有的8比特都被处理。
+	
+	IUCLC (c_iflag, Linux, Solaris) 将输入的大写字符映射成相知相惜字符。
+	
+	IXANY (c_iflag, XSI, FreeBSD, Linux, Mac OS X, Solaris) 激活任何字符，以重新开始输出。
+	
+	IXOFF (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，那么会激活startstop输入控制。当输入队列满的时候，终端驱动输出一个STOP字符。这个字符应当被发送数据和导致设备停止的设备识别。然后，当输入队列上面的字符被处理的时候，终端驱动将会输出一个START字符。这会导致设备重新开始发送数据。
+	
+	IXON (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么startstop输出控制会被激活。当终端驱动接收到STOP字符的时候，输出会停止。当输出停止的时候，下一个START字符将会导致重新开始输出。如果这个标记没有被设置，那么START和STOP字符会被读取，并且被进程当做普通字符来进行处理。
+	
+	MDMBUF (c_cflag, FreeBSD, Mac OS X) 根据modem carrier的标记，对output进行流控制。这是CCAR_OFLOW标记的旧名字。
+	
+	NLDLY (c_oflag, XSI, Linux, Solaris) 新行延迟码。其值可以是NL0或者NL1。
+	
+	NOFLSH (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 默认来说，当终端驱动产生SIGINT和SIGQUIT信号的时候，输入和输出队列都会被刷新。并且，当产生SIGSUSP信号的时候，输入队列也会被刷新。如果NOFLSH标记被设置了，那么产生相应的信号的时候，这些队列通常就不会被刷新了。
+	
+	NOKERNINFO (c_lflag, FreeBSD, Mac OS X) 当被设置的时候，这个标记会阻止STATUS字符向前台进程组打印字符。然而如果忽略这个标记，STATUS字符始终会导致SIGINFO信号被发送到前台进程组。
+	
+	OCRNL (c_oflag, XSI, FreeBSD, Linux, Solaris) 如果设置，会在输出上面将CR映射成NL。
+	
+	OFDEL (c_oflag, XSI, Linux, Solaris) 如果被设置，那么输出填充字符将会是ASCII的DEL；否则将会是ASCII的NUL。需要查看OFILL标记。
+	
+	OFILL (c_oflag, XSI, Linux, Solaris) 如果被设置，那么填充字符 ( ASCII DEL 或 ASCII NUL; 请查看 OFDEL 标记)会在需要延迟的时候被作为延迟被发送，而不是延迟一个指定的时间。具体需要查看六个延迟掩码：BSDLY, CRDLY, FFDLY, NLDLY, TABDLY, 以及 VtdLY.
+	
+	OLCUC (c_oflag, Linux, Solaris) 如果被设置了，那么将输出的小写字符映射成大写字符。
+	
+	ONLCR (c_oflag, XSI, FreeBSD, Linux, Mac OS X, Solaris)如果设置了，那么会将输出的NL映射成CR-NL。
+	
+	ONLRET (c_oflag, XSI, FreeBSD, Linux, Solaris) 如果设置了，那么会假设输出上面的NL字符和回车字符一样。
+	
+	ONOCR (c_oflag, XSI, FreeBSD, Linux, Solaris) 如果设置了，那么不会在第0列输出CR。
+	
+	ONOEOT (c_oflag, FreeBSD, Mac OS X) 如果设置了，那么忽略输出的EOT(^D)字符。这在一些可能会对Control-D解释成挂起的终端中，很有必要。
+	
+	OPOST (c_oflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么会进行实现所定义的输出处理。根据前面参考资料中各个标记的表格所列出的对于c_oflag标记的不同的系统实现定义而处理。
+	
+	OXTABS (c_oflag, FreeBSD, Mac OS X) 如果被设置了，那么输出上面的tabs被扩展成为space。这与设置水平制表延迟(TABDLY)为XTABS或者TAB3的效果一样。
+	
+	PARENB (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置，那么会对之后的字符进行校验。如果PARODD设置了那么就进行奇数校验，否则偶数校验。可以查看INPCK，IGNPAR，以及PARMRK标记。
+	
+	PAREXT (c_cflag, Solaris) 选择标记或者空白校验。如果设置了PARODD，那么校验位始终为1（标记校验），否则校验为始终为0（空白校验）。
+	
+	PARMRK (c_iflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 当设置了，并且IGNPAR没有被设置的时候，一个错误帧的字节（除了BREAK）或者一个具有校验错误的字节会被进程读取为三个字符序列：\377, \0, X，这里X就是接收到的出错的字节。如果ISTRIP没有被设置，那么合法的的\377传递给进程为\377,\377。如果IGNPAR或者PARMRK都没有被设置，那么一个错误帧的字节（除了BREAK）或者一个具有校验错误的字节会被读取为\0。
+	
+	PARODD (c_cflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果设置了，那么对接下来的字符进行奇数校验。否则，进行偶数校验。注意：PARENB标记会控制是否进行校验。
+	当CMSPAR或者PAREXT标记被设置的时候，PARODD标记也控制是否进行mark或者space校验。
+	
+	PENDIN (c_lflag, FreeBSD, Linux, Mac OS X, Solaris)当被设置的时候，任何没有被读取的输入会在下一个字符输入的时候通过系统被重新打印出来。这个动作和我们键入REPRINT字符的时候类似。
+	
+	TABDLY (c_oflag, XSI, Linux, Solaris) 水平制表延迟码，掩码的值为TAB0，TAB1，TAB2或者TAB3。
+	XTABS的值等于TAB3。这个值导致系统将tabs扩展成空格。系统假设一个tab会在8个空格之后stop一下，这个假定不能被改变。
+	
+	TOSTOP (c_lflag, POSIX.1, FreeBSD, Linux, Mac OS X, Solaris) 如果被设置了，并且如果实现支持作业控制，那么SIGTTOU信号会发送给尝试写控制终端的后台进程的进程组。默认来说，这个信号会将进程组中所有的进程停止。这个信号在尝试写控制终端的后台进程忽略或者阻塞信号的时候不会由终端驱动发起。
+	
+	VTDLY (c_oflag, XSI, Linux, Solaris) 垂直制表延迟码。延迟码的值可以为VT0或者VT1。
+	
+	XCASE (c_lflag, Linux, Solaris) 如果设置了，并且如果ICANON也被设置了，那么会假设终端只是大写的，并且所有的输入都会被转换成小写的。如果想要输入一个大写的字符，那么将反斜线做为其前缀。类似，一个大写的字符会被系统通过使用反斜线前缀的方式来输出（目前，这个选项被淘汰了，因为几乎不存在只有大写的终端了）。
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec5.html
+	
+	
+

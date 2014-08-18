@@ -1,0 +1,70 @@
+++++++APUE读书笔记-18终端输入输出-12终端窗口大小++++++
+
+
+
+12、终端窗口大小
+================================================
+	大多数UNIX系统提供一种方式，可以跟踪当前终端窗口大小，以便内核在大小改变的时候通知前台进程组。内核对每一个终端和伪终端维护一个窗口大小的结构。
+	struct winsize
+	{
+		unsigned short ws_row;       /* rows, in characters */
+		unsigned short ws_col;       /* columns, in characters */
+		unsigned short ws_xpixel;    /* horizontal size, pixels (unused) */
+		unsigned short ws_ypixel;    /* vertical size, pixels (unused) */
+	};
+	
+	结构的规则如下：
+	a 我们可以通过使用TIOCGWINSZ的ioctl来获取当前结构的值。
+	b 我们可以通过TIOCSWINSZ的ioctl向内核存储一个新的这个结构的值。如果新的值和当前内核存放的值不同，那么会给前台进程组发送一个SIGWINCH信号。（需要注意的是前面说过，这个信号的默认情况是被忽略）
+	c 除了存放当前的结构值以及当值变化的时候发送信号之外，内核不会对这个结构做任何事情。对于这个结构的解释，完全交给应用程序来做。
+	提供这个特性的原因是为了在窗口大小改变的时候通知应用程序（例如vi编辑器）。当收到这个信号的时候，应用程序可以获取新的大小，然后重新绘制屏幕。
+	
+	例子
+	下面代码中的程序，会打印当前窗口的大小。每次窗口大小改变的时候，程序会接收到一个SIGWINCH信号，然后打印新的大小。我们需要通过一个信号来终止这个应用程序。
+	打印窗口大小
+	#include "apue.h"
+	#include <termios.h>
+	#ifndef TIOCGWINSZ
+	#include <sys/ioctl.h>
+	#endif
+	
+	static void pr_winsize(int fd)
+	{
+	    struct winsize size;
+	
+	    if (ioctl(fd, TIOCGWINSZ, (char *) &size) < 0)
+	        err_sys("TIOCGWINSZ error");
+	    printf("%d rows, %d columns\n", size.ws_row, size.ws_col);
+	}
+	
+	static void sig_winch(int signo)
+	{
+	    printf("SIGWINCH received\n");
+	    pr_winsize(STDIN_FILENO);
+	}
+	
+	int main(void)
+	{
+	    if (isatty(STDIN_FILENO) == 0)
+	        exit(1);
+	    if (signal(SIGWINCH, sig_winch) == SIG_ERR)
+	        err_sys("signal error");
+	    pr_winsize(STDIN_FILENO);   /* print initial size */
+	    for ( ; ; )                 /* and sleep forever */
+	        pause();
+	}
+	
+	在一个终端窗口中运行这个应用程序，我们会得到如下的输出：
+	$ ./a.out
+	35 rows, 80 columns       initial size
+	SIGWINCH received         change window size: signal is caught
+	40 rows, 123 columns
+	SIGWINCH received         and again
+	42 rows, 33 columns
+	^? $                      type the interrupt key to terminate
+	
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch18lev1sec12.html
+
+
+

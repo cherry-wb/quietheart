@@ -1,0 +1,66 @@
+++++++APUE读书笔记-08进程控制（10）++++++
+
+
+14、进程记帐
+================================================
+	大多数的unix操作系统提供了一种进程记帐的手段，用来统计每个进程的资源使用情况.如果使能了这个功能，那么每次进程结束的时候，操作系统内核就会记录一条信息。信息记录的就是一些二进制的数据，包括命令名称，cpu占用时间，userID,group ID,启动时间等等。
+	这个功能并不是标准化的。因此所有系统的这个功能不是很统一。具体参见参考文档，这里不再举例了。
+	每种系统实现有它自己处理记帐原始数据的命令。例如solaris提供runacct(lm)和acctcom(l),而FreeBSD提供sa(8)来处理和列出原始记帐数据。
+	一个我们没有描述过的函数acct可以禁止和使能进程记帐。这个函数唯一的使用是accton命令（这个命令在不同平台上面竟然很类似）。超级用户执行带有一个路径参数的accton来使能记帐。记帐记录被写入到一个指定的文件，一般这个文件是/var/account/acct（FreeBSD和Mac OS X）或者/var/account/pacct(Linux)，或者/var/adm/pacct(Solaris).如果运行没有参数的accton那么记帐功能被禁止。
+	<sys/acct.h> 文件定义了记帐数据的结构体acct。其中ac_flag记录了在进程执行过程中发生的事件。
+	fork的时候会初始化一条记录但是exec的时候不会，但是exec的时候AFORK标志被清除（当然名字会更新）。每当进程结束的时候才会写入记帐记录所以记帐记录文件中记录了进程的结束次序而不是启动次序。尽管其中有start时间的记录，但是其单位是秒，无法精确记录启动次序；另外虽然cpu耗费时间比较精确，但是我们无法知道进程结束的时间；综上，我们实际上无法获得进程精确启动次序。
+	参考文献给出了一个具体的例子来展示如何在程序中获取和分析记帐数据,这里不详细说了。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec14.html
+
+
+15、用户标识
+================================================
+	任何进程都能够得到它的real uid和effective uid以及gid.有时候，我们想要获得运行程序的用户的login name.也许我们会想要使用getpwuid但是，如果一个用户具有多个登陆名字就不行了。（一个用户可能在password文件中拥有多个用户名，这些用户名对应一个uid，这样可以对不同的用户名使用不同得shell进行登陆）。系统一般会保留login名称（参见6章8节）.getlogin函数提供获得login name的功能。
+	#include <unistd.h>
+	char *getlogin(void);
+	正确返回指向登陆名称的字符串指针，错误返回NULL.
+	如果用户登陆的终端没有和进程相关联，那么这个函数会返回错误。我们把这样得进程称为daemon,后面会有所涉及。
+	给定login name我们就可以通过搜索password文件来确定登陆的shell了(例如使用getpwnam)。
+	不同系统获取loginname有不同的方式，例如unix以前使用ttyname搜索utmp文件，FreeBSD和Mac Os在进程表中存放相关信息，更多的其他系统不多说了。
+	另外需要注意的是：环境变量LOGNAME一般会被login程序初始化成用户登陆的名称，然后被登陆shell所继承。但是由于环境变量是可以修改的所以我们不使用LOGNAME而是使用getlogin函数。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec15.html
+
+
+16、进程时间
+================================================
+	前面我们说了进程时间：clock time, user cpu time, system cpu time.任何进程可以通过times函数获得它自己或者结束的子进程的这些值。
+	#include <sys/times.h>
+	clock_t times(struct tms *buf);
+	函数填充参数中tms结构体，并且返回clocktime。
+	结构体定义如下：
+	struct tms
+	{
+	  clock_t  tms_utime;  /* user CPU time */
+	  clock_t  tms_stime;  /* system CPU time */
+	  clock_t  tms_cutime; /* user CPU time, terminated children */
+	  clock_t  tms_cstime; /* system CPU time, terminated children */
+	};
+	这些值是从一个从前的某个起点开始计算的，所以一般我们用不上它们的绝对值，我们需要使用相对值来计算时间的长短。例如计时开始记录当前时间，计时结束记录一个时间，然后两者相减计算时间消耗。
+	这里，用于子进程的两个成员的时间值只是我们调用wait,waitid,或者waitpid等到的子进程时间。
+	函数返回的clock_t值使用clock tick per second转换成秒，这个clock tick per sceond由sysconf返回的_SC_CLK_TCK 来决定。
+	大多数系统有geTRusage函数，这个函数返回cpu time和其他14种资源值，BSD系列系统一般比其它实现支持更多的信息。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec16.html
+
+
+17、总结
+================================================
+	想要更为深入地了解编程，需要对UNIX系统中的进程控制机制有所了解。我们只需要掌握这几个函数：fork, exec函数族, _exit, wait, 以及waitpid。这些基本的进程控制函数（进程控制原语）在许多程序中都有所使用。fork函数使得我们也看到了一种竞争条件。
+	通过对system函数的深入了解以及进程记账机制的讲述，使得我们从另外一个角度来看待进程控制函数。我们也看到了exec函数的另外一种变体，解释器文件，以及它们是如何运作的。通过了解进程的各种用户ID和组ID（real,effective,save），我们知道如何去写一个安全的set-user-ID程序。
+	这样，我们已经对单一进程环境以及子进程有了一定的了解，下一章我们将看到不同进程会话之间的关系，以及作业控制相关内容。我们然后在第10章讲述信号的时候结束对进程的讨论。
+
+参考：
+http://book.chinaunix.net/special/ebook/addisonWesley/APUE2/0201433079/ch08lev1sec17.html
+
+
+
