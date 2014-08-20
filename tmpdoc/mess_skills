@@ -950,3 +950,6 @@ sox可以实现声音转换。
 开机进入单用户模式
 chkconfig   sendmail  off
 关闭它即可
+
+设置ubuntu 代理：
+export http_proxy="http://usrname:passwrd@host:port"
