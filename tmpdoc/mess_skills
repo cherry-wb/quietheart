@@ -869,6 +869,17 @@ secure,This  option requires that requests originate on an Internet port less th
 
 然后问题就解决了
 
+
+38）could not write bytes: Broken pipe解决
+系统：Ubuntu 12.04 64bit
+现象：昨天装了几款软件（QT4，以及几款软件更新），今天再开机，没等进入登录界面就黑屏显示“could not write bytes: Broken pipe”
+解决：
+a. 开机按“Ctrl + Alt + F1”，进入命令行模式，并登录
+b. 输入ls，发现环境变量没有问题。（若环境变量有问题，请参考其他资料）
+c. 执行startx。提示“.../usr/bin/X:No such file or directory”
+d. 执行sudo apt-get install xserver-xorg
+e. 重启即可
+
 ============================
 3）解决亲身实践的问题：}
 
