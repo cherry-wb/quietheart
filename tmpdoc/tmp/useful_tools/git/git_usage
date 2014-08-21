@@ -480,7 +480,11 @@ git difftool -t vimdiff ba70acc5 661a4d37 readme.txt
 git  clean?
 
 清除当前目录包括子目录下所有untracked的文件，也就是未被git版本控制的文件。默认不会对.gitignore中的内容进行清理。
+清除文件：
+git clean -f
 
+清除目录：
+git clean -d -f
 
 
 git reset?
